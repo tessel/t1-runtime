@@ -1,6 +1,6 @@
-/* The Great Computer Language Shootout
-   http://shootout.alioth.debian.org/
-   contributed by Isaac Gouy */
+// The Great Computer Language Shootout
+// http://shootout.alioth.debian.org/
+// contributed by Isaac Gouy
 
 function TreeNode(left,right,item){
    this.left = left;
@@ -33,7 +33,7 @@ var maxDepth = Math.max(minDepth + 2, n);
 var stretchDepth = maxDepth + 1;
 
 var check = bottomUpTree(0,stretchDepth).itemCheck();
-print("stretch tree of depth " + stretchDepth + "\t check: " + check);
+console.log("stretch tree of depth " + stretchDepth + "\t check: " + check);
 
 var longLivedTree = bottomUpTree(0,maxDepth);
 for (var depth=minDepth; depth<=maxDepth; depth+=2){
@@ -44,8 +44,8 @@ for (var depth=minDepth; depth<=maxDepth; depth+=2){
       check += bottomUpTree(i,depth).itemCheck();
       check += bottomUpTree(-i,depth).itemCheck();
    }
-   print(iterations*2 + "\t trees of depth " + depth + "\t check: " + check);
+   console.log(iterations*2 + "\t trees of depth " + depth + "\t check: " + check);
 }
 
-print("long lived tree of depth " + maxDepth + "\t check: " 
+console.log("long lived tree of depth " + maxDepth + "\t check: " 
    + longLivedTree.itemCheck());

@@ -69,24 +69,46 @@ function colonize (node) {
       break;
 
     case 'AssignmentExpression':
+      // +=, -=, etc.
       if (node.operator != '=') {
-        node.update(node.left.source() + ' = ' + node.left.source() + ' ' + node.operator.substr(0, 1) + ' ' + node.right.source());
-
+        node.right.update(node.left.source() + ' ' + node.operator.substr(0, 1) + ' ' + node.right.source());
+        node.operator = '=';
       }
+      // Used in another expression, assignments must be wrapped by a closure.
       if (node.parent.type != 'ExpressionStatement') {
         node.update('(function () local _r = ' + node.right.source() + '; ' + node.left.source() + ' = _r; return _r; end)()');
+      } else {
+        // Need to refresh thanks to += updating.
+        node.update(node.left.source() + ' = ' + node.right.source());
       }
       break;
+
+    case 'ThisExpression':
+      break;  
+
+    case 'UnaryExpression':
     case 'BinaryExpression':
-      node.update('(' + node.source() + ')');
+      if (node.operator == '<<') {
+        node.update('_JS._bit.lshift(' + node.left.source() + ', ' + node.right.source() + ')');
+      } else {
+        node.update('(' + node.source() + ')');
+      }
       break;
 
     case 'UpdateExpression':
+      // ++ or --
       if (node.prefix) {
         node.update('(function () ' + node.argument.source() + ' = ' + node.argument.source() + ' ' + node.operator.substr(0, 1) + ' 1; return ' + node.argument.source() + '; end)()');
       } else {
         node.update('(function () local _r = ' + node.argument.source() + '; ' + node.argument.source() + ' = _r ' + node.operator.substr(0, 1) + ' 1; return _r end)()');
       }
+      break;
+
+    case 'NewExpression':
+      node.update("_JS._new(" +
+        [node.callee.source()].concat(node.arguments.map(function (arg) {
+          return arg.source();
+        })).join(', ') + ")");
       break;
 
     case 'VariableDeclarator':
@@ -158,6 +180,15 @@ function colonize (node) {
       }
       break;
 
+    case 'IfStatement':
+      node.update([
+        "if _JS._truthy(" + node.test.source() + ") then\n",
+        node.consequent.source() + '\n',
+        (node.alternate ? 'else\n' + node.alternate.source() + '\n' : ""),
+        "end"
+      ].join(''));
+      break;
+
     case 'ReturnStatement':
       // Wrap in conditional to allow returns to precede statements
       node.update("if true then return" + (node.argument ? ' ' + node.argument.source() : '') + "; end;");
@@ -167,6 +198,7 @@ function colonize (node) {
       colonizeContext(node.parent.type == 'FunctionDeclaration' ? node.parent.identifiers : [], node);
       break;
 
+    case 'FunctionExpression':
     case 'FunctionDeclaration':
       if (node.id && !node.expression) {
         attachIdentifierToContext(node.id, node);
@@ -181,7 +213,7 @@ function colonize (node) {
       });
 
       // expression prefix/suffix
-      if (!node.expression && node) {
+      if (!node.expression && name) {
         var prefix = name + ' = ', suffix = ';';
       } else {
         var prefix = '', suffix = '';
@@ -245,6 +277,6 @@ function colonize (node) {
  * Output
  */
 
-var src = fs.readFileSync('examples/spectral-norm.js', 'utf-8');
+var src = fs.readFileSync('examples/binarytrees.js', 'utf-8');
 var out = falafel(src, colonize);
 console.log(String(out).replace(/\/\//g, '--'));
