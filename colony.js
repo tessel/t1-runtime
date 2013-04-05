@@ -29,7 +29,7 @@ function uniqueStrings (arr) {
 function attachIdentifierToContext (id, node) {
   var name = fixIdentifiers(id.source());
   while (node = node.parent) {
-    if (node.type == 'FunctionDeclaration' || node.type == 'Program') {
+    if (node.type == 'FunctionDeclaration' || node.type == 'Program' || node.type == 'FunctionExpression') {
       (node.identifiers || (node.identifiers = [])).push(name);
       node.identifiers = uniqueStrings(node.identifiers);
       return;
@@ -45,6 +45,11 @@ function truthy (node) {
 }
 
 function colonizeContext (ids, node) {
+  if (ids) {
+    ids = ids.filter(function (id) {
+      return id != 'arguments';
+    });
+  }
   node.update([
     // Variables
     ids && ids.length ? 'local ' + ids.join(', ') + ';' : '',
@@ -72,6 +77,9 @@ function colonize (node) {
   
   switch (node.type) {
     case 'Identifier':
+      if (node.source() == 'arguments') {
+        attachIdentifierToContext(node, node);
+      }
       node.update(fixIdentifiers(node.source()));
       break;
 
@@ -94,11 +102,32 @@ function colonize (node) {
       break;  
 
     case 'UnaryExpression':
+      if (node.operator == '!') {
+        node.update('(not ' + node.argument.source() + ')');
+      } else {
+        node.update('(' + node.source() + ')');
+      }
     case 'BinaryExpression':
-      if (node.operator == '<<') {
+      if (node.operator == '!==' || node.operator == '!=') {
+        // TODO strict
+        node.update('(' + node.left.source() + ' ~= ' + node.right.source() + ')');
+      } else if (node.operator == '<<') {
         node.update('_JS._bit.lshift(' + node.left.source() + ', ' + node.right.source() + ')');
       } else {
         node.update('(' + node.source() + ')');
+      }
+      break;
+
+    case 'LogicalExpression':
+      if (node.operator == '&&') {
+        node.update(node.left.source() + ' and ' + node.right.source());
+      } else if (node.operator == '||') {
+        node.update(node.left.source() + ' or ' + node.right.source());
+      }
+
+      // Can't have and/or be statements.
+      if (node.parent.type == 'ExpressionStatement') {
+        node.update('if ' + node.source() + ' then end');
       }
       break;
 
@@ -235,6 +264,10 @@ function colonize (node) {
       }
       break;
 
+    case 'ObjectExpression':
+      node.update('_JS._obj({})')
+      break;
+
     case 'ArrayExpression':
       if (!node.elements.length) {
         node.update("_JS._arr({})");
@@ -243,6 +276,10 @@ function colonize (node) {
           return el.source();
         })).join(', ') + "})");
       }
+      break;
+
+    case 'ConditionalExpression':
+      node.update('(' + truthy(node.test) + ' and {' + node.consequent.source() + '} or {' + node.alternate.source() + '})[1]');
       break;
 
     case 'IfStatement':
@@ -260,7 +297,7 @@ function colonize (node) {
       break;
 
     case 'BlockStatement':
-      colonizeContext(node.parent.type == 'FunctionDeclaration' ? node.parent.identifiers : [], node);
+      colonizeContext(node.parent.type == 'FunctionDeclaration' || node.parent.type == 'FunctionExpression' ? node.parent.identifiers : [], node);
       break;
 
     case 'MemberExpression':
@@ -280,6 +317,19 @@ function colonize (node) {
       node.update(node.body.source());
       break;
 
+    case 'ForInStatement':
+      if (node.left.type == 'VariableDeclaration') {
+        var name = fixIdentifiers(node.left.declarations[0].id.name);
+      } else {
+        var name = node.left.source();
+      }
+      node.update([
+        'for ' + name + ' in pairs(' + node.right.source() + ') do',
+        node.body.source(),
+        'end'
+      ].join('\n'))
+      break;
+
     case 'FunctionExpression':
     case 'FunctionDeclaration':
       if (node.id && !node.expression) {
@@ -295,7 +345,8 @@ function colonize (node) {
       });
 
       // expression prefix/suffix
-      if (!node.expression && name) {
+      if (!node.expression && node.parent.type != 'CallExpression' && name) {
+        // TODO among other types of expressions...
         var prefix = name + ' = ', suffix = ';';
       } else {
         var prefix = '', suffix = '';
@@ -311,7 +362,7 @@ function colonize (node) {
       var loops = [];
       if (node.identifiers.indexOf('arguments') > -1) {
         node.update(prefix + "_JS._func(function (this, ...)\n" + namestr +
-          "local arguments = _JS._arr((function (...) return arg; end)(...));\n" +
+          "local arguments = _JS._arr((function (...) return arg; end)(...)); arguments:shift();\n" +
           (args.length ? "local " + args.join(', ') + " = ...;\n" : "") +
           node.body.source() + "\n" +
           "end)" + suffix);
@@ -330,11 +381,11 @@ function colonize (node) {
         "local _JS = require('colony-js');",
         "local " + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
         "local " + locals.join(', ') + ' = ' + locals.map(function (k) { return '_JS.' + k; }).join(', ') + ';',
-        "local _exports = {}; local exports = _exports;",
+        "local _module = {exports={}}; local exports = _module.exports;",
         "",
         node.source(),
         "",
-        "return _exports;"
+        "return _module.exports;"
       ].join('\n'));
       break;
 
@@ -348,6 +399,6 @@ function colonize (node) {
  * Output
  */
 
-var src = fs.readFileSync('examples/labels.js', 'utf-8');
+var src = fs.readFileSync('examples/events.js', 'utf-8');
 var out = falafel(src, colonize);
 console.log(String(out).replace(/\/\//g, '--'));

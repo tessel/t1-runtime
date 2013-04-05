@@ -16,11 +16,26 @@ local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_
 -- this can cause conflicts with other modules if they utilize the string prototype
 -- (or expect number/booleans to have metatables)
 
-local func_mt, str_mt = {}, {}
+local func_mt, str_mt, nil_mt = {}, {}, {}
 debug.setmetatable((function () end), func_mt)
 debug.setmetatable(true, {__index=bool_proto})
 debug.setmetatable(0, {__index=num_proto})
 debug.setmetatable("", str_mt)
+debug.setmetatable(nil, nil_mt)
+
+-- nil metatable
+
+nil_mt.__eq = function (op1, op2)
+	return op2 == nil
+end
+
+nil_mt.__gt = function (op1, op2)
+	return op2 == nil
+end
+
+nil_mt.__lt = function (op1, op2)
+	return op2 == nil
+end
 
 -- object prototype and constructor
 
@@ -42,7 +57,7 @@ _JS._obj(arr_proto)
 -- function constructor
 
 _JS._func = function (f)
-	f.prototype = {}
+	f.prototype = _JS._obj({})
 	return f
 end
 local luafunctor = function (f)
@@ -188,6 +203,9 @@ end
 obj_proto.hasInstance = function (ths, p)
 	return toboolean(rawget(ths, p))
 end
+obj_proto.hasOwnProperty = function (ths, p)
+	return rawget(ths, p) ~= nil
+end
 
 -- function prototype
 
@@ -204,14 +222,15 @@ end
 -- array prototype
 
 arr_proto.push = function (ths, elem)
-	return table.insert(ths, ths.length, elem)
+  table.insert(ths, ths.length, elem)
+  return ths.length
 end
 arr_proto.pop = function (ths)
 	return table.remove(ths, ths.length-1)
 end
 arr_proto.shift = function (ths)
 	local ret = ths[0]
-	ths[0] = table.remove(ths, 0)
+	ths[0] = table.remove(ths, 1)
 	return ret
 end
 arr_proto.unshift = function (ths, elem)
@@ -226,7 +245,7 @@ arr_proto.reverse = function (ths)
 end
 arr_proto.slice = function (ths, len)
 	local a = _JS._arr({})
-	for i=len,ths.length-1 do
+	for i=len or 0,ths.length-1 do
 		a:push(ths[i])
 	end
 	return a
