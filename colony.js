@@ -37,6 +37,13 @@ function attachIdentifierToContext (id, node) {
   }
 }
 
+function truthy (node) {
+  if (['!', '<', '<=', '>', '>=', '===', '!=', '!==', 'instanceof', 'in'].indexOf(node.operator) == -1) {
+    node.update("_JS._truthy(" + node.source() + ")");
+  }
+  return node.source();
+}
+
 function colonizeContext (ids, node) {
   node.update([
     // Variables
@@ -123,6 +130,62 @@ function colonize (node) {
       }).join(', ') + ';');
       break;
 
+    case 'ContinueStatement':
+      //TODO _c down the stack is false until the main one
+      //label = label or (x for x in loops when loops[0] != 'try')[-1..][0]?[1] or ""
+
+      var label = node.label ? node.label.source() : '';
+
+      var par = node;
+      while (par = par.parent) {
+        if (par.type == 'WhileStatement' || par.type == 'ForStatement') {
+          par.usesContinue = true;
+        }
+      }
+      node.update("_c" + label + " = _JS._cont; break;");
+      break;
+
+    case 'WhileStatement':
+    // when "while-stat"
+    //   {ln, expr, stat} = n
+    //   ascend = (x[1] for x in loops when x[0] != 'try' and x[1])
+    //   name = labels.pop() or ""
+    //   cont = stat and usesContinue(stat, name)
+    //   loops.push(["while", name, cont])
+    //   ret = "while #{truthy(expr)} do\n" +
+    //     (if cont then "local _c#{name} = nil; repeat\n" else "") +
+    //     "#{colonize(stat)}\n" +
+    //     (if cont then "until true;\nif _c#{name} == _JS._break #{[''].concat(ascend).join(' or _c')} then break end\n" else "") +
+    //     "end\n" +
+    //     (if ascend.length then "if _c#{ascend.join(' or _c')} then break end\n" else '')
+    //   loops.pop()
+    //   return ret
+
+      var name = node.parent.type == 'LabeledStatement' ? node.parent.label.source() :'';
+
+      var loops = [];
+      var par = node;
+      while (par = par.parent) {
+        if (par.type == 'WhileStatement' || par.type == 'ForStatement') {
+          var parname = par.parent.type == 'LabeledStatement' ? par.parent.label.source() :'';
+          loops.unshift([par.type, parname, node.usesContinue]);
+        }
+      }
+      var ascend = loops.filter(function (l) {
+        return l[0] != 'TryStatement' && l[1] != null;
+      }).map(function (l) {
+        return l[1];
+      });
+
+      node.update([
+        'while ' + (node.test ? truthy(node.test) : 'true') + ' do',
+        (node.usesContinue ? 'local _c' + name + ' = nil; repeat' : ''),
+        node.body.source(),
+        (node.usesContinue ? 'until true;\nif _c' + name + ' == _JS._break' + [''].concat(ascend).join(' or _c') + ' then break end' : ''),
+        'end'
+      ].join('\n'))
+      break;
+
     case 'ForStatement':
       // {ln, init, expr, step, stat} = n
       // expr = {type: "boolean-literal", ln: ln, value: true} unless expr
@@ -143,8 +206,10 @@ function colonize (node) {
       // return ret
       node.update([
         node.init ? node.init.source() : '',
-        'while ' + (node.test ? node.test.source() : 'true') + ' do',
+        'while ' + (node.test ? truthy(node.test) : 'true') + ' do',
+        (node.usesContinue ? 'local _c = nil; repeat' : ''),
         node.body.source(),
+        (node.usesContinue ? 'until true;\nif _c == _JS._break then break end' : ''),
         node.update ? node.update.source() : '',
         'end'
       ].join('\n'))
@@ -182,7 +247,7 @@ function colonize (node) {
 
     case 'IfStatement':
       node.update([
-        "if _JS._truthy(" + node.test.source() + ") then\n",
+        "if " + truthy(node.test) + " then\n",
         node.consequent.source() + '\n',
         (node.alternate ? 'else\n' + node.alternate.source() + '\n' : ""),
         "end"
@@ -196,6 +261,23 @@ function colonize (node) {
 
     case 'BlockStatement':
       colonizeContext(node.parent.type == 'FunctionDeclaration' ? node.parent.identifiers : [], node);
+      break;
+
+    case 'MemberExpression':
+      if (!node.parent.type == 'CallExpression') {
+        node.update("(" + node.object.source() + ")"
+          + '[' + (node.property.type == 'Identifier' ? JSON.stringify(node.property.source()) : node.property.source()) + ']');
+      }
+      break;
+
+    case 'ExpressionStatement':
+      node.update(node.source().replace(/;?$/, ';'));
+      break;
+
+    case 'LabeledStatement':
+      // TODO change stat to do { } while(false) unless of certain type;
+      // this makes this labels array work
+      node.update(node.body.source());
       break;
 
     case 'FunctionExpression':
@@ -242,17 +324,6 @@ function colonize (node) {
       loops = loopsbkp;
       break;
 
-    case 'MemberExpression':
-      if (!node.parent.type == 'CallExpression') {
-        node.update("(" + node.object.source() + ")"
-          + '[' + (node.property.type == 'Identifier' ? JSON.stringify(node.property.source()) : node.property.source()) + ']');
-      }
-      break;
-
-    case 'ExpressionStatement':
-      node.update(node.source().replace(/;?$/, ';'));
-      break;
-
     case 'Program':
       colonizeContext(node.identifiers, node);
       node.update([
@@ -277,6 +348,6 @@ function colonize (node) {
  * Output
  */
 
-var src = fs.readFileSync('examples/binarytrees.js', 'utf-8');
+var src = fs.readFileSync('examples/labels.js', 'utf-8');
 var out = falafel(src, colonize);
 console.log(String(out).replace(/\/\//g, '--'));

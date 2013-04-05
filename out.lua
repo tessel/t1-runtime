@@ -1,56 +1,50 @@
--- The Great Computer Language Shootout
--- http:--shootout.alioth.debian.org/
--- contributed by Isaac Gouy
-
 local _JS = require('colony-js');
 local string, math = nil, nil;
 local this, Object, Array, String, Math, require, console = _JS.this, _JS.Object, _JS.Array, _JS.String, _JS.Math, _JS.require, _JS.console;
 local _exports = {}; local exports = _exports;
 
-local TreeNode, bottomUpTree, minDepth, n, maxDepth, stretchDepth, check, longLivedTree, depth, iterations, i;
-TreeNode = _JS._func(function (this, left, right, item)
-this.left = left;
-this.right = right;
-this.item = item;
-end);
-bottomUpTree = _JS._func(function (this, item, depth)
-if _JS._truthy((depth>(0))) then
-if true then return _JS._new(TreeNode, bottomUpTree(this, (((2)*item)-(1)), (depth-(1))), bottomUpTree(this, ((2)*item), (depth-(1))), item); end;
-else
-if true then return _JS._new(TreeNode, (null), (null), item); end;
-end
-end);
-TreeNode.prototype.itemCheck = _JS._func(function (this)
-if _JS._truthy((this.left==(null))) then
-if true then return this.item; end;
-else
-if true then return ((this.item + this.left:itemCheck()) - this.right:itemCheck()); end;
-end
-end)
-
-;
-minDepth = (4);
-n = (14);
-maxDepth = Math:max((minDepth + (2)), n);
-stretchDepth = (maxDepth + (1));
-check = bottomUpTree(this, (0), stretchDepth):itemCheck();
-console:log((((("stretch tree of depth ") + stretchDepth) + ("\t check: ")) + check));
-longLivedTree = bottomUpTree(this, (0), maxDepth);
-depth = minDepth;
-while (depth<=maxDepth) do
-iterations = _JS._bit.lshift((1), ((maxDepth - depth) + minDepth));
-check = (0);
-i = (1);
-while (i<=iterations) do
-check = check + bottomUpTree(this, i, depth):itemCheck();
-check = check + bottomUpTree(this, (-i), depth):itemCheck();
+local i, j;
+i = (0);
+while (i < (5)) do
+local _capples = nil; repeat
+console:log((("Level ") + i))
+	;
 (function () local _r = i; i = _r + 1; return _r end)()
+	;
+j = (0);
+while (j < (5)) do
+local _cpears = nil; repeat
+console:log((("J: ") + j))
+		;
+if _JS._truthy((i == (3))) then
+_capples = _JS._cont; break;
 end
-console:log((((((iterations*(2)) + ("\t trees of depth ")) + depth) + ("\t check: ")) + check));
-(function () local _r = depth + (2); depth = _r; return _r; end)()
+(function () local _r = j; j = _r + 1; return _r end)()
+	;
+until true;
+if _cpears == _JS._break or _capples then break end
 end
-console:log((((("long lived tree of depth ") + maxDepth) + ("\t check: ")) 
-   + longLivedTree:itemCheck()));
+until true;
+if _capples == _JS._break then break end
+end
 
 return _exports;
+
+-- for (var i = 0; i < 5; i++) {
+-- 	if (i % 2) continue;
+-- 	console.log('Even i: ' + i)
+-- }
+
+-- var i = 0
+-- candy: while (i < 7) {
+-- 	i++
+-- 	try {
+-- 		if (i == 3) continue candy;
+-- 		console.log("i="+i)
+-- 		if (i == 5) throw "Some error when i == 5"
+-- 	} catch (e) {
+-- 		console.log("Error: " + e)
+-- 	}
+-- 	console.log("Incrementing...")
+-- }
 

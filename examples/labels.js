@@ -10,20 +10,20 @@ apples: while (i < 5) {
 	}
 }
 
-for (var i = 0; i < 5; i++) {
-	if (i % 2) continue;
-	console.log('Even i: ' + i)
-}
+// for (var i = 0; i < 5; i++) {
+// 	if (i % 2) continue;
+// 	console.log('Even i: ' + i)
+// }
 
-var i = 0
-candy: while (i < 7) {
-	i++
-	try {
-		if (i == 3) continue candy;
-		console.log("i="+i)
-		if (i == 5) throw "Some error when i == 5"
-	} catch (e) {
-		console.log("Error: " + e)
-	}
-	console.log("Incrementing...")
-}
+// var i = 0
+// candy: while (i < 7) {
+// 	i++
+// 	try {
+// 		if (i == 3) continue candy;
+// 		console.log("i="+i)
+// 		if (i == 5) throw "Some error when i == 5"
+// 	} catch (e) {
+// 		console.log("Error: " + e)
+// 	}
+// 	console.log("Incrementing...")
+// }
