@@ -1,69 +1,87 @@
+-- The Great Computer Language Shootout
+-- http:--shootout.alioth.debian.org/
+--
+-- contributed by Ian Osgood
 
 local _JS = require('colony-js');
-local string, math = nil, nil;
-local this, Object, Array, String, Math, require, console = _JS.this, _JS.Object, _JS.Array, _JS.String, _JS.Math, _JS.require, _JS.console;
+local string, math, print = nil, nil, nil;
+local this, global, Object, Array, String, Math, require, console = _JS.this, _JS.global, _JS.Object, _JS.Array, _JS.String, _JS.Math, _JS.require, _JS.console;
 local _module = {exports={}}; local exports = _module.exports;
 
-local EventEmitter, stream;
-EventEmitter = _JS._func(function (this)
-local EventEmitter;
-EventEmitter = _JS._func(function (this)
+local A, Au, Atu, AtAu, spectralnorm;
+A = _JS._func(function (this, i, j)
+if true then return ((1)/(((((((i+j))*(((i+j)+(1))))/(2))+i)+(1)))); end;
+end);
+Au = _JS._func(function (this, u, v)
+local i, t, j;
+i = (0);
+while (i<u.length) do
 
-end);
-EventEmitter.prototype.listeners = _JS._func(function (this, type)
-if true then return (_JS._truthy(this.hasOwnProperty:call(this.__events or (function () local _r = _JS._obj({}); this.__events = _r; return _r; end)(), type)) and {this.__events[type]} or {(function () local _r = _JS._arr({}); this.__events[type] = _r; return _r; end)()})[1]; end;
-end);
-EventEmitter.prototype.on = (function () local _r = _JS._func(function (this, type, f)
-if _JS._truthy((this.__maxListeners ~= (0)) and (this:listeners(type):push(f) > (this.__maxListeners or (10)))) then
-if console and console:warn(((("Possible EventEmitter memory leak detected. ") + this.__events[type].length) + (" listeners added. Use emitter.setMaxListeners() to increase limit."))) then end;
-end
-this:emit(("newListener"), type, f);
-if true then return this; end;
-end); EventEmitter.prototype.addListener = _r; return _r; end)();
-EventEmitter.prototype.once = _JS._func(function (this, type, f)
-local g;
-this:on(type, _JS._func(function (this, ...)
-local arguments = _JS._arr((function (...) return arg; end)(...)); arguments:shift();
-f:apply(this, arguments);
-this:removeListener(type, g) ;
-end));
-end);
-EventEmitter.prototype.removeListener = _JS._func(function (this, type, f)
-local i;
-i = nil;
-if ((function () local _r = this:listeners(type):indexOf(f); i = _r; return _r; end)() ~= ((-(1)))) and this:listeners(type):splice(i, (1)) then end;
-if true then return this; end;
-end);
-EventEmitter.prototype.removeAllListeners = _JS._func(function (this, type)
-local k;
-for k in pairs(this.__events) do
-if ((not type)) or (type == k) and this.__events[k]:splice((0), this.__events[k].length) then end;
-end
-if true then return this; end;
-end);
-EventEmitter.prototype.emit = _JS._func(function (this, ...)
-local arguments = _JS._arr((function (...) return arg; end)(...)); arguments:shift();
-local type = ...;
-local args, i, fns;
-args = Array.prototype.slice:call(arguments, (1));
-i, fns = (0), this:listeners(type):slice();
-while (i < fns.length) do
+t = (0);
+j = (0);
+while (j<u.length) do
 
-fns[i]:apply(this, args);
+t = t + (A(global, i, j) * u[j]);
 
-(function () local _r = i; i = _r + 1; return _r end)()
+(function () j = j + 1; return j; end)()
 end
-if true then return fns.length; end;
+v[i] = t;
+
+(function () i = i + 1; return i; end)()
+end
 end);
-EventEmitter.prototype.setMaxListeners = _JS._func(function (this, maxListeners)
-this.__maxListeners = maxListeners;
+Atu = _JS._func(function (this, u, v)
+local i, t, j;
+i = (0);
+while (i<u.length) do
+
+t = (0);
+j = (0);
+while (j<u.length) do
+
+t = t + (A(global, j, i) * u[j]);
+
+(function () j = j + 1; return j; end)()
+end
+v[i] = t;
+
+(function () i = i + 1; return i; end)()
+end
 end);
-if true then return EventEmitter; end;
-end)(this);
-stream = _JS._new(EventEmitter);
-stream:on(("data"), _JS._func(function (this, data)
-console:log(data);
-end));
-stream:emit(("data"), ("Cool, this works."));
+AtAu = _JS._func(function (this, u, v, w)
+Au(global, u, w);
+Atu(global, w, v);
+end);
+spectralnorm = _JS._func(function (this, n)
+local i, u, v, w, vv, vBv;
+i, u, v, w, vv, vBv = nil, _JS._arr({}), _JS._arr({}), _JS._arr({}), (0), (0);
+(function () local _r = (0); i = _r; return _r; end)()
+while (i<n) do
+
+u[i] = (1);
+v[i] = (function () local _r = (0); w[i] = _r; return _r; end)();
+
+(function () i = i + 1; return i; end)()
+end
+(function () local _r = (0); i = _r; return _r; end)()
+while (i<(10)) do
+
+AtAu(global, u, v, w);
+AtAu(global, v, u, w);
+
+(function () i = i + 1; return i; end)()
+end
+(function () local _r = (0); i = _r; return _r; end)()
+while (i<n) do
+
+vBv = vBv + (u[i]*v[i]);
+vv = vv + (v[i]*v[i]);
+
+(function () i = i + 1; return i; end)()
+end
+if true then return Math:sqrt((vBv/vv)); end;
+end);
+console:log(spectralnorm(global, (500)):toFixed((9)));
 
 return _module.exports;
+

@@ -273,7 +273,7 @@ end
 Globals
 ]]--
 
-_JS.this = _G
+_JS.this, _JS.global = _G, _G
 
 -- Object
 

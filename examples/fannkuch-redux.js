@@ -1,8 +1,3 @@
-/* The Computer Language Benchmarks Game
-   http://shootout.alioth.debian.org/
-
-   contributed by Isaac Gouy, transliterated from Mike Pall's Lua program 
-*/
 
 function fannkuch(n) {
    var p = Array(n), q = Array(n), s = Array(n);
@@ -48,4 +43,4 @@ function fannkuch(n) {
 
 var n = 1*10*1;
 var pf = fannkuch(n);
-print(pf[0] + "\n" + "Pfannkuchen(" + n + ") = " + pf[1]);
+console.log(pf[0] + "\n" + "Pfannkuchen(" + n + ") = " + pf[1]);

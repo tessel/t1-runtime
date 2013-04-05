@@ -8,8 +8,8 @@ var fs = require('fs')
  */
 
 var keywords = ["end"];
-var mask = ['string', 'math'];
-var locals = ['this', 'Object', 'Array', 'String', 'Math', 'require', 'console']
+var mask = ['string', 'math', 'print'];
+var locals = ['this', 'global', 'Object', 'Array', 'String', 'Math', 'require', 'console']
 
 function fixIdentifiers (str) {
   if (keywords.indexOf(str) > -1) {
@@ -159,6 +159,15 @@ function colonize (node) {
       }).join(', ') + ';');
       break;
 
+    case 'BreakStatement':
+      //TODO _c down the stack is false until the main one
+      //label = label or (x for x in loops when loops[0] != 'try')[-1..][0]?[1] or ""
+
+      var label = node.label ? node.label.source() : '';
+      node.update("_c" + label + " = _JS._break; break;");
+      break;
+
+
     case 'ContinueStatement':
       //TODO _c down the stack is false until the main one
       //label = label or (x for x in loops when loops[0] != 'try')[-1..][0]?[1] or ""
@@ -174,22 +183,7 @@ function colonize (node) {
       node.update("_c" + label + " = _JS._cont; break;");
       break;
 
-    case 'WhileStatement':
-    // when "while-stat"
-    //   {ln, expr, stat} = n
-    //   ascend = (x[1] for x in loops when x[0] != 'try' and x[1])
-    //   name = labels.pop() or ""
-    //   cont = stat and usesContinue(stat, name)
-    //   loops.push(["while", name, cont])
-    //   ret = "while #{truthy(expr)} do\n" +
-    //     (if cont then "local _c#{name} = nil; repeat\n" else "") +
-    //     "#{colonize(stat)}\n" +
-    //     (if cont then "until true;\nif _c#{name} == _JS._break #{[''].concat(ascend).join(' or _c')} then break end\n" else "") +
-    //     "end\n" +
-    //     (if ascend.length then "if _c#{ascend.join(' or _c')} then break end\n" else '')
-    //   loops.pop()
-    //   return ret
-
+    case 'DoWhileStatement':
       var name = node.parent.type == 'LabeledStatement' ? node.parent.label.source() :'';
 
       var loops = [];
@@ -207,7 +201,33 @@ function colonize (node) {
       });
 
       node.update([
-        'while ' + (node.test ? truthy(node.test) : 'true') + ' do',
+        'repeat',
+        (node.usesContinue ? 'local _c' + name + ' = nil; repeat' : ''),
+        node.body.source(),
+        (node.usesContinue ? 'until true;\nif _c' + name + ' == _JS._break' + [''].concat(ascend).join(' or _c') + ' then break end' : ''),
+        'until not ' + truthy(node.test) + ';'
+      ].join('\n'))
+      break;
+
+    case 'WhileStatement':
+      var name = node.parent.type == 'LabeledStatement' ? node.parent.label.source() :'';
+
+      var loops = [];
+      var par = node;
+      while (par = par.parent) {
+        if (par.type == 'WhileStatement' || par.type == 'ForStatement') {
+          var parname = par.parent.type == 'LabeledStatement' ? par.parent.label.source() :'';
+          loops.unshift([par.type, parname, node.usesContinue]);
+        }
+      }
+      var ascend = loops.filter(function (l) {
+        return l[0] != 'TryStatement' && l[1] != null;
+      }).map(function (l) {
+        return l[1];
+      });
+
+      node.update([
+        'while ' + truthy(node.test) + ' do',
         (node.usesContinue ? 'local _c' + name + ' = nil; repeat' : ''),
         node.body.source(),
         (node.usesContinue ? 'until true;\nif _c' + name + ' == _JS._break' + [''].concat(ascend).join(' or _c') + ' then break end' : ''),
@@ -216,23 +236,6 @@ function colonize (node) {
       break;
 
     case 'ForStatement':
-      // {ln, init, expr, step, stat} = n
-      // expr = {type: "boolean-literal", ln: ln, value: true} unless expr
-      // ascend = [""].concat(x[1] for x in loops when x[0] != 'try' and x[1]).join(' or ')
-      // name = labels.pop() or ""
-      // cont = stat and usesContinue(stat, name)
-      // loops.push(["for", name, cont])
-      // ret = (if init then (if init.type == "var-stat" then colonize(init) else colonize({type: "expr-stat", ln: ln, expr: init}) + "\n") else "") +
-      //   "while #{truthy(expr)} do\n" +
-      //   (if cont then "local _c#{name} = nil; repeat\n" else "") +
-      //   colonize(stat) + "\n" +
-      //   (if cont then "until true;\n" else "") +
-      //   (if step then colonize({type: "expr-stat", ln: step.ln, expr: step}) + "\n" else "") +
-      //   # _cname = _JS._break OR ANYTHING ABOVE IT ~= nil then...
-      //   (if cont then "if _c#{name} == _JS._break #{ascend} then break end\n" else "") + 
-      //   "end"
-      // loops.pop()
-      // return ret
       node.update([
         node.init ? node.init.source() : '',
         'while ' + (node.test ? truthy(node.test) : 'true') + ' do',
@@ -258,7 +261,7 @@ function colonize (node) {
           return arg.source()
         }).join(', ') + ')')
       } else {
-        node.update(node.callee.source() + '(' + ['this'].concat(node.arguments.map(function (arg) {
+        node.update(node.callee.source() + '(' + ['global'].concat(node.arguments.map(function (arg) {
           return arg.source()
         })).join(', ') + ')')
       }
@@ -399,6 +402,11 @@ function colonize (node) {
  * Output
  */
 
-var src = fs.readFileSync('examples/events.js', 'utf-8');
+if (process.argv.length < 3) {
+  console.error('node colony filepath.js');
+  process.exit(1);
+}
+
+var src = fs.readFileSync(process.argv[2], 'utf-8');
 var out = falafel(src, colonize);
 console.log(String(out).replace(/\/\//g, '--'));
