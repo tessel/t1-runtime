@@ -8,12 +8,12 @@ Lua Colony compiles JavaScript to Lua 5.1 source code, and uses a small runtime 
 ## Installation
 
 ```sh
-$ npm install -g colony
-$ colony examples/helloworld.js --bundle | lua
+$ npm install -g lua-colony
+$ lua-colony examples/helloworld.js --bundle | lua
 Hello world. Welcome to Lua Colony!
 ```
 
-You will need the "colony-lib.lua" file to be found in the same as your current folder to work.
+To run, put "colony-lib.lua" in your current folder (where you are running the `lua` command).
 
 
 ## Example

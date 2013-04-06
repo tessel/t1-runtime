@@ -1,0 +1,23 @@
+{
+  "name": "lua-colony",
+  "version": "0.1.0",
+  "description": "Lua Colony compiles JavaScript to Lua 5.1 source code, using a small runtime library.",
+  "main": "colony.js",
+  "directories": {
+    "example": "examples"
+  },
+  "bin": {
+    "lua-colony": "colony.js"
+  },
+  "dependencies": {
+    "colors": "~0.6.0-1",
+    "falafel": "~0.2.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tcr/antfarm.git"
+  },
+  "author": "Tim Cameron Ryan",
+  "license": "MIT",
+  "readmeFilename": "README.md"
+}
