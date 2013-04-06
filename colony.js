@@ -70,6 +70,18 @@ function colonizeContext (ids, node) {
   }).join('\n'));
 }
 
+function getLoops (node) {
+  var loops = [];
+  var par = node;
+  while (par = par.parent) {
+    if (par.type == 'WhileStatement' || par.type == 'ForStatement' || par.type == 'TryStatement') {
+      var parname = par.parent.type == 'LabeledStatement' ? par.parent.label.source() :'';
+      loops.unshift([par.type, parname, node.usesContinue]);
+    }
+  }
+  return loops;
+}
+
 var labels = [];
 var loops = [];
 
@@ -164,7 +176,9 @@ function colonize (node) {
       //label = label or (x for x in loops when loops[0] != 'try')[-1..][0]?[1] or ""
 
       var label = node.label ? node.label.source() : '';
-      node.update("_c" + label + " = _JS._break; break;");
+
+      node.update("_c" + label + " = _JS._break; " +
+        ((getLoops(node).slice(-1)[0] || [])[0] == "TryStatement" ? "return _JS._break;" : "break;"));
       break;
 
 
@@ -180,20 +194,14 @@ function colonize (node) {
           par.usesContinue = true;
         }
       }
-      node.update("_c" + label + " = _JS._cont; break;");
+      node.update("_c" + label + " = _JS._cont; " +
+        ((getLoops(node).slice(-1)[0] || [])[0] == "TryStatement" ? "return _JS._cont;" : "break;"));
       break;
 
     case 'DoWhileStatement':
       var name = node.parent.type == 'LabeledStatement' ? node.parent.label.source() :'';
 
-      var loops = [];
-      var par = node;
-      while (par = par.parent) {
-        if (par.type == 'WhileStatement' || par.type == 'ForStatement') {
-          var parname = par.parent.type == 'LabeledStatement' ? par.parent.label.source() :'';
-          loops.unshift([par.type, parname, node.usesContinue]);
-        }
-      }
+      var loops = getLoops(node);
       var ascend = loops.filter(function (l) {
         return l[0] != 'TryStatement' && l[1] != null;
       }).map(function (l) {
@@ -212,14 +220,7 @@ function colonize (node) {
     case 'WhileStatement':
       var name = node.parent.type == 'LabeledStatement' ? node.parent.label.source() :'';
 
-      var loops = [];
-      var par = node;
-      while (par = par.parent) {
-        if (par.type == 'WhileStatement' || par.type == 'ForStatement') {
-          var parname = par.parent.type == 'LabeledStatement' ? par.parent.label.source() :'';
-          loops.unshift([par.type, parname, node.usesContinue]);
-        }
-      }
+      var loops = getLoops(node);
       var ascend = loops.filter(function (l) {
         return l[0] != 'TryStatement' && l[1] != null;
       }).map(function (l) {
@@ -331,6 +332,43 @@ function colonize (node) {
         node.body.source(),
         'end'
       ].join('\n'))
+      break;
+
+    case 'ThrowStatement':
+      node.update("error(" + node.argument.source() + ")");
+      break;
+
+    case 'CatchClause':
+      break;
+
+    case 'TryStatement':
+      node.update([
+'local _e = nil',
+'local _s, _r = xpcall(function ()',
+node.block.source(),
+//    #{if tryStat.stats[-1..][0].type != 'ret-stat' then "return _JS._cont" else ""}
+'    end, function (err)',
+'        _e = err',
+'    end)',
+
+// catch clause
+'if _s == false then',
+node.handlers[0].param.source() + ' = _e;\n' + node.handlers[0].body.source(),
+
+// break clause.
+'end',
+node.finalizer ? node.finalizer.source() : ''
+].concat(
+!getLoops(node).length ? [] : [
+//break
+'if _r == _JS._break then',
+(getLoops(node).length && getLoops(node).slice(-1)[0][0] == 'TryStatement' ? 'return _JS._break;' : 'break;'),
+// continue clause.
+'elseif _r == _JS._cont then',
+//'  return _r',
+(getLoops(node).length && getLoops(node).slice(-1)[0][0] == 'TryStatement' ? 'return _JS._cont;' : 'break;'),
+'end'
+      ]).join('\n'));
       break;
 
     case 'FunctionExpression':

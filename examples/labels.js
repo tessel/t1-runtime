@@ -1,19 +1,19 @@
-// var i = 0
-// apples: while (i < 5) {
-// 	console.log("Level " + i)
-// 	i++
-// 	var j = 0
-// 	pears: while (j < 5) {
-// 		console.log("J: " + j)
-// 		if (i == 3) continue apples;
-// 		j++
-// 	}
-// }
+var i = 0
+apples: while (i < 5) {
+	console.log("Level " + i)
+	i++
+	var j = 0
+	pears: while (j < 5) {
+		console.log("J: " + j)
+		if (i == 3) continue apples;
+		j++
+	}
+}
 
-// for (var i = 0; i < 5; i++) {
-// 	if (i % 2) continue;
-// 	console.log('Even i: ' + i)
-// }
+for (var i = 0; i < 5; i++) {
+	if (i % 2) continue;
+	console.log('Even i: ' + i)
+}
 
 var i = 0
 candy: while (i < 7) {

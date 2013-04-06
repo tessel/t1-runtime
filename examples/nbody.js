@@ -1,6 +1,6 @@
-/* The Great Computer Language Shootout
-   http://shootout.alioth.debian.org/
-   contributed by Isaac Gouy */
+// The Great Computer Language Shootout
+// http://shootout.alioth.debian.org/
+// contributed by Isaac Gouy
 
 var PI = 3.141592653589793;
 var SOLAR_MASS = 4 * PI * PI;
@@ -157,6 +157,6 @@ var bodies = new NBodySystem( Array(
    Sun(),Jupiter(),Saturn(),Uranus(),Neptune() 
 ));
 
-print(bodies.energy().toFixed(9));
+console.log(bodies.energy().toFixed(9));
 for (var i=0; i<n; i++){ bodies.advance(0.01); }
-print(bodies.energy().toFixed(9));
+console.log(bodies.energy().toFixed(9));

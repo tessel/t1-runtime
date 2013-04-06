@@ -1,87 +1,78 @@
--- The Great Computer Language Shootout
--- http:--shootout.alioth.debian.org/
---
--- contributed by Ian Osgood
-
 local _JS = require('colony-js');
 local string, math, print = nil, nil, nil;
 local this, global, Object, Array, String, Math, require, console = _JS.this, _JS.global, _JS.Object, _JS.Array, _JS.String, _JS.Math, _JS.require, _JS.console;
 local _module = {exports={}}; local exports = _module.exports;
 
-local A, Au, Atu, AtAu, spectralnorm;
-A = _JS._func(function (this, i, j)
-if true then return ((1)/(((((((i+j))*(((i+j)+(1))))/(2))+i)+(1)))); end;
-end);
-Au = _JS._func(function (this, u, v)
-local i, t, j;
+local i, j;
 i = (0);
-while (i<u.length) do
-
-t = (0);
+while (i < (5)) do
+local _capples = nil; repeat
+console:log((("Level ") + i))
+	;
+(function () local _r = i; i = _r + 1; return _r end)()
+	;
 j = (0);
-while (j<u.length) do
-
-t = t + (A(global, i, j) * u[j]);
-
-(function () j = j + 1; return j; end)()
+while (j < (5)) do
+local _cpears = nil; repeat
+console:log((("J: ") + j))
+		;
+if _JS._truthy((i == (3))) then
+_capples = _JS._cont; break;
 end
-v[i] = t;
-
-(function () i = i + 1; return i; end)()
+(function () local _r = j; j = _r + 1; return _r end)()
+	;
+until true;
+if _cpears == _JS._break or _capples then break end
 end
-end);
-Atu = _JS._func(function (this, u, v)
-local i, t, j;
+until true;
+if _capples == _JS._break then break end
+end
 i = (0);
-while (i<u.length) do
-
-t = (0);
-j = (0);
-while (j<u.length) do
-
-t = t + (A(global, j, i) * u[j]);
-
-(function () j = j + 1; return j; end)()
+while (i < (5)) do
+local _c = nil; repeat
+if _JS._truthy((i % (2))) then
+_c = _JS._cont; break;
 end
-v[i] = t;
-
-(function () i = i + 1; return i; end)()
+console:log((("Even i: ") + i))
+;
+until true;
+if _c == _JS._break then break end
+(function () local _r = i; i = _r + 1; return _r end)()
 end
-end);
-AtAu = _JS._func(function (this, u, v, w)
-Au(global, u, w);
-Atu(global, w, v);
-end);
-spectralnorm = _JS._func(function (this, n)
-local i, u, v, w, vv, vBv;
-i, u, v, w, vv, vBv = nil, _JS._arr({}), _JS._arr({}), _JS._arr({}), (0), (0);
-(function () local _r = (0); i = _r; return _r; end)()
-while (i<n) do
-
-u[i] = (1);
-v[i] = (function () local _r = (0); w[i] = _r; return _r; end)();
-
-(function () i = i + 1; return i; end)()
+i = (0);
+while (i < (7)) do
+local _ccandy = nil; repeat
+(function () local _r = i; i = _r + 1; return _r end)()
+	;
+local _e = nil
+local _s, _r = xpcall(function ()
+if _JS._truthy((i == (3))) then
+_ccandy = _JS._cont; return _JS._cont;
 end
-(function () local _r = (0); i = _r; return _r; end)()
-while (i<(10)) do
-
-AtAu(global, u, v, w);
-AtAu(global, v, u, w);
-
-(function () i = i + 1; return i; end)()
+console:log((("i=")+i))
+		;
+if _JS._truthy((i == (5))) then
+error(("Some error when i == 5"))
 end
-(function () local _r = (0); i = _r; return _r; end)()
-while (i<n) do
-
-vBv = vBv + (u[i]*v[i]);
-vv = vv + (v[i]*v[i]);
-
-(function () i = i + 1; return i; end)()
+    end, function (err)
+        _e = err
+    end)
+if _s == false then
+e = _e;
+console:log((("Error: ") + e))
+	;
 end
-if true then return Math:sqrt((vBv/vv)); end;
-end);
-console:log(spectralnorm(global, (500)):toFixed((9)));
+
+if _r == _JS._break then
+break;
+elseif _r == _JS._cont then
+break;
+end
+console:log(("Incrementing..."))
+;
+until true;
+if _ccandy == _JS._break then break end
+end
 
 return _module.exports;
 
