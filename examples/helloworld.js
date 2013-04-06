@@ -1,1 +1,1 @@
-console.log(["Hello", "world."].concat(["Welcome", "to", "colony"]).join(" "))
+console.log(["Hello", "world."].concat(["Welcome", "to", "Lua", "Colony"]).join(" ") + '!');

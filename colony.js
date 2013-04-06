@@ -419,7 +419,7 @@ node.finalizer ? node.finalizer.source() : ''
     case 'Program':
       colonizeContext(node.identifiers, node);
       node.update([
-        "local _JS = require('colony-js');",
+        "local _JS = require('colony-lib');",
         "local " + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
         "local " + locals.join(', ') + ' = ' + locals.map(function (k) { return '_JS.' + k; }).join(', ') + ';',
         "local _module = {exports={}}; local exports = _module.exports;",
@@ -441,7 +441,7 @@ node.finalizer ? node.finalizer.source() : ''
  */
 
 if (process.argv.length < 3) {
-  console.error('node colony filepath.js');
+  console.error('Usage: node colony filepath.js');
   process.exit(1);
 }
 
