@@ -4,6 +4,10 @@ References:
   https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String/slice
 ]]--
 
+-- requires
+
+local dkjson = require('dkjson');
+
 -- namespace
 
 local _JS = {}
@@ -75,6 +79,9 @@ func_mt.__newindex=function (t, p, v)
 	pt[p] = v
 	getmetatable(t)[t] = pt
 end
+func_mt.__tojson=function ()
+	return "{}"
+end
 
 -- string metatable
 
@@ -102,6 +109,13 @@ local arr_mt = {
 		else
 			return arr_proto[p]
 		end
+	end,
+	__tojson = function (arg)
+		local arr = {};
+		for i=0,arg.length do
+			table.insert(arr, arg[i])
+		end
+		return dkjson.encode(arr, {indent = true})
 	end
 }
 _JS._arr = function (a)
@@ -133,7 +147,14 @@ _JS._pairs = pairs;
 
 -- typeof operator
 
-_JS._typeof = type
+_JS._typeof = function (arg)
+	if arg == nil then
+		return 'undefined'
+	elseif type(arg) == 'table' then
+		return 'object'
+	end
+	return type(arg)
+end
 
 -- instanceof
 
@@ -170,6 +191,9 @@ str_proto.charAt = function (str, i)
 	return string.sub(str, i+1, i+1)
 end
 str_proto.substr = function (str, i)
+	return string.sub(str, i+1)
+end
+str_proto.slice = function (str, i)
 	return string.sub(str, i+1)
 end
 str_proto.toLowerCase = function (str)
@@ -328,8 +352,12 @@ _JS.console = _JS._obj({
 			print("undefined")
 		elseif x == null then
 			print("null")
-		else
+		elseif type(x) == 'function' then
+			print("function () { ... }")
+		elseif type(x) == 'string' then
 			print(x)
+		else 
+			print(_JS.JSON:stringify(x))
 		end
 	end)
 });
@@ -356,12 +384,23 @@ _JS._bit = require('bit')
 
 local f, rex = pcall(require, 'rex_pcre')
 if f then
-	_JS.Regexp = luafunctor(function (pat, flags)
+	_JS.RegExp = luafunctor(function (pat, flags)
 		local r = rex.new(tostring(pat))
 		debug.setmetatable(r, regex_proto)
 		return r
 	end)
 end
+
+-- json library
+
+_JS.JSON = {
+	parse = function (ths, arg)
+		return dkjson.decode(arg)
+	end,
+	stringify = function (ths, arg)
+		return dkjson.encode(arg, { indent = true })
+	end,
+};
 
 -- return namespace
 

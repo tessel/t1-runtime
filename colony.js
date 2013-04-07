@@ -9,9 +9,9 @@ var fs = require('fs')
  * Colonize
  */
 
-var keywords = ['end', 'do'];
+var keywords = ['end', 'do', 'nil'];
 var mask = ['string', 'math', 'print', 'type', 'pairs'];
-var locals = ['this', 'global', 'Object', 'Array', 'String', 'Math', 'require', 'console']
+var locals = ['this', 'global', 'Object', 'Array', 'String', 'Math', 'RegExp', 'JSON', 'require', 'console']
 
 function fixIdentifiers (str) {
   if (keywords.indexOf(str) > -1) {
@@ -91,7 +91,7 @@ function colonize (node) {
   
   switch (node.type) {
     case 'Identifier':
-      if (node.source() == 'arguments') {
+      if (node.source() == 'arguments' && node.parent.type != 'Property') {
         attachIdentifierToContext(node, node);
       }
       node.update(fixIdentifiers(node.source()));
@@ -100,7 +100,11 @@ function colonize (node) {
     case 'AssignmentExpression':
       // +=, -=, etc.
       if (node.operator != '=') {
-        node.right.update(node.left.source() + ' ' + node.operator.substr(0, 1) + ' ' + node.right.source());
+        if (node.operator == '|=') {
+          node.right.update('_JS._bit.bor(' + node.left.source() + ', ' + node.right.source() + ')');
+        } else {
+          node.right.update(node.left.source() + ' ' + node.operator.substr(0, 1) + ' ' + node.right.source());
+        }
         node.operator = '=';
       }
       // Used in another expression, assignments must be wrapped by a closure.
@@ -118,15 +122,31 @@ function colonize (node) {
     case 'UnaryExpression':
       if (node.operator == '!') {
         node.update('(not ' + node.argument.source() + ')');
+      } else if (node.operator == 'typeof') {
+        node.update('_JS._typeof(' + node.argument.source() + ')');
+      } else if (node.operator == 'delete') {
+        // TODO return true/false
+        node.update(node.argument.source() + ' = nil');
       } else {
         node.update('(' + node.source() + ')');
       }
+      break;
+
     case 'BinaryExpression':
       if (node.operator == '!==' || node.operator == '!=') {
         // TODO strict
         node.update('(' + node.left.source() + ' ~= ' + node.right.source() + ')');
+      } else if (node.operator == '===') {
+        // TODO strict
+        node.update('(' + node.left.source() + ' == ' + node.right.source() + ')');
       } else if (node.operator == '<<') {
         node.update('_JS._bit.lshift(' + node.left.source() + ', ' + node.right.source() + ')');
+      } else if (node.operator == '&') {
+        node.update('_JS._bit.band(' + node.left.source() + ', ' + node.right.source() + ')');
+      } else if (node.operator == '|') {
+        node.update('_JS._bit.bor(' + node.left.source() + ', ' + node.right.source() + ')');
+      } else if (node.operator == 'instanceof') {
+        node.update('_JS._instanceof(' + node.left.source() + ', ' + node.right.source() + ')');
       } else {
         node.update('(' + node.source() + ')');
       }
@@ -137,11 +157,6 @@ function colonize (node) {
         node.update(node.left.source() + ' and ' + node.right.source());
       } else if (node.operator == '||') {
         node.update(node.left.source() + ' or ' + node.right.source());
-      }
-
-      // Can't have and/or be statements.
-      if (node.parent.type == 'ExpressionStatement') {
-        node.update('if ' + node.source() + ' then end');
       }
       break;
 
@@ -285,7 +300,9 @@ function colonize (node) {
       break;
 
     case 'Literal':
-      node.update('(' + JSON.stringify(node.value) + ')');
+      if (node.parent.type != 'Property') {
+        node.update('(' + JSON.stringify(node.value) + ')');
+      }
       break;
 
     case 'CallExpression':
@@ -307,7 +324,7 @@ function colonize (node) {
     case 'ObjectExpression':
       node.update('_JS._obj({\n  ' +
         node.properties.map(function (prop) {
-          return '[' + JSON.stringify(prop.key.source()) + ']=' + prop.value.source()
+          return '[' + JSON.stringify(prop.key.type == 'Identifier' ? prop.key.name : prop.key.value) + ']=' + prop.value.source()
         }).join(',\n  ') +
         '})');
       break;
@@ -354,7 +371,12 @@ function colonize (node) {
       break;
 
     case 'ExpressionStatement':
-      node.update(node.source().replace(/;?$/, ';'));
+      node.update(node.source().replace(/;?$/, ';')); // Enforce trailing semicolons.
+
+      // Can't have and/or be statements.
+      if (node.expression.type == 'BinaryExpression' || node.expression.type == 'Literal' || node.expression.type == 'CallExpression') {
+        node.update('if ' + node.source().replace(/;?$/, '') + ' then end;');
+      }
       break;
 
     case 'LabeledStatement':
