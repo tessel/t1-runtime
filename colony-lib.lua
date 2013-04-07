@@ -127,6 +127,10 @@ _JS._add = function (a, b)
 	end
 end
 
+-- pairs
+
+_JS._pairs = pairs;
+
 -- typeof operator
 
 _JS._typeof = type

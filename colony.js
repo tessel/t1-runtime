@@ -9,8 +9,8 @@ var fs = require('fs')
  * Colonize
  */
 
-var keywords = ["end"];
-var mask = ['string', 'math', 'print'];
+var keywords = ['end', 'do'];
+var mask = ['string', 'math', 'print', 'type', 'pairs'];
 var locals = ['this', 'global', 'Object', 'Array', 'String', 'Math', 'require', 'console']
 
 function fixIdentifiers (str) {
@@ -183,6 +183,40 @@ function colonize (node) {
         ((getLoops(node).slice(-1)[0] || [])[0] == "TryStatement" ? "return _JS._break;" : "break;"));
       break;
 
+    case 'SwitchCase':
+      break;
+    case 'SwitchStatement':
+      node.update([
+        'repeat',
+        node.cases.map(function (c, i) {
+          return 'local _' + i + (c.test ? ' = ' + c.test.source() : '') + ';'
+        }).join(' '),
+        'local _r = ' + node.discriminant.source() + ';',
+        node.cases.map(function (c, i) {
+          if (!c.test) {
+            return c.consequent.map(function (s) {
+              return s.source();
+            }).join('\n')
+          }
+          return 'if _r == _' + i + ' then\n' + c.consequent.map(function (s) {
+            return s.source();
+          }).join('\n') + '\n' + (i < node.cases.length - 1 && (c.consequent.slice(-1)[0] || {}).type != 'BreakStatement' ? '_r = _' + (i + 1) + ';\n' : '') + 'end'
+        }).join('\n'),
+        'until true'
+      ].join('\n'))
+// ret = "repeat\n" +
+//   (if cases.length then ("local _#{i}#{if v then ' = ' + colonize(v) else ''}; " for i, [v, _] of cases).join('') else '') +
+//   "local _r = #{colonize(expr)};\n" +
+//   (for i, [_, stats] of cases
+//     if _?
+//       "if _r == _#{i} then\n" + (colonize(x) for x in stats).concat(if cases[Number(i)+1] and (not stats.length or stats[-1..][0].type != "break-stat") then ["_r = _#{Number(i)+1};"] else []).join("\n") + "\nend"
+//     else
+//       (colonize(x) for x in stats).join("\n")
+//   ).join("\n") + "\n" +
+//   "until true"
+// loops.pop()
+      break;
+
 
     case 'ContinueStatement':
       //TODO _c down the stack is false until the main one
@@ -271,7 +305,13 @@ function colonize (node) {
       break;
 
     case 'ObjectExpression':
-      node.update('_JS._obj({})')
+      node.update('_JS._obj({\n  ' +
+        node.properties.map(function (prop) {
+          return '[' + JSON.stringify(prop.key.source()) + ']=' + prop.value.source()
+        }).join(',\n  ') +
+        '})');
+      break;
+    case 'Property':
       break;
 
     case 'ArrayExpression':
@@ -330,7 +370,7 @@ function colonize (node) {
         var name = node.left.source();
       }
       node.update([
-        'for ' + name + ' in pairs(' + node.right.source() + ') do',
+        'for ' + name + ' in _JS._pairs(' + node.right.source() + ') do',
         node.body.source(),
         'end'
       ].join('\n'))
