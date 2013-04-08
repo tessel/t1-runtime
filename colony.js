@@ -476,9 +476,9 @@ node.finalizer ? node.finalizer.source() : ''
         var prefix = '', suffix = '';
       }
 
-      // assign self-named function reference only when necessary
+      // assign self-named function reference
       var namestr = "";
-      if (node.identifiers.indexOf(name) > -1) {
+      if (name) {
         namestr = "local " + name + " = debug.getinfo(1, 'f').func;\n";
       }
 

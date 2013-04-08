@@ -259,6 +259,11 @@ arr_proto.push = function (ths, elem)
   return ths.length
 end
 arr_proto.pop = function (ths)
+	if ths.length == 1 then
+		local _val = ths[0]
+		ths[0] = nil
+		return _val
+	end
 	return table.remove(ths, ths.length-1)
 end
 arr_proto.shift = function (ths)
@@ -304,6 +309,36 @@ arr_proto.join = function (ths, str)
 	end
 	return string.sub(_r, 1, string.len(_r) - string.len(str))
 end
+arr_proto.indexOf = function (ths, val)
+	for i=0,ths.length-1 do
+		if ths[i] == val then
+			return i
+		end
+	end
+	return -1
+end
+arr_proto.map = function (ths, fn)
+	local a = _JS._arr({})
+	for i=0,ths.length-1 do
+		a:push(fn(ths, ths[i], i))
+	end
+	return a
+end
+arr_proto.forEach = function (ths, fn)
+	for i=0,ths.length-1 do
+		fn(ths, ths[i], i)
+	end
+	return ths
+end
+arr_proto.filter = function (ths, fn)
+	local a = _JS._arr({})
+	for i=0,ths.length-1 do
+		if _JS._truthy(fn(ths, ths[i], i)) then
+			a:push(ths[i])
+		end
+	end
+	return a
+end
 
 --[[
 Globals
@@ -315,6 +350,13 @@ _JS.this, _JS.global = _G, _G
 
 _JS.Object = {}
 _JS.Object.prototype = obj_proto
+_JS.Object.keys = function (ths, obj)
+	local a = _JS._arr({})
+	for k,v in pairs(obj) do
+		a:push(k)
+	end
+	return a
+end
 
 -- Array
 
@@ -419,12 +461,12 @@ end)
 -- regexp library
 
 if rex then
-	_JS.RegExp = function (self, pat, flags)
-		self._regex = rex.new(tostring(pat));
+	_JS.RegExp = luafunctor(function (pat, flags)
+		local _regex = rex.new(tostring(pat));
 		local o = {}
 		setmetatable(o, {__index=_JS.RegExp.prototype})
 		return o
-	end
+	end)
 end
 
 -- json library
