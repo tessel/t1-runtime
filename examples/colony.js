@@ -85,6 +85,9 @@ var labels = [];
 var loops = [];
 
 function colonize (node) {
+  console.log(node.type);
+  collectgarbage.call('collect');
+  console.log(collectgarbage.call('count'));
   
   switch (node.type) {
     case 'Identifier':
