@@ -95,7 +95,9 @@ function colonize (node) {
       if (node.source() == 'arguments' && node.parent.type != 'Property') {
         attachIdentifierToContext(node, node);
       }
-      node.update(fixIdentifiers(node.source()));
+      if (node.parent.type != 'MemberExpression') {
+        node.update(fixIdentifiers(node.source()));
+      }
       break;
 
     case 'AssignmentExpression':
@@ -315,12 +317,22 @@ function colonize (node) {
     case 'CallExpression':
       if (node.callee.type == 'MemberExpression') {
         // Method call
-        node.update(node.callee.object.source() + ':'
-          + node.callee.property.source()
-          // + '[' + (node.callee.property.type == 'Identifier' ? JSON.stringify(node.callee.property.source()) : node.callee.property.source()) + ']'
-          + '(' + node.arguments.map(function (arg) {
-          return arg.source()
-        }).join(', ') + ')')
+        if (node.callee.property.type == 'Identifier' && fixIdentifiers(node.callee.property.name) != node.callee.property.name) {
+          // Escape keywords awkwardly.
+          node.update("(function () local base, prop = " + node.callee.object.source() + ', '
+            + (node.callee.property.type == 'Identifier' ? JSON.stringify(node.callee.property.source()) : node.callee.property.source())
+            + '; return base[prop]('
+            + ['base'].concat(node.arguments.map(function (arg) {
+              return arg.source()
+            })).join(', ') + '); end)()');
+        } else {
+          node.update(node.callee.object.source() + ':'
+            + node.callee.property.source()
+            // + '[' + (node.callee.property.type == 'Identifier' ? JSON.stringify(node.callee.property.source()) : node.callee.property.source()) + ']'
+            + '(' + node.arguments.map(function (arg) {
+            return arg.source()
+          }).join(', ') + ')')
+        }
       } else {
         node.update(node.callee.source() + '(' + ['global'].concat(node.arguments.map(function (arg) {
           return arg.source()
@@ -371,9 +383,9 @@ function colonize (node) {
       break;
 
     case 'MemberExpression':
-      if (!node.parent.type == 'CallExpression') {
+      if (node.parent.type != 'CallExpression') {
         node.update("(" + node.object.source() + ")"
-          + '[' + (node.property.type == 'Identifier' ? JSON.stringify(node.property.source()) : node.property.source()) + ']');
+          + '[' + (!node.computed ? JSON.stringify(node.property.source()) : node.property.source()) + ']');
       }
       break;
 
@@ -381,7 +393,7 @@ function colonize (node) {
       node.update(node.source().replace(/;?$/, ';')); // Enforce trailing semicolons.
 
       // Can't have and/or be statements.
-      if (node.expression.type == 'BinaryExpression' || node.expression.type == 'Literal' || node.expression.type == 'CallExpression') {
+      if (node.expression.type == 'BinaryExpression' || node.expression.type == 'LogicalExpression' || node.expression.type == 'Literal' || node.expression.type == 'CallExpression') {
         node.update('if ' + node.source().replace(/;?$/, '') + ' then end;');
       }
       break;
@@ -493,7 +505,7 @@ node.finalizer ? node.finalizer.source() : ''
         "local _JS = require('colony-lib');",
         "local " + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
         "local " + locals.join(', ') + ' = ' + locals.map(function (k) { return '_JS.' + k; }).join(', ') + ';',
-        "local _module = {exports={}}; local exports = _module.exports;",
+        "local _module = {exports={}}; local exports, module = _module.exports, _module;",
         "",
         node.source(),
         "",

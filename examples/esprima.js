@@ -787,6 +787,7 @@
     function scanStringLiteral() {
         var str = '', quote, start, ch, code, unescaped, restore, octal = false;
 
+
         quote = source[index];
         assert((quote === '\'' || quote === '"'),
             'String literal must starts with a quote');
@@ -1324,6 +1325,7 @@
         },
 
         createMemberExpression: function (accessor, object, property) {
+            console.log('hihihihihihi')
             return {
                 type: Syntax.MemberExpression,
                 computed: accessor === '[',
@@ -1924,6 +1926,7 @@
     }
 
     function parseNewExpression() {
+        console.log('parseNewExpression')
         var callee, args;
 
         expectKeyword('new');
@@ -3527,21 +3530,27 @@
         while (match('.') || match('[') || match('(')) {
             if (match('(')) {
                 args = parseArguments();
+                console.log('hi');
                 expr = delegate.createCallExpression(expr, args);
                 marker.end();
                 marker.apply(expr);
             } else if (match('[')) {
                 property = parseComputedMember();
+                console.log('ho');
                 expr = delegate.createMemberExpression('[', expr, property);
                 marker.end();
                 marker.apply(expr);
             } else {
                 property = parseNonComputedMember();
+                console.log('hey');
                 expr = delegate.createMemberExpression('.', expr, property);
+                console.log(expr);
                 marker.end();
                 marker.apply(expr);
             }
         }
+
+        // console.log(expr);
 
         return expr;
     }
@@ -3942,7 +3951,7 @@
         }
 
         patch();
-        try {
+        // try {
             program = parseProgram();
             if (typeof extra.comments !== 'undefined') {
                 filterCommentLocation();
@@ -3958,13 +3967,13 @@
             if (extra.range || extra.loc) {
                 filterGroup(program.body);
             }
-        } catch (e) {
-            console.log(e);
-            throw e;
-        } finally {
+        // } catch (e) {
+        //     console.log(e);
+        //     throw e;
+        // } finally {
             unpatch();
             extra = {};
-        }
+        // }
 
         return program;
     }

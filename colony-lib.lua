@@ -200,7 +200,7 @@ str_proto.toUpperCase = function (str)
 	return string.upper(str)
 end
 str_proto.indexOf = function (str, needle)
-	local ret = string.find(str, needle, 1, true) 
+	local ret = string.find(str, tostring(needle), 1, true) 
 	if ret == null then return -1; else return ret - 1; end
 end
 str_proto.split = function (str, sep, max)
@@ -419,11 +419,12 @@ end)
 -- regexp library
 
 if rex then
-	_JS.RegExp = luafunctor(function (pat, flags)
-		local r = rex.new(tostring(pat))
-		debug.setmetatable(r, regex_proto)
-		return r
-	end)
+	_JS.RegExp = function (self, pat, flags)
+		self._regex = rex.new(tostring(pat));
+		local o = {}
+		setmetatable(o, {__index=_JS.RegExp.prototype})
+		return o
+	end
 end
 
 -- json library

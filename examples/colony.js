@@ -1,6 +1,4 @@
-var fs = require('fs')
-  , falafel = require('falafel')
-  , colors = require('colors');
+var falafel = require('examples/falafel');
 
 
 /** 
@@ -509,11 +507,13 @@ node.finalizer ? node.finalizer.source() : ''
  * Output
  */
 
-if (process.argv.length < 3) {
-  console.error('Usage: node colony filepath.js');
-  process.exit(1);
+function readFileSync(file) {
+    var f = io.open.call(file, "rb")
+    var content = f.read("*all")
+    f.close()
+    return content
 }
 
-var src = fs.readFileSync(process.argv[2], 'utf-8');
+var src = readFileSync('examples/colony.js', 'utf-8');
 var out = falafel(src, colonize);
 console.log(String(out).replace(/\/\//g, '--'));
