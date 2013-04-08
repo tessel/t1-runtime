@@ -3959,6 +3959,7 @@
                 filterGroup(program.body);
             }
         } catch (e) {
+            console.log(e);
             throw e;
         } finally {
             unpatch();

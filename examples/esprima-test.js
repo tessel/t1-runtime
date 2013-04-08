@@ -1,5 +1,17 @@
 var esprima = require('examples/esprima');
+var io = require('io');
 
-var table = esprima.parse('console.log("hi");', { tokens: true });
+function readFileSync(file) {
+    var f = io.open.call(file, "rb")
+    var content = f.read("*all")
+    f.close()
+    return content
+}
 
-console.log(table);
+var r = new RegExp("hi", 'm');
+
+var howmeta = esprima.parse(readFileSync('examples/esprima.js'));
+// var howmeta = esprima.parse('(function (err, a) {\n})();');
+
+// console.log(howmeta);
+console.log('done');

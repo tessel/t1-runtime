@@ -5,8 +5,11 @@ References:
 ]]--
 
 -- requires
-
-local dkjson = require('dkjson');
+-- luarocks install bit32
+-- luarocks install dkjson
+-- luarocks install lrexlib-pcre
+local bit, dkjson = require('bit'), require('dkjson');
+local _, rex = pcall(require, 'rex_pcre');
 
 -- namespace
 
@@ -96,7 +99,7 @@ str_mt.__index = function (str, p)
 end
 
 str_mt.__add = function (op1, op2)
-	return op1 .. op2
+	return op1 .. tostring(op2)
 end
 
 -- array prototype and constructor
@@ -130,16 +133,6 @@ _JS._void = function () end
 -- null object (nil is "undefined")
 
 _JS._null = {}
-
--- "add" function to rectify lua's distinction of adding vs concatenation
-
-_JS._add = function (a, b)
-	if type(a) == "string" or type(b) == "string" then
-		return a .. b
-	else
-		return a + b
-	end
-end
 
 -- pairs
 
@@ -190,11 +183,15 @@ end
 str_proto.charAt = function (str, i)
 	return string.sub(str, i+1, i+1)
 end
-str_proto.substr = function (str, i)
-	return string.sub(str, i+1)
+str_proto.substr = function (str, i, len)
+	if len then
+		return string.sub(str, i+1, i + len)
+	else
+		return string.sub(str, i+1)
+	end
 end
-str_proto.slice = function (str, i)
-	return string.sub(str, i+1)
+str_proto.slice = function (str, i, len)
+	return string.sub(str, i+1, len or -1)
 end
 str_proto.toLowerCase = function (str)
 	return string.lower(str)
@@ -224,6 +221,14 @@ str_proto.split = function (str, sep, max)
 		ret[i] = string.sub(str, start)
 	end
 	return _JS._arr(ret)
+end
+str_proto.replace = function (str, match, out)
+	if type(match) == 'string' then
+		return string.gsub(str, string.gsub(match, "(%W)","%%%1"), out)
+	else
+		print('REGEX REPLACE NOT SUPPORTED')
+		return str
+	end
 end
 
 -- object prototype
@@ -271,9 +276,12 @@ arr_proto.reverse = function (ths)
 	end
 	return arr
 end
-arr_proto.slice = function (ths, len)
+arr_proto.slice = function (ths, start, len)
 	local a = _JS._arr({})
-	for i=len or 0,ths.length-1 do
+	if not len then
+		len = ths.length-1 - (start or 0)
+	end
+	for i=start or 0,len + (start or 0) do
 		a:push(ths[i])
 	end
 	return a
@@ -332,8 +340,12 @@ _JS.String = luafunctor(function (str)
 	return tostring(str)
 end)
 _JS.String.prototype = str_proto
-_JS.String.fromCharCode = luafunctor(function (c)
-	return string.char(c)
+_JS.String.fromCharCode = luafunctor(function (ord)
+	if ord == nil then return nil end
+  if ord < 32 then return string.format('\\x%02x', ord) end
+  if ord < 126 then return string.char(ord) end
+  if ord < 65539 then return string.format("\\u%04x", ord) end
+  if ord < 1114111 then return string.format("\\u%08x", ord) end
 end)
 
 -- Math
@@ -344,21 +356,35 @@ _JS.Math = _JS._obj({
 	floor = luafunctor(math.floor)
 })
 
+-- Error
+
+_JS.Error = _JS._func(function (self, str)
+	getmetatable(self).__tostring = function (self)
+		return self.message
+	end
+	self.message = str
+	self.stack = ""
+end)
+
 -- Console
 
 _JS.console = _JS._obj({
-	log = luafunctor(function (x)
-		if x == nil then 
-			print("undefined")
-		elseif x == null then
-			print("null")
-		elseif type(x) == 'function' then
-			print("function () { ... }")
-		elseif type(x) == 'string' then
-			print(x)
-		else 
-			print(_JS.JSON:stringify(x))
+	log = luafunctor(function (...)
+		for i,x in ipairs(arg) do
+			if x == nil then 
+				io.write("undefined")
+			elseif x == null then
+				io.write("null")
+			elseif type(x) == 'function' then
+				io.write("function () { ... }")
+			elseif type(x) == 'string' then
+				io.write(x)
+			else 
+				io.write(_JS.JSON:stringify(x))
+			end
+			io.write(' ')
 		end
+		io.write('\n')
 	end)
 });
 
@@ -378,12 +404,21 @@ _JS.require = luafunctor(require)
 
 -- bitop library
 
-_JS._bit = require('bit')
+_JS._bit = bit
+
+-- parseFloat, parseInt
+
+_JS.parseFloat = luafunctor(function (str)
+	return tonumber(str)
+end)
+
+_JS.parseInt = luafunctor(function (str)
+	return math.floor(tonumber(str))
+end)
 
 -- regexp library
 
-local f, rex = pcall(require, 'rex_pcre')
-if f then
+if rex then
 	_JS.RegExp = luafunctor(function (pat, flags)
 		local r = rex.new(tostring(pat))
 		debug.setmetatable(r, regex_proto)
