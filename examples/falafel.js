@@ -1,4 +1,4 @@
-var parse = require('esprima').parse;
+var parse = require('examples/esprima').parse;
 var objectKeys = Object.keys || function (obj) {
     var keys = [];
     for (var key in obj) keys.push(key);

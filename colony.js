@@ -89,7 +89,6 @@ var labels = [];
 var loops = [];
 
 function colonize (node) {
-  
   switch (node.type) {
     case 'Identifier':
       if (node.source() == 'arguments' && node.parent.type != 'Property') {
@@ -486,7 +485,7 @@ node.finalizer ? node.finalizer.source() : ''
       var loops = [];
       if (node.identifiers.indexOf('arguments') > -1) {
         node.update(prefix + "_JS._func(function (this, ...)\n" + namestr +
-          "local arguments = _JS._arr((function (...) return arg; end)(...)); arguments:shift();\n" +
+          "local arguments = _JS._arr((function (...) local a = {}; for i=1,select('#',...) do table.insert(a, select(i,...)); end; return a; end)(...)); arguments:shift();\n" +
           (args.length ? "local " + args.join(', ') + " = ...;\n" : "") +
           node.body.source() + "\n" +
           "end)" + suffix);

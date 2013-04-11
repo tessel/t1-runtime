@@ -64,23 +64,35 @@ _JS._obj(arr_proto)
 -- function constructor
 
 _JS._func = function (f)
-	f.prototype = _JS._obj({})
 	return f
 end
 local luafunctor = function (f)
 	return (function (this, ...) return f(...) end)
 end
 
+funccache = {}
+setmetatable(funccache, {__mode = 'k'})
+
 func_mt.__index=function (t, p)
-	if getmetatable(t)[t] and getmetatable(t)[t][p] ~= nil then
-		return getmetatable(t)[t][p]
+  local fobj = funccache[t]
+	if p == 'prototype' then
+		if fobj == nil then
+			funccache[t] = {}
+			fobj = funccache[t]
+		end
+		if fobj[p] == nil then
+			fobj[p] = _JS._obj({})
+		end
+	end
+	if fobj and fobj[p] ~= nil then
+		return fobj[p]
 	end
 	return func_proto[p]
 end
 func_mt.__newindex=function (t, p, v)
-	local pt = getmetatable(t)[t] or {}
+	local pt = funccache[t] or {}
 	pt[p] = v
-	getmetatable(t)[t] = pt
+	funccache[t] = pt
 end
 func_mt.__tojson=function ()
 	return "{}"
@@ -151,8 +163,8 @@ end
 
 -- instanceof
 
-_JS._instanceof = function ()
-	return true
+_JS._instanceof = function (self, arg)
+	return getmetatable(self).__index == arg.prototype
 end
 
 -- "new" invocation
@@ -204,7 +216,13 @@ str_proto.indexOf = function (str, needle)
 	if ret == null then return -1; else return ret - 1; end
 end
 str_proto.split = function (str, sep, max)
-	if sep == '' then return _JS._arr({}) end
+	if sep == '' then
+		local ret = _JS._arr({})
+		for i=0,str.length-1 do
+			ret:push(str:charAt(i));
+		end
+		return ret
+	end
 
 	local ret = {}
 	if string.len(str) > 0 then
@@ -225,9 +243,17 @@ end
 str_proto.replace = function (str, match, out)
 	if type(match) == 'string' then
 		return string.gsub(str, string.gsub(match, "(%W)","%%%1"), out)
+	elseif _JS._instanceof(match, _JS.RegExp) then
+		if type(out) == 'function' then 
+			print('REGEX REPLACE NOT SUPPORTED')
+		end
+		local count = 1
+		if string.find(match.flags, 'g') ~= nil then
+			count = nil
+		end
+		return rex.gsub(str, match.pattern, out, count)
 	else
-		print('REGEX REPLACE NOT SUPPORTED')
-		return str
+		error('Unknown regex invocation object: ' .. type(match))
 	end
 end
 
@@ -284,9 +310,9 @@ end
 arr_proto.slice = function (ths, start, len)
 	local a = _JS._arr({})
 	if not len then
-		len = ths.length-1 - (start or 0)
+		len = ths.length - (start or 0)
 	end
-	for i=start or 0,len + (start or 0) do
+	for i=start or 0,len - 1 do
 		a:push(ths[i])
 	end
 	return a
@@ -352,6 +378,10 @@ _JS.Object = {}
 _JS.Object.prototype = obj_proto
 _JS.Object.keys = function (ths, obj)
 	local a = _JS._arr({})
+	-- TODO debug this one:
+	if type(obj) == 'function' then
+		return a
+	end
 	for k,v in pairs(obj) do
 		a:push(k)
 	end
@@ -360,10 +390,15 @@ end
 
 -- Array
 
+function table.pack(...)
+  return { length = select("#", ...), ... }
+end
+
 _JS.Array = luafunctor(function (one, ...)
-	if #arg > 0 or type(one) ~= 'number' then
-		arg[0] = one
-		return _JS._arr(arg)
+	local a = table.pack(...)
+	if a.length > 0 or type(one) ~= 'number' then
+		a[0] = one
+		return _JS._arr(a)
 	elseif one ~= nil then
 		local a = {}
 		for i=0,tonumber(one)-1 do a[i]=null end
@@ -379,6 +414,9 @@ end)
 -- String
 
 _JS.String = luafunctor(function (str)
+	if type(str) == 'table' and type(str.toString) == 'function' then
+		return str:toString()
+	end
 	return tostring(str)
 end)
 _JS.String.prototype = str_proto
@@ -412,7 +450,8 @@ end)
 
 _JS.console = _JS._obj({
 	log = luafunctor(function (...)
-		for i,x in ipairs(arg) do
+		for i=1,select('#',...) do
+			local x = select(i,...)
 			if x == nil then 
 				io.write("undefined")
 			elseif x == null then
@@ -461,12 +500,11 @@ end)
 -- regexp library
 
 if rex then
-	_JS.RegExp = luafunctor(function (pat, flags)
-		local _regex = rex.new(tostring(pat));
-		local o = {}
+	_JS.RegExp = function (pat, flags)
+		local o = {pattern=pat, flags=flags}
 		setmetatable(o, {__index=_JS.RegExp.prototype})
 		return o
-	end)
+	end
 end
 
 -- json library

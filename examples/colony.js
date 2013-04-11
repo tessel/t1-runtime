@@ -86,7 +86,7 @@ var loops = [];
 
 function colonize (node) {
   console.log(node.type);
-  collectgarbage.call('collect');
+  collectgarbage.call();
   console.log(collectgarbage.call('count'));
   
   switch (node.type) {
@@ -517,6 +517,6 @@ function readFileSync(file) {
     return content
 }
 
-var src = readFileSync('examples/colony.js', 'utf-8');
+var src = readFileSync('examples/esprima.js', 'utf-8');
 var out = falafel(src, colonize);
 console.log(String(out).replace(/\/\//g, '--'));
