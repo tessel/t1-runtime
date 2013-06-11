@@ -12,7 +12,7 @@ var fs = require('fs')
 var keywords = ['end', 'do', 'nil', 'error'];
 var mask = ['string', 'math', 'print', 'type', 'pairs'];
 var locals = ['this', 'global', 'Object', 'Array', 'String', 'Math', 'RegExp', 'JSON', 'Error',
-  'require', 'console', 'parseFloat', 'parseInt']
+  'require', 'console', 'parseFloat', 'parseInt', 'process']
 
 function fixIdentifiers (str) {
   if (keywords.indexOf(str) > -1) {
@@ -89,6 +89,9 @@ var labels = [];
 var loops = [];
 
 function colonize (node) {
+  console.error(node.type);
+  console.error(process.memoryUsage().heapUsed/1024);
+
   switch (node.type) {
     case 'Identifier':
       if (node.source() == 'arguments' && node.parent.type != 'Property') {

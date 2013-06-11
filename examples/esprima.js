@@ -1164,9 +1164,9 @@
         createBinaryExpression: function (operator, left, right) {
             var type = (operator === '||' || operator === '&&') ? Syntax.LogicalExpression :
                         Syntax.BinaryExpression;
-            if (left == null) {
-                console.log(right)
-            }
+            // if (left == null) {
+            //     console.log(right)
+            // }
             return {
                 type: type,
                 operator: operator,

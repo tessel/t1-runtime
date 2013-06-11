@@ -85,9 +85,8 @@ var labels = [];
 var loops = [];
 
 function colonize (node) {
-  console.log(node.type);
-  collectgarbage.call();
-  console.log(collectgarbage.call('count'));
+  console.log('~', node.type);
+  console.log(process.memoryUsage().heapUsed/1024);
   
   switch (node.type) {
     case 'Identifier':
@@ -166,11 +165,11 @@ function colonize (node) {
 
     case 'UpdateExpression':
       // ++ or --
-      if (node.prefix) {
-        node.update('(function () ' + node.argument.source() + ' = ' + node.argument.source() + ' ' + node.operator.substr(0, 1) + ' 1; return ' + node.argument.source() + '; end)()');
-      } else {
-        node.update('(function () local _r = ' + node.argument.source() + '; ' + node.argument.source() + ' = _r ' + node.operator.substr(0, 1) + ' 1; return _r end)()');
-      }
+      // if (node.prefix) {
+      //   node.update('(function () ' + node.argument.source() + ' = ' + node.argument.source() + ' ' + node.operator.substr(0, 1) + ' 1; return ' + node.argument.source() + '; end)()');
+      // } else {
+      //   node.update('(function () local _r = ' + node.argument.source() + '; ' + node.argument.source() + ' = _r ' + node.operator.substr(0, 1) + ' 1; return _r end)()');
+      // }
       break;
 
     case 'NewExpression':
@@ -412,33 +411,33 @@ function colonize (node) {
       break;
 
     case 'TryStatement':
-      node.update([
-'local _e = nil',
-'local _s, _r = xpcall(function ()',
-node.block.source(),
-//    #{if tryStat.stats[-1..][0].type != 'ret-stat' then "return _JS._cont" else ""}
-'    end, function (err)',
-'        _e = err',
-'    end)',
+//       node.update([
+// 'local _e = nil',
+// 'local _s, _r = xpcall(function ()',
+// node.block.source(),
+// //    #{if tryStat.stats[-1..][0].type != 'ret-stat' then "return _JS._cont" else ""}
+// '    end, function (err)',
+// '        _e = err',
+// '    end)',
 
-// catch clause
-'if _s == false then',
-node.handlers[0].param.source() + ' = _e;\n' + node.handlers[0].body.source(),
+// // catch clause
+// 'if _s == false then',
+// node.handlers[0].param.source() + ' = _e;\n' + node.handlers[0].body.source(),
 
-// break clause.
-'end',
-node.finalizer ? node.finalizer.source() : ''
-].concat(
-!getLoops(node).length ? [] : [
-//break
-'if _r == _JS._break then',
-(getLoops(node).length && getLoops(node).slice(-1)[0][0] == 'TryStatement' ? 'return _JS._break;' : 'break;'),
-// continue clause.
-'elseif _r == _JS._cont then',
-//'  return _r',
-(getLoops(node).length && getLoops(node).slice(-1)[0][0] == 'TryStatement' ? 'return _JS._cont;' : 'break;'),
-'end'
-      ]).join('\n'));
+// // break clause.
+// 'end',
+// node.finalizer ? node.finalizer.source() : ''
+// ].concat(
+// !getLoops(node).length ? [] : [
+// //break
+// 'if _r == _JS._break then',
+// (getLoops(node).length && getLoops(node).slice(-1)[0][0] == 'TryStatement' ? 'return _JS._break;' : 'break;'),
+// // continue clause.
+// 'elseif _r == _JS._cont then',
+// //'  return _r',
+// (getLoops(node).length && getLoops(node).slice(-1)[0][0] == 'TryStatement' ? 'return _JS._cont;' : 'break;'),
+// 'end'
+//       ]).join('\n'));
       break;
 
     case 'FunctionExpression':
