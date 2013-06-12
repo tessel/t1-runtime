@@ -4,6 +4,16 @@ var fs = require('fs')
   , falafel = require('falafel')
   , colors = require('colors');
 
+/**
+ * Arguments
+ */
+
+var argv = require('optimist')
+  .usage('Compile JavaScript to Lua.\nUsage: $0 file1 [file2 file3...]')
+  .alias('c', 'concat').boolean('c').describe('c', 'Concatenate library and source files.')
+  .demand(1)
+  .argv;
+
 
 /** 
  * Colonize
@@ -89,8 +99,8 @@ var labels = [];
 var loops = [];
 
 function colonize (node) {
-  console.error(node.type);
-  console.error(process.memoryUsage().heapUsed/1024);
+  // console.error(node.type);
+  // console.error(process.memoryUsage().heapUsed/1024);
 
   switch (node.type) {
     case 'Identifier':
@@ -504,7 +514,7 @@ node.finalizer ? node.finalizer.source() : ''
     case 'Program':
       colonizeContext(node.identifiers, node);
       node.update([
-        "local _JS = require('colony-lib');",
+        argv.c ? 'local _JS = (function ()\n' + fs.readFileSync('./lib/colony.lua') + '\nend)()\n\n' : "local _JS = require('colony');",
         "local " + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
         "local " + locals.join(', ') + ' = ' + locals.map(function (k) { return '_JS.' + k; }).join(', ') + ';',
         "local _module = {exports={}}; local exports, module = _module.exports, _module;",
@@ -524,11 +534,6 @@ node.finalizer ? node.finalizer.source() : ''
 /**
  * Output
  */
-
-if (process.argv.length < 3) {
-  console.error('Usage: node colony filepath.js');
-  process.exit(1);
-}
 
 var src = fs.readFileSync(process.argv[2], 'utf-8');
 var out = falafel(src, colonize);
