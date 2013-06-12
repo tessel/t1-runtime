@@ -1,13 +1,14 @@
 {
-  "name": "lua-colony",
-  "version": "0.1.0",
-  "description": "Lua Colony compiles JavaScript to Lua 5.1 source code, using a small runtime library.",
-  "main": "colony.js",
+  "name": "colony",
+  "version": "0.2.0",
+  "private": "true",
+  "description": "Colony compiles JavaScript to Lua 5.2 source code, using a small runtime library.",
+  "main": "./src/index.js",
   "directories": {
     "example": "examples"
   },
   "bin": {
-    "lua-colony": "colony.js"
+    "colony": "./src/index.js"
   },
   "dependencies": {
     "colors": "~0.6.0-1",
