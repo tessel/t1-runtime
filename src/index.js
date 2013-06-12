@@ -515,7 +515,7 @@ node.finalizer ? node.finalizer.source() : ''
       colonizeContext(node.identifiers, node);
       node.update([
         argv.c ? 'local _JS = (function ()\n' + fs.readFileSync('./lib/colony.lua') + '\nend)()\n\n' : "local _JS = require('colony');",
-        "local " + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
+        argv.c ? '' : "local " + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
         "local " + locals.join(', ') + ' = ' + locals.map(function (k) { return '_JS.' + k; }).join(', ') + ';',
         "local _module = {exports={}}; local exports, module = _module.exports, _module;",
         "",
