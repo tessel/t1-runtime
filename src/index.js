@@ -2,7 +2,8 @@
 
 var fs = require('fs')
   , falafel = require('falafel')
-  , colors = require('colors');
+  , colors = require('colors')
+  , path = require('path');
 
 /**
  * Arguments
@@ -514,7 +515,7 @@ node.finalizer ? node.finalizer.source() : ''
     case 'Program':
       colonizeContext(node.identifiers, node);
       node.update([
-        argv.c ? 'local _JS = (function ()\n' + fs.readFileSync('./lib/colony.lua') + '\nend)()\n\n' : "local _JS = require('colony');",
+        argv.c ? 'local _JS = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n\n' : "local _JS = require('colony');",
         argv.c ? '' : "local " + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
         "local " + locals.join(', ') + ' = ' + locals.map(function (k) { return '_JS.' + k; }).join(', ') + ';',
         "local _module = {exports={}}; local exports, module = _module.exports, _module;",
@@ -535,6 +536,8 @@ node.finalizer ? node.finalizer.source() : ''
  * Output
  */
 
-var src = fs.readFileSync(process.argv[2], 'utf-8');
+var src = argv._.map(function (file) {
+  return fs.readFileSync(file, 'utf-8');
+}).join('\n\n');
 var out = falafel(src, colonize);
 console.log(String(out).replace(/\/\//g, '--'));
