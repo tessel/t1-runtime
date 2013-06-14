@@ -466,7 +466,7 @@ local function logger (out, ...)
     elseif type(x) == 'string' then
       out:write(x)
     else 
-      out:write(x)
+      out:write(tostring(x))
       --out:write(_JS.JSON:stringify(x))
     end
     out:write(' ')

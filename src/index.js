@@ -517,7 +517,7 @@ node.finalizer ? node.finalizer.source() : ''
       node.update([
         argv.c ? 'local _JS = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n\n' : "local _JS = require('colony');",
         argv.c ? '' : "local " + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
-        "local " + locals.join(', ') + ' = ' + locals.map(function (k) { return '_JS.' + k; }).join(', ') + ';',
+        locals.map(function (k) { return 'local ' + k + ' = _JS.' + k + ';'; }).join('\n'),
         "local _module = {exports={}}; local exports, module = _module.exports, _module;",
         "",
         node.source(),
