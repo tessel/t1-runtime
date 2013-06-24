@@ -1,4 +1,4 @@
-print('[[start colony mem: ' .. collectgarbage('count') .. 'kb]]');
+-- print('[[start colony mem: ' .. collectgarbage('count') .. 'kb]]');
 
 -- requires
 -- luarocks install bit32
@@ -544,6 +544,10 @@ _JS.process = _JS._obj({
 
 -- return namespace
 
-print('[[end colony mem: ' .. collectgarbage('count') .. 'kb]]');
+-- eval stub
+
+_JS.eval = _JS._func(function () end)
+
+-- print('[[end colony mem: ' .. collectgarbage('count') .. 'kb]]');
 
 return _JS

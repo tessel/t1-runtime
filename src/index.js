@@ -11,9 +11,12 @@ var fs = require('fs')
 
 var argv = require('optimist')
   .usage('Compile JavaScript to Lua.\nUsage: $0 file1 [file2 file3...]')
-  .alias('c', 'concat').boolean('c').describe('c', 'Concatenate library and source files.')
+  .alias('b', 'bundle').boolean('b').describe('b', 'Concatenate library and source files.')
+  .alias('c', 'compile').boolean('c').describe('c', 'Compile code to lua and output.')
   .demand(1)
   .argv;
+
+var flagconcat = argv.b || !argv.c;
 
 
 /** 
@@ -22,8 +25,10 @@ var argv = require('optimist')
 
 var keywords = ['end', 'do', 'nil', 'error'];
 var mask = ['string', 'math', 'print', 'type', 'pairs'];
-var locals = ['this', 'global', 'Object', 'Array', 'String', 'Math', 'RegExp', 'JSON', 'Error',
-  'require', 'console', 'parseFloat', 'parseInt', 'process']
+var locals = [
+  'this', 'global', 'Object', 'Array', 'String', 'Math', 'RegExp', 'JSON', 'Error',
+  'require', 'console', 'parseFloat', 'parseInt', 'process', 'eval'
+]
 
 function fixIdentifiers (str) {
   if (keywords.indexOf(str) > -1) {
@@ -515,8 +520,8 @@ node.finalizer ? node.finalizer.source() : ''
     case 'Program':
       colonizeContext(node.identifiers, node);
       node.update([
-        argv.c ? 'local _JS = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n\n' : "local _JS = require('colony');",
-        argv.c ? '' : "local " + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
+        flagconcat ? 'local _JS = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n\n' : "local _JS = require('colony');",
+        flagconcat ? '' : "local " + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
         locals.map(function (k) { return 'local ' + k + ' = _JS.' + k + ';'; }).join('\n'),
         "local _module = {exports={}}; local exports, module = _module.exports, _module;",
         "",
@@ -536,8 +541,46 @@ node.finalizer ? node.finalizer.source() : ''
  * Output
  */
 
-var src = argv._.map(function (file) {
-  return fs.readFileSync(file, 'utf-8');
-}).join('\n\n');
-var out = falafel(src, colonize);
-console.log(String(out).replace(/\/\//g, '--'));
+function go (src) {
+  try {
+    src = (src || '') + '\n' + argv._.filter(function (f) {
+      return f != '-';
+    }).map(function (file) {
+      return fs.readFileSync(file, 'utf-8');
+    }).join('\n\n');
+    var out = falafel(src, colonize);
+    var luacode = String(out).replace(/\/\//g, '--');
+  } catch (e) {
+    console.error(String(e.stack).red);
+    process.exit(100);
+  }
+
+  if (argv.c) {
+    // Output source code
+    console.log(luacode);
+  } else {
+    var lua = require('child_process').spawn('lua', ['-e', luacode]);
+    lua.stdout.on('data', function (str) {
+      process.stdout.write(String(str).green);
+    });
+    lua.stderr.on('data', function (str) {
+      process.stderr.write(String(str).yellow);
+    });
+    lua.on('close', function (code) {
+      process.exit(code);
+    });
+  }
+}
+
+if (argv._.indexOf('-') > -1) {
+  process.stdin.setEncoding('utf-8');
+  var inin = '';
+  process.stdin.on('data', function (str) {
+    inin += str;
+  })
+  process.stdin.on('close', function () {
+    go(inin);
+  });
+} else {
+  go('');
+}
