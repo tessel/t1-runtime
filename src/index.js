@@ -27,7 +27,7 @@ var keywords = ['end', 'do', 'nil', 'error'];
 var mask = ['string', 'math', 'print', 'type', 'pairs'];
 var locals = [
   'this', 'global', 'Object', 'Array', 'String', 'Math', 'RegExp', 'JSON', 'Error',
-  'require', 'console', 'parseFloat', 'parseInt', 'process', 'eval'
+  'require', 'console', 'parseFloat', 'parseInt', 'process', 'eval', 'luaeval'
 ]
 
 function fixIdentifiers (str) {

@@ -521,16 +521,6 @@ if rex then
   end
 end
 
--- process
-
-_JS.process = _JS._obj({
-  memoryUsage = function (ths)
-    return _JS._obj({
-      heapUsed=collectgarbage('count')*1024
-    });
-  end
-})
-
 -- json library
 
 -- _JS.JSON = _JS._obj({
@@ -547,6 +537,52 @@ _JS.process = _JS._obj({
 -- eval stub
 
 _JS.eval = _JS._func(function () end)
+
+-- NODE JS
+-- Emulation
+
+-- process
+
+_JS.process = _JS._obj({
+  memoryUsage = function (ths)
+    return _JS._obj({
+      heapUsed=collectgarbage('count')*1024
+    });
+  end
+})
+
+-- buffer
+
+local buf_proto = {
+  
+}
+
+local buffer_mt = {
+  __index = function (self, p)
+    if (p == "length") then
+      if self[0] then return #self + 1 end
+      return #self
+    else
+      return buf_proto[p]
+    end
+  end
+}
+
+_JS.Buffer = _JS._func(function (self, size)
+  setmetatable(self, buffer_mt)
+  return self
+end)
+_JS.Buffer.prototype = buf_proto
+
+-- poor man's eval
+
+_JS.luaeval = _JS._func(function (self, str) 
+  local context = {}
+  setmetatable(context, { __index = _JS })
+  local condition = assert(loadstring('return ' .. str))
+  setfenv(condition, context)
+  return condition()
+end)
 
 -- print('[[end colony mem: ' .. collectgarbage('count') .. 'kb]]');
 
