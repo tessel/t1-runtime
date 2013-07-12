@@ -436,7 +436,7 @@ function colonize (node) {
       break;
 
     case 'ThrowStatement':
-      node.update("error(" + node.argument.source() + ")");
+      node.update("_error(" + node.argument.source() + ")");
       break;
 
     case 'CatchClause':
@@ -445,7 +445,7 @@ function colonize (node) {
     case 'TryStatement':
       node.update([
 'local _e = nil',
-'local _s, _r = xpcall(function ()',
+'local _s, _r = _xpcall(function ()',
 node.block.source(),
 //    #{if tryStat.stats[-1..][0].type != 'ret-stat' then "return _cont" else ""}
 '    end, function (err)',
@@ -504,7 +504,7 @@ node.finalizer ? node.finalizer.source() : ''
       var loops = [];
       if (node.identifiers.indexOf('arguments') > -1) {
         node.update(prefix + "_func(function (this, ...)\n" + namestr +
-          "local arguments = _arr((function (...) local a = {}; for i=1,select('#',...) do table.insert(a, select(i,...)); end; return a; end)(...)); arguments:shift();\n" +
+          "local arguments = _arguments(...);\n" +
           (args.length ? "local " + args.join(', ') + " = ...;\n" : "") +
           node.body.source() + "\n" +
           "end)" + suffix);

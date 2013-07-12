@@ -319,7 +319,7 @@ arr_proto.slice = function (ths, start, len)
   if not len then
     len = ths.length - (start or 0)
   end
-  for i=start or 0,len - 1 do
+  for i=start or 0,len do
     a:push(ths[i])
   end
   return a
@@ -494,17 +494,31 @@ global._truthy = function (o)
   return o and o ~= 0 and o ~= ""
 end
 
--- debug library
+-- in-code references
 
+global._bit = bit
 global._debug = debug
+global._xpcall = xpcall
+global._error = error
+
+-- arguments
+
+global._arguments = function (...)
+  local arguments = global._arr((function (...)
+    local a = {}
+    for i=1,select('#', ...) do
+      local val, _ = select(i, ...)
+      table.insert(a, val)
+    end
+    return a
+  end)(...))
+  arguments:shift()
+  return arguments
+end
 
 -- require function
 
 global.require = luafunctor(require)
-
--- bitop library
-
-global._bit = bit
 
 -- parseFloat, parseInt
 

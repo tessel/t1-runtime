@@ -1,1 +1,1 @@
-console.log(collectgarbage.call('count'));
+console.log(process.memoryUsage().heapUsed / 1024, 'kbytes used at startup.');
