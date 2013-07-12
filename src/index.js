@@ -555,6 +555,9 @@ function go (src) {
     src = (src || '') + '\n' + argv._.filter(function (f) {
       return f != '-';
     }).map(function (file) {
+      if (!fs.existsSync(file) && fs.existsSync(file + '.js')) {
+      file = file + '.js';
+    }
       return fs.readFileSync(file, 'utf-8');
     }).join('\n\n');
 
