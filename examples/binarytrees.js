@@ -37,7 +37,6 @@ console.log("stretch tree of depth " + stretchDepth + "\t check: " + check);
 
 var longLivedTree = bottomUpTree(0,maxDepth);
 for (var depth=minDepth; depth<=maxDepth; depth+=2){
-   console.log(collectgarbage.call('count'), 'kb')
    var iterations = 1 << (maxDepth - depth + minDepth);
 
    check = 0;

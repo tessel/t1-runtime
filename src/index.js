@@ -25,11 +25,6 @@ var flagconcat = argv.b || !argv.c;
 
 var keywords = ['end', 'do', 'nil', 'error'];
 var mask = ['string', 'math', 'print', 'type', 'pairs'];
-var locals = [
-  'this', 'global', 'Object', 'Array', 'String', 'Math', 'RegExp', 'JSON', 'Error',
-  'require', 'console', 'parseFloat', 'parseInt', 'process', 'eval',
-  'luaeval'
-]
 
 function fixIdentifiers (str) {
   if (keywords.indexOf(str) > -1) {
@@ -59,7 +54,7 @@ function attachIdentifierToContext (id, node) {
 
 function truthy (node) {
   if (['!', '<', '<=', '>', '>=', '===', '!=', '!==', 'instanceof', 'in'].indexOf(node.operator) == -1) {
-    node.update("_JS._truthy(" + node.source() + ")");
+    node.update("_truthy(" + node.source() + ")");
   }
   return node.source();
 }
@@ -123,7 +118,7 @@ function colonize (node) {
       // +=, -=, etc.
       if (node.operator != '=') {
         if (node.operator == '|=') {
-          node.right.update('_JS._bit.bor(' + node.left.source() + ', ' + node.right.source() + ')');
+          node.right.update('_bit.bor(' + node.left.source() + ', ' + node.right.source() + ')');
         } else {
           node.right.update(node.left.source() + ' ' + node.operator.substr(0, 1) + ' ' + node.right.source());
         }
@@ -147,11 +142,11 @@ function colonize (node) {
 
     case 'UnaryExpression':
       if (node.operator == '~') {
-        node.update('_JS._bit.bnot(' + node.argument.source() + ')');
+        node.update('_bit.bnot(' + node.argument.source() + ')');
       } else if (node.operator == '!') {
         node.update('(not (' + node.argument.source() + '))');
       } else if (node.operator == 'typeof') {
-        node.update('_JS._typeof(' + node.argument.source() + ')');
+        node.update('_typeof(' + node.argument.source() + ')');
       } else if (node.operator == 'delete') {
         // TODO return true/false
         node.update(node.argument.source() + ' = nil');
@@ -168,15 +163,15 @@ function colonize (node) {
         // TODO strict
         node.update('(' + node.left.source() + ' == ' + node.right.source() + ')');
       } else if (node.operator == '<<') {
-        node.update('_JS._bit.lshift(' + node.left.source() + ', ' + node.right.source() + ')');
+        node.update('_bit.lshift(' + node.left.source() + ', ' + node.right.source() + ')');
       } else if (node.operator == '>>') {
-        node.update('_JS._bit.rshift(' + node.left.source() + ', ' + node.right.source() + ')');
+        node.update('_bit.rshift(' + node.left.source() + ', ' + node.right.source() + ')');
       } else if (node.operator == '&') {
-        node.update('_JS._bit.band(' + node.left.source() + ', ' + node.right.source() + ')');
+        node.update('_bit.band(' + node.left.source() + ', ' + node.right.source() + ')');
       } else if (node.operator == '|') {
-        node.update('_JS._bit.bor(' + node.left.source() + ', ' + node.right.source() + ')');
+        node.update('_bit.bor(' + node.left.source() + ', ' + node.right.source() + ')');
       } else if (node.operator == 'instanceof') {
-        node.update('_JS._instanceof(' + node.left.source() + ', ' + node.right.source() + ')');
+        node.update('_instanceof(' + node.left.source() + ', ' + node.right.source() + ')');
       } else {
         node.update('(' + node.source() + ')');
       }
@@ -200,7 +195,7 @@ function colonize (node) {
       break;
 
     case 'NewExpression':
-      node.update("_JS._new(" +
+      node.update("_new(" +
         [node.callee.source()].concat(node.arguments.map(function (arg) {
           return arg.source();
         })).join(', ') + ")");
@@ -224,8 +219,8 @@ function colonize (node) {
 
       var label = node.label ? node.label.source() : '';
 
-      node.update("_c" + label + " = _JS._break; " +
-        ((getLoops(node).slice(-1)[0] || [])[0] == "TryStatement" ? "return _JS._break;" : "break;"));
+      node.update("_c" + label + " = _break; " +
+        ((getLoops(node).slice(-1)[0] || [])[0] == "TryStatement" ? "return _break;" : "break;"));
       break;
 
     case 'SwitchCase':
@@ -275,8 +270,8 @@ function colonize (node) {
           par.usesContinue = true;
         }
       }
-      node.update("_c" + label + " = _JS._cont; " +
-        ((getLoops(node).slice(-1)[0] || [])[0] == "TryStatement" ? "return _JS._cont;" : "break;"));
+      node.update("_c" + label + " = _cont; " +
+        ((getLoops(node).slice(-1)[0] || [])[0] == "TryStatement" ? "return _cont;" : "break;"));
       break;
 
     case 'DoWhileStatement':
@@ -293,7 +288,7 @@ function colonize (node) {
         'repeat',
         (node.usesContinue ? 'local _c' + name + ' = nil; repeat' : ''),
         node.body.source(),
-        (node.usesContinue ? 'until true;\nif _c' + name + ' == _JS._break' + [''].concat(ascend).join(' or _c') + ' then break end' : ''),
+        (node.usesContinue ? 'until true;\nif _c' + name + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end' : ''),
         'until not ' + truthy(node.test) + ';'
       ].join('\n'))
       break;
@@ -312,7 +307,7 @@ function colonize (node) {
         'while ' + truthy(node.test) + ' do',
         (node.usesContinue ? 'local _c' + name + ' = nil; repeat' : ''),
         node.body.source(),
-        (node.usesContinue ? 'until true;\nif _c' + name + ' == _JS._break' + [''].concat(ascend).join(' or _c') + ' then break end' : ''),
+        (node.usesContinue ? 'until true;\nif _c' + name + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end' : ''),
         'end'
       ].join('\n'))
       break;
@@ -323,7 +318,7 @@ function colonize (node) {
         'while ' + (node.test ? truthy(node.test) : 'true') + ' do',
         (node.usesContinue ? 'local _c = nil; repeat' : ''),
         node.body.source(),
-        (node.usesContinue ? 'until true;\nif _c == _JS._break then break end' : ''),
+        (node.usesContinue ? 'until true;\nif _c == _break then break end' : ''),
         node.update ? node.update.source() : '',
         'end'
       ].join('\n'))
@@ -331,7 +326,7 @@ function colonize (node) {
 
     case 'Literal':
       if (node.value instanceof RegExp) {
-        node.update('_JS.RegExp(' + JSON.stringify(node.value.source) + ', ' + JSON.stringify(String(node.value).replace(/^.*\//, '')) + ')');
+        node.update('RegExp(' + JSON.stringify(node.value.source) + ', ' + JSON.stringify(String(node.value).replace(/^.*\//, '')) + ')');
       } else if (node.parent.type != 'Property') {
         node.update('(' + JSON.stringify(node.value) + ')');
       }
@@ -364,7 +359,7 @@ function colonize (node) {
       break;
 
     case 'ObjectExpression':
-      node.update('_JS._obj({\n  ' +
+      node.update('_obj({\n  ' +
         node.properties.map(function (prop) {
           return '[' + JSON.stringify(prop.key.type == 'Identifier' ? prop.key.name : prop.key.value) + ']=' + prop.value.source()
         }).join(',\n  ') +
@@ -375,9 +370,9 @@ function colonize (node) {
 
     case 'ArrayExpression':
       if (!node.elements.length) {
-        node.update("_JS._arr({})");
+        node.update("_arr({})");
       } else {
-        node.update("_JS._arr({[0]=" + [].concat(node.elements.map(function (el) {
+        node.update("_arr({[0]=" + [].concat(node.elements.map(function (el) {
           return el.source();
         })).join(', ') + "})");
       }
@@ -434,7 +429,7 @@ function colonize (node) {
         var name = node.left.source();
       }
       node.update([
-        'for ' + name + ' in _JS._pairs(' + node.right.source() + ') do',
+        'for ' + name + ' in _pairs(' + node.right.source() + ') do',
         node.body.source(),
         'end'
       ].join('\n'))
@@ -452,7 +447,7 @@ function colonize (node) {
 'local _e = nil',
 'local _s, _r = xpcall(function ()',
 node.block.source(),
-//    #{if tryStat.stats[-1..][0].type != 'ret-stat' then "return _JS._cont" else ""}
+//    #{if tryStat.stats[-1..][0].type != 'ret-stat' then "return _cont" else ""}
 '    end, function (err)',
 '        _e = err',
 '    end)',
@@ -467,12 +462,12 @@ node.finalizer ? node.finalizer.source() : ''
 ].concat(
 !getLoops(node).length ? [] : [
 //break
-'if _r == _JS._break then',
-(getLoops(node).length && getLoops(node).slice(-1)[0][0] == 'TryStatement' ? 'return _JS._break;' : 'break;'),
+'if _r == _break then',
+(getLoops(node).length && getLoops(node).slice(-1)[0][0] == 'TryStatement' ? 'return _break;' : 'break;'),
 // continue clause.
-'elseif _r == _JS._cont then',
+'elseif _r == _cont then',
 //'  return _r',
-(getLoops(node).length && getLoops(node).slice(-1)[0][0] == 'TryStatement' ? 'return _JS._cont;' : 'break;'),
+(getLoops(node).length && getLoops(node).slice(-1)[0][0] == 'TryStatement' ? 'return _cont;' : 'break;'),
 'end'
       ]).join('\n'));
       break;
@@ -502,19 +497,19 @@ node.finalizer ? node.finalizer.source() : ''
       // assign self-named function reference
       var namestr = "";
       if (name) {
-        namestr = "local " + name + " = debug.getinfo(1, 'f').func;\n";
+        namestr = "local " + name + " = _debug.getinfo(1, 'f').func;\n";
       }
 
       var loopsbkp = loops;
       var loops = [];
       if (node.identifiers.indexOf('arguments') > -1) {
-        node.update(prefix + "_JS._func(function (this, ...)\n" + namestr +
-          "local arguments = _JS._arr((function (...) local a = {}; for i=1,select('#',...) do table.insert(a, select(i,...)); end; return a; end)(...)); arguments:shift();\n" +
+        node.update(prefix + "_func(function (this, ...)\n" + namestr +
+          "local arguments = _arr((function (...) local a = {}; for i=1,select('#',...) do table.insert(a, select(i,...)); end; return a; end)(...)); arguments:shift();\n" +
           (args.length ? "local " + args.join(', ') + " = ...;\n" : "") +
           node.body.source() + "\n" +
           "end)" + suffix);
       } else {
-        node.update(prefix + "_JS._func(function (" + ['this'].concat(args).join(', ') + ")\n" + namestr +
+        node.update(prefix + "_func(function (" + ['this'].concat(args).join(', ') + ")\n" + namestr +
           node.body.source() + "\n" +
           "end)" + suffix);
       }
@@ -525,19 +520,28 @@ node.finalizer ? node.finalizer.source() : ''
     case 'Program':
       colonizeContext(node.identifiers, node);
       node.update([
-        flagconcat ? '_JS = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n\n' : "_JS = require('colony');",
-        flagconcat ? '' : mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
-        locals.map(function (k) { return k + ' = _JS.' + k + ';'; }).join('\n'),
+        "function (_ENV)",
+        mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
         "_module = {exports={}}; exports, module = _module.exports, _module;",
         "",
         node.source(),
         "",
-        "return _module.exports;"
+        "return _module.exports;",
+        "end"
       ].join('\n'));
       break;
 
     default:
       console.log(node.type.red, node);
+  }
+}
+
+function colonizeModule (src) {
+  var lua = String(falafel(src, colonize)).replace(/^(.*?)\/\//gm, '$1--').replace(/^\s+|\s+$/g, '');
+  if (flagconcat) {
+    return 'local colony = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n\nreturn colony.run(' + lua + ')'
+  } else {
+    return 'return ' + lua;
   }
 }
 
@@ -553,8 +557,8 @@ function go (src) {
     }).map(function (file) {
       return fs.readFileSync(file, 'utf-8');
     }).join('\n\n');
-    var out = falafel(src, colonize);
-    var luacode = String(out).replace(/\/\//g, '--');
+
+    var luacode = colonizeModule(src);
   } catch (e) {
     console.error(String(e.stack).red);
     process.exit(100);

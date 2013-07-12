@@ -4,13 +4,14 @@
 -- luarocks install bit32
 -- luarocks install json
 -- luarocks install lrexlib-pcre
+
 local bit = require('bit32')
 --local _, rex = pcall(require, 'lrexlib')
 local rex = nil
 
 -- namespace
 
-local _JS = {}
+local global = {}
 
 -- built-in prototypes
 
@@ -43,7 +44,7 @@ end
 
 -- object prototype and constructor
 
-_JS._obj = function (o)
+global._obj = function (o)
   local mt = getmetatable(o) or {}
   mt.__index = obj_proto
   setmetatable(o, mt)
@@ -52,15 +53,15 @@ end
 
 -- all prototypes inherit from object
 
-_JS._obj(func_proto)
-_JS._obj(num_proto)
-_JS._obj(bool_proto)
-_JS._obj(str_proto)
-_JS._obj(arr_proto)
+global._obj(func_proto)
+global._obj(num_proto)
+global._obj(bool_proto)
+global._obj(str_proto)
+global._obj(arr_proto)
 
 -- function constructor
 
-_JS._func = function (f)
+global._func = function (f)
   return f
 end
 local luafunctor = function (f)
@@ -78,7 +79,7 @@ func_mt.__index=function (t, p)
       fobj = funccache[t]
     end
     if fobj[p] == nil then
-      fobj[p] = _JS._obj({})
+      fobj[p] = global._obj({})
     end
   end
   if fobj and fobj[p] ~= nil then
@@ -130,26 +131,26 @@ local arr_mt = {
     return dkjson.encode(arr, {indent = true})
   end
 }
-_JS._arr = function (a)
+global._arr = function (a)
   setmetatable(a, arr_mt)
   return a
 end
 
 -- void function for expression statements (which lua disallows)
 
-_JS._void = function () end
+global._void = function () end
 
 -- null object (nil is "undefined")
 
-_JS._null = {}
+global._null = {}
 
 -- pairs
 
-_JS._pairs = pairs;
+global._pairs = pairs;
 
 -- typeof operator
 
-_JS._typeof = function (arg)
+global._typeof = function (arg)
   if arg == nil then
     return 'undefined'
   elseif type(arg) == 'table' then
@@ -160,13 +161,13 @@ end
 
 -- instanceof
 
-_JS._instanceof = function (self, arg)
+global._instanceof = function (self, arg)
   return getmetatable(self).__index == arg.prototype
 end
 
 -- "new" invocation
 
-_JS._new = function (f, ...)
+global._new = function (f, ...)
   local o = {}
   setmetatable(o, {__index=f.prototype})
   local r = f(o, ...)
@@ -214,7 +215,7 @@ str_proto.indexOf = function (str, needle)
 end
 str_proto.split = function (str, sep, max)
   if sep == '' then
-    local ret = _JS._arr({})
+    local ret = global._arr({})
     for i=0,str.length-1 do
       ret:push(str:charAt(i));
     end
@@ -235,12 +236,12 @@ str_proto.split = function (str, sep, max)
     end
     ret[i] = string.sub(str, start)
   end
-  return _JS._arr(ret)
+  return global._arr(ret)
 end
 str_proto.replace = function (str, match, out)
   if type(match) == 'string' then
     return string.gsub(str, string.gsub(match, "(%W)","%%%1"), out)
-  elseif _JS._instanceof(match, _JS.RegExp) then
+  elseif global._instanceof(match, global.RegExp) then
     if type(out) == 'function' then 
       print('REGEX REPLACE NOT SUPPORTED')
     end
@@ -307,14 +308,14 @@ arr_proto.unshift = function (ths, elem)
   return _val
 end
 arr_proto.reverse = function (ths)
-  local arr = _JS._arr({})
+  local arr = global._arr({})
   for i=0,ths.length-1 do
     arr[ths.length - 1 - i] = ths[i]
   end
   return arr
 end
 arr_proto.slice = function (ths, start, len)
-  local a = _JS._arr({})
+  local a = global._arr({})
   if not len then
     len = ths.length - (start or 0)
   end
@@ -324,7 +325,7 @@ arr_proto.slice = function (ths, start, len)
   return a
 end
 arr_proto.concat = function (src1, src2)
-  local a = _JS._arr({})
+  local a = global._arr({})
   for i=0,src1.length-1 do
     a:push(src1[i])
   end
@@ -350,7 +351,7 @@ arr_proto.indexOf = function (ths, val)
   return -1
 end
 arr_proto.map = function (ths, fn)
-  local a = _JS._arr({})
+  local a = global._arr({})
   for i=0,ths.length-1 do
     a:push(fn(ths, ths[i], i))
   end
@@ -363,9 +364,9 @@ arr_proto.forEach = function (ths, fn)
   return ths
 end
 arr_proto.filter = function (ths, fn)
-  local a = _JS._arr({})
+  local a = global._arr({})
   for i=0,ths.length-1 do
-    if _JS._truthy(fn(ths, ths[i], i)) then
+    if global._truthy(fn(ths, ths[i], i)) then
       a:push(ths[i])
     end
   end
@@ -376,14 +377,14 @@ end
 Globals
 ]]--
 
-_JS.this, _JS.global = _G, _G
+global.this, global.global = _G, _G
 
 -- Object
 
-_JS.Object = {}
-_JS.Object.prototype = obj_proto
-_JS.Object.keys = function (ths, obj)
-  local a = _JS._arr({})
+global.Object = {}
+global.Object.prototype = obj_proto
+global.Object.keys = function (ths, obj)
+  local a = global._arr({})
   -- TODO debug this one:
   if type(obj) == 'function' then
     return a
@@ -400,33 +401,33 @@ function table.pack(...)
   return { length = select("#", ...), ... }
 end
 
-_JS.Array = luafunctor(function (one, ...)
+global.Array = luafunctor(function (one, ...)
   local a = table.pack(...)
   if a.length > 0 or type(one) ~= 'number' then
     a[0] = one
-    return _JS._arr(a)
+    return global._arr(a)
   elseif one ~= nil then
     local a = {}
     for i=0,tonumber(one)-1 do a[i]=null end
-    return _JS._arr(a)
+    return global._arr(a)
   end
-  return _JS._arr({})
+  return global._arr({})
 end)
-_JS.Array.prototype = arr_proto
-_JS.Array.isArray = luafunctor(function (a)
+global.Array.prototype = arr_proto
+global.Array.isArray = luafunctor(function (a)
   return (getmetatable(a) or {}) == arr_mt
 end)
 
 -- String
 
-_JS.String = luafunctor(function (str)
+global.String = luafunctor(function (str)
   if type(str) == 'table' and type(str.toString) == 'function' then
     return str:toString()
   end
   return tostring(str)
 end)
-_JS.String.prototype = str_proto
-_JS.String.fromCharCode = luafunctor(function (ord)
+global.String.prototype = str_proto
+global.String.fromCharCode = luafunctor(function (ord)
   if ord == nil then return nil end
   if ord < 32 then return string.format('\\x%02x', ord) end
   if ord < 126 then return string.char(ord) end
@@ -436,7 +437,7 @@ end)
 
 -- Math
 
-_JS.Math = _JS._obj({
+global.Math = global._obj({
   max = luafunctor(math.max),
   sqrt = luafunctor(math.sqrt),
   floor = luafunctor(math.floor)
@@ -444,7 +445,7 @@ _JS.Math = _JS._obj({
 
 -- Error
 
-_JS.Error = _JS._func(function (self, str)
+global.Error = global._func(function (self, str)
   getmetatable(self).__tostring = function (self)
     return self.message
   end
@@ -467,14 +468,14 @@ local function logger (out, ...)
       out:write(x)
     else 
       out:write(tostring(x))
-      --out:write(_JS.JSON:stringify(x))
+      --out:write(global.JSON:stringify(x))
     end
     out:write(' ')
   end
   out:write('\n')
 end
 
-_JS.console = _JS._obj({
+global.console = global._obj({
   log = function (self, ...)
     logger(io.stdout, ...)
   end,
@@ -485,45 +486,49 @@ _JS.console = _JS._obj({
 
 -- break/cont flags
 
-_JS._break = {}; _JS._cont = {}
+global._break = {}; global._cont = {}
 
 -- truthy values
 
-_JS._truthy = function (o)
+global._truthy = function (o)
   return o and o ~= 0 and o ~= ""
 end
 
+-- debug library
+
+global._debug = debug
+
 -- require function
 
-_JS.require = luafunctor(require)
+global.require = luafunctor(require)
 
 -- bitop library
 
-_JS._bit = bit
+global._bit = bit
 
 -- parseFloat, parseInt
 
-_JS.parseFloat = luafunctor(function (str)
+global.parseFloat = luafunctor(function (str)
   return tonumber(str)
 end)
 
-_JS.parseInt = luafunctor(function (str)
+global.parseInt = luafunctor(function (str)
   return math.floor(tonumber(str))
 end)
 
 -- regexp library
 
 if rex then
-  _JS.RegExp = function (pat, flags)
+  global.RegExp = function (pat, flags)
     local o = {pattern=pat, flags=flags}
-    setmetatable(o, {__index=_JS.RegExp.prototype})
+    setmetatable(o, {__index=global.RegExp.prototype})
     return o
   end
 end
 
 -- json library
 
--- _JS.JSON = _JS._obj({
+-- global.JSON = global._obj({
 --  parse = function (ths, arg)
 --    return json.decode(arg)
 --  end,
@@ -536,16 +541,16 @@ end
 
 -- eval stub
 
-_JS.eval = _JS._func(function () end)
+global.eval = global._func(function () end)
 
 -- NODE JS
 -- Emulation
 
 -- process
 
-_JS.process = _JS._obj({
+global.process = global._obj({
   memoryUsage = function (ths)
-    return _JS._obj({
+    return global._obj({
       heapUsed=collectgarbage('count')*1024
     });
   end
@@ -568,15 +573,15 @@ local buffer_mt = {
   end
 }
 
-_JS.Buffer = _JS._func(function (self, size)
+global.Buffer = global._func(function (self, size)
   setmetatable(self, buffer_mt)
   return self
 end)
-_JS.Buffer.prototype = buf_proto
+global.Buffer.prototype = buf_proto
 
 -- poor man's eval
 
-_JS.luaeval = _JS._func(function (self, str)
+global.luaeval = global._func(function (self, str)
   local fn = load(str, nil, "t")
   io.stdout:write('stillgood ' + tostring(collectgarbage('count')) + '\n')
   if fn then
@@ -587,8 +592,17 @@ _JS.luaeval = _JS._func(function (self, str)
   end
 end)
 
-_tm = _JS._obj(_tm)
+-- _tm = global._obj(_tm)
 
 -- print('[[end colony mem: ' .. collectgarbage('count') .. 'kb]]');
 
-return _JS
+-- stdio settings
+
+io.stdout:setvbuf('no')
+
+return {
+  global = global,
+  run = function (fn)
+    return fn(global)
+  end
+}
