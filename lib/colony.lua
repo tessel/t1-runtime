@@ -576,13 +576,18 @@ _JS.Buffer.prototype = buf_proto
 
 -- poor man's eval
 
-_JS.luaeval = _JS._func(function (self, str) 
-  local context = {}
-  setmetatable(context, { __index = _JS })
-  local condition = assert(loadstring('return ' .. str))
-  setfenv(condition, context)
-  return condition()
+_JS.luaeval = _JS._func(function (self, str)
+  local fn = load(str, nil, "t")
+  io.stdout:write('stillgood ' + tostring(collectgarbage('count')) + '\n')
+  if fn then
+    local code, res = pcall(fn)
+    return res
+  else
+    return "[Syntax error in submitted code]"
+  end
 end)
+
+_tm = _JS._obj(_tm)
 
 -- print('[[end colony mem: ' .. collectgarbage('count') .. 'kb]]');
 

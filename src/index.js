@@ -27,7 +27,8 @@ var keywords = ['end', 'do', 'nil', 'error'];
 var mask = ['string', 'math', 'print', 'type', 'pairs'];
 var locals = [
   'this', 'global', 'Object', 'Array', 'String', 'Math', 'RegExp', 'JSON', 'Error',
-  'require', 'console', 'parseFloat', 'parseInt', 'process', 'eval', 'luaeval'
+  'require', 'console', 'parseFloat', 'parseInt', 'process', 'eval',
+  'luaeval'
 ]
 
 function fixIdentifiers (str) {
@@ -145,7 +146,9 @@ function colonize (node) {
       break;  
 
     case 'UnaryExpression':
-      if (node.operator == '!') {
+      if (node.operator == '~') {
+        node.update('_JS._bit.bnot(' + node.argument.source() + ')');
+      } else if (node.operator == '!') {
         node.update('(not (' + node.argument.source() + '))');
       } else if (node.operator == 'typeof') {
         node.update('_JS._typeof(' + node.argument.source() + ')');
@@ -166,6 +169,8 @@ function colonize (node) {
         node.update('(' + node.left.source() + ' == ' + node.right.source() + ')');
       } else if (node.operator == '<<') {
         node.update('_JS._bit.lshift(' + node.left.source() + ', ' + node.right.source() + ')');
+      } else if (node.operator == '>>') {
+        node.update('_JS._bit.rshift(' + node.left.source() + ', ' + node.right.source() + ')');
       } else if (node.operator == '&') {
         node.update('_JS._bit.band(' + node.left.source() + ', ' + node.right.source() + ')');
       } else if (node.operator == '|') {
@@ -520,10 +525,10 @@ node.finalizer ? node.finalizer.source() : ''
     case 'Program':
       colonizeContext(node.identifiers, node);
       node.update([
-        flagconcat ? 'local _JS = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n\n' : "local _JS = require('colony');",
-        flagconcat ? '' : "local " + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
-        locals.map(function (k) { return 'local ' + k + ' = _JS.' + k + ';'; }).join('\n'),
-        "local _module = {exports={}}; local exports, module = _module.exports, _module;",
+        flagconcat ? '_JS = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n\n' : "_JS = require('colony');",
+        flagconcat ? '' : mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
+        locals.map(function (k) { return k + ' = _JS.' + k + ';'; }).join('\n'),
+        "_module = {exports={}}; exports, module = _module.exports, _module;",
         "",
         node.source(),
         "",
@@ -560,6 +565,7 @@ function go (src) {
     console.log(luacode);
   } else {
     var lua = require('child_process').spawn('lua', ['-e', luacode]);
+    process.stdin.pipe(lua.stdin);
     lua.stdout.on('data', function (str) {
       process.stdout.write(String(str).green);
     });
