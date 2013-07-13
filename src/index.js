@@ -207,10 +207,8 @@ function colonize (node) {
 
     case 'VariableDeclaration':
       node.update(node.declarations.map(function (d) {
-        return d.id.source();
-      }).join(', ') + ' = ' + node.declarations.map(function (d) {
-        return d.init ? d.init.source() : 'nil'
-      }).join(', ') + ';');
+        return d.id.source() + ' = ' + (d.init ? d.init.source() : 'nil') + ';';
+      }).join('\n'));
       break;
 
     case 'BreakStatement':
@@ -555,7 +553,7 @@ function runluacode (luacode) {
   var lua = require('child_process').spawn('lua', ['-e', luacode]);
   process.stdin.pipe(lua.stdin);
   lua.stdout.on('data', function (str) {
-    process.stdout.write(String(str).green);
+    process.stdout.write(String(str));
   });
   lua.stderr.on('data', function (str) {
     process.stderr.write(String(str).yellow);
@@ -601,18 +599,27 @@ function compile (srcs) {
     })
     stringify.on('close', function () {
       var deps = JSON.parse(buf.join(''));
+      var out = [];
       
-      console.log('local colony = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n');
-      console.log('local deps = {')
+      out.push('local colony = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n');
+      out.push('local deps = {')
       deps.forEach(function (dep) {
-        console.log('[' + JSON.stringify(dep.id) + '] = {\n\tfunc = ', colonizeModule(dep.source));
-        console.log(',\ndeps = ' + luastringifytable(dep.deps) + '\n},');
+        out.push('[' + JSON.stringify(dep.id) + '] = {\n\tfunc = ' + colonizeModule(dep.source));
+        out.push(',\ndeps = ' + luastringifytable(dep.deps) + '\n},');
       })
-      console.log('}')
-      console.log('');
-      console.log('return colony.enter(deps, ' + JSON.stringify(deps.filter(function (dep) {
+      out.push('}')
+      out.push('');
+      out.push('return colony.enter(deps, ' + JSON.stringify(deps.filter(function (dep) {
         return dep.entry;
       })[0].id) + ')');
+
+      var luacode = out.join('\n');
+
+      if (argv.c) {
+        console.log(luacode);
+      } else {
+        runluacode(luacode);
+      }
     })
 
     mdeps(srcs).pipe(stringify);

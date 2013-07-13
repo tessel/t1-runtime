@@ -481,7 +481,8 @@ end)
 global.Math = global._obj({
   max = luafunctor(math.max),
   sqrt = luafunctor(math.sqrt),
-  floor = luafunctor(math.floor)
+  floor = luafunctor(math.floor),
+  random = luafunctor(math.random)
 })
 
 -- Error
