@@ -418,7 +418,7 @@ end
 Globals
 ]]--
 
-global.this, global.global = _G, _G
+global.this, global.global = global, global
 
 -- Object
 
@@ -655,9 +655,19 @@ end)
 
 io.stdout:setvbuf('no')
 
-return {
+colony = {
   global = global,
-  run = function (fn)
-    return fn(global)
+  enter = function (deps, entry)
+    local req = function (self, key)
+      return colony.run(deps[deps[entry].deps[key]].func, req)
+    end
+    return colony.run(deps[entry].func, req)
+  end,
+  run = function (fn, req)
+    local myglobal = {}
+    setmetatable(myglobal, {__index = global})
+    myglobal.require = req
+    return fn(myglobal)
   end
 }
+return colony

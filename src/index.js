@@ -540,15 +540,10 @@ node.finalizer ? node.finalizer.source() : ''
 }
 
 function colonizeModule (src) {
-  var lua = String(falafel(src, colonize))
+  return String(falafel(src, colonize))
     .replace(/^(.*?)\/\//gm, '$1--')
     .replace(/\/\*([\S\s]*?)\*\//, '')
     .replace(/^\s+|\s+$/g, '');
-  if (flagconcat) {
-    return 'local colony = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n\nreturn colony.run(' + lua + ')'
-  } else {
-    return 'return ' + lua;
-  }
 }
 
 
@@ -556,50 +551,74 @@ function colonizeModule (src) {
  * Output
  */
 
-function go (src) {
-  try {
-    src = (src || '') + '\n' + argv._.filter(function (f) {
-      return f != '-';
-    }).map(function (file) {
+function runluacode (luacode) {
+  var lua = require('child_process').spawn('lua', ['-e', luacode]);
+  process.stdin.pipe(lua.stdin);
+  lua.stdout.on('data', function (str) {
+    process.stdout.write(String(str).green);
+  });
+  lua.stderr.on('data', function (str) {
+    process.stderr.write(String(str).yellow);
+  });
+  lua.on('close', function (code) {
+    process.exit(code);
+  });
+}
+
+function luastringifytable (obj) {
+  return '{ ' + Object.keys(obj).map(function (key) {
+    return '[' + JSON.stringify(key) + '] = ' + JSON.stringify(obj[key])
+  }).join(', ') + ' }';
+}
+
+function compile (srcs) {
+  if (!flagconcat) {
+    try {
+      var file = srcs[0];
       if (!fs.existsSync(file) && fs.existsSync(file + '.js')) {
         file = file + '.js';
       }
-      return fs.readFileSync(file, 'utf-8');
-    }).join('\n\n');
+      var src = fs.readFileSync(file, 'utf-8');
+      var luacode = colonizeModule(src);
+    } catch (e) {
+      console.error(String(e.stack).red);
+      process.exit(100);
+    }
 
-    var luacode = colonizeModule(src);
-  } catch (e) {
-    console.error(String(e.stack).red);
-    process.exit(100);
-  }
-
-  if (argv.c) {
-    // Output source code
-    console.log(luacode);
+    if (argv.c) {
+      console.log(luacode);
+    } else {
+      runluacode(luacode);
+    }
   } else {
-    var lua = require('child_process').spawn('lua', ['-e', luacode]);
-    process.stdin.pipe(lua.stdin);
-    lua.stdout.on('data', function (str) {
-      process.stdout.write(String(str).green);
-    });
-    lua.stderr.on('data', function (str) {
-      process.stderr.write(String(str).yellow);
-    });
-    lua.on('close', function (code) {
-      process.exit(code);
-    });
+    var mdeps = require('module-deps');
+    var JSONStream = require('JSONStream');
+
+    var stringify = JSONStream.stringify();
+    var buf = [];
+    stringify.on('data', function (data) {
+      buf.push(data);
+    })
+    stringify.on('close', function () {
+      var deps = JSON.parse(buf.join(''));
+      
+      console.log('local colony = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n');
+      console.log('local deps = {')
+      deps.forEach(function (dep) {
+        console.log('[' + JSON.stringify(dep.id) + '] = {\n\tfunc = ', colonizeModule(dep.source));
+        console.log(',\ndeps = ' + luastringifytable(dep.deps) + '\n},');
+      })
+      console.log('}')
+      console.log('');
+      console.log('return colony.enter(deps, ' + JSON.stringify(deps.filter(function (dep) {
+        return dep.entry;
+      })[0].id) + ')');
+    })
+
+    mdeps(srcs).pipe(stringify);
   }
 }
 
-if (argv._.indexOf('-') > -1) {
-  process.stdin.setEncoding('utf-8');
-  var inin = '';
-  process.stdin.on('data', function (str) {
-    inin += str;
-  })
-  process.stdin.on('close', function () {
-    go(inin);
-  });
-} else {
-  go('');
-}
+compile(argv._.map(function (name) {
+  return name == '-' ? process.stdin : path.join(process.cwd(), name);
+}));
