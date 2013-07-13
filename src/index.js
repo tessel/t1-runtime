@@ -67,7 +67,7 @@ function colonizeContext (ids, node) {
   }
   node.update([
     // Variables
-    ids && ids.length ? 'local ' + ids.join(', ') + ';' : '',
+    ids && ids.length ? 'local ' + ids.join(', ') + ' = ' + ids.join(', ') + ';' : '',
     // Hoist Functions
     node.body.filter(function (stat) {
       return stat.type == 'FunctionDeclaration';
@@ -327,6 +327,9 @@ function colonize (node) {
     case 'Literal':
       if (node.value instanceof RegExp) {
         node.update('RegExp(' + JSON.stringify(node.value.source) + ', ' + JSON.stringify(String(node.value).replace(/^.*\//, '')) + ')');
+      } else if (typeof node.value == 'string') {
+        // TODO update
+        node.update('(' + JSON.stringify(node.value).replace(/\\u00/, '\\x') + ')');
       } else if (node.parent.type != 'Property') {
         node.update('(' + JSON.stringify(node.value) + ')');
       }
@@ -521,8 +524,8 @@ node.finalizer ? node.finalizer.source() : ''
       colonizeContext(node.identifiers, node);
       node.update([
         "function (_ENV)",
-        mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
-        "_module = {exports={}}; exports, module = _module.exports, _module;",
+        'local ' + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
+        "local _module = {exports={}}; local exports, module = _module.exports, _module;",
         "",
         node.source(),
         "",
@@ -537,7 +540,10 @@ node.finalizer ? node.finalizer.source() : ''
 }
 
 function colonizeModule (src) {
-  var lua = String(falafel(src, colonize)).replace(/^(.*?)\/\//gm, '$1--').replace(/^\s+|\s+$/g, '');
+  var lua = String(falafel(src, colonize))
+    .replace(/^(.*?)\/\//gm, '$1--')
+    .replace(/\/\*([\S\s]*?)\*\//, '')
+    .replace(/^\s+|\s+$/g, '');
   if (flagconcat) {
     return 'local colony = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n\nreturn colony.run(' + lua + ')'
   } else {
@@ -556,8 +562,8 @@ function go (src) {
       return f != '-';
     }).map(function (file) {
       if (!fs.existsSync(file) && fs.existsSync(file + '.js')) {
-      file = file + '.js';
-    }
+        file = file + '.js';
+      }
       return fs.readFileSync(file, 'utf-8');
     }).join('\n\n');
 

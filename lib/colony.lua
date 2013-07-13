@@ -9,6 +9,7 @@ local bit = require('bit32')
 --local _, rex = pcall(require, 'lrexlib')
 local rex = nil
 
+
 -- namespace
 
 local global = {}
@@ -17,14 +18,28 @@ local global = {}
 
 local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_proto = {}, {}, {}, {}, {}, {}, {}
 
+-- get from prototype chain while maintaining "self"
+
+function proto_get (self, proto, key)
+  return rawget(proto, key) or (getmetatable(proto) and getmetatable(proto).__index and getmetatable(proto).__index(self, key)) or nil
+end
+
 -- introduce metatables to built-in types using debug library:
 -- this can cause conflicts with other modules if they utilize the string prototype
 -- (or expect number/booleans to have metatables)
 
 local func_mt, str_mt, nil_mt = {}, {}, {}
 debug.setmetatable((function () end), func_mt)
-debug.setmetatable(true, {__index=bool_proto})
-debug.setmetatable(0, {__index=num_proto})
+debug.setmetatable(true, {
+  __index=function (self, key)
+    return proto_get(self, bool_proto, key)
+  end
+})
+debug.setmetatable(0, {
+  __index=function (self, key)
+    return proto_get(self, num_proto, key)
+  end
+})
 debug.setmetatable("", str_mt)
 debug.setmetatable(nil, nil_mt)
 
@@ -46,7 +61,9 @@ end
 
 global._obj = function (o)
   local mt = getmetatable(o) or {}
-  mt.__index = obj_proto
+  mt.__index = function (self, key)
+    return proto_get(self, obj_proto, key)
+  end
   setmetatable(o, mt)
   return o
 end
@@ -71,12 +88,12 @@ end
 funccache = {}
 setmetatable(funccache, {__mode = 'k'})
 
-func_mt.__index=function (t, p)
-  local fobj = funccache[t]
+func_mt.__index = function (self, p)
+  local fobj = funccache[self]
   if p == 'prototype' then
     if fobj == nil then
-      funccache[t] = {}
-      fobj = funccache[t]
+      funccache[self] = {}
+      fobj = funccache[self]
     end
     if fobj[p] == nil then
       fobj[p] = global._obj({})
@@ -85,12 +102,12 @@ func_mt.__index=function (t, p)
   if fobj and fobj[p] ~= nil then
     return fobj[p]
   end
-  return func_proto[p]
+  return proto_get(self, func_proto, key)
 end
-func_mt.__newindex=function (t, p, v)
-  local pt = funccache[t] or {}
+func_mt.__newindex = function (self, p, v)
+  local pt = funccache[self] or {}
   pt[p] = v
-  funccache[t] = pt
+  funccache[self] = pt
 end
 func_mt.__tojson=function ()
   return "{}"
@@ -104,7 +121,7 @@ str_mt.__index = function (str, p)
   elseif (tonumber(p) == p) then
     return string.sub(str, p+1, p+1)
   else
-    return str_proto[p]
+    return proto_get(str, str_proto, p)
   end
 end
 
@@ -115,12 +132,12 @@ end
 -- array prototype and constructor
 
 local arr_mt = {
-  __index = function (arr, p)
-    if (p == "length") then
+  __index = function (arr, key)
+    if (key == "length") then
       if arr[0] then return #arr + 1 end
       return #arr
     else
-      return arr_proto[p]
+      return proto_get(self, arr_proto, key)
     end
   end,
   __tojson = function (arg)
@@ -161,6 +178,7 @@ end
 
 -- instanceof
 
+-- NOW broken
 global._instanceof = function (self, arg)
   return getmetatable(self).__index == arg.prototype
 end
@@ -169,7 +187,12 @@ end
 
 global._new = function (f, ...)
   local o = {}
-  setmetatable(o, {__index=f.prototype})
+  setmetatable(o, {
+    __index = function (self, key)
+      return proto_get(self, f.prototype, key)
+    end,
+    __proto = f.prototype
+  })
   local r = f(o, ...)
   if r then return r end
   return o
@@ -263,6 +286,24 @@ end
 obj_proto.hasOwnProperty = function (ths, p)
   return rawget(ths, p) ~= nil
 end
+obj_proto.__defineGetter__ = function (self, key, fn)
+  local idx = getmetatable(self).__index
+  getmetatable(self).__index = function (self, getkey)
+    if key == getkey then
+      return fn(self)
+    else
+      if type(idx) == 'function' then
+        return idx(self, getkey)
+      else
+        return idx[getkey]
+      end
+    end
+  end
+end
+
+-- local obj_mt = {}
+-- setmetatable(obj_proto, obj_mt)
+
 
 -- function prototype
 
