@@ -1,4 +1,4 @@
-# Lua Colony, a JavaScript-to-Lua source compiler
+# Colony, a low-memory JavaScript runtime built on Lua
 
 Lua Colony compiles JavaScript to Lua 5.1 source code, and uses a small runtime library.
 

@@ -609,6 +609,9 @@ global.process = global._obj({
     return global._obj({
       heapUsed=collectgarbage('count')*1024
     });
+  end,
+  binding = function (self, key)
+    return _G['_colony_binding_' + key](global);
   end
 })
 
@@ -656,6 +659,24 @@ end)
 
 io.stdout:setvbuf('no')
 
+if not setfenv then -- Lua 5.2
+  -- based on http://lua-users.org/lists/lua-l/2010-06/msg00314.html
+  -- this assumes f is a function
+  local function findenv(f)
+    local level = 1
+    repeat
+      local name, value = debug.getupvalue(f, level)
+      if name == '_ENV' then return level, value end
+      level = level + 1
+    until name == nil
+    return nil end
+  getfenv = function (f) return(select(2, findenv(f)) or _G) end
+  setfenv = function (f, t)
+    local level = findenv(f)
+    if level then debug.setupvalue(f, level, t) end
+    return f end
+end
+
 colony = {
   global = global,
   enter = function (deps, entry)
@@ -668,6 +689,7 @@ colony = {
     local myglobal = {}
     setmetatable(myglobal, {__index = global})
     myglobal.require = req
+    setfenv(fn, myglobal)
     return fn(myglobal)
   end
 }
