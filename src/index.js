@@ -550,7 +550,7 @@ function colonizeModule (src) {
  */
 
 function runluacode (luacode) {
-  var lua = require('child_process').spawn('lua', ['-e', luacode]);
+  var lua = require('child_process').spawn(path.join(__dirname, '../bin/lua-5.2.2/src/lua'), ['-e', luacode]);
   process.stdin.pipe(lua.stdin);
   lua.stdout.on('data', function (str) {
     process.stdout.write(String(str));
@@ -560,6 +560,24 @@ function runluacode (luacode) {
   });
   lua.on('close', function (code) {
     process.exit(code);
+  });
+}
+
+function lua2c (luacode) {
+  var temp = require('temp');
+  temp.open('myprefix', function(err, info) {
+    fs.write(info.fd, luacode);
+    fs.close(info.fd, function (err) {
+      var lua = require('child_process').spawn('lua', ['lua2c.lua', info.path], {
+        cwd: '/Users/tim/Code/tcr/lua2c52'
+      });
+      process.stdin.pipe(lua.stdin);
+      lua.stdout.pipe(process.stdout);
+      lua.stderr.pipe(process.stderr);
+      lua.stdout.on('close', function () {
+        process.exit(0);
+      })
+    });
   });
 }
 
@@ -609,6 +627,7 @@ function compile (srcs) {
       })
       out.push('}')
       out.push('');
+      out.push('collectgarbage();'); // for good measure
       out.push('return colony.enter(deps, ' + JSON.stringify(deps.filter(function (dep) {
         return dep.entry;
       })[0].id) + ')');
@@ -618,7 +637,7 @@ function compile (srcs) {
       if (argv.c) {
         console.log(luacode);
       } else {
-        runluacode(luacode);
+        lua2c(luacode);
       }
     })
 
