@@ -13,7 +13,7 @@ var argv = require('optimist')
   .usage('Compile JavaScript to Lua.\nUsage: $0 file1 [file2 file3...]')
   .alias('b', 'bundle').boolean('b').describe('b', 'Concatenate library and source files.')
   .alias('c', 'compile').boolean('c').describe('c', 'Compile code to lua and output.')
-  .demand(1)
+  .alias('l', 'library').boolean('l').describe('l', 'Output the colony library.')
   .argv;
 
 var flagconcat = argv.b || !argv.c;
@@ -619,7 +619,8 @@ function compile (srcs) {
       var deps = JSON.parse(buf.join(''));
       var out = [];
       
-      out.push('local colony = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n');
+      out.push('local colony = require(\'colony\');');
+      //out.push('local colony = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n');
       out.push('local deps = {')
       deps.forEach(function (dep) {
         out.push('[' + JSON.stringify(dep.id) + '] = {\n\tfunc = ' + colonizeModule(dep.source));
@@ -637,7 +638,7 @@ function compile (srcs) {
       if (argv.c) {
         console.log(luacode);
       } else {
-        lua2c(luacode);
+        runluacode(luacode);
       }
     })
 
@@ -645,6 +646,10 @@ function compile (srcs) {
   }
 }
 
-compile(argv._.map(function (name) {
-  return name == '-' ? process.stdin : path.join(process.cwd(), name);
-}));
+if (argv.l) {
+  fs.createReadStream(path.join(__dirname, '../lib/colony.lua')).pipe(process.stdout);
+} else {
+  compile(argv._.map(function (name) {
+    return name == '-' ? process.stdin : path.join(process.cwd(), name);
+  }));
+}

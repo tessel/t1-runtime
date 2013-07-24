@@ -205,7 +205,7 @@ Standard Library
 -- number prototype
 
 num_proto.toFixed = function (num, n)
-  return string.format("%." .. n .. "f", num)
+  return string.format("%." .. tonumber(n) .. "f", num)
 end
 
 -- string prototype
@@ -217,7 +217,10 @@ str_proto.charAt = function (str, i)
   return string.sub(str, i+1, i+1)
 end
 str_proto.substr = function (str, i, len)
-  if len then
+  if i < 0 then
+    i = i - 1
+  end
+  if len ~= nil then
     return string.sub(str, i+1, i + len)
   else
     return string.sub(str, i+1)
@@ -650,6 +653,8 @@ global.luaeval = global._func(function (self, str)
     return "[Syntax error in submitted code]"
   end
 end)
+
+global.collectgarbage = luafunctor(collectgarbage)
 
 -- _tm = global._obj(_tm)
 
