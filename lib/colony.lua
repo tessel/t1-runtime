@@ -145,8 +145,8 @@ local arr_mt = {
   end,
   __tostring = function (arg)
     local str = ''
-    for i=0,arg.length do
-      str = str .. tostring(arg[i]) .. (i == arg.length and '' or ',')
+    for i=0,arg.length-1 do
+      str = str .. tostring(arg[i]) .. (i == arg.length-1 and '' or ',')
     end
     return str
   end,
@@ -265,12 +265,12 @@ str_proto.split = function (str, sep, max)
     local i, start=1, 1
     local first, last = string.find(str, sep, start, true)
     while first and max ~= 0 do
-      ret[i] = string.sub(str, start, first-1)
+      ret[i-1] = string.sub(str, start, first-1)
       i, start = i+1, last+1
       first, last = string.find(str, sep, start, true)
       max = max-1
     end
-    ret[i] = string.sub(str, start)
+    ret[i-1] = string.sub(str, start)
   end
   return global._arr(ret)
 end
