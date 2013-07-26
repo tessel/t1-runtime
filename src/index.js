@@ -630,6 +630,7 @@ function compile (srcs) {
       out.push('}')
       out.push('');
       out.push('collectgarbage();'); // for good measure
+      out.push('colony.global.process.env = colony.global._obj({ DEPLOY_IP = ' + JSON.stringify(require('my-local-ip')()) + ' });');
       out.push('return colony.enter(deps, ' + JSON.stringify(deps.filter(function (dep) {
         return dep.entry;
       })[0].id) + ')');

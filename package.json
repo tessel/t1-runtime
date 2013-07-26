@@ -13,7 +13,8 @@
   "dependencies": {
     "colors": "~0.6.0-1",
     "falafel": "~0.2.1",
-    "optimist": "~0.5.2"
+    "optimist": "~0.5.2",
+    "my-local-ip": "~1.0.0"
   },
   "repository": {
     "type": "git",

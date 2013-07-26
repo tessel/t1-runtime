@@ -631,11 +631,9 @@ global.process = global._obj({
   end,
   binding = function (self, key)
     return _G['_colony_binding_' + key](global);
-  end
+  end,
+  env = global._obj({})
 })
-global.process:__defineGetter__('env', function ()
-  return global._obj(_G._ENV or {})
-end)
 
 -- buffer
 
