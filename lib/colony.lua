@@ -9,7 +9,6 @@ local bit = require('bit32')
 --local _, rex = pcall(require, 'lrexlib')
 local rex = nil
 
-
 -- namespace
 
 local global = {}
@@ -632,11 +631,11 @@ global.process = global._obj({
   end,
   binding = function (self, key)
     return _G['_colony_binding_' + key](global);
-  end,
-  env = global._obj({
-    DEPLOY_IP = "$$$ENV_DEPLOY_IP$$$"
-  })
+  end
 })
+global.process:__defineGetter__('env', function ()
+  return global._obj(_G._ENV or {})
+end)
 
 -- buffer
 
