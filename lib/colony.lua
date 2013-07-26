@@ -45,6 +45,9 @@ debug.setmetatable(nil, nil_mt)
 
 -- nil metatable
 
+nil_mt.__tostring = function (arg)
+  return 'null'
+end
 nil_mt.__eq = function (op1, op2)
   return op2 == nil
 end
@@ -139,6 +142,13 @@ local arr_mt = {
     else
       return proto_get(self, arr_proto, key)
     end
+  end,
+  __tostring = function (arg)
+    local str = ''
+    for i=0,arg.length do
+      str = str .. tostring(arg[i]) .. (i == arg.length and '' or ',')
+    end
+    return str
   end,
   __tojson = function (arg)
     local arr = {};
@@ -423,6 +433,12 @@ Globals
 
 global.this, global.global = global, global
 
+-- Number
+
+global.Number = luafunctor(function (n) 
+  return tonumber(n)
+end)
+
 -- Object
 
 global.Object = {}
@@ -482,6 +498,7 @@ end)
 -- Math
 
 global.Math = global._obj({
+  abs = luafunctor(math.abs),
   max = luafunctor(math.max),
   sqrt = luafunctor(math.sqrt),
   floor = luafunctor(math.floor),
@@ -615,7 +632,10 @@ global.process = global._obj({
   end,
   binding = function (self, key)
     return _G['_colony_binding_' + key](global);
-  end
+  end,
+  env = global._obj({
+    DEPLOY_IP = "$$$ENV_DEPLOY_IP$$$"
+  })
 })
 
 -- buffer

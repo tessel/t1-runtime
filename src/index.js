@@ -550,6 +550,7 @@ function colonizeModule (src) {
  */
 
 function runluacode (luacode) {
+  luacode = 'package.path = ' + JSON.stringify(path.join(__dirname, '../lib') + '/?.lua;') + ' .. package.path; \n' + luacode;
   var lua = require('child_process').spawn(path.join(__dirname, '../bin/lua-5.2.2/src/lua'), ['-e', luacode]);
   process.stdin.pipe(lua.stdin);
   lua.stdout.on('data', function (str) {
