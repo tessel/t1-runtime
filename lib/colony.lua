@@ -66,6 +66,42 @@ global._obj = function (o)
   mt.__index = function (self, key)
     return proto_get(self, obj_proto, key)
   end
+  local function objtostring (obj, sset)
+    local vals = {}
+    sset[obj] = true
+    for k, v in pairs(obj) do
+      if sset[v] ~= true then
+        sset[v] = true
+        if type(v) == 'string' then
+          v = '\'' + v + '\''
+        elseif type(v) == 'table' then
+          v = objtostring(v, sset)
+        end
+      else
+        v = '[Circular]'
+      end
+      if global.Array:isArray(obj) then
+        table.insert(vals, v)
+      else 
+        table.insert(vals, k + ": " + v)
+      end
+    end
+    if global.Array:isArray(obj) then
+      if #vals == 0 then
+        return "[]"
+      end
+      table.insert(vals, 1, table.remove(vals))
+      return "[ " + table.concat(vals, ", ") + " ]"
+    else
+      if #vals == 0 then
+        return "{}"
+      end
+      return "{ " + table.concat(vals, ", ") + " }"
+    end
+  end
+  mt.__tostring = function (self)
+    return objtostring(self, {})
+  end
   setmetatable(o, mt)
   return o
 end
