@@ -1,4 +1,3 @@
-
 var EventEmitter = (function () {
 
   function EventEmitter () { }
@@ -55,4 +54,5 @@ stream.on('data', function (data) {
   console.log(data);
 });
 
+// Should print "Cool, this works."
 stream.emit('data', 'Cool, this works.');

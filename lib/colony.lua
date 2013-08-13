@@ -126,19 +126,19 @@ end
 funccache = {}
 setmetatable(funccache, {__mode = 'k'})
 
-func_mt.__index = function (self, p)
+func_mt.__index = function (self, key)
   local fobj = funccache[self]
-  if p == 'prototype' then
+  if key == 'prototype' then
     if fobj == nil then
       funccache[self] = {}
       fobj = funccache[self]
     end
-    if fobj[p] == nil then
-      fobj[p] = global._obj({})
+    if fobj[key] == nil then
+      fobj[key] = global._obj({})
     end
   end
-  if fobj and fobj[p] ~= nil then
-    return fobj[p]
+  if fobj and fobj[key] ~= nil then
+    return fobj[key]
   end
   return proto_get(self, func_proto, key)
 end
