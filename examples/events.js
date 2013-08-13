@@ -56,3 +56,19 @@ stream.on('data', function (data) {
 
 // Should print "Cool, this works."
 stream.emit('data', 'Cool, this works.');
+
+function TestClass () {
+  this.str = "Extending works too!!!"
+}
+
+TestClass.prototype = new EventEmitter();
+
+TestClass.prototype.hello = function () {
+  this.emit('data', this.str);
+}
+
+var t = new TestClass();
+t.on('data', function (data) {
+  console.log(data);
+})
+t.hello();
