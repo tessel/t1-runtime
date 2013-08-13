@@ -253,6 +253,14 @@ num_proto.toFixed = function (num, n)
   return string.format("%." .. tonumber(n) .. "f", num)
 end
 
+num_proto.toString = function (num, n)
+  if n == 16 then
+    return string.format("%x", num)
+  else
+    return tostring(num)
+  end
+end
+
 -- string prototype
 
 str_proto.charCodeAt = function (str, i, a)
@@ -537,7 +545,9 @@ global.Math = global._obj({
   max = luafunctor(math.max),
   sqrt = luafunctor(math.sqrt),
   floor = luafunctor(math.floor),
-  random = luafunctor(math.random)
+  random = function ()
+    return math.random()
+  end
 })
 
 -- Error
