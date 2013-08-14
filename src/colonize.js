@@ -106,6 +106,8 @@ function colonize (node) {
       if (node.operator != '=') {
         if (node.operator == '|=') {
           node.right.update('_bit.bor(' + node.left.source() + ', ' + node.right.source() + ')');
+        } else if (node.operator == '&=') {
+          node.right.update('_bit.band(' + node.left.source() + ', ' + node.right.source() + ')');
         } else {
           node.right.update(node.left.source() + ' ' + node.operator.substr(0, 1) + ' ' + node.right.source());
         }
