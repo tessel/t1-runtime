@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "colors": "~0.6.1",
-    "falafel": "~0.2.1",
+    "falafel": "~0.3.0",
     "optimist": "~0.5.2",
     "my-local-ip": "~1.0.0",
     "module-deps": "~1.0.1",
