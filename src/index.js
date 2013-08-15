@@ -89,7 +89,7 @@ function bundleFiles (srcs, inject, next) {
   mdeps(srcs, {
     resolve: function (id, info, cb) {
       if (id in inject) {
-        require('browser-resolve')('./', inject[id] + '/index.js', cb);
+        require('browser-resolve')(inject[id] + '/index.js', __filename, cb);
       } else {
         require('browser-resolve').apply(null, arguments);
       }
