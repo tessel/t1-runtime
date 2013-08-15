@@ -27,7 +27,7 @@ function bottomUpTree(item,depth){
 }
 
 
-var minDepth = 12;
+var minDepth = 14;
 var n = 4;
 var maxDepth = Math.max(minDepth + 2, n);
 var stretchDepth = maxDepth + 1;
@@ -44,7 +44,7 @@ for (var depth=minDepth; depth<=maxDepth; depth+=2){
       check += bottomUpTree(i,depth).itemCheck();
       check += bottomUpTree(-i,depth).itemCheck();
    }
-   console.log('Bytes allocated:', process.memoryUsage().heapUsed / 1024 / 1024 + 'mb');
+   // console.log('Bytes allocated:', process.memoryUsage().heapUsed / 1024 / 1024 + 'mb');
    console.log(iterations*2 + "\t trees of depth " + depth + "\t check: " + check);
 }
 
