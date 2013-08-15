@@ -58,7 +58,7 @@ function bundleDependencies (deps, next) {
   deps.forEach(function (dep) {
     out.push('[' + JSON.stringify(dep.id) + '] = {\n\tfunc = ' + colonize(dep.source));
     out.push(',\ndeps = ' + luastringifytable(dep.deps) + '\n},');
-  })
+  });
   out.push('}')
   out.push('');
   out.push('collectgarbage();'); // for good measure
@@ -70,7 +70,12 @@ function bundleDependencies (deps, next) {
   next(out.join('\n'));
 }
 
-function bundleFiles (srcs, next) {
+function bundleFiles (srcs, inject, next) {
+  if (!next) {
+    next = inject;
+    inject = {};
+  }
+
   var stringify = JSONStream.stringify();
   var buf = [];
   stringify.on('data', function (data) {
@@ -81,7 +86,15 @@ function bundleFiles (srcs, next) {
     bundleDependencies(deps, next);
   });
 
-  mdeps(srcs).pipe(stringify);
+  mdeps(srcs, {
+    resolve: function (id, info, cb) {
+      if (id in inject) {
+        require('browser-resolve')('./', inject[id] + '/index.js', cb);
+      } else {
+        require('browser-resolve').apply(null, arguments);
+      }
+    }
+  }).pipe(stringify);
 }
 
 
