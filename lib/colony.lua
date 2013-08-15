@@ -748,15 +748,17 @@ end
 colony = {
   global = global,
   enter = function (deps, entry)
-    local req = function (self, key)
-      return colony.run(deps[deps[entry].deps[key]].func, req)
+    local function req (self, key, entry)
+      return colony.run(deps[deps[entry].deps[key]].func, req, deps[entry].deps[key])
     end
-    return colony.run(deps[entry].func, req)
+    return colony.run(deps[entry].func, req, entry)
   end,
-  run = function (fn, req)
+  run = function (fn, req, entry)
     local myglobal = {}
     setmetatable(myglobal, {__index = global})
-    myglobal.require = req
+    myglobal.require = function (self, key)
+      return req(self, key, entry)
+    end
     setfenv(fn, myglobal)
     return fn(myglobal)
   end
