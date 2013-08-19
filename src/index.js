@@ -87,9 +87,16 @@ function bundleFiles (srcs, inject, next) {
   });
 
   mdeps(srcs, {
+    filter: function (id) {
+      return !(id in inject) || inject[id] != null;
+    },
     resolve: function (id, info, cb) {
       if (id in inject) {
-        require('browser-resolve')(inject[id] + '/index.js', __filename, cb);
+        if (inject[id] == null) {
+          cb(null, null, null);
+        } else {
+          require('browser-resolve')(inject[id] + '/index.js', __filename, cb);
+        }
       } else {
         require('browser-resolve').apply(null, arguments);
       }

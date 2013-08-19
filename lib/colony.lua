@@ -678,7 +678,7 @@ global.process = global._obj({
   binding = function (self, key)
     return _G['_colony_binding_' + key](global);
   end,
-  env = global._obj({})
+  env = global._obj({}),
 })
 
 -- buffer
@@ -747,20 +747,50 @@ end
 
 colony = {
   global = global,
+
+  -- take a deps object and an entry key, run code
   enter = function (deps, entry)
-    local function req (self, key, entry)
-      return colony.run(deps[deps[entry].deps[key]].func, req, deps[entry].deps[key])
+    local cache = {}
+
+    -- require() function
+    -- caches modules against repeated inclusion
+    local function req (self, key, origin)
+      -- built-in
+      if cache['!' .. key] then
+        return cache['!' .. key]
+      end
+
+      -- generic caching and paths
+      local id = deps[origin].deps[key]
+      if not id then
+        error("Module \"" .. key .. "\" not found required from " .. origin .. ".")
+      end
+      if cache[id] then
+        return cache[id]
+      else 
+        cache[id] = colony.run(deps[id].func, req, id, cache)
+        return cache[id]
+      end
     end
-    return colony.run(deps[entry].func, req, entry)
+
+    -- Run code
+    return colony.run(deps[entry].func, req, entry, cache)
   end,
-  run = function (fn, req, entry)
+
+  -- takes a function, a requirement function, a source point, and a module cache
+  run = function (fn, req, origin, cache)
+    -- create fake global object with intercepted require function.
     local myglobal = {}
     setmetatable(myglobal, {__index = global})
     myglobal.require = function (self, key)
-      return req(self, key, entry)
+      return req(self, key, origin)
     end
+    myglobal.require.cache = cache -- custom
     setfenv(fn, myglobal)
+
+    -- Call function.
     return fn(myglobal)
   end
 }
+
 return colony
