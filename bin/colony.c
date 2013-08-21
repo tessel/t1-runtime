@@ -1,5 +1,10 @@
 #include "colony.h"
 
+typedef struct {
+  int size;
+  char values[1];
+} Buffer_t;
+
 
 static void stackDump (lua_State *L) {
       int i;
@@ -29,6 +34,98 @@ static void stackDump (lua_State *L) {
       }
       printf("\n");  /* end the listing */
     }
+
+/**
+ * Colony buffer
+ */
+
+static int colony_buffer_new (lua_State *L)
+{
+    size_t n = (size_t) lua_tonumber(L, 2);
+    size_t nbytes = sizeof(Buffer_t) + (n - 1)*sizeof(uint8_t);
+
+    Buffer_t *a = (Buffer_t *)lua_newuserdata(L, nbytes);
+    
+    luaL_getmetatable(L, "colony.Buffer");
+    lua_setmetatable(L, -2);
+    
+    a->size = n;
+    return 1;  /* new userdatum is already on the stack */
+}
+
+static Buffer_t *colony_buffer_verify (lua_State *L)
+{
+    void *ud = luaL_checkudata(L, 1, "colony.Buffer");
+    luaL_argcheck(L, ud != NULL, 1, "`array' expected");
+    return (Buffer_t *)ud;
+}
+
+
+static int colony_buffer_size (lua_State *L)
+{
+    Buffer_t *a = colony_buffer_verify(L);
+    lua_pushnumber(L, a->size);
+    return 1;
+}
+
+
+static uint8_t *colony_buffer_ptr (lua_State *L)
+{
+    Buffer_t *a = colony_buffer_verify(L);
+    size_t index = (size_t) lua_tonumber(L, 2);
+    
+    luaL_argcheck(L, 0 <= index && index < a->size, 2, "index out of range");
+    
+    /* return element address */
+    return &a->values[index];
+}
+
+
+static int colony_buffer_set (lua_State *L)
+{
+    uint8_t newvalue = (uint8_t) lua_tonumber(L, 3);
+    *colony_buffer_ptr(L) = newvalue;
+    return 0;
+}
+
+
+static int colony_buffer_get (lua_State *L)
+{
+  if (lua_isnumber(L, 2)) {
+    lua_pushnumber(L, *colony_buffer_ptr(L));
+  } else {
+    lua_pushvalue(L, 2);
+    lua_tostring(L, -1);
+    // TODO when not userdata
+    // lua_rawget(L, 1);
+    lua_pushnil(L);
+    if (lua_isnil(L, -1)) {
+      lua_pop(L, 1);
+      luaL_getmetatable(L, "colony.Buffer");
+      lua_getfield(L, -1, "__proto");
+      lua_pushvalue(L, 2);
+      lua_gettable(L, -2);
+    }
+  }
+  return 1;
+}
+
+void colony_buffer_init (lua_State *L)
+{
+
+  luaL_newmetatable(L, "colony.Buffer");
+
+  lua_pushcclosure(L, colony_buffer_get, 0);
+  lua_setfield(L, -2, "__index");
+
+  lua_pushcclosure(L, colony_buffer_set, 0);
+  lua_setfield(L, -2, "__newindex");
+
+  lua_newtable(L);
+  lua_setfield(L, -2, "__proto");  
+
+  lua_remove(L, -1);
+}
 
 
 /**
@@ -148,6 +245,11 @@ void colony_libload (lua_State *L)
   lua_setfield(L, -2, "setInterval");
   lua_pushcclosure(L, colony_dointerrupt, 0);
   lua_setfield(L, -2, "dointerrupt");
+
+  colony_buffer_init(L);
+  lua_pushcclosure(L, colony_buffer_new, 0);
+  lua_setfield(L, -2, "Buffer");
+
   lua_remove(L, -1);
 
   lua_setfield(L, -2, "colony");

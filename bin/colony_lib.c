@@ -4375,95 +4375,13 @@ static int lcf408 (lua_State * L) {
 }
 
 
-/* function (self, p) */
-static int lcf419 (lua_State * L) {
-  enum { lc_nformalargs = 2 };
-  lua_settop(L,2);
-  lc_newclosuretable(L,lua_upvalueindex(1));
-  enum { lc411 = 3 };
-  assert((lua_gettop(L) == lc411));
-  
-  /* if (p == "length") then */
-  enum { lc412 = 3 };
-  lua_pushliteral(L,"length");
-  const int lc413 = lua_compare(L,2,-1,LUA_OPEQ);
-  lua_pop(L,1);
-  lua_pushboolean(L,lc413);
-  const int lc414 = lua_toboolean(L,-1);
-  lua_pop(L,1);
-  if (lc414) {
-    
-    /* if self[0] then */
-    enum { lc415 = 3 };
-    lua_pushnumber(L,0);
-    lua_gettable(L,1);
-    const int lc416 = lua_toboolean(L,-1);
-    lua_pop(L,1);
-    if (lc416) {
-      
-      /* return #self + 1 */
-      lua_len(L,1);
-      lua_pushnumber(L,1);
-      lc_add(L,-2,-1);
-      lua_remove(L,-2);
-      lua_remove(L,-2);
-      return 1;
-      assert(lua_gettop(L) == 3);
-    }
-    lua_settop(L,lc415);
-    assert(lua_gettop(L) == 3);
-    
-    /* return #self */
-    lua_len(L,1);
-    return 1;
-    assert(lua_gettop(L) == 3);
-  }
-  else {
-    
-    /* else
-     * return buf_proto[p] */
-    lc_getupvalue(L,lc411,1,17);
-    lua_pushvalue(L,2);
-    lua_gettable(L,-2);
-    lua_remove(L,-2);
-    return 1;
-    assert(lua_gettop(L) == 3);
-  }
-  lua_settop(L,lc412);
-  assert(lua_gettop(L) == 3);
-  return 0;
-}
-
-
-/* function (self, size) */
-static int lcf421 (lua_State * L) {
-  enum { lc_nformalargs = 2 };
-  lua_settop(L,2);
-  lc_newclosuretable(L,lua_upvalueindex(1));
-  enum { lc420 = 3 };
-  assert((lua_gettop(L) == lc420));
-  
-  /* setmetatable(self, buffer_mt) */
-  lua_getglobal(L,"setmetatable");
-  lua_pushvalue(L,1);
-  lc_getupvalue(L,lc420,1,18);
-  lua_call(L,2,0);
-  assert(lua_gettop(L) == 3);
-  
-  /* return self */
-  lua_pushvalue(L,1);
-  return 1;
-  assert(lua_gettop(L) == 3);
-}
-
-
 /* function (self, str) */
-static int lcf425 (lua_State * L) {
+static int lcf412 (lua_State * L) {
   enum { lc_nformalargs = 2 };
   lua_settop(L,2);
   lc_newclosuretable(L,lua_upvalueindex(1));
-  enum { lc422 = 3 };
-  assert((lua_gettop(L) == lc422));
+  enum { lc409 = 3 };
+  assert((lua_gettop(L) == lc409));
   
   /* local fn = load(str, nil, "t") */
   lua_getglobal(L,"load");
@@ -4483,11 +4401,11 @@ static int lcf425 (lua_State * L) {
   lua_insert(L,-2);
   lua_pushliteral(L,"stillgood ");
   lua_getglobal(L,"tostring");
-  const int lc423 = lua_gettop(L);
+  const int lc410 = lua_gettop(L);
   lua_getglobal(L,"collectgarbage");
   lua_pushliteral(L,"count");
   lua_call(L,1,LUA_MULTRET);
-  lua_call(L,(lua_gettop(L) - lc423),1);
+  lua_call(L,(lua_gettop(L) - lc410),1);
   lc_add(L,-2,-1);
   lua_remove(L,-2);
   lua_remove(L,-2);
@@ -4499,7 +4417,7 @@ static int lcf425 (lua_State * L) {
   assert(lua_gettop(L) == 4);
   
   /* if fn then */
-  enum { lc424 = 4 };
+  enum { lc411 = 4 };
   if (lua_toboolean(L,4)) {
     
     /* local code, res = pcall(fn) */
@@ -4521,7 +4439,7 @@ static int lcf425 (lua_State * L) {
     return 1;
     assert(lua_gettop(L) == 4);
   }
-  lua_settop(L,lc424);
+  lua_settop(L,lc411);
   assert(lua_gettop(L) == 4);
   return 0;
 }
@@ -4533,15 +4451,15 @@ static int lcf1_findenv (lua_State * L) {
   enum { lc_nformalargs = 1 };
   lua_settop(L,1);
   lc_newclosuretable(L,lua_upvalueindex(1));
-  enum { lc429 = 2 };
-  assert((lua_gettop(L) == lc429));
+  enum { lc416 = 2 };
+  assert((lua_gettop(L) == lc416));
   
   /* local level = 1 */
   lua_pushnumber(L,1);
   assert(lua_gettop(L) == 3);
   
   /* repeat */
-  enum { lc430 = 3 };
+  enum { lc417 = 3 };
   while (1) {
     
     /* local name, value = debug.getupvalue(f, level) */
@@ -4555,14 +4473,14 @@ static int lcf1_findenv (lua_State * L) {
     assert(lua_gettop(L) == 5);
     
     /* if name == '_ENV' then */
-    enum { lc431 = 5 };
+    enum { lc418 = 5 };
     lua_pushliteral(L,"_ENV");
-    const int lc432 = lua_compare(L,4,-1,LUA_OPEQ);
+    const int lc419 = lua_compare(L,4,-1,LUA_OPEQ);
     lua_pop(L,1);
-    lua_pushboolean(L,lc432);
-    const int lc433 = lua_toboolean(L,-1);
+    lua_pushboolean(L,lc419);
+    const int lc420 = lua_toboolean(L,-1);
     lua_pop(L,1);
-    if (lc433) {
+    if (lc420) {
       
       /* return level, value */
       lua_pushvalue(L,3);
@@ -4570,7 +4488,7 @@ static int lcf1_findenv (lua_State * L) {
       return 2;
       assert(lua_gettop(L) == 5);
     }
-    lua_settop(L,lc431);
+    lua_settop(L,lc418);
     assert(lua_gettop(L) == 5);
     
     /* level = level + 1 */
@@ -4580,9 +4498,9 @@ static int lcf1_findenv (lua_State * L) {
     lua_replace(L,3);
     assert(lua_gettop(L) == 5);
     lua_pushnil(L);
-    const int lc434 = lua_compare(L,4,-1,LUA_OPEQ);
+    const int lc421 = lua_compare(L,4,-1,LUA_OPEQ);
     lua_pop(L,1);
-    lua_pushboolean(L,lc434);
+    lua_pushboolean(L,lc421);
     if (lua_toboolean(L,-1)) {
       break;
     }
@@ -4590,7 +4508,7 @@ static int lcf1_findenv (lua_State * L) {
     /* internal: stack cleanup on scope exit */
     lua_pop(L,3);
   }
-  lua_settop(L,lc430);
+  lua_settop(L,lc417);
   assert(lua_gettop(L) == 3);
   
   /* return nil */
@@ -4606,17 +4524,17 @@ static int lcf1_getfenv (lua_State * L) {
   enum { lc_nformalargs = 1 };
   lua_settop(L,1);
   lc_newclosuretable(L,lua_upvalueindex(1));
-  enum { lc435 = 2 };
-  assert((lua_gettop(L) == lc435));
+  enum { lc422 = 2 };
+  assert((lua_gettop(L) == lc422));
   
   /* return(select(2, findenv(f)) or _G) */
   lua_getglobal(L,"select");
-  const int lc436 = lua_gettop(L);
+  const int lc423 = lua_gettop(L);
   lua_pushnumber(L,2);
-  lc_getupvalue(L,lc435,1,19);
+  lc_getupvalue(L,lc422,1,17);
   lua_pushvalue(L,1);
   lua_call(L,1,LUA_MULTRET);
-  lua_call(L,(lua_gettop(L) - lc436),1);
+  lua_call(L,(lua_gettop(L) - lc423),1);
   if (!(lua_toboolean(L,-1))) {
     lua_pop(L,1);
     lua_getglobal(L,"_G");
@@ -4632,17 +4550,17 @@ static int lcf1_setfenv (lua_State * L) {
   enum { lc_nformalargs = 2 };
   lua_settop(L,2);
   lc_newclosuretable(L,lua_upvalueindex(1));
-  enum { lc437 = 3 };
-  assert((lua_gettop(L) == lc437));
+  enum { lc424 = 3 };
+  assert((lua_gettop(L) == lc424));
   
   /* local level = findenv(f) */
-  lc_getupvalue(L,lc437,1,19);
+  lc_getupvalue(L,lc424,1,17);
   lua_pushvalue(L,1);
   lua_call(L,1,1);
   assert(lua_gettop(L) == 4);
   
   /* if level then */
-  enum { lc438 = 4 };
+  enum { lc425 = 4 };
   if (lua_toboolean(L,4)) {
     
     /* debug.setupvalue(f, level, t) */
@@ -4656,7 +4574,7 @@ static int lcf1_setfenv (lua_State * L) {
     lua_call(L,3,0);
     assert(lua_gettop(L) == 4);
   }
-  lua_settop(L,lc438);
+  lua_settop(L,lc425);
   assert(lua_gettop(L) == 4);
   
   /* return f */
@@ -4667,92 +4585,203 @@ static int lcf1_setfenv (lua_State * L) {
 
 
 /* name: req
- * function(self, key, entry) */
+ * function(self, key, origin) */
 static int lcf1_req (lua_State * L) {
   enum { lc_nformalargs = 3 };
   lua_settop(L,3);
   lc_newclosuretable(L,lua_upvalueindex(1));
-  enum { lc441 = 4 };
-  assert((lua_gettop(L) == lc441));
+  enum { lc429 = 4 };
+  assert((lua_gettop(L) == lc429));
   
-  /* return colony.run(deps[deps[entry].deps[key]].func, req, deps[entry].deps[key]) */
-  const int lc442 = lua_gettop(L);
-  lua_getglobal(L,"colony");
-  lua_pushliteral(L,"run");
-  lua_gettable(L,-2);
-  lua_remove(L,-2);
-  lc_getupvalue(L,lc441,2,20);
-  lc_getupvalue(L,lc441,2,20);
-  lua_pushvalue(L,3);
-  lua_gettable(L,-2);
-  lua_remove(L,-2);
-  lua_pushliteral(L,"deps");
-  lua_gettable(L,-2);
-  lua_remove(L,-2);
+  /* -- built-in
+   * if cache['!' .. key] then */
+  enum { lc430 = 4 };
+  lc_getupvalue(L,lc429,2,19);
+  lua_pushliteral(L,"!");
   lua_pushvalue(L,2);
+  lua_concat(L,2);
   lua_gettable(L,-2);
   lua_remove(L,-2);
-  lua_gettable(L,-2);
-  lua_remove(L,-2);
-  lua_pushliteral(L,"func");
-  lua_gettable(L,-2);
-  lua_remove(L,-2);
-  lc_getupvalue(L,lc441,1,21);
-  lc_getupvalue(L,lc441,2,20);
-  lua_pushvalue(L,3);
-  lua_gettable(L,-2);
-  lua_remove(L,-2);
-  lua_pushliteral(L,"deps");
-  lua_gettable(L,-2);
-  lua_remove(L,-2);
-  lua_pushvalue(L,2);
-  lua_gettable(L,-2);
-  lua_remove(L,-2);
-  lua_call(L,3,LUA_MULTRET);
-  return (lua_gettop(L) - lc442);
+  const int lc431 = lua_toboolean(L,-1);
+  lua_pop(L,1);
+  if (lc431) {
+    
+    /* return cache['!' .. key] */
+    lc_getupvalue(L,lc429,2,19);
+    lua_pushliteral(L,"!");
+    lua_pushvalue(L,2);
+    lua_concat(L,2);
+    lua_gettable(L,-2);
+    lua_remove(L,-2);
+    return 1;
+    assert(lua_gettop(L) == 4);
+  }
+  lua_settop(L,lc430);
   assert(lua_gettop(L) == 4);
+  
+  /* -- generic caching and paths
+   * local id = deps[origin].deps[key] */
+  lc_getupvalue(L,lc429,3,18);
+  lua_pushvalue(L,3);
+  lua_gettable(L,-2);
+  lua_remove(L,-2);
+  lua_pushliteral(L,"deps");
+  lua_gettable(L,-2);
+  lua_remove(L,-2);
+  lua_pushvalue(L,2);
+  lua_gettable(L,-2);
+  lua_remove(L,-2);
+  assert(lua_gettop(L) == 5);
+  
+  /* if not id then */
+  enum { lc432 = 5 };
+  lua_pushboolean(L,!(lua_toboolean(L,5)));
+  const int lc433 = lua_toboolean(L,-1);
+  lua_pop(L,1);
+  if (lc433) {
+    
+    /* error("Module \"" .. key .. "\" not found required from " .. origin .. ".") */
+    lua_getglobal(L,"error");
+    lua_pushliteral(L,"Module \"");
+    lua_pushvalue(L,2);
+    lua_pushliteral(L,"\" not found required from ");
+    lua_pushvalue(L,3);
+    lua_pushliteral(L,".");
+    lua_concat(L,2);
+    lua_concat(L,2);
+    lua_concat(L,2);
+    lua_concat(L,2);
+    lua_call(L,1,0);
+    assert(lua_gettop(L) == 5);
+  }
+  lua_settop(L,lc432);
+  assert(lua_gettop(L) == 5);
+  
+  /* if cache[id] then */
+  enum { lc434 = 5 };
+  lc_getupvalue(L,lc429,2,19);
+  lua_pushvalue(L,5);
+  lua_gettable(L,-2);
+  lua_remove(L,-2);
+  const int lc435 = lua_toboolean(L,-1);
+  lua_pop(L,1);
+  if (lc435) {
+    
+    /* return cache[id] */
+    lc_getupvalue(L,lc429,2,19);
+    lua_pushvalue(L,5);
+    lua_gettable(L,-2);
+    lua_remove(L,-2);
+    return 1;
+    assert(lua_gettop(L) == 5);
+  }
+  else {
+    
+    /* else
+     * cache[id] = colony.run(deps[id].func, req, id, cache) */
+    lua_getglobal(L,"colony");
+    lua_pushliteral(L,"run");
+    lua_gettable(L,-2);
+    lua_remove(L,-2);
+    lc_getupvalue(L,lc429,3,18);
+    lua_pushvalue(L,5);
+    lua_gettable(L,-2);
+    lua_remove(L,-2);
+    lua_pushliteral(L,"func");
+    lua_gettable(L,-2);
+    lua_remove(L,-2);
+    lc_getupvalue(L,lc429,1,20);
+    lua_pushvalue(L,5);
+    lc_getupvalue(L,lc429,2,19);
+    lua_call(L,4,1);
+    lc_getupvalue(L,lc429,2,19);
+    lua_insert(L,-2);
+    lua_pushvalue(L,5);
+    lua_insert(L,-2);
+    lua_settable(L,-3);
+    lua_pop(L,1);
+    assert(lua_gettop(L) == 5);
+    
+    /* return cache[id] */
+    lc_getupvalue(L,lc429,2,19);
+    lua_pushvalue(L,5);
+    lua_gettable(L,-2);
+    lua_remove(L,-2);
+    return 1;
+    assert(lua_gettop(L) == 5);
+  }
+  lua_settop(L,lc434);
+  assert(lua_gettop(L) == 5);
+  return 0;
 }
 
 
 /* function (deps, entry) */
-static int lcf444 (lua_State * L) {
+static int lcf437 (lua_State * L) {
   enum { lc_nformalargs = 2 };
   lua_settop(L,2);
   lc_newclosuretable(L,lua_upvalueindex(1));
-  enum { lc439 = 3 };
-  assert((lua_gettop(L) == lc439));
+  enum { lc426 = 3 };
+  assert((lua_gettop(L) == lc426));
   lua_pushvalue(L,1);
-  lua_rawseti(L,-2,20);
+  lua_rawseti(L,-2,18);
   
-  /* local function req (self, key, entry)
-   *       return colony.run(deps[deps[entry].deps[key]].func, req, deps[entry].deps[key])
-   *     end */
-  lc_newclosuretable(L,lc439);
-  enum { lc440 = 4 };
-  assert((lua_gettop(L) == lc440));
-  lua_pushvalue(L,lc440);
-  lua_pushcclosure(L,lcf1_req,1);
-  lua_rawseti(L,lc440,21);
+  /* local cache = {} */
+  lc_newclosuretable(L,lc426);
+  enum { lc427 = 4 };
+  assert((lua_gettop(L) == lc427));
+  lua_newtable(L);
+  lua_rawseti(L,lc427,19);
   assert(lua_gettop(L) == 4);
   
-  /* return colony.run(deps[entry].func, req, entry) */
-  const int lc443 = lua_gettop(L);
+  /* -- require() function
+   * -- caches modules against repeated inclusion
+   * local function req (self, key, origin)
+   *       -- built-in
+   *       if cache['!' .. key] then
+   *         return cache['!' .. key]
+   *       end
+   * 
+   *       -- generic caching and paths
+   *       local id = deps[origin].deps[key]
+   *       if not id then
+   *         error("Module \"" .. key .. "\" not found required from " .. origin .. ".")
+   *       end
+   *       if cache[id] then
+   *         return cache[id]
+   *       else 
+   *         cache[id] = colony.run(deps[id].func, req, id, cache)
+   *         return cache[id]
+   *       end
+   *     end */
+  lc_newclosuretable(L,lc427);
+  enum { lc428 = 5 };
+  assert((lua_gettop(L) == lc428));
+  lua_pushvalue(L,lc428);
+  lua_pushcclosure(L,lcf1_req,1);
+  lua_rawseti(L,lc428,20);
+  assert(lua_gettop(L) == 5);
+  
+  /* -- Run code
+   * return colony.run(deps[entry].func, req, entry, cache) */
+  const int lc436 = lua_gettop(L);
   lua_getglobal(L,"colony");
   lua_pushliteral(L,"run");
   lua_gettable(L,-2);
   lua_remove(L,-2);
-  lc_getupvalue(L,lc440,1,20);
+  lc_getupvalue(L,lc428,2,18);
   lua_pushvalue(L,2);
   lua_gettable(L,-2);
   lua_remove(L,-2);
   lua_pushliteral(L,"func");
   lua_gettable(L,-2);
   lua_remove(L,-2);
-  lc_getupvalue(L,lc440,0,21);
+  lc_getupvalue(L,lc428,0,20);
   lua_pushvalue(L,2);
-  lua_call(L,3,LUA_MULTRET);
-  return (lua_gettop(L) - lc443);
-  assert(lua_gettop(L) == 4);
+  lc_getupvalue(L,lc428,1,19);
+  lua_call(L,4,LUA_MULTRET);
+  return (lua_gettop(L) - lc436);
+  assert(lua_gettop(L) == 5);
 }
 
 
@@ -4762,78 +4791,92 @@ static int lcf1_myglobal_require (lua_State * L) {
   enum { lc_nformalargs = 2 };
   lua_settop(L,2);
   lc_newclosuretable(L,lua_upvalueindex(1));
-  enum { lc446 = 3 };
-  assert((lua_gettop(L) == lc446));
+  enum { lc439 = 3 };
+  assert((lua_gettop(L) == lc439));
   
-  /* return req(self, key, entry) */
-  const int lc447 = lua_gettop(L);
-  lc_getupvalue(L,lc446,1,22);
+  /* return req(self, key, origin) */
+  const int lc440 = lua_gettop(L);
+  lc_getupvalue(L,lc439,1,21);
   lua_pushvalue(L,1);
   lua_pushvalue(L,2);
-  lc_getupvalue(L,lc446,1,23);
+  lc_getupvalue(L,lc439,1,22);
   lua_call(L,3,LUA_MULTRET);
-  return (lua_gettop(L) - lc447);
+  return (lua_gettop(L) - lc440);
   assert(lua_gettop(L) == 3);
 }
 
 
-/* function (fn, req, entry) */
-static int lcf449 (lua_State * L) {
-  enum { lc_nformalargs = 3 };
-  lua_settop(L,3);
+/* function (fn, req, origin, cache) */
+static int lcf442 (lua_State * L) {
+  enum { lc_nformalargs = 4 };
+  lua_settop(L,4);
   lc_newclosuretable(L,lua_upvalueindex(1));
-  enum { lc445 = 4 };
-  assert((lua_gettop(L) == lc445));
+  enum { lc438 = 5 };
+  assert((lua_gettop(L) == lc438));
   lua_pushvalue(L,2);
-  lua_rawseti(L,-2,22);
+  lua_rawseti(L,-2,21);
   lua_pushvalue(L,3);
-  lua_rawseti(L,-2,23);
+  lua_rawseti(L,-2,22);
   
-  /* local myglobal = {} */
+  /* -- create fake global object with intercepted require function.
+   * local myglobal = {} */
   lua_newtable(L);
-  assert(lua_gettop(L) == 5);
+  assert(lua_gettop(L) == 6);
   
   /* setmetatable(myglobal, {__index = global}) */
   lua_getglobal(L,"setmetatable");
-  lua_pushvalue(L,5);
+  lua_pushvalue(L,6);
   lua_createtable(L,0,1);
   lua_pushliteral(L,"__index");
-  lc_getupvalue(L,lc445,6,2);
+  lc_getupvalue(L,lc438,4,2);
   lua_rawset(L,-3);
   lua_call(L,2,0);
-  assert(lua_gettop(L) == 5);
+  assert(lua_gettop(L) == 6);
   
   /* myglobal.require = function (self, key)
-   *       return req(self, key, entry)
+   *       return req(self, key, origin)
    *     end */
-  lua_pushvalue(L,lc445);
+  lua_pushvalue(L,lc438);
   lua_pushcclosure(L,lcf1_myglobal_require,1);
   lua_pushliteral(L,"require");
   lua_insert(L,-2);
-  lua_settable(L,5);
-  assert(lua_gettop(L) == 5);
+  lua_settable(L,6);
+  assert(lua_gettop(L) == 6);
   
-  /* setfenv(fn, myglobal) */
+  /* myglobal.require.cache = cache */
+  lua_pushvalue(L,4);
+  lua_pushliteral(L,"require");
+  lua_gettable(L,6);
+  lua_insert(L,-2);
+  lua_pushliteral(L,"cache");
+  lua_insert(L,-2);
+  lua_settable(L,-3);
+  lua_pop(L,1);
+  assert(lua_gettop(L) == 6);
+  
+  /* -- custom
+   * setfenv(fn, myglobal) */
   lua_getglobal(L,"setfenv");
   lua_pushvalue(L,1);
-  lua_pushvalue(L,5);
+  lua_pushvalue(L,6);
   lua_call(L,2,0);
-  assert(lua_gettop(L) == 5);
+  assert(lua_gettop(L) == 6);
   
-  /* return fn(myglobal) */
-  const int lc448 = lua_gettop(L);
+  /* -- Call function.
+   * return fn(myglobal) */
+  const int lc441 = lua_gettop(L);
   lua_pushvalue(L,1);
-  lua_pushvalue(L,5);
+  lua_pushvalue(L,6);
   lua_call(L,1,LUA_MULTRET);
-  return (lua_gettop(L) - lc448);
-  assert(lua_gettop(L) == 5);
+  return (lua_gettop(L) - lc441);
+  assert(lua_gettop(L) == 6);
 }
 
 
 /* name: (main)
  * function(...) */
 int lcf_main (lua_State * L) {
-  lua_checkstack(L,25);
+  lua_checkstack(L,23);
   enum { lc_nformalargs = 0 };
   const int lc_nactualargs = lua_gettop(L);
   const int lc_nextra = (lc_nactualargs - lc_nformalargs);
@@ -5066,7 +5109,16 @@ int lcf_main (lua_State * L) {
   assert(lua_gettop(L) - lc_nextra == 9);
   
   /* -- all prototypes inherit from object
-   * global._obj(func_proto) */
+   * global._obj(global) */
+  lc_getupvalue(L,(lc4 + lc_nextra),1,2);
+  lua_pushliteral(L,"_obj");
+  lua_gettable(L,-2);
+  lua_remove(L,-2);
+  lc_getupvalue(L,(lc4 + lc_nextra),1,2);
+  lua_call(L,1,0);
+  assert(lua_gettop(L) - lc_nextra == 9);
+  
+  /* global._obj(func_proto) */
   lc_getupvalue(L,(lc4 + lc_nextra),1,2);
   lua_pushliteral(L,"_obj");
   lua_gettable(L,-2);
@@ -6376,7 +6428,7 @@ int lcf_main (lua_State * L) {
    *   binding = function (self, key)
    *     return _G['_colony_binding_' + key](global);
    *   end,
-   *   env = global._obj({})
+   *   env = global._obj({}),
    * }) */
   lc_getupvalue(L,(lc350 + lc_nextra),3,2);
   lua_pushliteral(L,"_obj");
@@ -6408,70 +6460,6 @@ int lcf_main (lua_State * L) {
   lua_pop(L,1);
   assert(lua_gettop(L) - lc_nextra == 12);
   
-  /* -- buffer
-   * local buf_proto = {
-   *   
-   * } */
-  lc_newclosuretable(L,(lc350 + lc_nextra));
-  enum { lc409 = 13 };
-  assert((lua_gettop(L) == (lc409 + lc_nextra)));
-  lua_newtable(L);
-  lua_rawseti(L,(lc409 + lc_nextra),17);
-  assert(lua_gettop(L) - lc_nextra == 13);
-  
-  /* local buffer_mt = {
-   *   __index = function (self, p)
-   *     if (p == "length") then
-   *       if self[0] then return #self + 1 end
-   *       return #self
-   *     else
-   *       return buf_proto[p]
-   *     end
-   *   end
-   * } */
-  lc_newclosuretable(L,(lc409 + lc_nextra));
-  enum { lc410 = 14 };
-  assert((lua_gettop(L) == (lc410 + lc_nextra)));
-  lua_createtable(L,0,1);
-  lua_pushliteral(L,"__index");
-  lua_pushvalue(L,(lc409 + lc_nextra));
-  lua_pushcclosure(L,lcf419,1);
-  lua_rawset(L,-3);
-  lua_rawseti(L,(lc410 + lc_nextra),18);
-  assert(lua_gettop(L) - lc_nextra == 14);
-  
-  /* global.Buffer = global._func(function (self, size)
-   *   setmetatable(self, buffer_mt)
-   *   return self
-   * end) */
-  lc_getupvalue(L,(lc410 + lc_nextra),5,2);
-  lua_pushliteral(L,"_func");
-  lua_gettable(L,-2);
-  lua_remove(L,-2);
-  lua_pushvalue(L,(lc410 + lc_nextra));
-  lua_pushcclosure(L,lcf421,1);
-  lua_call(L,1,1);
-  lc_getupvalue(L,(lc410 + lc_nextra),5,2);
-  lua_insert(L,-2);
-  lua_pushliteral(L,"Buffer");
-  lua_insert(L,-2);
-  lua_settable(L,-3);
-  lua_pop(L,1);
-  assert(lua_gettop(L) - lc_nextra == 14);
-  
-  /* global.Buffer.prototype = buf_proto */
-  lc_getupvalue(L,(lc410 + lc_nextra),1,17);
-  lc_getupvalue(L,(lc410 + lc_nextra),5,2);
-  lua_pushliteral(L,"Buffer");
-  lua_gettable(L,-2);
-  lua_remove(L,-2);
-  lua_insert(L,-2);
-  lua_pushliteral(L,"prototype");
-  lua_insert(L,-2);
-  lua_settable(L,-3);
-  lua_pop(L,1);
-  assert(lua_gettop(L) - lc_nextra == 14);
-  
   /* -- poor man's eval
    * global.luaeval = global._func(function (self, str)
    *   local fn = load(str, nil, "t")
@@ -6483,31 +6471,31 @@ int lcf_main (lua_State * L) {
    *     return "[Syntax error in submitted code]"
    *   end
    * end) */
-  lc_getupvalue(L,(lc410 + lc_nextra),5,2);
+  lc_getupvalue(L,(lc350 + lc_nextra),3,2);
   lua_pushliteral(L,"_func");
   lua_gettable(L,-2);
   lua_remove(L,-2);
-  lua_pushcfunction(L,lcf425);
+  lua_pushcfunction(L,lcf412);
   lua_call(L,1,1);
-  lc_getupvalue(L,(lc410 + lc_nextra),5,2);
+  lc_getupvalue(L,(lc350 + lc_nextra),3,2);
   lua_insert(L,-2);
   lua_pushliteral(L,"luaeval");
   lua_insert(L,-2);
   lua_settable(L,-3);
   lua_pop(L,1);
-  assert(lua_gettop(L) - lc_nextra == 14);
+  assert(lua_gettop(L) - lc_nextra == 12);
   
   /* global.collectgarbage = luafunctor(collectgarbage) */
   lua_pushvalue(L,(10 + lc_nextra));
   lua_getglobal(L,"collectgarbage");
   lua_call(L,1,1);
-  lc_getupvalue(L,(lc410 + lc_nextra),5,2);
+  lc_getupvalue(L,(lc350 + lc_nextra),3,2);
   lua_insert(L,-2);
   lua_pushliteral(L,"collectgarbage");
   lua_insert(L,-2);
   lua_settable(L,-3);
   lua_pop(L,1);
-  assert(lua_gettop(L) - lc_nextra == 14);
+  assert(lua_gettop(L) - lc_nextra == 12);
   
   /* -- _tm = global._obj(_tm)
    * -- print('[[end colony mem: ' .. collectgarbage('count') .. 'kb]]');
@@ -6522,16 +6510,16 @@ int lcf_main (lua_State * L) {
   lua_insert(L,-2);
   lua_pushliteral(L,"no");
   lua_call(L,2,0);
-  assert(lua_gettop(L) - lc_nextra == 14);
+  assert(lua_gettop(L) - lc_nextra == 12);
   
   /* if not setfenv then */
-  enum { lc426 = 14 };
+  enum { lc413 = 12 };
   lua_getglobal(L,"setfenv");
   lua_pushboolean(L,!(lua_toboolean(L,-1)));
   lua_remove(L,-2);
-  const int lc427 = lua_toboolean(L,-1);
+  const int lc414 = lua_toboolean(L,-1);
   lua_pop(L,1);
-  if (lc427) {
+  if (lc414) {
     
     /* -- Lua 5.2
      * -- based on http://lua-users.org/lists/lua-l/2010-06/msg00314.html
@@ -6544,67 +6532,96 @@ int lcf_main (lua_State * L) {
      *       level = level + 1
      *     until name == nil
      *     return nil end */
-    lc_newclosuretable(L,(lc410 + lc_nextra));
-    enum { lc428 = 15 };
-    assert((lua_gettop(L) == (lc428 + lc_nextra)));
+    lc_newclosuretable(L,(lc350 + lc_nextra));
+    enum { lc415 = 13 };
+    assert((lua_gettop(L) == (lc415 + lc_nextra)));
     lua_pushcfunction(L,lcf1_findenv);
-    lua_rawseti(L,(lc428 + lc_nextra),19);
-    assert(lua_gettop(L) - lc_nextra == 15);
+    lua_rawseti(L,(lc415 + lc_nextra),17);
+    assert(lua_gettop(L) - lc_nextra == 13);
     
     /* getfenv = function (f) return(select(2, findenv(f)) or _G) end */
-    lua_pushvalue(L,(lc428 + lc_nextra));
+    lua_pushvalue(L,(lc415 + lc_nextra));
     lua_pushcclosure(L,lcf1_getfenv,1);
     lua_setglobal(L,"getfenv");
-    assert(lua_gettop(L) - lc_nextra == 15);
+    assert(lua_gettop(L) - lc_nextra == 13);
     
     /* setfenv = function (f, t)
      *     local level = findenv(f)
      *     if level then debug.setupvalue(f, level, t) end
      *     return f end */
-    lua_pushvalue(L,(lc428 + lc_nextra));
+    lua_pushvalue(L,(lc415 + lc_nextra));
     lua_pushcclosure(L,lcf1_setfenv,1);
     lua_setglobal(L,"setfenv");
-    assert(lua_gettop(L) - lc_nextra == 15);
+    assert(lua_gettop(L) - lc_nextra == 13);
   }
-  lua_settop(L,(lc426 + lc_nextra));
-  assert(lua_gettop(L) - lc_nextra == 14);
+  lua_settop(L,(lc413 + lc_nextra));
+  assert(lua_gettop(L) - lc_nextra == 12);
   
   /* colony = {
    *   global = global,
+   * 
+   *   -- take a deps object and an entry key, run code
    *   enter = function (deps, entry)
-   *     local function req (self, key, entry)
-   *       return colony.run(deps[deps[entry].deps[key]].func, req, deps[entry].deps[key])
+   *     local cache = {}
+   * 
+   *     -- require() function
+   *     -- caches modules against repeated inclusion
+   *     local function req (self, key, origin)
+   *       -- built-in
+   *       if cache['!' .. key] then
+   *         return cache['!' .. key]
+   *       end
+   * 
+   *       -- generic caching and paths
+   *       local id = deps[origin].deps[key]
+   *       if not id then
+   *         error("Module \"" .. key .. "\" not found required from " .. origin .. ".")
+   *       end
+   *       if cache[id] then
+   *         return cache[id]
+   *       else 
+   *         cache[id] = colony.run(deps[id].func, req, id, cache)
+   *         return cache[id]
+   *       end
    *     end
-   *     return colony.run(deps[entry].func, req, entry)
+   * 
+   *     -- Run code
+   *     return colony.run(deps[entry].func, req, entry, cache)
    *   end,
-   *   run = function (fn, req, entry)
+   * 
+   *   -- takes a function, a requirement function, a source point, and a module cache
+   *   run = function (fn, req, origin, cache)
+   *     -- create fake global object with intercepted require function.
    *     local myglobal = {}
    *     setmetatable(myglobal, {__index = global})
    *     myglobal.require = function (self, key)
-   *       return req(self, key, entry)
+   *       return req(self, key, origin)
    *     end
+   *     myglobal.require.cache = cache -- custom
    *     setfenv(fn, myglobal)
+   * 
+   *     -- Call function.
    *     return fn(myglobal)
    *   end
    * } */
   lua_createtable(L,0,3);
   lua_pushliteral(L,"global");
-  lc_getupvalue(L,(lc410 + lc_nextra),5,2);
+  lc_getupvalue(L,(lc350 + lc_nextra),3,2);
   lua_rawset(L,-3);
   lua_pushliteral(L,"enter");
-  lua_pushcfunction(L,lcf444);
+  lua_pushcfunction(L,lcf437);
   lua_rawset(L,-3);
   lua_pushliteral(L,"run");
-  lua_pushvalue(L,(lc410 + lc_nextra));
-  lua_pushcclosure(L,lcf449,1);
+  lua_pushvalue(L,(lc350 + lc_nextra));
+  lua_pushcclosure(L,lcf442,1);
   lua_rawset(L,-3);
   lua_setglobal(L,"colony");
-  assert(lua_gettop(L) - lc_nextra == 14);
+  assert(lua_gettop(L) - lc_nextra == 12);
   
   /* return colony */
   lua_getglobal(L,"colony");
   return 1;
-  assert(lua_gettop(L) - lc_nextra == 14);
+  assert(lua_gettop(L) - lc_nextra == 12);
 }
 
 

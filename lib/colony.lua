@@ -108,6 +108,7 @@ end
 
 -- all prototypes inherit from object
 
+global._obj(global)
 global._obj(func_proto)
 global._obj(num_proto)
 global._obj(bool_proto)
@@ -680,29 +681,6 @@ global.process = global._obj({
   end,
   env = global._obj({}),
 })
-
--- buffer
-
-local buf_proto = {
-  
-}
-
-local buffer_mt = {
-  __index = function (self, p)
-    if (p == "length") then
-      if self[0] then return #self + 1 end
-      return #self
-    else
-      return buf_proto[p]
-    end
-  end
-}
-
-global.Buffer = global._func(function (self, size)
-  setmetatable(self, buffer_mt)
-  return self
-end)
-global.Buffer.prototype = buf_proto
 
 -- poor man's eval
 
