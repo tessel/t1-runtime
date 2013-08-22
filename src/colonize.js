@@ -306,7 +306,7 @@ function colonize (node) {
         (node.usesContinue ? 'local _c = nil; repeat' : ''),
         node.body.source(),
         (node.usesContinue ? 'until true;\nif _c == _break then break end' : ''),
-        node.update ? node.update.source() : '',
+        node.update && node.update.source ? node.update.source() : '',
         'end'
       ].join('\n'))
       break;
