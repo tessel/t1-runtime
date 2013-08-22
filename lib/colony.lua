@@ -701,10 +701,6 @@ global.collectgarbage = luafunctor(collectgarbage)
 
 -- print('[[end colony mem: ' .. collectgarbage('count') .. 'kb]]');
 
--- stdio settings
-
-io.stdout:setvbuf('no')
-
 if not setfenv then -- Lua 5.2
   -- based on http://lua-users.org/lists/lua-l/2010-06/msg00314.html
   -- this assumes f is a function
