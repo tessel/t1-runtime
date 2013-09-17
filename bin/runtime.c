@@ -16,8 +16,13 @@
 int main (int argc, char *argv[])
 {
   lua_State *L = colony_init();
+  lua_gc(L, LUA_GCSETPAUSE, 90);
+  lua_gc(L, LUA_GCSETSTEPMUL, 200);
+  // tm_runtime_init(L);
 
+  // Parse code.
   tm_task_luaparse_start(tm_task_default_loop(), L, argv[1], strlen(argv[1]));
+  // Main loop.
   tm_task_run(tm_task_default_loop());
 
   colony_close(L);

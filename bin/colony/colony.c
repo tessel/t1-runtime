@@ -1,10 +1,5 @@
 #include "colony.h"
-
-typedef struct {
-  int size;
-  char values[1];
-} Buffer_t;
-
+#include "math.h"
 
 static void stackDump (lua_State *L) {
       int i;
@@ -36,7 +31,7 @@ static void stackDump (lua_State *L) {
     }
 
 /**
- * Colony buffer
+ * Buffer
  */
 
 static int colony_buffer_new (lua_State *L)
@@ -45,25 +40,39 @@ static int colony_buffer_new (lua_State *L)
     size_t nbytes = sizeof(Buffer_t) + (n - 1)*sizeof(uint8_t);
 
     Buffer_t *a = (Buffer_t *)lua_newuserdata(L, nbytes);
-    
+
     luaL_getmetatable(L, "colony.Buffer");
     lua_setmetatable(L, -2);
-    
+
     a->size = n;
     return 1;  /* new userdatum is already on the stack */
 }
 
-static Buffer_t *colony_buffer_verify (lua_State *L)
+Buffer_t *colony_buffer_verify (lua_State *L, int idx)
 {
-    void *ud = luaL_checkudata(L, 1, "colony.Buffer");
-    luaL_argcheck(L, ud != NULL, 1, "`array' expected");
+    void *ud = luaL_checkudata(L, idx, "colony.Buffer");
+    luaL_argcheck(L, ud != NULL, idx, "`array' expected");
     return (Buffer_t *)ud;
+}
+
+uint8_t *colony_buffer_ensure (lua_State *L, int idx, size_t *size)
+{
+    void *ud = luaL_checkudata(L, idx, "colony.Buffer");
+    if (ud == NULL) {
+      lua_pushvalue(L, idx);
+      uint8_t *ret = lua_tolstring(L, -1, &size);
+      lua_pop(L, 1);
+      return ret;
+    } else {
+      *size = ((Buffer_t *)ud)->size;
+      return ((Buffer_t *)ud)->values;
+    }
 }
 
 
 static int colony_buffer_size (lua_State *L)
 {
-    Buffer_t *a = colony_buffer_verify(L);
+    Buffer_t *a = colony_buffer_verify(L, 1);
     lua_pushnumber(L, a->size);
     return 1;
 }
@@ -71,11 +80,11 @@ static int colony_buffer_size (lua_State *L)
 
 static uint8_t *colony_buffer_ptr (lua_State *L)
 {
-    Buffer_t *a = colony_buffer_verify(L);
+    Buffer_t *a = colony_buffer_verify(L, 1);
     size_t index = (size_t) lua_tonumber(L, 2);
-    
+
     luaL_argcheck(L, 0 <= index && index < a->size, 2, "index out of range");
-    
+
     /* return element address */
     return &a->values[index];
 }
@@ -88,6 +97,43 @@ static int colony_buffer_set (lua_State *L)
     return 0;
 }
 
+static int colony_buffer_fill (lua_State *L)
+{
+  Buffer_t *a = colony_buffer_verify(L, 1);
+    uint8_t value = (uint8_t) lua_tonumber(L, 2);
+    int start = (int) lua_tonumber(L, 3);
+    int end = (int) lua_tonumber(L, 4);
+
+    luaL_argcheck(L, 0 <= start && start < a->size, 2, "start out of range");
+    luaL_argcheck(L, 0 <= end && end <= a->size, 2, "end out of range");
+
+    for (int i = start; i < end; i++) {
+      a->values[i] = value;
+    }
+    return 0;
+}
+
+static int colony_buffer_copy (lua_State *L)
+{
+  Buffer_t *source = colony_buffer_verify(L, 1);
+  Buffer_t *target = colony_buffer_verify(L, 2);
+    int targetStart = (int) lua_tonumber(L, 3);
+    int sourceStart = (int) lua_tonumber(L, 4);
+    int sourceEnd = (int) lua_tonumber(L, 5);
+
+    luaL_argcheck(L, 0 <= targetStart && targetStart < target->size, 2, "targetStart out of range");
+    luaL_argcheck(L, 0 <= sourceStart && sourceStart < source->size, 2, "sourceStart out of range");
+    luaL_argcheck(L, 0 <= sourceEnd && sourceEnd <= source->size, 2, "sourceEnd out of range");
+
+    for (int i = 0; i < sourceEnd - sourceStart; i++) {
+      if (targetStart + i > target->size) {
+        break;
+      }
+      target->values[targetStart + i] = source->values[sourceStart + i];
+    }
+    return 0;
+}
+
 
 static int colony_buffer_get (lua_State *L)
 {
@@ -95,7 +141,15 @@ static int colony_buffer_get (lua_State *L)
     lua_pushnumber(L, *colony_buffer_ptr(L));
   } else {
     lua_pushvalue(L, 2);
-    lua_tostring(L, -1);
+    char *key = lua_tostring(L, -1);
+    if (strncmp(key, "fill", strlen("fill")) == 0) {
+      lua_pushcclosure(L, colony_buffer_fill, 0);
+      return 1;
+    }
+    if (strncmp(key, "copy", strlen("copy")) == 0) {
+      lua_pushcclosure(L, colony_buffer_copy, 0);
+      return 1;
+    }
     // TODO when not userdata
     // lua_rawget(L, 1);
     lua_pushnil(L);
@@ -112,7 +166,6 @@ static int colony_buffer_get (lua_State *L)
 
 void colony_buffer_init (lua_State *L)
 {
-
   luaL_newmetatable(L, "colony.Buffer");
 
   lua_pushcclosure(L, colony_buffer_get, 0);
@@ -122,15 +175,16 @@ void colony_buffer_init (lua_State *L)
   lua_setfield(L, -2, "__newindex");
 
   lua_newtable(L);
-  lua_setfield(L, -2, "__proto");  
+  lua_setfield(L, -2, "__proto");
 
   lua_remove(L, -1);
 }
 
-
 /**
  * colony_setInterval
  */
+
+static int colony_setInterval_count = 0;
 
 static void colony_setInterval_endpoint (void *_data)
 {
@@ -145,6 +199,9 @@ static int colony_setInterval (lua_State *L)
     return 0;
   }
   int timeout = lua_tonumber(L, 3);
+  if (!(timeout > 0)) {
+    timeout = 1;
+  }
 
   lua_pushvalue(L, 2);
   int ref = luaL_ref(L, LUA_REGISTRYINDEX);
@@ -153,6 +210,8 @@ static int colony_setInterval (lua_State *L)
   data->ref = ref;
   data->L = L;
   tm_task_timer_start(tm_task_default_loop(), colony_setInterval_endpoint, timeout, timeout, data);
+
+  colony_setInterval_count++;
   return 0;
 }
 
@@ -161,11 +220,14 @@ static int colony_setInterval (lua_State *L)
  * colony_setTimeout
  */
 
+static int colony_setTimeout_count = 0;
+
 static void colony_setTimeout_endpoint (void *_data)
 {
   tm_task_lua_endpoint_t *data = (tm_task_lua_endpoint_t *) _data;
 
   tm_task_lua_start(tm_task_default_loop(), data->L, data->ref, 0);
+  colony_setTimeout_count--;
   free(data);
 }
 
@@ -183,14 +245,15 @@ static int colony_setTimeout (lua_State *L)
   data->ref = ref;
   data->L = L;
   tm_task_timer_start(tm_task_default_loop(), colony_setTimeout_endpoint, timeout, 0, data);
+  colony_setTimeout_count++;
   return 0;
 }
 
-static int colony_dointerrupt (lua_State *L)
-{
-  tm_task_interruptall(tm_task_default_loop());
-  return 0;
-}
+//static int colony_dointerrupt (lua_State *L)
+//{
+//  tm_task_interruptall(tm_task_default_loop());
+//  return 0;
+//}
 
 
 /**
@@ -243,8 +306,8 @@ void colony_libload (lua_State *L)
   lua_setfield(L, -2, "setTimeout");
   lua_pushcclosure(L, colony_setInterval, 0);
   lua_setfield(L, -2, "setInterval");
-  lua_pushcclosure(L, colony_dointerrupt, 0);
-  lua_setfield(L, -2, "dointerrupt");
+//  lua_pushcclosure(L, colony_dointerrupt, 0);
+//  lua_setfield(L, -2, "dointerrupt");
 
   colony_buffer_init(L);
   lua_pushcclosure(L, colony_buffer_new, 0);

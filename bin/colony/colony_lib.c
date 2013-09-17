@@ -6499,20 +6499,7 @@ int lcf_main (lua_State * L) {
   
   /* -- _tm = global._obj(_tm)
    * -- print('[[end colony mem: ' .. collectgarbage('count') .. 'kb]]');
-   * -- stdio settings
-   * io.stdout:setvbuf('no') */
-  lua_getglobal(L,"io");
-  lua_pushliteral(L,"stdout");
-  lua_gettable(L,-2);
-  lua_remove(L,-2);
-  lua_pushliteral(L,"setvbuf");
-  lua_gettable(L,-2);
-  lua_insert(L,-2);
-  lua_pushliteral(L,"no");
-  lua_call(L,2,0);
-  assert(lua_gettop(L) - lc_nextra == 12);
-  
-  /* if not setfenv then */
+   * if not setfenv then */
   enum { lc413 = 12 };
   lua_getglobal(L,"setfenv");
   lua_pushboolean(L,!(lua_toboolean(L,-1)));

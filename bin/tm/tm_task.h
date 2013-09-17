@@ -12,19 +12,20 @@
 typedef struct tm_task
 {
   int (*taskfn)(void *);
-  int (*taskinterrupt)(void *);
+  void (*taskinterrupt)(void *);
   void *taskdata;
   void *data;
   struct tm_task *tasknext;
 } tm_task_t;
 
-typedef tm_task_t** tm_task_loop_t;
+typedef volatile tm_task_t** tm_task_loop_t;
 
 tm_task_loop_t tm_task_default_loop (void);
 void tm_task_run (tm_task_loop_t queue);
+void tm_task_run_forever (tm_task_loop_t queue);
 
 // Threadsafe interrupt all
-void tm_task_interruptall ();
+void tm_task_interruptall (tm_task_loop_t queue, void (*cb)(void));
 
 void tm_task_lua_start (tm_task_loop_t queue, lua_State *L, int ref, int dounref);
 void tm_task_luaparse_start (tm_task_loop_t queue, lua_State *L, uint8_t *buf, size_t size);
@@ -32,11 +33,17 @@ void tm_task_luaparse_start (tm_task_loop_t queue, lua_State *L, uint8_t *buf, s
 // Colony
 
 typedef struct {
+  uint8_t alive;
+  int (*userfn)(void *);
+  void *userdata;
+} tm_task_idle_t;
+
+typedef struct {
+  uint8_t alive;
   void (*timerf)(void *);
+  void *userdata;
   double time;
   double repeat;
-  uint8_t alive;
-  void *userdata;
 } tm_task_timer_t;
 
 typedef struct {
