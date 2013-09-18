@@ -3,7 +3,8 @@ var fs = require('fs')
   , colors = require('colors')
   , path = require('path')
   , mdeps = require('module-deps')
-  , JSONStream = require('JSONStream');
+  , JSONStream = require('JSONStream')
+  , luamin = require('luamin');
 
 var colonize = require('./colonize');
 
@@ -50,7 +51,12 @@ function luastringifytable (obj) {
   }).join(', ') + ' }';
 }
 
-function bundleDependencies (deps, next) {
+function bundleDependencies (deps, opts, next) {
+  if (!next) {
+    next = opts;
+    opts = {};
+  }
+
   var out = [];
   out.push('local colony = require(\'colony\');');
   //out.push('local colony = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n');
@@ -66,15 +72,21 @@ function bundleDependencies (deps, next) {
   out.push('return colony.enter(deps, ' + JSON.stringify(deps.filter(function (dep) {
     return dep.entry;
   })[0].id) + ')');
+  var code = out.join('\n');
 
-  next(out.join('\n'));
+  if (opts.bundleLib) {
+    code = code.replace('require(\'colony\')', '(function ()\n' + fs.readFileSync(__dirname + '/../lib/colony.lua') + '\nend)()');
+  }
+
+  next(opts.minify ? luamin.minify(code) : code);
 }
 
-function bundleFiles (srcs, inject, next) {
+function bundleFiles (srcs, opts, next) {
   if (!next) {
-    next = inject;
-    inject = {};
+    next = opts;
+    opts = {};
   }
+  var inject = opts.inject || {};
 
   var stringify = JSONStream.stringify();
   var buf = [];
@@ -83,7 +95,7 @@ function bundleFiles (srcs, inject, next) {
   });
   stringify.on('close', function () {
     var deps = JSON.parse(buf.join(''));
-    bundleDependencies(deps, next);
+    bundleDependencies(deps, opts, next);
   });
 
   mdeps(srcs, {

@@ -665,6 +665,13 @@ end
 
 global.eval = global._func(function () end)
 
+-- extern globals
+
+global.Buffer = _G._colony_global_Buffer
+global.setTimeout = _G._colony_global_setTimeout
+global.setInterval = _G._colony_global_setInterval
+global.setImmediate = _G._colony_global_setImmediate
+
 -- NODE JS
 -- Emulation
 

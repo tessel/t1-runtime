@@ -6,8 +6,7 @@ var fs = require('fs')
   , path = require('path')
   , mdeps = require('module-deps')
   , JSONStream = require('JSONStream')
-  , optimist = require('optimist')
-  , luamin = require('luamin');
+  , optimist = require('optimist');
 
 var colony = require('./');
 
@@ -52,9 +51,11 @@ function cli () {
     // Evaluate string.
     } else if (evalsource) {
 
-      colony.bundleDependencies([
-        {"id": "/example.js","source":evalsource,"entry":true,"deps":{}}
-      ], cli_run);
+      colony.bundleDependencies({
+        inject: [
+          {"id": "/example.js","source":evalsource,"entry":true,"deps":{}}
+        ]
+      }, cli_run);
 
     // Bundle code.
     } else {
@@ -75,24 +76,17 @@ function cli () {
         return name;
       });
 
-      colony.bundleFiles(srcs, function (code) {
-        if (argv.B) {
-          code = code.replace('require(\'colony\')', '(function ()\n' + fs.readFileSync(__dirname + '/../lib/colony.lua') + '\nend)()');
-        }
-
-        cli_run(code);
-      });
+      colony.bundleFiles(srcs, {
+        minify: argv.m,
+        bundleLib: argv.B
+      }, cli_run);
     }
   }
 }
 
 function cli_run (luacode) {
   if (args.argv.c) {
-    if (args.argv.m) {
-      console.log(luamin.minify(luacode));
-    } else {
-      console.log(luacode);
-    }
+    console.log(luacode);
   } else {
     colony.runlua(luacode);
   }
