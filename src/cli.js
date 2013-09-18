@@ -6,21 +6,24 @@ var fs = require('fs')
   , path = require('path')
   , mdeps = require('module-deps')
   , JSONStream = require('JSONStream')
-  , optimist = require('optimist');
+  , optimist = require('optimist')
+  , luamin = require('luamin');
 
 var colony = require('./');
 
 var args = optimist
   .usage('Compile JavaScript to Lua.\nUsage: $0 file1 [file2 file3...]')
-  .alias('b', 'bundle').boolean('b').describe('b', 'Concatenate library and source files.')
+  .alias('b', 'bundle').boolean('b').describe('b', 'Concatenate source files.')
+  .alias('B', 'bundle-colony').boolean('B').describe('B', 'Concatenate library and source files.')
   .alias('c', 'compile').boolean('c').describe('c', 'Compile code to lua and output.')
   .alias('l', 'library').boolean('l').describe('l', 'Output the colony library.')
-  .alias('e', 'evalsource').describe('e', 'Evaluate a line of code.');
+  .alias('e', 'evalsource').describe('e', 'Evaluate a line of code.')
+  .alias('m', 'minify').boolean('m').describe('m', 'Minify output.');
 
 function cli () {
   var argv = args.argv;
 
-  var flagconcat = argv.b || !argv.c;
+  var flagconcat = argv.b || argv.B || !argv.c;
   var evalsource = argv.e;
 
   // List out just the colony lib.
@@ -72,14 +75,24 @@ function cli () {
         return name;
       });
 
-      colony.bundleFiles(srcs, cli_run);
+      colony.bundleFiles(srcs, function (code) {
+        if (argv.B) {
+          code = code.replace('require(\'colony\')', '(function ()\n' + fs.readFileSync(__dirname + '/../lib/colony.lua') + '\nend)()');
+        }
+
+        cli_run(code);
+      });
     }
   }
 }
 
 function cli_run (luacode) {
   if (args.argv.c) {
-    console.log(luacode);
+    if (args.argv.m) {
+      console.log(luamin.minify(luacode));
+    } else {
+      console.log(luacode);
+    }
   } else {
     colony.runlua(luacode);
   }
