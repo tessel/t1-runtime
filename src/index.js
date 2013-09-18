@@ -58,8 +58,11 @@ function bundleDependencies (deps, opts, next) {
   }
 
   var out = [];
-  out.push('local colony = require(\'colony\');');
-  //out.push('local colony = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n');
+  if (opts.bundleLib) {
+    out.push('local colony = (function ()\n' + fs.readFileSync(path.join(__dirname, '../lib/colony.lua')) + '\nend)()\n');
+  } else {
+    out.push('local colony = require(\'colony\');');
+  }
   out.push('local deps = {')
   deps.forEach(function (dep) {
     out.push('[' + JSON.stringify(dep.id) + '] = {\n\tfunc = ' + colonize(dep.source));
@@ -73,10 +76,6 @@ function bundleDependencies (deps, opts, next) {
     return dep.entry;
   })[0].id) + ')');
   var code = out.join('\n');
-
-  if (opts.bundleLib) {
-    code = code.replace('require(\'colony\')', '(function ()\n' + fs.readFileSync(__dirname + '/../lib/colony.lua') + '\nend)()');
-  }
 
   next(opts.minify ? luamin.minify(code) : code);
 }

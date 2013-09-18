@@ -96,7 +96,7 @@ function colonize (node) {
       if (node.source() == 'arguments' && node.parent.type != 'Property') {
         attachIdentifierToContext(node, node);
       }
-      if (node.parent.type != 'MemberExpression') {
+      if (node.parent.type != 'MemberExpression' || node.parent.object == node) {
         node.update(fixIdentifiers(node.source()));
       }
       break;
@@ -404,8 +404,12 @@ function colonize (node) {
 
     case 'MemberExpression':
       if (node.parent.type != 'CallExpression') {
-        node.update("(" + node.object.source() + ")"
-          + '[' + (!node.computed ? JSON.stringify(node.property.source()) : node.property.source()) + ']');
+        if (!node.computed && node.property.source().match(/^[\w_\$]+$/)) {
+          node.update("(" + node.object.source() + ")." + node.property.source());
+        } else {
+          node.update("(" + node.object.source() + ")"
+            + '[' + (!node.computed ? JSON.stringify(node.property.source()) : node.property.source()) + ']');
+        }
       }
       break;
 
