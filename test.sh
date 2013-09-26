@@ -1,0 +1,1 @@
+./LuaJIT-2.0.2/src/luajit -j off undef.lua 
