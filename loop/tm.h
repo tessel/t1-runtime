@@ -9,6 +9,19 @@
 #include <stdint.h>
 #include <setjmp.h>
 
+typedef int tm_socket_t;
+// static int const TM_SOCKET_INVALID = 0;
+#define TM_SOCKET_INVALID NULL
+
+tm_socket_t tm_udp_open ();
+tm_socket_t tm_tcp_open ();
+int tm_tcp_connect (tm_socket_t sock, uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3, uint16_t port);
+int tm_tcp_write (tm_socket_t sock, uint8_t *buf, size_t buflen);
+int tm_tcp_read (tm_socket_t sock, uint8_t *buf, size_t buflen);
+int tm_tcp_readable (tm_socket_t sock);
+
+// tasks
+
 typedef struct tm_task
 {
   int (*taskfn)(void *);

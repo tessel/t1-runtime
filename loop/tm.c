@@ -8,6 +8,60 @@
 #include "tm_debug.h"
 #include "time.h"
 
+#include<stdio.h>
+#include<string.h>    //strlen
+#include<sys/socket.h>
+#include<arpa/inet.h> //inet_addr
+#include <stdint.h>
+#include <sys/time.h>
+
+tm_socket_t tm_udp_open ()
+{
+    return socket(AF_INET, SOCK_STREAM, 0);
+}
+
+tm_socket_t tm_tcp_open ()
+{
+    return socket(AF_INET, SOCK_STREAM, 0);
+}
+
+int tm_tcp_connect (tm_socket_t sock, uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3, uint16_t port)
+{
+    struct sockaddr_in server;
+    server.sin_addr.s_addr = htonl(ip0 << 24 | ip1 << 16 | ip2 << 8 | ip3); // inet_addr("74.125.235.20");
+    server.sin_family = AF_INET;
+    server.sin_port = htons(port);
+    // printf("server: %p, %d, %d\n", server.sin_addr.s_addr, server.sin_family, server.sin_port);
+    return connect(sock, (struct sockaddr *) &server, sizeof(server));
+}
+
+// http://publib.boulder.ibm.com/infocenter/iseries/v5r3/index.jsp?topic=%2Frzab6%2Frzab6xnonblock.htm
+
+int tm_tcp_write (tm_socket_t sock, uint8_t *buf, size_t buflen)
+{
+    return send(sock, buf, buflen, 0);
+}
+
+int tm_tcp_read (tm_socket_t sock, uint8_t *buf, size_t buflen)
+{
+    return recv(sock, buf, buflen, 0);
+}
+
+int tm_tcp_readable (tm_socket_t sock)
+{
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+
+    fd_set readset;
+    FD_ZERO(&readset);
+    FD_SET(sock, &readset);
+    if (select(sock+1, &readset, NULL, NULL, &tv) <= 0) {
+        return 0;
+    }
+    return FD_ISSET(sock, &readset);
+}
+
 
 //double millis () {
 //  struct timeval tv;
