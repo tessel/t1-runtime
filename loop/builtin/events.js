@@ -1,4 +1,6 @@
-
+/**
+ * EventEmitter
+ */
 
 var EventEmitter = (function () {
 
@@ -51,5 +53,10 @@ var EventEmitter = (function () {
 
   return EventEmitter;
 })();
+
+
+/**
+ * Public API
+ */
 
 exports.EventEmitter = EventEmitter;

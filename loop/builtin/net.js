@@ -22,7 +22,7 @@ TCPSocket.prototype.connect = function (port, ip, cb) {
     }, 100);
     cb();
   });
-}
+};
 
 TCPSocket.prototype.write = function (buf, cb) {
   var socket = this.socket;
@@ -32,12 +32,12 @@ TCPSocket.prototype.write = function (buf, cb) {
       cb();
     }
   })
-}
+};
 
 TCPSocket.prototype.close = function () {
   this.socket = tm_tcp_close(this.socket);
   this.emit('close');
-}
+};
 
 exports.connect = function (port, host, callback) {
   var client = new TCPSocket(tm_tcp_open());

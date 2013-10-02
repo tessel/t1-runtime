@@ -33,7 +33,7 @@ typedef struct tm_task
   struct tm *tasknext;
 } tm_task_t;
 
-typedef volatile tm_task_t** tm_loop_t;
+typedef tm_task_t** tm_loop_t;
 
 tm_loop_t tm_default_loop (void);
 void tm_run (tm_loop_t queue);
@@ -44,6 +44,8 @@ void tm_interruptall (tm_loop_t queue, void (*cb)(void));
 
 void tm_lua_start (tm_loop_t queue, lua_State *L, int ref, int dounref);
 void tm_luaparse_start (tm_loop_t queue, lua_State *L, uint8_t *buf, size_t size);
+
+void tm_timer_start (tm_loop_t queue, void (*f)(void *), int time, int repeat, void *data);
 
 // Colony
 

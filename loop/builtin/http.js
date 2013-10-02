@@ -26,7 +26,7 @@ HTTPResponse.prototype.setEncoding = function () {
  * HTTPRequest
  */
 
-function HTTPRequest (port, host) {
+function HTTPRequest (port, host, path) {
   var ipl = tm_hostname_lookup(host);
   if (ipl == 0) {
     throw new Error('Could not lookup hostname.');
@@ -35,7 +35,7 @@ function HTTPRequest (port, host) {
 
   var self = this;
   this.socket = net.connect(port, ip, function () {
-    self.socket.write('GET /200 HTTP/1.1\r\nHost: ' + host + '\r\n\r\n');
+    self.socket.write('GET /' + path + ' HTTP/1.1\r\nHost: ' + host + '\r\n\r\n');
     // self.emit('connect');
   })
   this.socket.on('data', function (data) {
@@ -55,7 +55,7 @@ HTTPRequest.prototype.end = function () {
  */
 
 exports.request = function (opts, onresponse) {
-  var req = new HTTPRequest(opts.port || 80, opts.hostname);
+  var req = new HTTPRequest(opts.port || 80, opts.hostname, opts.path || '');
   onresponse && req.on('response', onresponse);
   return req;
 };

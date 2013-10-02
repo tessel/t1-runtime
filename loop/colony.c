@@ -60,7 +60,7 @@ uint8_t *colony_buffer_ensure (lua_State *L, int idx, size_t *size)
     void *ud = luaL_checkudata(L, idx, "colony.Buffer");
     if (ud == NULL) {
       lua_pushvalue(L, idx);
-      uint8_t *ret = lua_tolstring(L, -1, &size);
+      uint8_t *ret = lua_tolstring(L, -1, size);
       lua_pop(L, 1);
       return ret;
     } else {
@@ -141,7 +141,7 @@ static int colony_buffer_get (lua_State *L)
     lua_pushnumber(L, *colony_buffer_ptr(L));
   } else {
     lua_pushvalue(L, 2);
-    char *key = lua_tostring(L, -1);
+    const char *key = lua_tostring(L, -1);
     if (strncmp(key, "fill", strlen("fill")) == 0) {
       lua_pushcclosure(L, colony_buffer_fill, 0);
       return 1;

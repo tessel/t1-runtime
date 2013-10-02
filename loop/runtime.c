@@ -51,7 +51,7 @@ char *readfile (char *path) {
 int main (int argc, char *argv[])
 {
   lua_State *L = colony_init();
-  luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_OFF);
+  luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
 
   // lua_gc(L, LUA_GCSETPAUSE, 90);
   // lua_gc(L, LUA_GCSETSTEPMUL, 200);

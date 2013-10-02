@@ -88,7 +88,7 @@ int tm_tcp_readable (tm_socket_t sock)
  * Event queue
  */
 
-volatile tm_task_t *default_queue_root = NULL;
+tm_task_t *default_queue_root = NULL;
 tm_loop_t default_queue = &default_queue_root;
 
 tm_loop_t tm_default_loop ()
@@ -96,30 +96,30 @@ tm_loop_t tm_default_loop ()
   return default_queue;
 }
 
-static void tm_push (volatile tm_loop_t queue, tm_task_t *task)
+static void tm_push (tm_loop_t queue, tm_task_t *task)
 {
- tm_task_t *item = *queue;
- if (item == NULL) {
-   *queue = task;
-   return;
- }
- while (item->tasknext != NULL) {
-   item = item->tasknext;
- }
- item->tasknext = task;
+  tm_task_t * item = *queue;
+  if (item == NULL) {
+    *queue = task;
+    return;
+  }
+  while (item->tasknext != NULL) {
+    item = item->tasknext;
+  }
+  item->tasknext = task;
 }
 
-static void tm_remove (volatile tm_loop_t queue, volatile tm_task_t *task)
+static void tm_remove (tm_loop_t queue, tm_task_t *task)
 {
- tm_task_t *item = *queue;
- if (item == task) {
-   *queue = item->tasknext;
-   return;
- }
- while (item->tasknext != task) {
-   item = item->tasknext;
- }
- item->tasknext = task->tasknext;
+  tm_task_t *item = *queue;
+  if (item == task) {
+    *queue = item->tasknext;
+    return;
+  }
+  while (item->tasknext != task) {
+    item = item->tasknext;
+  }
+  item->tasknext = task->tasknext;
 }
 
 static tm_task_t *tm_create (int (*f)(void *), void (*interrupt)(void *), void *taskdata)
@@ -131,14 +131,14 @@ static tm_task_t *tm_create (int (*f)(void *), void (*interrupt)(void *), void *
   return task;
 }
 
-volatile tm_task_t *queue_current = NULL;
+tm_task_t *queue_current = NULL;
 
-volatile static tm_task_t *tm_current (volatile tm_loop_t queue)
+static tm_task_t *tm_current (tm_loop_t queue)
 {
   return queue_current;
 }
 
-static int tm_count (volatile tm_loop_t queue)
+static int tm_count (tm_loop_t queue)
 {
   int count = 0;
   tm_task_t *item = *queue;
@@ -149,12 +149,12 @@ static int tm_count (volatile tm_loop_t queue)
   return count;
 }
 
-void tm_run (volatile tm_loop_t queue)
+void tm_run (tm_loop_t queue)
 {
   while ((*queue) != NULL) {
-    volatile tm_task_t *item = *queue;
+    tm_task_t *item = *queue;
     while (item != NULL) {
-      volatile tm_task_t *last = item;
+      tm_task_t *last = item;
       queue_current = item;
       int remove = (item->taskfn(item->taskdata)) == 0;
       item = item->tasknext;
@@ -166,7 +166,7 @@ void tm_run (volatile tm_loop_t queue)
   }
 }
 
-void tm_run_forever (volatile tm_loop_t queue)
+void tm_run_forever (tm_loop_t queue)
 {
   while (1) {
     tm_run(queue);
@@ -186,7 +186,7 @@ int tm_interruptall_endpoint (void *_data)
   }
 }
 
-void tm_interruptall (volatile tm_loop_t queue, void (*cb)(void))
+void tm_interruptall (tm_loop_t queue, void (*cb)(void))
 {
   tm_task_t *item = *queue;
   while (item != NULL) {
@@ -308,7 +308,7 @@ int tm_luaparse_endpoint (void *_data)
   return 0;
 }
 
-void tm_luaparse_start (volatile tm_loop_t queue, lua_State *L, uint8_t *buf, size_t size)
+void tm_luaparse_start (tm_loop_t queue, lua_State *L, uint8_t *buf, size_t size)
 {
   tm_luaparse_endpoint_t *data = calloc(1, sizeof(tm_luaparse_endpoint_t));
 
@@ -375,7 +375,7 @@ int tm_lua_endpoint (void *_taskdata)
 
 void tm_lua_interrupt_hook (lua_State* L, lua_Debug *ar)
 {
-  volatile tm_task_t *task = tm_current(tm_default_loop());
+  tm_task_t *task = tm_current(tm_default_loop());
   tm_lua_endpoint_t *taskdata = (tm_lua_endpoint_t *) task->taskdata;
   // printf("WHAT IS TASKDATA %p\n", taskdata);
 
@@ -390,7 +390,7 @@ void tm_lua_interrupt (void *_taskdata)
   lua_sethook(taskdata->L, tm_lua_interrupt_hook, LUA_MASKCOUNT, 1);
 }
 
-void tm_lua_start (volatile tm_loop_t queue, lua_State *L, int ref, int dounref)
+void tm_lua_start (tm_loop_t queue, lua_State *L, int ref, int dounref)
 {
   tm_lua_endpoint_t *taskdata = calloc(1, sizeof(tm_lua_endpoint_t));
   taskdata->ref = ref;

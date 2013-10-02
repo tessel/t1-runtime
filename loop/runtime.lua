@@ -1,22 +1,3 @@
-function readfile (name)
-  local prefix = ''
-  local fp = assert(io.open(prefix..name))
-  local s = fp:read("*a")
-  assert(fp:close())
-  return s
-end
-
-function colonize (name)
-  local f = assert(io.popen('colony -c ' .. name, 'r'))
-  local s = assert(f:read('*a'))
-  f:close()
-  return assert(loadstring('return ' .. s, "@"..name))()
-end
-
-local colony = require('colony')
-
------------
-
 local ffi = require('ffi')
 ffi.cdef[[
   typedef int tm_socket_t;
@@ -34,38 +15,20 @@ ffi.cdef[[
   int printf(const char *fmt, ...);
 ]]
 
-local luafunctor = function (f)
-  return (function (this, ...) return f(...) end)
-end
-
-colony.global.tm__hostname__lookup = function (ths, host)
-  return ffi.C.tm_hostname_lookup(ffi.cast('uint8_t *', host))
-end
-colony.global.tm__tcp__open = function (ths)
-  return ffi.C.tm_tcp_open()
-end
-colony.global.tm__tcp__connect = function (ths, sock, ip0, ip1, ip2, ip3, port)
-  return ffi.C.tm_tcp_connect(sock, ip0, ip1, ip2, ip3, port)
-end
-colony.global.tm__tcp__write = function (ths, sock, buf, buflen)
-  return ffi.C.tm_tcp_write(sock, ffi.cast('uint8_t *', buf), buflen)
-end
-colony.global.tm__tcp__read = function (ths, socket)
-  local server_reply = ffi.new("char[2000]");
-  if ffi.C.tm_tcp_read(socket, server_reply, 2000) < 0 then
-    print("recv failed");
-    return nil
-  end
-  return ffi.string(server_reply)
-end
-colony.global.tm__tcp__readable = function (ths, sock)
-  return ffi.C.tm_tcp_readable(sock)
-end
 
 --------------------
 
 -- Returns directory name component of path
 -- Copied and adapted from http://dev.alpinelinux.org/alpine/acf/core/acf-core-0.4.20.tar.bz2/acf-core-0.4.20/lib/fs.lua
+
+
+function readfile (name)
+  local prefix = ''
+  local fp = assert(io.open(prefix..name))
+  local s = fp:read("*a")
+  assert(fp:close())
+  return s
+end
 
 local LUA_DIRSEP = '/'
  
@@ -101,6 +64,49 @@ local function path_dirname (string_)
   return(string_)  
 end
 
+-------------
+
+function colonize (name)
+  local f = assert(io.popen('colony -c ' .. name, 'r'))
+  local s = assert(f:read('*a'))
+  f:close()
+  return assert(loadstring('return ' .. s, "@"..name))()
+end
+
+local colony = require('colony')
+
+-------------
+
+-- Lua API for colony
+
+local luafunctor = function (f)
+  return (function (this, ...) return f(...) end)
+end
+
+colony.global.tm__hostname__lookup = function (ths, host)
+  return ffi.C.tm_hostname_lookup(ffi.cast('uint8_t *', host))
+end
+colony.global.tm__tcp__open = function (ths)
+  return ffi.C.tm_tcp_open()
+end
+colony.global.tm__tcp__connect = function (ths, sock, ip0, ip1, ip2, ip3, port)
+  return ffi.C.tm_tcp_connect(sock, ip0, ip1, ip2, ip3, port)
+end
+colony.global.tm__tcp__write = function (ths, sock, buf, buflen)
+  return ffi.C.tm_tcp_write(sock, ffi.cast('uint8_t *', buf), buflen)
+end
+colony.global.tm__tcp__read = function (ths, socket)
+  local server_reply = ffi.new("char[2000]");
+  if ffi.C.tm_tcp_read(socket, server_reply, 2000) < 0 then
+    print("recv failed");
+    return nil
+  end
+  return ffi.string(server_reply)
+end
+colony.global.tm__tcp__readable = function (ths, sock)
+  return ffi.C.tm_tcp_readable(sock)
+end
+
 
 
 ------------------
@@ -121,4 +127,4 @@ function colony_run (name, root)
   return res()
 end
 
-colony_run('./examples/google-http')
+colony_run('./examples/http')
