@@ -1,7 +1,4 @@
 
-/**
- * require('events')
- */
 
 var EventEmitter = (function () {
 
@@ -55,60 +52,4 @@ var EventEmitter = (function () {
   return EventEmitter;
 })();
 
-
-function TCP (socket) {
-  this.socket = socket;
-}
-
-TCP.prototype = new EventEmitter();
-
-TCP.prototype.connect = function (port, ip, cb) {
-  var ips = ip.split('.');
-  var client = this;
-  setImmediate(function () {
-    tm_tcp_connect(client.socket, Number(ips[0]), Number(ips[1]), Number(ips[2]), Number(ips[3]), Number(port));
-    setInterval(function () {
-      while (tm_tcp_readable(client.socket) > 0) {
-        var buf = tm_tcp_read(client.socket);
-        client.emit('data', buf);
-      }
-    }, 100);
-    cb();
-  });
-}
-
-TCP.prototype.write = function (buf, cb) {
-  var socket = this.socket;
-  setImmediate(function () {
-    tm_tcp_write(socket, buf, buf.length);
-    if (cb) {
-      cb();
-    }
-  })
-}
-
-TCP.prototype.close = function () {
-  this.socket = tm_tcp_close(this.socket);
-  this.emit('close');
-}
-
-net = {
-  connect: function (port, host, callback) {
-    var client = new TCP(tm_tcp_open());
-    client.connect(port, host, callback);
-    return client;
-  }
-};
-
-// var net = require('net');
-var client = net.connect(80, '74.125.235.20', function() { //'connect' listener
-  console.log('client connected');
-  client.write('GET / HTTP/1.1\r\n\r\n');
-});
-client.on('data', function(data) {
-  console.log(String(data));
-  // client.end();
-});
-// client.on('end', function() {
-//   console.log('client disconnected');
-// });
+exports.EventEmitter = EventEmitter;

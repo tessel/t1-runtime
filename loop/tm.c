@@ -8,12 +8,13 @@
 #include "tm_debug.h"
 #include "time.h"
 
-#include<stdio.h>
-#include<string.h>    //strlen
-#include<sys/socket.h>
-#include<arpa/inet.h> //inet_addr
+#include <stdio.h>
+#include <string.h>    //strlen
+#include <sys/socket.h>
+#include <arpa/inet.h> //inet_addr
 #include <stdint.h>
 #include <sys/time.h>
+#include  <netdb.h>
 
 tm_socket_t tm_udp_open ()
 {
@@ -23,6 +24,18 @@ tm_socket_t tm_udp_open ()
 tm_socket_t tm_tcp_open ()
 {
     return socket(AF_INET, SOCK_STREAM, 0);
+}
+
+uint32_t tm_hostname_lookup (uint8_t *hostname)
+{
+  struct hostent *h;
+
+  /* get the host info */
+  if ((h = gethostbyname(hostname)) == NULL) {
+    herror("gethostbyname(): ");
+    return 0;
+  }
+  return ((struct in_addr *)h->h_addr)->s_addr;
 }
 
 int tm_tcp_connect (tm_socket_t sock, uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3, uint16_t port)
@@ -273,7 +286,7 @@ int tm_luaparse_endpoint (void *_data)
 {
   tm_luaparse_endpoint_t *data = (tm_luaparse_endpoint_t *) _data;
 
-  int ret_lb = luaL_loadbuffer(data->L, (char *) data->buf, data->size, "usercode");
+  int ret_lb = luaL_loadbuffer(data->L, (char *) data->buf, data->size, "runtime");
   if (ret_lb != 0) {
   const char* err_str = luaL_checkstring(data->L, -1);
     if (ret_lb == 4) {
@@ -341,17 +354,17 @@ int tm_lua_endpoint (void *_taskdata)
   if (setjmp(taskdata->jmp) == 0) {
     error = lua_pcall(taskdata->L, 0, 0, -2);
   }
-if (error != 0) {
-  if (error == 4) {
-    TM_COMMAND('u', "ERROR: Not enough memory to execute code.");
-  } else if (error == 2) {
-    TM_COMMAND('u', "ERROR: Thrown from code: %s", lua_tostring(taskdata->L, -1));
-  } else {
-    TM_COMMAND('u', "ERROR: Could not run code: %d", error);
+  if (error != 0) {
+    if (error == 4) {
+      TM_COMMAND('u', "ERROR: Not enough memory to execute code.");
+    } else if (error == 2) {
+      TM_COMMAND('u', "ERROR: Thrown from code: %s", lua_tostring(taskdata->L, -1));
+    } else {
+      TM_COMMAND('u', "ERROR: Could not run code: %d", error);
+    }
+    lua_pop(taskdata->L, 1);
   }
   lua_pop(taskdata->L, 1);
-}
-lua_pop(taskdata->L, 1);
 
   if (taskdata->dounref) {
     luaL_unref(taskdata->L, LUA_REGISTRYINDEX, taskdata->ref);
