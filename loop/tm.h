@@ -30,7 +30,7 @@ typedef struct tm_task
   void (*taskinterrupt)(void *);
   void *taskdata;
   void *data;
-  struct tm *tasknext;
+  struct tm_task *tasknext;
 } tm_task_t;
 
 typedef tm_task_t** tm_loop_t;

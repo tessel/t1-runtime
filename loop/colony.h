@@ -23,7 +23,7 @@ void colony_libload (lua_State *L);
 void colony_close (lua_State *L);
 
 Buffer_t *colony_buffer_verify (lua_State *L, int idx);
-uint8_t *colony_buffer_ensure (lua_State *L, int idx, size_t *size);
+const uint8_t *colony_buffer_ensure (lua_State *L, int idx, size_t *size);
 
 #ifdef __cplusplus
 }

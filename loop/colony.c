@@ -55,12 +55,12 @@ Buffer_t *colony_buffer_verify (lua_State *L, int idx)
     return (Buffer_t *)ud;
 }
 
-uint8_t *colony_buffer_ensure (lua_State *L, int idx, size_t *size)
+const uint8_t *colony_buffer_ensure (lua_State *L, int idx, size_t *size)
 {
     void *ud = luaL_checkudata(L, idx, "colony.Buffer");
     if (ud == NULL) {
       lua_pushvalue(L, idx);
-      uint8_t *ret = lua_tolstring(L, -1, size);
+      const uint8_t *ret = lua_tolstring(L, -1, size);
       lua_pop(L, 1);
       return ret;
     } else {
