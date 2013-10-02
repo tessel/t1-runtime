@@ -1,5 +1,7 @@
+var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var net = require('net');
+
 
 /**
  * HTTPResponse
@@ -15,7 +17,7 @@ function HTTPResponse (data) {
   })
 }
 
-HTTPResponse.prototype = new EventEmitter();
+util.inherits(HTTPResponse, EventEmitter);
 
 HTTPResponse.prototype.setEncoding = function () {
   // TODO
@@ -43,7 +45,7 @@ function HTTPRequest (port, host, path) {
   })
 }
 
-HTTPRequest.prototype = new EventEmitter();
+util.inherits(HTTPRequest, EventEmitter);
 
 HTTPRequest.prototype.end = function () {
   console.log('end');

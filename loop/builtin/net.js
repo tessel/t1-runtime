@@ -1,10 +1,11 @@
+var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 
 function TCPSocket (socket) {
   this.socket = socket;
 }
 
-TCPSocket.prototype = new EventEmitter();
+util.inherits(TCPSocket, EventEmitter);
 
 TCPSocket.prototype.connect = function (port, ip, cb) {
   var ips = ip.split('.');
