@@ -9,6 +9,17 @@ local bit = require('bit32')
 local _, rex = pcall(require, 'rex_pcre')
 -- local rex = nil
 
+function table.concat (t1,t2)
+  for i=1,#t2 do
+    t1[#t1+1] = t2[i]
+  end
+  return t1
+end
+
+function table.pack(...)
+  return { length = select("#", ...), ... }
+end
+
 -- namespace
 
 local global = {}
@@ -377,6 +388,13 @@ end
 func_proto.call = function (func, ths, ...)
   return func(ths, ...)
 end
+func_proto.bind = function (func, ths1, ...)
+  local args1 = table.pack(...)
+  return function (ths2, ...)
+    local args2 = table.pack(...)
+    return func(ths1, unpack(table.concat(args1, args2)))
+  end
+end
 func_proto.apply = function (func, ths, args)
   -- copy args to new args array
   local luargs = {}
@@ -553,10 +571,6 @@ global.Function.prototype = func_proto
 
 -- Array
 
-function table.pack(...)
-  return { length = select("#", ...), ... }
-end
-
 global.Array = luafunctor(function (one, ...)
   local a = table.pack(...)
   if a.length > 0 or type(one) ~= 'number' then
@@ -692,10 +706,6 @@ end
 global._in = function (key, obj)
   return obj[key]
 end
-
--- require function
-
-global.require = luafunctor(require)
 
 -- parseFloat, parseInt
 

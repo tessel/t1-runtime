@@ -34,7 +34,7 @@ local LUA_DIRSEP = '/'
  
 -- https://github.com/leafo/lapis/blob/master/lapis/cmd/path.lua
 local function path_normalize (path)
-  return string.gsub(path, "^%./", "")
+  return string.gsub(path, "%./", "")
 end
 
 local function fs_exists (path)
@@ -115,7 +115,13 @@ end
 
 function colony_run (name, root)
   root = root or './'
-  local res = colonize(path_normalize(root .. name .. '.js'))
+  if string.sub(name, -3) ~= '.js' then
+    name = name .. '.js'
+  end 
+  local res = colonize(path_normalize(root .. name))
+  if not res then
+    return
+  end
   setfenv(res, colony.global)
   colony.global.require = function (ths, value)
     if string.sub(value, 1, 1) == '.' then
@@ -127,4 +133,4 @@ function colony_run (name, root)
   return res()
 end
 
-colony_run('./examples/http')
+colony_run(arg[0])
