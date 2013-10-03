@@ -16,8 +16,10 @@ function table.concat (t1,t2)
   return t1
 end
 
-function table.pack(...)
-  return { length = select("#", ...), ... }
+if not table.pack then
+  function table.pack(...)
+    return { length = select("#", ...), ... }
+  end
 end
 
 -- namespace
@@ -72,7 +74,7 @@ end
 
 -- object prototype and constructor
 
-global._obj = function (o)
+function js_obj (o)
   local mt = getmetatable(o) or {}
   mt.__index = function (self, key)
     return proto_get(self, obj_proto, key)
@@ -117,14 +119,16 @@ global._obj = function (o)
   return o
 end
 
+global._obj = js_obj
+
 -- all prototypes inherit from object
 
-global._obj(global)
-global._obj(func_proto)
-global._obj(num_proto)
-global._obj(bool_proto)
-global._obj(str_proto)
-global._obj(arr_proto)
+js_obj(global)
+js_obj(func_proto)
+js_obj(num_proto)
+js_obj(bool_proto)
+js_obj(str_proto)
+js_obj(arr_proto)
 
 -- function constructor
 
@@ -146,7 +150,7 @@ func_mt.__index = function (self, key)
       fobj = funccache[self]
     end
     if fobj[key] == nil then
-      fobj[key] = global._obj({})
+      fobj[key] = js_obj({})
     end
   end
   if fobj and fobj[key] ~= nil then
@@ -607,7 +611,7 @@ end)
 
 -- Math
 
-global.Math = global._obj({
+global.Math = js_obj({
   abs = luafunctor(math.abs),
   max = luafunctor(math.max),
   sqrt = luafunctor(math.sqrt),
@@ -620,13 +624,13 @@ global.Math = global._obj({
 
 -- Error
 
-global.Error = global._func(function (self, str)
+global.Error = function (self, str)
   getmetatable(self).__tostring = function (self)
     return self.message
   end
   self.message = str
   self.stack = ""
-end)
+end
 
 global.Error.captureStackTrace = function ()
   return {}
@@ -654,7 +658,7 @@ local function logger (out, ...)
   out:write('\n')
 end
 
-global.console = global._obj({
+global.console = js_obj({
   log = function (self, ...)
     logger(io.stdout, ...)
   end,
@@ -739,7 +743,7 @@ end
 
 -- json library
 
--- global.JSON = global._obj({
+-- global.JSON = js_obj({
 --  parse = function (ths, arg)
 --    return json.decode(arg)
 --  end,
@@ -752,7 +756,7 @@ end
 
 -- eval stub
 
-global.eval = global._func(function () end)
+global.eval = function () end
 
 -- extern globals
 
@@ -766,19 +770,19 @@ global.setImmediate = _G._colony_global_setImmediate
 
 -- process
 
-global.process = global._obj({
+global.process = js_obj({
   memoryUsage = function (ths)
-    return global._obj({
+    return js_obj({
       heapUsed=collectgarbage('count')*1024
     });
   end,
   binding = function (self, key)
     return _G['_colony_binding_' + key](global);
   end,
-  versions = global._obj({
+  versions = js_obj({
     node = "0.10.0"
   }),
-  env = global._obj({}),
+  env = js_obj({}),
   stdin = {
     resume = function () end,
     setEncoding = function () end
@@ -788,20 +792,20 @@ global.process = global._obj({
 
 -- poor man's eval
 
-global.luaeval = global._func(function (self, str)
-  local fn = load(str, nil, "t")
-  io.stdout:write('stillgood ' + tostring(collectgarbage('count')) + '\n')
-  if fn then
-    local code, res = pcall(fn)
-    return res
-  else
-    return "[Syntax error in submitted code]"
-  end
-end)
+-- global.luaeval = function (self, str)
+--   local fn = load(str, nil, "t")
+--   io.stdout:write('stillgood ' + tostring(collectgarbage('count')) + '\n')
+--   if fn then
+--     local code, res = pcall(fn)
+--     return res
+--   else
+--     return "[Syntax error in submitted code]"
+--   end
+-- end
 
-global.collectgarbage = luafunctor(collectgarbage)
+-- global.collectgarbage = luafunctor(collectgarbage)
 
--- _tm = global._obj(_tm)
+-- _tm = js_obj(_tm)
 
 -- print('[[end colony mem: ' .. collectgarbage('count') .. 'kb]]');
 

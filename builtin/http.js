@@ -14,7 +14,7 @@ function HTTPResponse (data) {
   var parts = data.split('\r\n\r\n');
   setImmediate(function () {
     self.emit('data', parts[1] || '');
-  })
+  });
 }
 
 util.inherits(HTTPResponse, EventEmitter);
