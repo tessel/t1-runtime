@@ -1,3 +1,6 @@
+collectgarbage()
+print('Start mem:', collectgarbage('count'))
+
 local ffi = require('ffi')
 ffi.cdef[[
   typedef int tm_socket_t;
@@ -73,7 +76,7 @@ function colonize (name)
   return assert(loadstring('return ' .. s, "@"..name))()
 end
 
-local colony = require('colony')
+local colony = require('lib/colony')
 
 -------------
 
@@ -133,4 +136,7 @@ function colony_run (name, root)
   return res()
 end
 
+collectgarbage()
 colony_run(arg[0])
+
+print('End mem:', collectgarbage('count'))
