@@ -1,8 +1,12 @@
 var a = {}
 a.hello = 'A'
 console.log('A:', a.hello)
-a.__defineGetter__('hello', function () {
-  return 'B';
+Object.defineProperties(a, {
+  'hello': {
+    get: function () {
+      return 'B';
+    }
+  }
 });
 a.__defineSetter__('hello', function (val) {
   console.log('called setter (C):', val);

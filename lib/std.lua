@@ -210,22 +210,6 @@ end
 obj_proto.__defineGetter__ = js_define_getter
 obj_proto.__defineSetter__ = js_define_setter
 
--- obj_proto.__defineGetter__ = function (self, key, fn)
---   local idx = getmetatable(self).__index
---   getmetatable(self).__index = function (self, getkey)
---     if key == getkey then
---       return fn(self)
---     else
---       if type(idx) == 'function' then
---         return idx(self, getkey)
---       else
---         return idx[getkey]
---       end
---     end
---   end
--- end
-
-
 -- function prototype
 
 func_proto.call = function (func, ths, ...)
@@ -407,12 +391,25 @@ global.Object = {}
 
 global.Object.prototype = obj_proto
 
-global.Object.defineProperty = function (ths)
-  return ths
+global.Object.defineProperty = function (this, obj, prop, config)
+  if config.value then
+    rawset(obj, prop, config.value)
+  end
+  if config.get then
+    js_define_getter(obj, prop, config.get)
+  end
+  if config.set then
+    js_define_setter(obj, prop, config.set)
+  end
+  -- todo configurable, writeable, enumerable
+  return obj
 end
 
-global.Object.defineProperties = function (ths)
-  return ths
+global.Object.defineProperties = function (this, obj, props)
+  for k, v in js_pairs(props) do
+    global.Object:defineProperty(obj, k, v)
+  end
+  return obj
 end
 
 global.Object.freeze = function (ths)
