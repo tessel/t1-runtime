@@ -616,9 +616,22 @@ end
 global.eval = function () end
 
 -- extern globals
-global.setTimeout = _G._colony_global_setTimeout
-global.setInterval = _G._colony_global_setInterval
-global.setImmediate = _G._colony_global_setImmediate
+-- TODO fix these
+global.setTimeout = function (this, fn, val) 
+  return _G._colony_global_setTimeout(nil, function ()
+    fn(this)
+  end, val)
+end
+global.setInterval = function (this, fn, val) 
+  return _G._colony_global_setInterval(nil, function ()
+    fn(this)
+  end, val)
+end
+global.setImmediate = function (this, fn, val) 
+  return _G._colony_global_setImmediate(nil, function ()
+    fn(this)
+  end, val)
+end
 
 -- NODE JS
 -- Emulation
