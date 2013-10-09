@@ -19,6 +19,8 @@ int tm_tcp_connect (tm_socket_t sock, uint8_t ip0, uint8_t ip1, uint8_t ip2, uin
 int tm_tcp_write (tm_socket_t sock, uint8_t *buf, size_t buflen);
 int tm_tcp_read (tm_socket_t sock, uint8_t *buf, size_t buflen);
 int tm_tcp_readable (tm_socket_t sock);
+int tm_tcp_listen (tm_socket_t sock, int port);
+int tm_tcp_accept (tm_socket_t sock, uint32_t *ip);
 
 uint32_t tm_hostname_lookup (uint8_t *hostname);
 

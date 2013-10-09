@@ -1,5 +1,5 @@
-collectgarbage()
-print('Start mem:', collectgarbage('count'))
+-- collectgarbage()
+-- print('Start mem:', collectgarbage('count'))
 
 local ffi = require('ffi')
 ffi.cdef[[
@@ -13,6 +13,8 @@ ffi.cdef[[
   int tm_tcp_read (tm_socket_t sock, uint8_t *buf, size_t buflen);
   int tm_tcp_readable (tm_socket_t sock);
   uint32_t tm_hostname_lookup (uint8_t *hostname);
+  int tm_tcp_listen (tm_socket_t sock, int port);
+  int tm_tcp_accept (tm_socket_t sock, uint32_t *ip);
 
   size_t strlen(const char * str);
   int printf(const char *fmt, ...);
@@ -109,8 +111,13 @@ end
 colony.global.tm__tcp__readable = function (ths, sock)
   return ffi.C.tm_tcp_readable(sock)
 end
-
-
+colony.global.tm__tcp__listen = function (this, sock, port)
+  return ffi.C.tm_tcp_listen(sock, port)
+end
+colony.global.tm__tcp__accept = function (this, sock)
+  local ip = ffi.new("uint32_t[1]");
+  return ffi.C.tm_tcp_accept(sock, ip)
+end
 
 ------------------
 
@@ -139,4 +146,4 @@ end
 collectgarbage()
 colony_run(arg[0])
 
-print('End mem:', collectgarbage('count'))
+-- print('End mem:', collectgarbage('count'))

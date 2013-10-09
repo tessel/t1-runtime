@@ -220,6 +220,7 @@ function js_arr (a)
     getters = {
       length = array_getter_length
     },
+    values = {},
     __index = js_getter_index(arr_proto),
     __tostring = js_tostring,
     proto = arr_proto

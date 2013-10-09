@@ -114,7 +114,7 @@ end
 
 str_proto.split = function (str, sep, max)
   if sep == '' then
-    local ret = global._arr({})
+    local ret = js_arr({})
     for i=0,str.length-1 do
       ret:push(str:charAt(i));
     end
@@ -135,7 +135,7 @@ str_proto.split = function (str, sep, max)
     end
     ret[i-1] = string.sub(str, start)
   end
-  return global._arr(ret)
+  return js_arr(ret)
 end
 
 str_proto.replace = function (str, match, out)
@@ -279,7 +279,7 @@ arr_proto.unshift = function (ths, elem)
 end
 
 arr_proto.splice = function (ths, i, del, ...)
-  local ret = global._arr({})
+  local ret = js_arr({})
   for j=1,del do
     ret:push(ths[i])
     table.remove(ths, i)
@@ -293,7 +293,7 @@ arr_proto.splice = function (ths, i, del, ...)
 end
 
 arr_proto.reverse = function (ths)
-  local arr = global._arr({})
+  local arr = js_arr({})
   for i=0,ths.length-1 do
     arr[ths.length - 1 - i] = ths[i]
   end
@@ -301,7 +301,7 @@ arr_proto.reverse = function (ths)
 end
 
 arr_proto.slice = function (ths, start, len)
-  local a = global._arr({})
+  local a = js_arr({})
   if not len then
     len = ths.length - (start or 0)
   end
@@ -312,7 +312,7 @@ arr_proto.slice = function (ths, start, len)
 end
 
 arr_proto.concat = function (src1, src2)
-  local a = global._arr({})
+  local a = js_arr({})
   for i=0,src1.length-1 do
     a:push(src1[i])
   end
@@ -345,7 +345,7 @@ arr_proto.indexOf = function (ths, val)
 end
 
 arr_proto.map = function (ths, fn)
-  local a = global._arr({})
+  local a = js_arr({})
   for i=0,ths.length-1 do
     a:push(fn(ths, ths[i], i))
   end
@@ -364,7 +364,7 @@ arr_proto.forEach = function (ths, fn)
 end
 
 arr_proto.filter = function (ths, fn)
-  local a = global._arr({})
+  local a = js_arr({})
   for i=0,ths.length-1 do
     if global._truthy(fn(ths, ths[i], i)) then
       a:push(ths[i])
@@ -387,7 +387,7 @@ end
 
 -- Object
 
-global.Object = {}
+global.Object = js_obj({})
 
 global.Object.prototype = obj_proto
 
@@ -412,17 +412,17 @@ global.Object.defineProperties = function (this, obj, props)
   return obj
 end
 
-global.Object.freeze = function (ths)
-  return ths
+global.Object.freeze = function (this, obj)
+  return obj
 end
 
-global.Object.keys = function (ths, obj)
-  local a = global._arr({})
+global.Object.keys = function (this, obj)
+  local a = js_arr({})
   -- TODO debug this one:
   if type(obj) == 'function' then
     return a
   end
-  for k,v in pairs(obj) do
+  for k,v in js_pairs(obj) do
     a:push(k)
   end
   return a
@@ -443,13 +443,13 @@ global.Array = function (ths, one, ...)
   local a = table.pack(...)
   if a.length > 0 or type(one) ~= 'number' then
     a[0] = one
-    return global._arr(a)
+    return js_arr(a)
   elseif one ~= nil then
     local a = {}
     for i=0,tonumber(one)-1 do a[i]=null end
-    return global._arr(a)
+    return js_arr(a)
   end
-  return global._arr({})
+  return js_arr({})
 end
 
 global.Array.prototype = arr_proto

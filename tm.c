@@ -15,6 +15,8 @@
 #include <stdint.h>
 #include <sys/time.h>
 #include  <netdb.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 tm_socket_t tm_udp_open ()
 {
@@ -75,14 +77,52 @@ int tm_tcp_readable (tm_socket_t sock)
     return FD_ISSET(sock, &readset);
 }
 
+int tm_tcp_listen (tm_socket_t sock, int port)
+{
+  // CC3000_START;
 
-//double millis () {
-//  struct timeval tv;
-//  gettimeofday(&tv, NULL);
-//
-//  double time_in_mill = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000;
-//  return time_in_mill;
-//}
+  struct sockaddr localSocketAddr;
+  localSocketAddr.sa_family = AF_INET;
+  localSocketAddr.sa_data[0] = (port & 0xFF00) >> 8; //ascii_to_char(0x01, 0x01);
+  localSocketAddr.sa_data[1] = (port & 0x00FF); //ascii_to_char(0x05, 0x0c);
+  localSocketAddr.sa_data[2] = 0;
+  localSocketAddr.sa_data[3] = 0;
+  localSocketAddr.sa_data[4] = 0;
+  localSocketAddr.sa_data[5] = 0;
+
+  // Bind socket
+  // TM_COMMAND('w', "Binding local socket...");
+  int sockStatus;
+  if ((sockStatus = bind(sock, &localSocketAddr, sizeof(struct sockaddr))) != 0) {
+    // TM_COMMAND('w', "binding failed: %d", sockStatus);
+    // CC3000_END;
+    return -1;
+  }
+
+  // TM_DEBUG("Listening on local socket...");
+  int listenStatus = listen(sock, 1);
+  if (listenStatus != 0) {
+    // TM_COMMAND('w', "cannot listen to socket: %d", listenStatus);
+    // CC3000_END;
+    return -1;
+  }
+
+  // CC3000_END;
+  return 0;
+}
+
+// Returns -1 on error or no socket.
+// Returns -2 on pending connection.
+// Returns >= 0 for socket descriptor.
+int tm_tcp_accept (tm_socket_t sock, uint32_t *ip)
+{
+  struct sockaddr addrClient;
+  socklen_t addrlen;
+  int res = accept(sock, &addrClient, &addrlen);
+  *ip = ((struct sockaddr_in *) &addrClient)->sin_addr.s_addr;
+  return res;
+}
+
 
 /**
  * Event queue
