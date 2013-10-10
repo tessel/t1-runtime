@@ -1,6 +1,6 @@
 // Tasks
-#ifndef _TASK_H
-#define _TASK_H
+#ifndef _TM_H
+#define _TM_H
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -77,5 +77,18 @@ typedef struct {
   int dounref;
   jmp_buf jmp;
 } tm_lua_endpoint_t;
+
+// Regex
+
+typedef void* tm_regex_t;
+
+typedef struct {
+  void *a;
+  void *b;
+} tm_regex_group_t;
+
+tm_regex_t tm_regex_compile (const char *str);
+int tm_regex_exec (tm_regex_t regex, const char *str, tm_regex_group_t *groups, size_t group_count);
+void tm_regex_sub (const char *src, char *buf, size_t buf_len, tm_regex_group_t *groups, size_t group_count);
 
 #endif

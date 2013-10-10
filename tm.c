@@ -7,6 +7,7 @@
 #include "tm_uptime.h"
 #include "tm_debug.h"
 #include "time.h"
+// #include "regexp9.h"
 
 #include <stdio.h>
 #include <string.h>    //strlen
@@ -446,6 +447,25 @@ void tm_lua_start (tm_loop_t queue, lua_State *L, int ref, int dounref)
   tm_push(queue, tm_create(tm_lua_endpoint, tm_lua_interrupt, taskdata));
   //  tm_idle_start(queue, ); // creates new listener & callback.
 }
+
+/**
+ * Regexp
+ */
+
+// tm_regex_t tm_regex_compile (const char *str)
+// {
+//   return (void *) regcomp9((char *)str);
+// }
+
+// int tm_regex_exec (tm_regex_t regex, const char *str, tm_regex_group_t *groups, size_t group_count)
+// {
+//   return regexec9((Reprog*) regex, (char *) str, (Resub *) groups, group_count);
+// }
+
+// void tm_regex_sub (const char *src, char *buf, size_t buf_len, tm_regex_group_t *groups, size_t group_count)
+// {
+//   regsub9((char *) src, buf, buf_len, (Resub *) groups, group_count);
+// }
 
 
 /**

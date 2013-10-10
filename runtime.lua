@@ -106,6 +106,18 @@ typedef struct http_parser_settings http_parser_settings;
   int http_body_is_final(const http_parser *parser);
 
   enum http_parser_type { HTTP_REQUEST, HTTP_RESPONSE, HTTP_BOTH };
+
+
+  typedef void* tm_regex_t;
+
+typedef struct {
+  void *a;
+  void *b;
+} tm_regex_group_t;
+
+tm_regex_t tm_regex_compile (const char *str);
+int tm_regex_exec (tm_regex_t regex, const char *str, tm_regex_group_t *groups, size_t group_count);
+void tm_regex_sub (const char *src, char *buf, size_t buf_len, tm_regex_group_t *groups, size_t group_count);
 ]]
 
 --------------------
@@ -208,6 +220,18 @@ colony.global.tm__tcp__accept = function (this, sock)
   local ip = ffi.new("uint32_t[1]");
   return ffi.C.tm_tcp_accept(sock, ip)
 end
+
+-- local instr = "sing me 99 red balloons"
+
+-- local regex = ffi.C.tm_regex_compile("[0-9]+")
+-- local groups = ffi.new("tm_regex_group_t[10]")
+-- local buf = ffi.new("char[500]")
+-- local res = ffi.C.tm_regex_exec(regex, instr, groups, 10)
+-- print('matches:', res)
+-- ffi.C.tm_regex_sub("100", buf, 500, groups, 10)
+-- print(ffi.string(buf))
+
+-- if true then return end
 
 ------------------
 
@@ -374,6 +398,7 @@ local p = arg[0]
 if string.sub(p, 1, 1) ~= '.' then
   p = './' .. p
 end
+print('Run mem:', collectgarbage('count'))
 colony_run(p)
 
--- print('End mem:', collectgarbage('count'))
+print('End mem:', collectgarbage('count'))
