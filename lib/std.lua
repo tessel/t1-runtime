@@ -112,6 +112,15 @@ str_proto.indexOf = function (str, needle)
   if ret == null then return -1; else return ret - 1; end
 end
 
+str_proto.toString = function (this)
+  -- not called as __tostring metatable to prevent recursion
+  if type(this) == 'string' then
+    return tostring(this)
+  else
+    return '[object Object]'
+  end
+end
+
 str_proto.split = function (str, sep, max)
   if sep == '' then
     local ret = js_arr({})
@@ -363,6 +372,15 @@ arr_proto.forEach = function (ths, fn)
   return ths
 end
 
+arr_proto.some = function (ths, fn)
+  for i=0,ths.length-1 do
+    if fn(ths, ths[i], i) then
+      return true
+    end
+  end
+  return false
+end
+
 arr_proto.filter = function (ths, fn)
   local a = js_arr({})
   for i=0,ths.length-1 do
@@ -390,6 +408,19 @@ end
 global.Object = js_obj({})
 
 global.Object.prototype = obj_proto
+
+global.Object.create = function (proto)
+  local o = {}
+  local mt = {}
+  setmetatable(o, mt)
+  if proto then
+    mt.__index = function (self, key)
+      return proto_get(self, f.prototype, key)
+    end
+    mt.proto = proto
+  end
+  return o
+end
 
 global.Object.defineProperty = function (this, obj, prop, config)
   if config.value then
@@ -595,6 +626,10 @@ if rex then
 
   global.RegExp.prototype.test = function ()
     return false
+  end
+else
+  global.RegExp = function ()
+    -- error('No RegExp library installed.')
   end
 end
 

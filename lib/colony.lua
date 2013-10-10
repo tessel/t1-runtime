@@ -47,12 +47,12 @@ local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_
 -- get from prototype chain while maintaining "self"
 
 local function proto_get (self, proto, key)
-  return rawget(proto, key) or (getmetatable(proto) and getmetatable(proto).__index and getmetatable(proto).__index(self, key)) or nil
+  return rawget(proto, key) or (getmetatable(proto) and getmetatable(proto).__index and getmetatable(proto).__index(self, key, proto)) or nil
 end
 
 local function js_getter_index (proto)
-  return function (self, key)
-    local mt = getmetatable(self)
+  return function (self, key, _self)
+    local mt = getmetatable(_self or self)
     local getter = mt.getters[key]
     if getter then
       return getter(self)
@@ -187,6 +187,7 @@ str_mt.getters = {
     return string.len(ths)
   end
 }
+str_mt.values = {}
 str_mt.__index = function (self, key)
   -- custom js_getter_index for strings 
   -- allows numerical indices

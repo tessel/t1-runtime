@@ -1,0 +1,3 @@
+exports.readFileSync = function () {
+  return "";
+};

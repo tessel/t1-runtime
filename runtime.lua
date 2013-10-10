@@ -8,6 +8,7 @@ ffi.cdef[[
 
   tm_socket_t tm_udp_open ();
   tm_socket_t tm_tcp_open ();
+  int tm_tcp_close (tm_socket_t sock);
   int tm_tcp_connect (tm_socket_t sock, uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3, uint16_t port);
   int tm_tcp_write (tm_socket_t sock, uint8_t *buf, size_t buflen);
   int tm_tcp_read (tm_socket_t sock, uint8_t *buf, size_t buflen);
@@ -18,8 +19,94 @@ ffi.cdef[[
 
   size_t strlen(const char * str);
   int printf(const char *fmt, ...);
-]]
 
+typedef struct http_parser http_parser;
+typedef struct http_parser_settings http_parser_settings;
+
+  typedef int (*http_data_cb) (http_parser*, const char *at, size_t length);
+  typedef int (*http_cb) (http_parser*);
+
+  struct http_parser {
+    /** PRIVATE **/
+    unsigned char type : 2;     /* enum http_parser_type */
+    unsigned char flags : 6;    /* F_* values from 'flags' enum; semi-public */
+    unsigned char state;        /* enum state from http_parser.c */
+    unsigned char header_state; /* enum header_state from http_parser.c */
+    unsigned char index;        /* index into current matcher */
+
+    uint32_t nread;          /* # bytes read in various scenarios */
+    uint64_t content_length; /* # bytes in body (0 if no Content-Length header) */
+
+    /** READ-ONLY **/
+    unsigned short http_major;
+    unsigned short http_minor;
+    unsigned short status_code; /* responses only */
+    unsigned char method;       /* requests only */
+    unsigned char http_errno : 7;
+
+    /* 1 = Upgrade header was present and the parser has exited because of that.
+     * 0 = No upgrade header present.
+     * Should be checked when http_parser_execute() returns in addition to
+     * error checking.
+     */
+    unsigned char upgrade : 1;
+
+    /** PUBLIC **/
+    void *data; /* A pointer to get hook to the "connection" or "socket" object */
+  };
+
+  struct http_parser_settings {
+    http_cb      on_message_begin;
+    http_data_cb on_url;
+    http_cb      on_status_complete;
+    http_data_cb on_header_field;
+    http_data_cb on_header_value;
+    http_cb      on_headers_complete;
+    http_data_cb on_body;
+    http_cb      on_message_complete;
+  };
+
+  unsigned long http_parser_version(void);
+
+  void http_parser_init(http_parser *parser, enum http_parser_type type);
+
+
+  size_t http_parser_execute(http_parser *parser,
+                             const http_parser_settings *settings,
+                             const char *data,
+                             size_t len);
+
+
+  /* If http_should_keep_alive() in the on_headers_complete or
+   * on_message_complete callback returns 0, then this should be
+   * the last message on the connection.
+   * If you are the server, respond with the "Connection: close" header.
+   * If you are the client, close the connection.
+   */
+  int http_should_keep_alive(const http_parser *parser);
+
+  /* Returns a string version of the HTTP method. */
+  const char *http_method_str(enum http_method m);
+
+  /* Return a string name of the given error */
+  const char *http_errno_name(enum http_errno err);
+
+  /* Return a string description of the given error */
+  const char *http_errno_description(enum http_errno err);
+
+  /* Parse a URL; return nonzero on failure */
+  int http_parser_parse_url(const char *buf, size_t buflen,
+                            int is_connect,
+                            struct http_parser_url *u);
+
+  /* Pause or un-pause the parser; a nonzero value pauses */
+  void http_parser_pause(http_parser *parser, int paused);
+
+  /* Checks if this is the final chunk of the body. */
+  int http_body_is_final(const http_parser *parser);
+
+  enum http_parser_type { HTTP_REQUEST, HTTP_RESPONSE, HTTP_BOTH };
+]]
 
 --------------------
 
@@ -94,6 +181,9 @@ end
 colony.global.tm__tcp__open = function (ths)
   return ffi.C.tm_tcp_open()
 end
+colony.global.tm__tcp__close = function (ths, sock)
+  return ffi.C.tm_tcp_close(sock)
+end
 colony.global.tm__tcp__connect = function (ths, sock, ip0, ip1, ip2, ip3, port)
   return ffi.C.tm_tcp_connect(sock, ip0, ip1, ip2, ip3, port)
 end
@@ -121,29 +211,169 @@ end
 
 ------------------
 
+colony.global.tm__http__parser = function (this, type, cb)
+  local settings = ffi.new("http_parser_settings[1]");
+  this.on_error = cb.on_error
+  settings[0].on_message_begin = function (parser)
+    -- print('on_message_begin')
+    if cb.on_message_begin then
+      return cb.on_message_begin(this) or 0
+    end
+    return 0;
+  end
+  settings[0].on_url = function (parser, buf, buf_len)
+    if cb.on_url then
+      return cb.on_url(this, ffi.string(buf, buf_len)) or 0
+    end
+    return 0;
+  end
+  settings[0].on_status_complete = function (parser)
+    if cb.on_status_complete then
+      return cb.on_status_complete(this) or 0
+    end
+    return 0;
+  end
+  settings[0].on_header_field = function (parser, buf, buf_len)
+    if cb.on_header_field then
+      return cb.on_header_field(this, ffi.string(buf, buf_len)) or 0
+    end
+    return 0;
+  end
+  settings[0].on_header_value = function (parser, buf, buf_len)
+    if cb.on_header_value then
+      return cb.on_header_value(this, ffi.string(buf, buf_len)) or 0
+    end
+    return 0;
+  end
+  settings[0].on_headers_complete = function (parser)
+    if cb.on_headers_complete then
+      return cb.on_headers_complete(this) or 0
+    end
+    return 0;
+  end
+  settings[0].on_body = function (parser, buf, buf_len)
+    if cb.on_body then
+      return cb.on_body(this, ffi.string(buf, buf_len)) or 0
+    end
+    return 0;
+  end
+  settings[0].on_message_complete = function (parser)
+    if cb.on_message_complete then
+      return cb.on_message_complete(this) or 0
+    end
+    return 0;
+  end
+
+  local parser = ffi.new("http_parser[1]");
+  if type == 'request' then
+    ffi.C.http_parser_init(parser, ffi.C.HTTP_REQUEST)
+  else
+    ffi.C.http_parser_init(parser, 1)
+  end
+
+  this.__settings = settings
+  this.__parser = parser
+end
+
+colony.global.tm__http__parser.prototype.write = function (this, str)
+  local nparsed = ffi.C.http_parser_execute(this.__parser, this.__settings, str, string.len(str))
+  if nparsed ~= string.len(str) and this.on_error then
+    this:on_error('Could not parse tokens at character #' .. tostring(nparsed))
+  end
+  -- if (parser->upgrade) {
+  --   /* handle new protocol */
+  --     puts("UPGRADE");
+  -- } else if (nparsed != nread) {
+  --   /* Handle error. Usually just close the connection. */
+  --     puts("ERROR");
+  --     break;
+  -- }
+  return nparsed
+end
+
+-- http_parser_settings settings;
+-- settings.on_url = my_url_callback;
+-- settings.on_message_begin = my_message_begin;
+-- settings.on_status_complete = my_status_complete;
+-- settings.on_header_field = my_header_field_callback;
+-- settings.on_header_value = my_header_field_callback;
+-- settings.on_headers_complete = my_headers_complete;
+-- settings.on_body = my_body_callback;
+-- settings.on_message_complete = my_message_end;
+-- /* ... */
+
+-- http_parser *parser = malloc(sizeof(http_parser));
+-- http_parser_init(parser, HTTP_RESPONSE);
+-- parser->data = &server_reply;
+
+-- int nparsed = http_parser_execute(parser, &settings, server_reply, nread);
+-- // puts(server_reply);
+-- // printf("Parsed: %d of %d\n", nparsed, nread);
+
+-- if (parser->upgrade) {
+--   /* handle new protocol */
+--     puts("UPGRADE");
+-- } else if (nparsed != nread) {
+--   /* Handle error. Usually just close the connection. */
+--     puts("ERROR");
+--     break;
+-- }
+
+------------------
+
 -- Run that runtime
+
+local colony_cache = {}
 
 function colony_run (name, root)
   root = root or './'
+  print('<-', root, name)
+  if string.sub(name, -3) == '.js' then
+    name = string.sub(name, 1, -4)
+  end 
+
+  if string.sub(name, 1, 1) ~= '.' then
+    if fs_exists('./builtin/' .. name .. '.js') then
+      root = './builtin/'
+      name = name .. '.js'
+    else
+      -- TODO climb hierarchy for node_modules
+      while not fs_exists(root .. 'node_modules/' .. name) and not fs_exists(root .. 'node_modules/' .. name .. '/package.json') and string.find(root, "/") do
+        root = path_dirname(root) .. '/'
+      end
+      if not root then
+        error('Could not find installed module "' .. p .. '"')
+      end
+      root = root .. 'node_modules/'
+      _, _, label = string.find(readfile(root .. name .. '/package.json'), '"main"%s-:%s-"([^"]+)"')
+      name = name .. '/' .. label
+    end
+  end
   if string.sub(name, -3) ~= '.js' then
     name = name .. '.js'
-  end 
-  local res = colonize(path_normalize(root .. name))
-  if not res then
-    return
   end
+  local p = path_normalize(root .. name)
+  print('->', p)
+
+  local res = colony_cache[p] or colonize(p)
+  colony_cache[p] = res
+  if not res then
+    error('Could not find module "' .. p .. '"')
+  end
+
   setfenv(res, colony.global)
   colony.global.require = function (ths, value)
-    if string.sub(value, 1, 1) == '.' then
-      return colony_run(value, path_dirname(name) .. '/')
-    else
-      return colony_run(value, './builtin/')
-    end
+    local scriptpath = string.sub(debug.getinfo(2).source, 2)
+    return colony_run(value, path_dirname(scriptpath) .. '/')
   end
   return res()
 end
 
 collectgarbage()
-colony_run(arg[0])
+local p = arg[0]
+if string.sub(p, 1, 1) ~= '.' then
+  p = './' .. p
+end
+colony_run(p)
 
 -- print('End mem:', collectgarbage('count'))

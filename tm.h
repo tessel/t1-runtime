@@ -22,7 +22,7 @@ int tm_tcp_readable (tm_socket_t sock);
 int tm_tcp_listen (tm_socket_t sock, int port);
 int tm_tcp_accept (tm_socket_t sock, uint32_t *ip);
 
-uint32_t tm_hostname_lookup (uint8_t *hostname);
+uint32_t tm_hostname_lookup (const uint8_t *hostname);
 
 // tasks
 

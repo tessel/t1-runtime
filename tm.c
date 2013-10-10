@@ -17,6 +17,7 @@
 #include  <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 tm_socket_t tm_udp_open ()
 {
@@ -28,12 +29,18 @@ tm_socket_t tm_tcp_open ()
     return socket(AF_INET, SOCK_STREAM, 0);
 }
 
-uint32_t tm_hostname_lookup (uint8_t *hostname)
+int tm_tcp_close (tm_socket_t sock)
+{
+    return shutdown(sock, SHUT_WR);
+    // return close(sock);
+}
+
+uint32_t tm_hostname_lookup (const uint8_t *hostname)
 {
   struct hostent *h;
 
   /* get the host info */
-  if ((h = gethostbyname(hostname)) == NULL) {
+  if ((h = gethostbyname((const char *) hostname)) == NULL) {
     herror("gethostbyname(): ");
     return 0;
   }

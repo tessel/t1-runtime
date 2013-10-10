@@ -24,7 +24,7 @@ TCPSocket.prototype.connect = function (port, ip, cb) {
 TCPSocket.prototype.__listen = function () {
   var client = this;
   setInterval(function () {
-    while (tm_tcp_readable(client.socket) > 0) {
+    while (client.socket && tm_tcp_readable(client.socket) > 0) {
       var buf = tm_tcp_read(client.socket);
       if (!buf || buf.length == 0) {
         break;
@@ -45,8 +45,12 @@ TCPSocket.prototype.write = function (buf, cb) {
 };
 
 TCPSocket.prototype.close = function () {
-  this.socket = tm_tcp_close(this.socket);
-  this.emit('close');
+  var self = this;
+  setImmediate(function () {
+    tm_tcp_close(self.socket);
+    self.socket = null;
+    self.emit('close');
+  });
 };
 
 exports.connect = function (port, host, callback) {
@@ -68,7 +72,11 @@ util.inherits(TCPServer, TCPSocket);
 
 TCPServer.prototype.listen = function (port, ip) {
   var self = this;
-  tm_tcp_listen(this.socket, port);
+  var res = tm_tcp_listen(this.socket, port);
+  if (res < 0) {
+    throw "Error listening on TCP socket (port " + port + ", ip " + ip + ")"
+  }
+
   setInterval(function () {
     var client;
     // why is "this" null here?
