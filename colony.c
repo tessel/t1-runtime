@@ -329,11 +329,21 @@ static int colony_panic (lua_State *L)
   return 0;  /* return to Lua to abort */
 }
 
+static int load_pcre (lua_State *L) {
+  luaopen_rex_pcre(L);
+  return 0;
+}
+
 lua_State *colony_init ()
 {
   lua_State *L = lua_open();
   lua_atpanic(L, &colony_panic);
   luaL_openlibs(L);
+
+  // pcre load
+  lua_pushcfunction(L,load_pcre);
+  lua_setglobal(L, "load_pcre");
+  luaL_dostring(L, "load_pcre()");
 
   // Initialize colony library.
   colony_libload(L);

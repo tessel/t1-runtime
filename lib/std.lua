@@ -1,6 +1,7 @@
 return function (colony)
 
 local bit = require('bit32')
+local _, rex = pcall(require, 'rex_pcre')
 
 -- locals
 
@@ -18,6 +19,7 @@ local js_seq = colony.js_seq
 local js_in = colony.js_in
 local js_setter_index = colony.js_setter_index
 local js_getter_index = colony.js_getter_index
+local js_proto_get = colony.js_proto_get
 
 local obj_proto = colony.obj_proto
 local num_proto = colony.num_proto
@@ -150,7 +152,7 @@ end
 str_proto.replace = function (str, match, out)
   if type(match) == 'string' then
     return string.gsub(str, string.gsub(match, "(%W)","%%%1"), out)
-  elseif global._instanceof(match, global.RegExp) then
+  elseif js_instanceof(match, global.RegExp) then
     if type(out) == 'function' then 
       print('REGEX REPLACE NOT SUPPORTED')
     end
@@ -160,6 +162,7 @@ str_proto.replace = function (str, match, out)
     end
     return rex.gsub(str, match.pattern, out, count)
   else
+    print(match)
     error('Unknown regex invocation object: ' .. type(match))
   end
 end
@@ -415,7 +418,7 @@ global.Object.create = function (proto)
   setmetatable(o, mt)
   if proto then
     mt.__index = function (self, key)
-      return proto_get(self, f.prototype, key)
+      return js_proto_get(self, proto, key)
     end
     mt.proto = proto
   end
@@ -618,18 +621,26 @@ end
 -- regexp library
 
 if rex then
-  global.RegExp = function (pat, flags)
+  global.RegExp = function (this, pat, flags)
     local o = {pattern=pat, flags=flags}
-    setmetatable(o, {__index=global.RegExp.prototype})
+    setmetatable(o, {
+      __index=global.RegExp.prototype,
+      __tostring=js_tostring,
+      proto=global.RegExp.prototype
+    })
     return o
   end
 
-  global.RegExp.prototype.test = function ()
-    return false
+  global._regexp = function (pat, flags) 
+    return js_new(global.RegExp, pat, flags)
   end
-else
-  global.RegExp = function ()
-    -- error('No RegExp library installed.')
+
+  global.String.prototype.match = function (this, regex)
+    return rex.match(this, regex.pattern)
+  end
+
+  global.RegExp.prototype.test = function (this, subj)
+    return rex.match(subj, this.pattern) and true or false
   end
 end
 
@@ -672,6 +683,10 @@ end
 -- Emulation
 
 global.Buffer = _G._colony_global_Buffer
+
+global.Buffer.byteLength = function (this, msg)
+  return type(msg) == 'string' and string.len(msg) or msg.length
+end
 
 -- process
 

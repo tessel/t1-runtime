@@ -11,6 +11,7 @@ function ServerResponse (req, socket) {
   this.req = req;
   this.socket = socket;
   this.headers = {};
+  this._header = false;
   this._closed = false;
 
   var self = this;
@@ -22,20 +23,42 @@ function ServerResponse (req, socket) {
 // TODO stream
 util.inherits(ServerResponse, EventEmitter);
 
+ServerResponse.prototype.setHeader = function (name, value) {
+  if (this._header) {
+    throw "Already wrote HEAD";
+  }
+  this.headers[String(name).toLowerCase()] = value;
+};
+
+ServerResponse.prototype.setHeaders = function (headers) {
+  for (var key in headers) {
+    this.setHeader(key, headers[key]);
+  }
+};
+
 ServerResponse.prototype.writeHead = function (status, headers) {
-  // TODO
-  this.socket.write('HTTP/1.1 ' + status + ' OK\r\n');
+  if (this._header) {
+    throw "Already wrote HEAD";
+  }
+
   if (headers) {
-    for (var key in headers) {
-      this.socket.write(key + ': ' + headers[key] + '\r\n');
-    }
+    this.setHeaders(headers);
+  }
+  this.socket.write('HTTP/1.1 ' + status + ' OK\r\n');
+  for (var key in this.headers) {
+    this.socket.write(key + ': ' + this.headers[key] + '\r\n');
   }
   this.socket.write('Transfer-Encoding: chunked\r\n');
   this.socket.write('\r\n');
+  this._header = true;
   // console.log('writing headers', headers);
 };
 
 ServerResponse.prototype.write = function (data) {
+  if (!this._header) {
+    this.writeHead(200);
+  }
+
   this.socket.write(Number(data.length).toString(16));
   this.socket.write('\r\n');
   this.socket.write(data);
@@ -43,6 +66,10 @@ ServerResponse.prototype.write = function (data) {
 }
 
 ServerResponse.prototype.end = function (data) {
+  if (!this._header) {
+    this.writeHead(200);
+  }
+
   // TODO
   if (data != null) {
     this.write(data);
@@ -54,27 +81,31 @@ ServerResponse.prototype.end = function (data) {
 
 
 /**
- * HTTPIncomingRequest
+ * ServerRequest
  */
 
-function HTTPIncomingRequest (socket) {
+function ServerRequest (socket) {
   var self = this;
 
   this.headers = {};
   this.socket = socket;
+  this.url = null;
 
   var lastheader;
   var parser = new tm_http_parser('request', {
     on_message_begin: function () {
     },
-    on_url: function (url) { },
+    on_url: function (url) {
+      self.url = url;
+    },
     on_header_field: function (field) {
       lastheader = field;
     },
     on_header_value: function (value) {
       self.headers[lastheader.toLowerCase()] = value;
     },
-    on_headers_complete: function () {
+    on_headers_complete: function (method) {
+      self.method = method;
       self.emit('request', self);
     },
     on_body: function (body) {
@@ -95,7 +126,7 @@ function HTTPIncomingRequest (socket) {
   })
 }
 
-util.inherits(HTTPIncomingRequest, EventEmitter);
+util.inherits(ServerRequest, EventEmitter);
 
 
 
@@ -103,7 +134,7 @@ util.inherits(HTTPIncomingRequest, EventEmitter);
 function HTTPServer () {
   var self = this;
   this.socket = net.createServer(function (socket) {
-    var request = new HTTPIncomingRequest(socket);
+    var request = new ServerRequest(socket);
     var response = new ServerResponse(request, socket);
     request.on('request', function () {
       self.emit('request', request, response)
@@ -209,3 +240,4 @@ exports.createServer = function (onrequest) {
 };
 
 exports.ServerResponse = ServerResponse;
+exports.ServerRequest = ServerRequest;

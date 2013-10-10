@@ -46,7 +46,7 @@ local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_
 
 -- get from prototype chain while maintaining "self"
 
-local function proto_get (self, proto, key)
+local function js_proto_get (self, proto, key)
   return rawget(proto, key) or (getmetatable(proto) and getmetatable(proto).__index and getmetatable(proto).__index(self, key, proto)) or nil
 end
 
@@ -57,7 +57,7 @@ local function js_getter_index (proto)
     if getter then
       return getter(self)
     end
-    return mt.values[key] or proto_get(self, proto, key)
+    return mt.values[key] or js_proto_get(self, proto, key)
   end
 end
 
@@ -85,12 +85,12 @@ local func_mt, str_mt, nil_mt = {}, {}, {}
 debug.setmetatable((function () end), func_mt)
 debug.setmetatable(true, {
   __index=function (self, key)
-    return proto_get(self, bool_proto, key)
+    return js_proto_get(self, bool_proto, key)
   end
 })
 debug.setmetatable(0, {
   __index=function (self, key)
-    return proto_get(self, num_proto, key)
+    return js_proto_get(self, num_proto, key)
   end
 })
 debug.setmetatable("", str_mt)
@@ -104,16 +104,21 @@ debug.setmetatable(nil, nil_mt)
 nil_mt.__tostring = function (arg)
   return 'undefined'
 end
+
+nil_mt.__add = function (op1, op2)
+  return "null" + op2
+end
+
 nil_mt.__eq = function (op1, op2)
   return op2 == nil
 end
 
-nil_mt.__gt = function (op1, op2)
-  return op2 == nil
+nil_mt.__lt = function (op1, op2)
+  return op2 > 0
 end
 
-nil_mt.__lt = function (op1, op2)
-  return op2 == nil
+nil_mt.__le = function (op1, op2)
+  return op2 >= 0
 end
 
 
@@ -122,7 +127,7 @@ end
 --]]
 
 function js_obj_index (self, key)
-  return proto_get(self, obj_proto, key)
+  return js_proto_get(self, obj_proto, key)
 end
 
 function js_obj (o)
@@ -164,7 +169,7 @@ func_mt.__index = function (self, key)
   if fobj and fobj[key] ~= nil then
     return fobj[key]
   end
-  return proto_get(self, func_proto, key)
+  return js_proto_get(self, func_proto, key)
 end
 func_mt.__newindex = function (self, p, v)
   local pt = funccache[self] or {}
@@ -197,9 +202,13 @@ str_mt.__index = function (self, key)
     return getter(self, key)
   end
   if (tonumber(key) == key) then
-    return string.sub(self, key+1, key+1)
+    if key >= self.length then
+      return null
+    else
+      return string.sub(self, key+1, key+1)
+    end
   end
-  return proto_get(self, str_proto, key)
+  return js_proto_get(self, str_proto, key)
 end
 str_mt.__add = function (op1, op2)
   return op1 .. tostring(op2)
@@ -271,7 +280,7 @@ end
 
 function js_instanceof (self, arg)
   local mt = getmetatable(self)
-  if mt then
+  if mt and arg then
     local proto = getmetatable(self).proto
     if proto then
       return proto == arg.prototype or js_instanceof(proto, arg)
@@ -289,7 +298,7 @@ function js_new (f, ...)
   local o = {}
   setmetatable(o, {
     __index = function (self, key)
-      return proto_get(self, f.prototype, key)
+      return js_proto_get(self, f.prototype, key)
     end,
     proto = f.prototype
   })
@@ -355,6 +364,7 @@ colony = {
   js_in = js_in,
   js_setter_index = js_setter_index,
   js_getter_index = js_getter_index,
+  js_proto_get = js_proto_get,
 
   obj_proto = obj_proto,
   num_proto = num_proto,

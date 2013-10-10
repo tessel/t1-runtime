@@ -1,1 +1,1 @@
-gcc-4.9 -fdiagnostics-color=auto -o runtime ../colony-jit/src/libluajit.a ../http-parser/http_parser.c -I../http-parser -I../colony-jit/src/ -std=c99 -g -pagezero_size 10000 -image_base 100000000 *.c
+gcc-4.9 -fdiagnostics-color=auto -o runtime ../colony-jit/src/libluajit.a -DVERSION="\"2.7.2\"" -lpcre ../lrexlib/src/*.c ../lrexlib/src/pcre/*.c -I../lrexlib/src -I../lrexlib/src/pcre ../http-parser/http_parser.c -I../http-parser -I../colony-jit/src/ -std=c99 -g -pagezero_size 10000 -image_base 100000000 *.c

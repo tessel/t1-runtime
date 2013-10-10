@@ -105,6 +105,11 @@ typedef struct http_parser_settings http_parser_settings;
   /* Checks if this is the final chunk of the body. */
   int http_body_is_final(const http_parser *parser);
 
+  enum http_method
+  {
+  HHHHHHH
+  };
+
   enum http_parser_type { HTTP_REQUEST, HTTP_RESPONSE, HTTP_BOTH };
 
 
@@ -138,7 +143,7 @@ local LUA_DIRSEP = '/'
  
 -- https://github.com/leafo/lapis/blob/master/lapis/cmd/path.lua
 local function path_normalize (path)
-  return string.gsub(path, "%./", "")
+  return string.gsub(string.gsub(path, "[^/]+/../", "/"), "%./", "")
 end
 
 local function fs_exists (path)
@@ -253,7 +258,7 @@ colony.global.tm__http__parser = function (this, type, cb)
   end
   settings[0].on_status_complete = function (parser)
     if cb.on_status_complete then
-      return cb.on_status_complete(this) or 0
+      return cb.on_status_complete(this, ffi.string(parser.method)) or 0
     end
     return 0;
   end
@@ -271,7 +276,7 @@ colony.global.tm__http__parser = function (this, type, cb)
   end
   settings[0].on_headers_complete = function (parser)
     if cb.on_headers_complete then
-      return cb.on_headers_complete(this) or 0
+      return cb.on_headers_complete(this, ffi.string(ffi.C.http_method_str(parser[0].method))) or 0
     end
     return 0;
   end
@@ -351,7 +356,7 @@ local colony_cache = {}
 
 function colony_run (name, root)
   root = root or './'
-  print('<-', root, name)
+  -- print('<-', root, name)
   if string.sub(name, -3) == '.js' then
     name = string.sub(name, 1, -4)
   end 
@@ -377,7 +382,7 @@ function colony_run (name, root)
     name = name .. '.js'
   end
   local p = path_normalize(root .. name)
-  print('->', p)
+  -- print('->', p)
 
   local res = colony_cache[p] or colonize(p)
   colony_cache[p] = res
