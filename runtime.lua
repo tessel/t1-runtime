@@ -367,15 +367,23 @@ function colony_run (name, root)
       name = name .. '.js'
     else
       -- TODO climb hierarchy for node_modules
-      while not fs_exists(root .. 'node_modules/' .. name) and not fs_exists(root .. 'node_modules/' .. name .. '/package.json') and string.find(root, "/") do
+      local fullname = name
+      while string.find(name, '/') do
+        name = path_dirname(name)
+      end
+      while not fs_exists(root .. 'node_modules/' .. name) and not fs_exists(root .. 'node_modules/' .. name .. '/package.json') and string.find(path_dirname(root), "/") do
         root = path_dirname(root) .. '/'
       end
       if not root then
         error('Could not find installed module "' .. p .. '"')
       end
       root = root .. 'node_modules/'
-      _, _, label = string.find(readfile(root .. name .. '/package.json'), '"main"%s-:%s-"([^"]+)"')
-      name = name .. '/' .. label
+      if string.find(fullname, '/') then
+        name = fullname
+      else
+        _, _, label = string.find(readfile(root .. name .. '/package.json'), '"main"%s-:%s-"([^"]+)"')
+        name = name .. '/' .. label
+      end
     end
   end
   if string.sub(name, -3) ~= '.js' then
@@ -384,7 +392,11 @@ function colony_run (name, root)
   local p = path_normalize(root .. name)
   -- print('->', p)
 
-  local res = colony_cache[p] or colonize(p)
+  local res = colony_cache[p]
+  if not res then
+    res = assert(loadstring('return ' .. readfile(string.sub(p, 1, -4) .. '.lua'), "@"..p))()
+  end
+  -- local res = colony_cache[p] or colonize(p)
   colony_cache[p] = res
   if not res then
     error('Could not find module "' .. p .. '"')
@@ -397,6 +409,8 @@ function colony_run (name, root)
   end
   return res()
 end
+
+-- os.execute("node preprocessor 2> /dev/null");
 
 collectgarbage()
 local p = arg[0]

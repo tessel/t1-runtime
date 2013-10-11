@@ -169,8 +169,12 @@ end
 
 -- object prototype
 
-obj_proto.toString = function (ths)
-  return '[object Object]'
+obj_proto.toString = function (this)
+  if getmetatable(this) and getmetatable(this).proto == arr_proto then
+    return '[object Array]'
+  else
+    return '[object Object]'
+  end
 end
 
 obj_proto.hasInstance = function (ths, p)
@@ -239,7 +243,9 @@ end
 func_proto.apply = function (func, ths, args)
   -- copy args to new args array
   local luargs = {}
-  for i=0,args.length-1 do luargs[i+1] = args[i] end
+  if args then
+    for i=0,(args.length or 0)-1 do luargs[i+1] = args[i] end
+  end
   return func(ths, unpack(luargs))
 end
 
@@ -364,7 +370,19 @@ arr_proto.map = function (ths, fn)
   return a
 end
 
+arr_proto.filter = function (this, fn)
+  local a = js_arr({})
+  for i=0,this.length-1 do
+    if fn(this, this[i], i) then
+      a:push(this[i])
+    end
+  end
+  return a
+end
+
 arr_proto.reduce = function (ths, fn)
+  local a = js_arr({})
+  -- TODO
   return a
 end
 
@@ -548,7 +566,9 @@ local function objtostring (obj, sset)
   sset[obj] = true
   for k, v in pairs(obj) do
     if sset[v] ~= true then
-      sset[v] = true
+      if type(v) == 'table' then
+        sset[v] = true
+      end
       if type(v) == 'string' then
         v = '\'' + v + '\''
       elseif type(v) == 'table' then
@@ -645,6 +665,15 @@ if rex then
 end
 
 -- json library
+
+global.JSON = js_obj({
+  parse = function (this, arg)
+    return js_obj({})
+  end,
+  stringify = function (this, arg)
+    return "{}"
+  end
+})
 
 -- global.JSON = js_obj({
 --  parse = function (ths, arg)
