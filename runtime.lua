@@ -151,7 +151,11 @@ local LUA_DIRSEP = '/'
  
 -- https://github.com/leafo/lapis/blob/master/lapis/cmd/path.lua
 local function path_normalize (path)
-  return string.gsub(string.gsub(path, "[^/]+/../", "/"), "%./", "")
+  while string.find(path, "%w+/%.%./") or string.find(path, "/%./") do
+    path = string.gsub(path, "%w+/%.%./", "/")
+    path = string.gsub(path, "/%./", "/")
+  end
+  return path
 end
 
 local function fs_exists (path)
@@ -200,18 +204,27 @@ local luafunctor = function (f)
   return (function (this, ...) return f(...) end)
 end
 
-colony.global.tm__fs__dir__open = function (this, path)
-  return ffi.C.tm_fs_dir_open(path)
-end
-colony.global.tm__fs__dir__next = function (this, dirptr)
-  local dir = ffi.C.tm_fs_dir_next(dirptr)
-  if dir ~= nil then
-    return ffi.string(dir)
+colony.global.ffi = {
+  C = {}
+}
+setmetatable(colony.global.ffi, {
+  __index = function (this, key)
+    local fn = function (this, ...)
+      return ffi[key](...)
+    end
+    this[key] = fn
+    return fn
   end
-end
-colony.global.tm__fs__dir__close = function (this, dirptr)
-  return ffi.C.tm_fs_dir_close(dirptr)
-end
+})
+setmetatable(colony.global.ffi.C, {
+  __index = function (this, key)
+    local fn = function (this, ...)
+      return ffi.C[key](...)
+    end
+    this[key] = fn
+    return fn
+  end
+})
 
 colony.global.tm__hostname__lookup = function (ths, host)
   return ffi.C.tm_hostname_lookup(ffi.cast('uint8_t *', host))
@@ -403,7 +416,7 @@ function colony_run (name, root)
         name = fullname
       else
         _, _, label = string.find(readfile(root .. name .. '/package.json'), '"main"%s-:%s-"([^"]+)"')
-        name = name .. '/' .. label
+        name = name .. '/' .. (label or 'index.js')
       end
     end
   end
@@ -425,7 +438,12 @@ function colony_run (name, root)
 
   setfenv(res, colony.global)
   colony.global.require = function (ths, value)
-    local scriptpath = string.sub(debug.getinfo(2).source, 2)
+    local n = 2
+    -- metamethods are tricky here
+    while debug.getinfo(n).namewhat == 'metamethod' do
+      n = n + 1
+    end
+    local scriptpath = string.sub(debug.getinfo(n).source, 2)
     return colony_run(value, path_dirname(scriptpath) .. '/')
   end
   return res()

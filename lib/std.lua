@@ -20,6 +20,7 @@ local js_in = colony.js_in
 local js_setter_index = colony.js_setter_index
 local js_getter_index = colony.js_getter_index
 local js_proto_get = colony.js_proto_get
+local js_func_proxy = colony.js_func_proxy
 
 local obj_proto = colony.obj_proto
 local num_proto = colony.num_proto
@@ -188,8 +189,7 @@ end
 
 function js_define_setter (self, key, fn)
   if type(self) == 'function' then
-    print('uh...')
-    return
+    self = js_func_proxy(self)
   end
 
   local mt = getmetatable(self)
@@ -212,8 +212,7 @@ end
 
 function js_define_getter (self, key, fn)
   if type(self) == 'function' then
-    print('uh...')
-    return
+    self = js_func_proxy(self)
   end
   
   local mt = getmetatable(self)
@@ -551,6 +550,7 @@ global.Math = js_obj({
   sqrt = luafunctor(math.sqrt),
   ceil = luafunctor(math.ceil),
   floor = luafunctor(math.floor),
+  log = luafunctor(math.log),
   random = function ()
     return math.random()
   end

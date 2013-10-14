@@ -96,6 +96,7 @@ function ServerRequest (socket) {
     on_message_begin: function () {
     },
     on_url: function (url) {
+      console.log('->', url);
       self.url = url;
     },
     on_header_field: function (field) {

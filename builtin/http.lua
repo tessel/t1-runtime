@@ -32,6 +32,7 @@ parser = _new(tm__http__parser, ("request"), _obj({
 
 end),
   ["on_url"]=(function (this, url)
+if console:log(("->"), url) then end;
 (self).url = url;
 end),
   ["on_header_field"]=(function (this, field)

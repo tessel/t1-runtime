@@ -5,7 +5,7 @@ local _module = _obj({exports=_obj({})}); local exports, module = _module.export
 local connect, http, app = connect, http, app;
 connect = require(global, ("connect"));
 http = require(global, ("http"));
-app = connect(global):use((function (this, req, res)
+app = connect(global):use(connect:favicon()):use((function (this, req, res)
 if (function () local base, prop = res, "end"; return base[prop](base, ("Hello from Connect!\n")); end)() then end;
 end));
 if http:createServer(app):listen((3000)) then end;

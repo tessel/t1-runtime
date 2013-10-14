@@ -163,6 +163,12 @@ function js_func_proxy (fn)
   local proxy = funcproxies[fn]
   if not proxy then
     proxy = {}
+    setmetatable(proxy, {
+      __index = function (self, key)
+        return js_proto_get(self, func_proto, key)
+      end,
+      proto = func_proto
+    })
     funcproxies[fn] = proxy
   end
   return proxy
@@ -171,15 +177,15 @@ end
 func_mt.__index = function (self, key)
   if key == 'prototype' then
     local proxy = js_func_proxy(self)
-    if proxy[key] == nil then
-      proxy[key] = js_obj({})
+    if proxy.prototype == nil then
+      proxy.prototype = js_obj({})
     end
-    return proxy[key]
+    return proxy.prototype
   end
 
   local proxy = funcproxies[self]
-  if proxy and proxy[key] ~= nil then
-    return proxy[key]
+  if proxy then
+    return js_proto_get(self, proxy, key)
   end
   return js_proto_get(self, func_proto, key)
 end
@@ -376,6 +382,7 @@ colony = {
   js_setter_index = js_setter_index,
   js_getter_index = js_getter_index,
   js_proto_get = js_proto_get,
+  js_func_proxy = js_func_proxy,
 
   obj_proto = obj_proto,
   num_proto = num_proto,
