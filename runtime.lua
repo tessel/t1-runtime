@@ -17,8 +17,16 @@ ffi.cdef[[
   int tm_tcp_listen (tm_socket_t sock, int port);
   int tm_tcp_accept (tm_socket_t sock, uint32_t *ip);
 
+void *tm_fs_dir_open (const char *path);
+const char *tm_fs_dir_next (void *dir);
+void tm_fs_dir_close (void *dir);
+
+  // c stuff
+
   size_t strlen(const char * str);
   int printf(const char *fmt, ...);
+
+  // httpparser
 
 typedef struct http_parser http_parser;
 typedef struct http_parser_settings http_parser_settings;
@@ -190,6 +198,19 @@ local colony = require('lib/colony')
 
 local luafunctor = function (f)
   return (function (this, ...) return f(...) end)
+end
+
+colony.global.tm__fs__dir__open = function (this, path)
+  return ffi.C.tm_fs_dir_open(path)
+end
+colony.global.tm__fs__dir__next = function (this, dirptr)
+  local dir = ffi.C.tm_fs_dir_next(dirptr)
+  if dir ~= nil then
+    return ffi.string(dir)
+  end
+end
+colony.global.tm__fs__dir__close = function (this, dirptr)
+  return ffi.C.tm_fs_dir_close(dirptr)
 end
 
 colony.global.tm__hostname__lookup = function (ths, host)
@@ -410,7 +431,7 @@ function colony_run (name, root)
   return res()
 end
 
--- os.execute("node preprocessor 2> /dev/null");
+os.execute("node preprocessor 2> /dev/null");
 
 collectgarbage()
 local p = arg[0]

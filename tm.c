@@ -506,3 +506,30 @@ void tm_lua_start (tm_loop_t queue, lua_State *L, int ref, int dounref)
 //  task->f = tm_collect_endpoint;
 //  tm_push(queue, task);
 //}
+
+
+
+
+/**
+ * Filesystem
+ */
+
+void *tm_fs_dir_open (const char *path)
+{
+  DIR *dir = opendir(path);
+  return dir;
+}
+
+const char *tm_fs_dir_next (void *dir)
+{
+  struct dirent *ent = readdir((DIR *) dir);
+  if (ent != NULL) {
+    return ent->d_name;
+  }
+  return NULL;
+}
+
+void tm_fs_dir_close (void *dir)
+{
+  closedir((DIR *) dir);
+}

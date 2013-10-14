@@ -20,7 +20,7 @@ wrench.readdirRecursive(__dirname + '/..', function (err, files) {
     return;
   }
   files.filter(function (f) {
-    return f.match(/\.(js)$/i) && !f.match(/^preprocessor\//);
+    return f.match(/\.(js)$/i) && (f.match(/^examples\/connect\//) || f.match(/^builtin\//));
   }).forEach(function (f) {
     gen(f);
   });

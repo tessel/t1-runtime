@@ -160,7 +160,8 @@ str_proto.replace = function (str, match, out)
     if string.find(match.flags, 'g') ~= nil then
       count = nil
     end
-    return rex.gsub(str, match.pattern, out, count)
+    local ret, _ = rex.gsub(str, match.pattern, out, count)
+    return ret
   else
     print(match)
     error('Unknown regex invocation object: ' .. type(match))
@@ -186,6 +187,11 @@ obj_proto.hasOwnProperty = function (ths, p)
 end
 
 function js_define_setter (self, key, fn)
+  if type(self) == 'function' then
+    print('uh...')
+    return
+  end
+
   local mt = getmetatable(self)
   if not mt.values then
     mt.values = {}
@@ -205,6 +211,11 @@ function js_define_setter (self, key, fn)
 end
 
 function js_define_getter (self, key, fn)
+  if type(self) == 'function' then
+    print('uh...')
+    return
+  end
+  
   local mt = getmetatable(self)
   if not mt.values then
     mt.values = {}
@@ -738,6 +749,16 @@ global.process = js_obj({
   }),
   stdout = js_obj({})
 })
+
+-- dirname, pathname
+
+global:__defineGetter__('____dirname', function (this)
+  return string.gsub(string.sub(debug.getinfo(2).source, 2), "/?[^/]+$", "")
+end)
+
+global:__defineGetter__('____filename', function (this)
+  return string.sub(debug.getinfo(2).source, 2)
+end)
 
 -- poor man's eval
 

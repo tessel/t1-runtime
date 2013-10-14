@@ -5,6 +5,9 @@ local _module = _obj({exports=_obj({})}); local exports, module = _module.export
 (exports).join = (function (this)
 if true then return (""); end;
 end);
+(exports).basename = (function (this, file)
+if true then return file:replace(_regexp("^.*\\/", ""), ("")); end;
+end);
 
 return _module.exports;
 end

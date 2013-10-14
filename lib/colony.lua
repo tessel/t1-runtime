@@ -152,29 +152,40 @@ js_obj(arr_proto)
 --  Function
 --]]
 
-funccache = {}
-setmetatable(funccache, {__mode = 'k'})
+-- Functions don't have objects on them by default
+-- so when we access an __index or __newindex, we 
+-- set up an intermediary object to handle it
+
+funcproxies = {}
+setmetatable(funcproxies, {__mode = 'k'})
+
+function js_func_proxy (fn)
+  local proxy = funcproxies[fn]
+  if not proxy then
+    proxy = {}
+    funcproxies[fn] = proxy
+  end
+  return proxy
+end
 
 func_mt.__index = function (self, key)
-  local fobj = funccache[self]
   if key == 'prototype' then
-    if fobj == nil then
-      funccache[self] = {}
-      fobj = funccache[self]
+    local proxy = js_func_proxy(self)
+    if proxy[key] == nil then
+      proxy[key] = js_obj({})
     end
-    if fobj[key] == nil then
-      fobj[key] = js_obj({})
-    end
+    return proxy[key]
   end
-  if fobj and fobj[key] ~= nil then
-    return fobj[key]
+
+  local proxy = funcproxies[self]
+  if proxy and proxy[key] ~= nil then
+    return proxy[key]
   end
   return js_proto_get(self, func_proto, key)
 end
-func_mt.__newindex = function (self, p, v)
-  local pt = funccache[self] or {}
-  pt[p] = v
-  funccache[self] = pt
+func_mt.__newindex = function (this, key, value)
+  local proxy = js_func_proxy(this)
+  proxy[key] = value
 end
 func_mt.__tostring = js_tostring
 -- func_mt.__tostring = function ()

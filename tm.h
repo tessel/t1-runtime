@@ -24,6 +24,13 @@ int tm_tcp_accept (tm_socket_t sock, uint32_t *ip);
 
 uint32_t tm_hostname_lookup (const uint8_t *hostname);
 
+// fs
+
+#include "dirent.h"
+void *tm_fs_dir_open (const char *path);
+const char *tm_fs_dir_next (void *dir);
+void tm_fs_dir_close (void *dir);
+
 // tasks
 
 typedef struct tm_task
