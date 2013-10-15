@@ -32,7 +32,7 @@ local buf = buf;
 while _truthy((client).socket and (tm__tcp__readable(global, client.socket) > (0))) do
 
 buf = tm__tcp__read(global, client.socket);
-if _truthy((not (buf)) or ((buf).length == (0))) then
+if _truthy((not _truthy(buf)) or ((buf).length == (0))) then
 _c = _break; break;
 end
 if client:emit(("data"), buf) then end;

@@ -32,7 +32,6 @@ parser = _new(tm__http__parser, ("request"), _obj({
 
 end),
   ["on_url"]=(function (this, url)
-if console:log(("->"), url) then end;
 (self).url = url;
 end),
   ["on_header_field"]=(function (this, field)
@@ -162,7 +161,7 @@ if (this).socket:write(("\r\n")) then end;
 (this)._header = (true);
 end);
 ((ServerResponse).prototype).write = (function (this, data)
-if (not ((this)._header)) then
+if (not _truthy((this)._header)) then
 if this:writeHead((200)) then end;
 end
 if (this).socket:write(Number(global, data.length):toString((16))) then end;
@@ -173,7 +172,7 @@ end)
 
 ;
 ((ServerResponse).prototype)["end"] = (function (this, data)
-if (not ((this)._header)) then
+if (not _truthy((this)._header)) then
 if this:writeHead((200)) then end;
 end
 if (data ~= (null)) then

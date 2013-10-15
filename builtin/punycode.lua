@@ -310,7 +310,7 @@ if define(global, (function (this)
 if true then return punycode; end;
 end)) then end;
 else
-if _truthy(freeExports and (not ((freeExports).nodeType))) then
+if _truthy(freeExports and (not _truthy((freeExports).nodeType))) then
 if _truthy(freeModule) then
 (freeModule).exports = punycode;
 else

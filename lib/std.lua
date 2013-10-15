@@ -238,6 +238,10 @@ obj_proto.__defineSetter__ = js_define_setter
 
 -- function prototype
 
+js_define_getter(func_proto, 'length', function (this)
+  return debug.getinfo(this, 'u').nparams - 1
+end)
+
 func_proto.call = function (func, ths, ...)
   return func(ths, ...)
 end

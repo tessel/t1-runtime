@@ -14,3 +14,9 @@ exports.readdirSync = function (path) {
   ffi.C.tm_fs_dir_close(ptr);
   return dirs;
 };
+
+exports.readFile = function (path, next) {
+  setImmediate(function () {
+    next("error");
+  });
+};

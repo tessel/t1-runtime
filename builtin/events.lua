@@ -39,7 +39,7 @@ end);
 ((EventEmitter).prototype).removeAllListeners = (function (this, type)
 local k = k;
 for k in _pairs((this)._events) do
-if (not (type)) or (type == k) and ((this)._events)[k]:splice((0), ((this)._events)[k].length) then end;
+if (not _truthy(type)) or (type == k) and ((this)._events)[k]:splice((0), ((this)._events)[k].length) then end;
 end
 if true then return this; end;
 end);

@@ -21,6 +21,11 @@ end
 if (function () local base, prop = (ffi).C, "tm_fs_dir_close"; return base[prop](base, ptr); end)() then end;
 if true then return dirs; end;
 end);
+(exports).readFile = (function (this, path, next)
+if setImmediate(global, (function (this)
+if next(global, ("error")) then end;
+end)) then end;
+end);
 
 return _module.exports;
 end
