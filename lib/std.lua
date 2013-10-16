@@ -551,6 +551,7 @@ end
 global.Math = js_obj({
   abs = luafunctor(math.abs),
   max = luafunctor(math.max),
+  min = luafunctor(math.min),
   sqrt = luafunctor(math.sqrt),
   ceil = luafunctor(math.ceil),
   floor = luafunctor(math.floor),
@@ -674,6 +675,11 @@ if rex then
     return rex.match(this, regex.pattern)
   end
 
+  global.RegExp.prototype.exec = function (this, subj)
+    -- TODO wrong
+    return js_arr(table.pack(rex.match(subj, this.pattern)))
+  end
+
   global.RegExp.prototype.test = function (this, subj)
     return rex.match(subj, this.pattern) and true or false
   end
@@ -740,6 +746,7 @@ global.process = js_obj({
       heapUsed=collectgarbage('count')*1024
     });
   end,
+  platform = "nuttx", --todo change
   binding = function (self, key)
     return _G['_colony_binding_' + key](global);
   end,

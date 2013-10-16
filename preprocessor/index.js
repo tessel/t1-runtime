@@ -16,11 +16,11 @@ function gen (f) {
 
 wrench.readdirRecursive(__dirname + '/..', function (err, files) {
   if (!files) {
-    console.log('[done preprocessing]');
+    console.error('[done preprocessing]');
     return;
   }
   files.filter(function (f) {
-    return f.match(/\.(js)$/i) && (f.match(/^examples\/connect\//) || f.match(/^(builtin|etc)\//));
+    return f.match(/\.(js)$/i) && (f.match(/^examples\/path\//) || f.match(/^(builtin|etc)\//));
   }).forEach(function (f) {
     gen(f);
   });

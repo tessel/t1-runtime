@@ -456,7 +456,7 @@ local p = arg[0]
 if string.sub(p, 1, 1) ~= '.' then
   p = './' .. p
 end
-print('Run mem:', collectgarbage('count'))
+-- print('Run mem:', collectgarbage('count'))
 colony_run(p)
 
-print('End mem:', collectgarbage('count'))
+-- print('End mem:', collectgarbage('count'))
