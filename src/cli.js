@@ -51,10 +51,21 @@ function cli () {
     // Evaluate string.
     } else if (evalsource) {
 
-      colony.bundleDependencies({
-        inject: [
-          {"id": "/example.js","source":evalsource,"entry":true,"deps":{}}
-        ]
+      colony.bundleDependencies([
+        {"id": "/example.js","source":evalsource,"entry":true,"deps":{}}
+      ], {
+        inject: {
+          events: null,
+          net: null,
+          dgram: null,
+          util: null,
+          buffer: null,
+          fs: null,
+          stream: null,
+          path: null,
+          child_process: null,
+          repl: null
+        }
       }, cli_run);
 
     // Bundle code.
@@ -78,7 +89,19 @@ function cli () {
 
       colony.bundleFiles(srcs, {
         minify: argv.m,
-        bundleLib: argv.B
+        bundleLib: argv.B,
+        inject: {
+          events: null,
+          net: null,
+          dgram: null,
+          util: null,
+          buffer: null,
+          fs: null,
+          stream: null,
+          path: null,
+          child_process: null,
+          repl: null
+        }
       }, cli_run);
     }
   }

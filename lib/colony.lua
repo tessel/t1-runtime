@@ -6,8 +6,8 @@
 -- luarocks install lrexlib-pcre
 
 local bit = require('bit32')
---local _, rex = pcall(require, 'lrexlib')
-local rex = nil
+local _, rex = pcall(require, 'rex_pcre')
+-- local rex = nil
 
 -- namespace
 
@@ -209,7 +209,13 @@ global._null = {}
 
 -- pairs
 
-global._pairs = pairs;
+global._pairs = function (arg)
+  if type(arg) == 'function' then
+    return pairs({})
+  else
+    return pairs(arg)
+  end
+end;
 
 -- typeof operator
 
@@ -224,14 +230,18 @@ end
 
 -- instanceof
 
--- NOW broken
 global._instanceof = function (self, arg)
-  return getmetatable(self).__index == arg.prototype
+  -- NOW broken
+  -- return true
+  return getmetatable(self) and getmetatable(self).__index == arg.prototype
 end
 
 -- "new" invocation
 
 global._new = function (f, ...)
+  if type(f) ~= 'function' then
+    error('TypeError: object is not a function')
+  end
   local o = {}
   setmetatable(o, {
     __index = function (self, key)
@@ -373,6 +383,9 @@ func_proto.apply = function (func, ths, args)
   for i=0,args.length-1 do luargs[i+1] = args[i] end
   return func(ths, unpack(luargs))
 end
+func_proto.toString = function ()
+  return "function () { ... }"
+end
 
 -- array prototype
 
@@ -405,6 +418,19 @@ arr_proto.unshift = function (ths, elem)
   ths[0] = elem
   return _val
 end
+arr_proto.splice = function (ths, i, del, ...)
+  local ret = global._arr({})
+  for j=1,del do
+    ret:push(ths[i])
+    table.remove(ths, i)
+  end
+  local args = table.pack(...)
+  for j=1,args.length do
+    table.insert(ths, i, args[j])
+    i = i + 1
+  end
+  return ret
+end
 arr_proto.reverse = function (ths)
   local arr = global._arr({})
   for i=0,ths.length-1 do
@@ -432,6 +458,9 @@ arr_proto.concat = function (src1, src2)
   end
   return a
 end
+arr_proto.sort = function (ths)
+  return ths
+end
 arr_proto.join = function (ths, str)
   local _r = ""
   for i=0,ths.length-1 do
@@ -453,6 +482,9 @@ arr_proto.map = function (ths, fn)
   for i=0,ths.length-1 do
     a:push(fn(ths, ths[i], i))
   end
+  return a
+end
+arr_proto.reduce = function (ths, fn)
   return a
 end
 arr_proto.forEach = function (ths, fn)
@@ -477,6 +509,12 @@ Globals
 
 global.this, global.global = global, global
 
+-- toString
+
+global.toString = function ()
+  return "[object Object]"
+end
+
 -- Number
 
 global.Number = luafunctor(function (n) 
@@ -487,6 +525,15 @@ end)
 
 global.Object = {}
 global.Object.prototype = obj_proto
+global.Object.defineProperty = function (ths)
+  return ths
+end
+global.Object.defineProperties = function (ths)
+  return ths
+end
+global.Object.freeze = function (ths)
+  return ths
+end
 global.Object.keys = function (ths, obj)
   local a = global._arr({})
   -- TODO debug this one:
@@ -498,6 +545,11 @@ global.Object.keys = function (ths, obj)
   end
   return a
 end
+
+-- Function
+
+global.Function = {}
+global.Function.prototype = func_proto
 
 -- Array
 
@@ -545,6 +597,7 @@ global.Math = global._obj({
   abs = luafunctor(math.abs),
   max = luafunctor(math.max),
   sqrt = luafunctor(math.sqrt),
+  ceil = luafunctor(math.ceil),
   floor = luafunctor(math.floor),
   random = function ()
     return math.random()
@@ -560,6 +613,10 @@ global.Error = global._func(function (self, str)
   self.message = str
   self.stack = ""
 end)
+
+global.Error.captureStackTrace = function ()
+  return {}
+end
 
 -- Console
 
@@ -624,6 +681,18 @@ global._arguments = function (...)
   return arguments
 end
 
+-- sequence
+
+global._seq = function (list)
+  return table.remove(list)
+end
+
+-- in
+
+global._in = function (key, obj)
+  return obj[key]
+end
+
 -- require function
 
 global.require = luafunctor(require)
@@ -631,12 +700,18 @@ global.require = luafunctor(require)
 -- parseFloat, parseInt
 
 global.parseFloat = luafunctor(function (str)
-  return tonumber(str)
+  return tonumber(tostring(str)) or 0
 end)
 
 global.parseInt = luafunctor(function (str)
-  return math.floor(tonumber(str))
+  return math.floor(tonumber(str) or 0)
 end)
+
+-- Date
+
+global.Date = function (ths)
+  return 0
+end
 
 -- regexp library
 
@@ -645,6 +720,10 @@ if rex then
     local o = {pattern=pat, flags=flags}
     setmetatable(o, {__index=global.RegExp.prototype})
     return o
+  end
+
+  global.RegExp.prototype.test = function ()
+    return false
   end
 end
 
@@ -686,7 +765,15 @@ global.process = global._obj({
   binding = function (self, key)
     return _G['_colony_binding_' + key](global);
   end,
+  versions = global._obj({
+    node = "0.10.0"
+  }),
   env = global._obj({}),
+  stdin = {
+    resume = function () end,
+    setEncoding = function () end
+  },
+  stdout = {}
 })
 
 -- poor man's eval

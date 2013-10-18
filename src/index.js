@@ -13,7 +13,7 @@ var colonize = require('./colonize');
  */
 
 function runlua (luacode) {
-  luacode = 'package.path = ' + JSON.stringify(path.join(__dirname, '../lib') + '/?.lua;') + ' .. package.path; \n' + luacode;
+  luacode = 'package.path = ' + JSON.stringify(path.join(__dirname, '../lib') + '/?.lua;') + ' .. package.path; ' + luacode;
   var lua = require('child_process').spawn(path.join(__dirname, '../bin/lua-5.2.2/src/lua'), ['-e', luacode]);
   process.stdin.pipe(lua.stdin);
   lua.stdout.on('data', function (str) {

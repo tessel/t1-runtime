@@ -1,5 +1,7 @@
 var a_b = 'hi';
 
+aaaaaa.hey();
+
 console.log(1, a_b);
 
 a_b += ' there';

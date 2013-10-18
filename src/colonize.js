@@ -10,8 +10,10 @@ var fs = require('fs')
  * Colonize
  */
 
-var keywords = ['end', 'do', 'nil', 'error'];
+var keywords = ['end', 'do', 'nil', 'error', 'until', 'repeat'];
 var mask = ['string', 'math', 'print', 'type', 'pairs'];
+
+var joiner = '';
 
 function fixIdentifiers (str) {
   if (keywords.indexOf(str) > -1) {
@@ -60,16 +62,16 @@ function colonizeContext (ids, node) {
       return stat.type == 'FunctionDeclaration';
     }).map(function (stat) {
       return stat.source();
-    }).join('\n'),
+    }).join(joiner),
     // Statements
     node.body.filter(function (stat) {
       return stat.type != 'FunctionDeclaration';
     }).map(function (stat) {
       return stat.source();
-    }).join('\n')
+    }).join(joiner)
   ].filter(function (n) {
     return n;
-  }).join('\n'));
+  }).join(joiner));
 }
 
 function getLoops (node) {
@@ -88,7 +90,6 @@ var labels = [];
 var loops = [];
 
 function colonize (node) {
-  // console.error(node.type);
   // console.error(process.memoryUsage().heapUsed/1024);
 
   switch (node.type) {
@@ -113,13 +114,15 @@ function colonize (node) {
         } else if (node.operator == '<<=') {
           node.right.update('_bit.lshift(' + node.left.source() + ', ' + node.right.source() + ')');
         } else {
-          node.right.update(node.left.source() + ' ' + node.operator.substr(0, 1) + ' ' + node.right.source());
+          node.right.update(node.left.source().replace(/^\s+/, '') + ' ' + node.operator.substr(0, 1) + ' ' + node.right.source());
         }
         node.operator = '=';
       }
       // Used in another expression, assignments must be wrapped by a closure.
       if (node.parent.type != 'ExpressionStatement') {
-        node.update('(function () local _r = ' + node.right.source() + '; ' + node.left.source() + ' = _r; return _r; end)()');
+        // OPTIM
+        // node.update('(function () local _r = ' + node.right.source() + '; ' + node.left.source() + ' = _r; return _r; end)()');
+        node.update('local _r = ' + node.right.source() + '; ' + node.left.source() + ' = _r; ');
       } else {
         // Need to refresh thanks to += updating.
         node.update(node.left.source() + ' = ' + node.right.source());
@@ -136,8 +139,10 @@ function colonize (node) {
     case 'UnaryExpression':
       if (node.operator == '~') {
         node.update('_bit.bnot(' + node.argument.source() + ')');
+      } else if (node.operator == '+') {
+        node.update('(0+' + node.argument.source() + ')');
       } else if (node.operator == '!') {
-        node.update('(not (' + node.argument.source() + '))');
+        node.update('(not _truthy(' + node.argument.source() + '))');
       } else if (node.operator == 'typeof') {
         node.update('_typeof(' + node.argument.source() + ')');
       } else if (node.operator == 'delete') {
@@ -159,12 +164,16 @@ function colonize (node) {
         node.update('_bit.lshift(' + node.left.source() + ', ' + node.right.source() + ')');
       } else if (node.operator == '>>') {
         node.update('_bit.rshift(' + node.left.source() + ', ' + node.right.source() + ')');
+      } else if (node.operator == '>>>') {
+        node.update('_bit.rrotate(' + node.left.source() + ', ' + node.right.source() + ')');
       } else if (node.operator == '&') {
         node.update('_bit.band(' + node.left.source() + ', ' + node.right.source() + ')');
       } else if (node.operator == '|') {
         node.update('_bit.bor(' + node.left.source() + ', ' + node.right.source() + ')');
       } else if (node.operator == 'instanceof') {
         node.update('_instanceof(' + node.left.source() + ', ' + node.right.source() + ')');
+      } else if (node.operator == 'in') {
+        node.update('_in(' + node.left.source() + ', ' + node.right.source() + ')');
       } else {
         node.update('(' + node.source() + ')');
       }
@@ -183,7 +192,9 @@ function colonize (node) {
       if (node.prefix) {
         node.update('(function () ' + node.argument.source() + ' = ' + node.argument.source() + ' ' + node.operator.substr(0, 1) + ' 1; return ' + node.argument.source() + '; end)()');
       } else {
-        node.update('(function () local _r = ' + node.argument.source() + '; ' + node.argument.source() + ' = _r ' + node.operator.substr(0, 1) + ' 1; return _r end)()');
+        // OPTIM
+        // node.update('(function () local _r = ' + node.argument.source() + '; ' + node.argument.source() + ' = _r ' + node.operator.substr(0, 1) + ' 1; return _r end)()');
+        node.update('local _r = ' + node.argument.source() + '; ' + node.argument.source() + ' = _r ' + node.operator.substr(0, 1) + ' 1;');
       }
       break;
 
@@ -201,7 +212,7 @@ function colonize (node) {
     case 'VariableDeclaration':
       node.update(node.declarations.map(function (d) {
         return d.id.source() + ' = ' + (d.init ? d.init.source() : 'nil') + ';';
-      }).join('\n'));
+      }).join(joiner));
       break;
 
     case 'BreakStatement':
@@ -212,6 +223,12 @@ function colonize (node) {
 
       node.update("_c" + label + " = _break; " +
         ((getLoops(node).slice(-1)[0] || [])[0] == "TryStatement" ? "return _break;" : "break;"));
+      break;
+
+    case 'SequenceExpression':
+      node.update('_seq({' + node.expressions.map(function (d) {
+        return d.source();
+      }).join(', ') + '})');
       break;
 
     case 'SwitchCase':
@@ -227,14 +244,14 @@ function colonize (node) {
           if (!c.test) {
             return c.consequent.map(function (s) {
               return s.source();
-            }).join('\n')
+            }).join(joiner)
           }
-          return 'if _r == _' + i + ' then\n' + c.consequent.map(function (s) {
+          return 'if _r == _' + i + ' then' + joiner + c.consequent.map(function (s) {
             return s.source();
-          }).join('\n') + '\n' + (i < node.cases.length - 1 && (c.consequent.slice(-1)[0] || {}).type != 'BreakStatement' ? '_r = _' + (i + 1) + ';\n' : '') + 'end'
-        }).join('\n'),
+          }).join(joiner) + joiner + (i < node.cases.length - 1 && (c.consequent.slice(-1)[0] || {}).type != 'BreakStatement' ? '_r = _' + (i + 1) + ';' + joiner : '') + 'end'
+        }).join(joiner),
         'until true'
-      ].join('\n'))
+      ].join(joiner))
 // ret = "repeat\n" +
 //   (if cases.length then ("local _#{i}#{if v then ' = ' + colonize(v) else ''}; " for i, [v, _] of cases).join('') else '') +
 //   "local _r = #{colonize(expr)};\n" +
@@ -279,9 +296,9 @@ function colonize (node) {
         'repeat',
         (node.usesContinue ? 'local _c' + name + ' = nil; repeat' : ''),
         node.body.source(),
-        (node.usesContinue ? 'until true;\nif _c' + name + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end' : ''),
+        (node.usesContinue ? 'until true;' + joiner + 'if _c' + name + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end' : ''),
         'until not ' + truthy(node.test) + ';'
-      ].join('\n'))
+      ].join(joiner))
       break;
 
     case 'WhileStatement':
@@ -298,9 +315,9 @@ function colonize (node) {
         'while ' + truthy(node.test) + ' do',
         (node.usesContinue ? 'local _c' + name + ' = nil; repeat' : ''),
         node.body.source(),
-        (node.usesContinue ? 'until true;\nif _c' + name + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end' : ''),
+        (node.usesContinue ? 'until true;' + joiner + 'if _c' + name + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end' : ''),
         'end'
-      ].join('\n'))
+      ].join(joiner))
       break;
 
     case 'ForStatement':
@@ -309,15 +326,20 @@ function colonize (node) {
         'while ' + (node.test ? truthy(node.test) : 'true') + ' do',
         (node.usesContinue ? 'local _c = nil; repeat' : ''),
         node.body.source(),
-        (node.usesContinue ? 'until true;\nif _c == _break then break end' : ''),
-        node.update && node.update.source ? node.update.source() : '',
+        (node.usesContinue ? 'until true;' + joiner + 'if _c == _break then break end' : ''),
+        (node.update && node.update.source
+          // TODO make this better
+          ? (node.update.type == 'BinaryExpression' || node.update.type == 'LogicalExpression' || node.update.type == 'UpdateExpression' || node.update.type == 'Literal' || node.update.type == 'CallExpression' || node.update.type == 'ConditionalExpression'
+            ? node.update.source()
+            : 'if ' + node.update.source().replace(/;?$/, '') + ' then end;')
+          : ''),
         'end'
-      ].join('\n'))
+      ].join(joiner))
       break;
 
     case 'Literal':
       if (node.value instanceof RegExp) {
-        node.update('RegExp(' + JSON.stringify(node.value.source) + ', ' + JSON.stringify(String(node.value).replace(/^.*\//, '')) + ')');
+        node.update('_regexp(' + JSON.stringify(node.value.source) + ', ' + JSON.stringify(String(node.value).replace(/^.*\//, '')) + ')');
       } else if (typeof node.value == 'string') {
         // TODO update
         node.update('(' + JSON.stringify(node.value).replace(/\\u00/, '\\x') + ')');
@@ -361,10 +383,10 @@ function colonize (node) {
       break;
 
     case 'ObjectExpression':
-      node.update('_obj({\n  ' +
+      node.update('_obj({' + joiner + '  ' +
         node.properties.map(function (prop) {
           return '[' + JSON.stringify(prop.key.type == 'Identifier' ? prop.key.name : prop.key.value) + ']=' + prop.value.source()
-        }).join(',\n  ') +
+        }).join(',' + joiner + '  ') +
         '})');
       break;
     case 'Property':
@@ -386,9 +408,9 @@ function colonize (node) {
 
     case 'IfStatement':
       node.update([
-        "if " + truthy(node.test) + " then\n",
-        node.consequent.source() + '\n',
-        (node.alternate ? 'else\n' + node.alternate.source() + '\n' : ""),
+        "if " + truthy(node.test) + " then" + joiner,
+        node.consequent.source() + joiner,
+        (node.alternate ? 'else ' + joiner + node.alternate.source() + joiner : ""),
         "end"
       ].join(''));
       break;
@@ -404,12 +426,16 @@ function colonize (node) {
 
     case 'MemberExpression':
       if (node.parent.type != 'CallExpression') {
-        if (!node.computed && node.property.source().match(/^[\w_\$]+$/)) {
+        if (!node.computed && node.property.source().match(/^[\w_\$]+$/) && keywords.indexOf(node.property.source()) == -1) {
           node.update("(" + node.object.source() + ")." + node.property.source());
         } else {
           node.update("(" + node.object.source() + ")"
-            + '[' + (!node.computed ? JSON.stringify(node.property.source()) : node.property.source()) + ']');
+            + '[' + (!node.computed ? JSON.stringify(node.property.source()) : fixIdentifiers(node.property.source())) + ']');
         }
+      }
+
+      if (node.parent.type == 'ExpressionStatement') {
+        node.update('if ' + node.source() + ' then end');
       }
       break;
 
@@ -417,7 +443,8 @@ function colonize (node) {
       node.update(node.source().replace(/;?$/, ';')); // Enforce trailing semicolons.
 
       // Can't have and/or be statements.
-      if (node.expression.type == 'BinaryExpression' || node.expression.type == 'LogicalExpression' || node.expression.type == 'Literal' || node.expression.type == 'CallExpression') {
+      if (node.expression.type == 'BinaryExpression' || node.expression.type == 'LogicalExpression' || node.expression.type == 'Literal' || node.expression.type == 'CallExpression' || node.expression.type == 'ConditionalExpression') {
+        // console.log('>>>', JSON.stringify(node.source()))
         node.update('if ' + node.source().replace(/;?$/, '') + ' then end;');
       }
       break;
@@ -438,7 +465,7 @@ function colonize (node) {
         'for ' + name + ' in _pairs(' + node.right.source() + ') do',
         node.body.source(),
         'end'
-      ].join('\n'))
+      ].join(joiner))
       break;
 
     case 'ThrowStatement':
@@ -460,7 +487,7 @@ node.block.source(),
 
 // catch clause
 'if _s == false then',
-node.handlers[0].param.source() + ' = _e;\n' + node.handlers[0].body.source(),
+node.handlers[0].param.source() + ' = _e;' + joiner + node.handlers[0].body.source(),
 
 // break clause.
 'end',
@@ -475,7 +502,7 @@ node.finalizer ? node.finalizer.source() : ''
 //'  return _r',
 (getLoops(node).length && getLoops(node).slice(-1)[0][0] == 'TryStatement' ? 'return _cont;' : 'break;'),
 'end'
-      ]).join('\n'));
+      ]).join(joiner));
       break;
 
     case 'FunctionExpression':
@@ -503,21 +530,28 @@ node.finalizer ? node.finalizer.source() : ''
       // assign self-named function reference
       var namestr = "";
       if (name) {
-        namestr = "local " + name + " = _debug.getinfo(1, 'f').func;\n";
+        // OPTIM
+        // namestr = "local " + name + " = _debug.getinfo(1, 'f').func;\n";
       }
 
       var loopsbkp = loops;
       var loops = [];
       if (node.identifiers.indexOf('arguments') > -1) {
-        node.update(prefix + "_func(function (this, ...)\n" + namestr +
-          "local arguments = _arguments(...);\n" +
-          (args.length ? "local " + args.join(', ') + " = ...;\n" : "") +
-          node.body.source() + "\n" +
+        node.update(prefix + "(function (this, ...) " + joiner + namestr +
+          "local arguments = _arguments(...);" + joiner +
+          (args.length ? "local " + args.join(', ') + " = ...;" + joiner : "") +
+          node.body.source() + joiner +
           "end)" + suffix);
       } else {
-        node.update(prefix + "_func(function (" + ['this'].concat(args).join(', ') + ")\n" + namestr +
-          node.body.source() + "\n" +
+        node.update(prefix + "(function (" + ['this'].concat(args).join(', ') + ") " + joiner + namestr +
+          node.body.source() + joiner +
           "end)" + suffix);
+      }
+
+      // Wrap functions with names used in expressions to assign inside closure.
+
+      if (name && prefix && node.parent.type.match(/Expression$|^VariableDeclarator$|^ReturnStatement$/)) {
+        node.update('(function () ' + node.source() + '; return ' + name + '; end)()');
       }
 
       loops = loopsbkp;
@@ -528,13 +562,13 @@ node.finalizer ? node.finalizer.source() : ''
       node.update([
         "function (_ENV)",
         'local ' + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
-        "local _module = {exports={}}; local exports, module = _module.exports, _module;",
+        "local _module = _obj({exports=_obj({})}); local exports, module = _module.exports, _module;",
         "",
         node.source(),
         "",
         "return _module.exports;",
         "end"
-      ].join('\n'));
+      ].join(joiner));
       break;
 
     default:
@@ -543,8 +577,17 @@ node.finalizer ? node.finalizer.source() : ''
 }
 
 module.exports = function (src) {
+  src = src.replace(/^#/, '//#');
   return String(falafel(src, colonize))
-    .replace(/^(.*?)\/\//gm, '$1--')
-    .replace(/\/\*([\S\s]*?)\*\//, '')
-    .replace(/^\s+|\s+$/g, '');
+    // inline lingering comments are converted to lua comments
+    .replace(/^(([^"']|"[^"]*"|'[^']*')*?)\/\//gm, '$1--')
+    // replace multiline comments
+    .replace(/\/\*([\S\s\n]*?)\*\//g, function (str) {
+      return str.replace(/[^\n]+/g, '');
+    })
+    // Replace trailing and beginning whitespace
+    // .replace(/^\s+|\s+$/g, '')
+    // Replace successive semicolons or trailing semicolons
+    .replace(/;([\s\n]*;)+/g, ';')
+    .replace(/do\s*;/g, 'do')
 };
