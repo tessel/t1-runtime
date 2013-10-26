@@ -394,6 +394,11 @@ colony = {
 
 -- Load standard library
 
-colony.global = require('lib/std')(colony)
+require('lib/std')(colony)
+if true then
+  require('lib/node')(colony)
+else
+  require('lib/lualoop')(colony)
+end
 
 return colony

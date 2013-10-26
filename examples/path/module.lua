@@ -17,430 +17,723 @@
 -- NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
 -- DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 -- OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
--- USE OR OTHER DEALINGS IN THE SOFTWARE.
+-- USE OR OTHER DEALINGS IN THE SOFTWARE.function (_ENV)local string, math, print, type, pairs = nil, nil, nil, nil, nil;local _module = _obj({exports=_obj({})}); local exports, module = _module.exports, _module;local  punycode,  util,  isString,  isNull,  isObject,  isArray,  Url,  protocolPattern, 
+    portPattern, 
+    delims, 
+    unwise, 
+    autoEscape, 
+    nonHostChars, 
+    hostEndingChars, 
+    hostnameMaxLen, 
+    hostnamePartPattern, 
+    hostnamePartStart, 
+    unsafeProtocol, 
+    hostlessProtocol, 
+    slashedProtocol, 
+    querystring,  urlParse,  urlFormat,  urlResolve,  urlResolveObject =  punycode,  util,  isString,  isNull,  isObject,  isArray,  Url,  protocolPattern, 
+    portPattern, 
+    delims, 
+    unwise, 
+    autoEscape, 
+    nonHostChars, 
+    hostEndingChars, 
+    hostnameMaxLen, 
+    hostnamePartPattern, 
+    hostnamePartStart, 
+    unsafeProtocol, 
+    hostlessProtocol, 
+    slashedProtocol, 
+    querystring,  urlParse,  urlFormat,  urlResolve,  urlResolveObject;
+
+ isString = (function (this, str)  
+
+  if true then return ( _typeof( str) == ("string")); end;end);
+
+ isNull = (function (this, arg)  
+
+  if true then return ( arg == (null)); end;end);
+
+ isObject = (function (this, arg)  
+
+  if true then return ( _typeof( arg) == ("object")); end;end);
+
+ isArray = (function (this, arg)  
+
+  if true then return  Array:isArray(arg); end;end);
+
+ Url = (function (this)  
+
+  (this).protocol =  (null);
+  (this).slashes =  (null);
+  (this).auth =  (null);
+  (this).host =  (null);
+  (this).port =  (null);
+  (this).hostname =  (null);
+  (this).hash =  (null);
+  (this).search =  (null);
+  (this).query =  (null);
+  (this).pathname =  (null);
+  (this).path =  (null);
+  (this).href =  (null);end);
+
+ urlParse = (function (this, url,  parseQueryString,  slashesDenoteHost)  
+local  u =  u;
+  if _truthy(url and  util:isObject(url) and _instanceof( url,  Url)) then if true then return  url; end;end
+
+   u =  _new( Url);if 
+  u:parse(url,  parseQueryString,  slashesDenoteHost) then end; 
+  if true then return  u; end;end);
+ urlFormat = (function (this, obj)  
 
 
-function (_ENV)
-local string, math, print, type, pairs = nil, nil, nil, nil, nil;
-local _module = _obj({exports=_obj({})}); local exports, module = _module.exports, _module;
-
-local isWindows, util, normalizeArray, splitDeviceRe, splitTailRe, splitPath, normalizeUNCRoot, splitPathRe = isWindows, util, normalizeArray, splitDeviceRe, splitTailRe, splitPath, normalizeUNCRoot, splitPathRe;
-normalizeArray = (function (this, parts, allowAboveRoot)
-local normalizeArray = _debug.getinfo(1, 'f').func;
-local up, i, last = up, i, last;
-up = (0);
-i = ((parts).length - (1));
-while (i >= (0)) do
-
-last = (parts)[i];
-if (last == (".")) then
-if parts:splice(i, (1)) then end;
-else
-if (last == ("..")) then
-if parts:splice(i, (1)) then end;
-(function () local _r = up; up = _r + 1; return _r end)();
-else
-if _truthy(up) then
-if parts:splice(i, (1)) then end;
-(function () local _r = up; up = _r - 1; return _r end)();
-end
-end
-end
-
-if (function () local _r = i; i = _r - 1; return _r end)() then end;
-end
-if _truthy(allowAboveRoot) then
-
-while _truthy((function () local _r = up; up = _r - 1; return _r end)()) do
-
-if parts:unshift(("..")) then end;
-
-if up then end;
-end
-end
-if true then return parts; end;
-end);
-isWindows = ((process).platform == ("win32"));
-util = require(global, ("util"));
-(util).isString = (function (this, str)
-if true then return (_typeof(str) == ("string")); end;
-end)
 
 
--- resolves . and .. elements in a path array with directory names there
--- must be no slashes, empty elements, or device names (c:\) in the array
--- (so also no leading and trailing slashes - it does not distinguish
--- relative and absolute paths)
-;
-if _truthy(isWindows) then
-splitDeviceRe = _regexp("^([a-zA-Z]:|[\\\\\\/]{2}[^\\\\\\/]+[\\\\\\/]+[^\\\\\\/]+)?([\\\\\\/])?([\\s\\S]*?)$", "");
-splitTailRe = _regexp("^([\\s\\S]*?)((?:\\.{1,2}|[^\\\\\\/]+?|)(\\.[^.\\/\\\\]*|))(?:[\\\\\\/]*)$", "");
-splitPath = (function (this, filename)
-local result, device, tail, result2, dir, basename, ext = result, device, tail, result2, dir, basename, ext;
-result = splitDeviceRe:exec(filename);
-device = (((result)[(1)] or ("")) + ((result)[(2)] or ("")));
-tail = (result)[(3)] or ("");
-result2 = splitTailRe:exec(tail);
-dir = (result2)[(1)];
-basename = (result2)[(2)];
-ext = (result2)[(3)];
-if true then return _arr({[0]=device, dir, basename, ext}); end;
-end);
-normalizeUNCRoot = (function (this, device)
-if true then return (("\\\\") + device:replace(_regexp("^[\\\\\\/]+", ""), ("")):replace(_regexp("[\\\\\\/]+", "g"), ("\\"))); end;
-end);
-(exports).resolve = (function (this, ...)
-local arguments = _arguments(...);
-local resolvedDevice, resolvedTail, resolvedAbsolute, i, path, result, device, isUnc, isAbsolute, tail, f = resolvedDevice, resolvedTail, resolvedAbsolute, i, path, result, device, isUnc, isAbsolute, tail, f;
-f = (function (this, p)
-local f = _debug.getinfo(1, 'f').func;
-if true then return (not _truthy((not _truthy(p)))); end;
-end);
-resolvedDevice = ("");
-resolvedTail = ("");
-resolvedAbsolute = (false);
-i = ((arguments).length - (1));
-while (i >= (-(1))) do
-local _c = nil; repeat
-path = nil;
-if (i >= (0)) then
-path = (arguments)[i];
-else
-if (not _truthy(resolvedDevice)) then
-path = process:cwd();
-else
-path = ((process).env)[(("=") + resolvedDevice)];
-if _truthy((not _truthy(path)) or (path:substr((0), (3)):toLowerCase() ~= (resolvedDevice:toLowerCase() + ("\\")))) then
-path = (resolvedDevice + ("\\"));
-end
-end
-end
-if (not _truthy(util:isString(path))) then
-_error(_new(TypeError, ("Arguments to path.resolve must be strings")))
-else
-if (not _truthy(path)) then
-_c = _cont; break;
-end
-end
-result = splitDeviceRe:exec(path);
-device = (result)[(1)] or ("");
-isUnc = device and (device:charAt((1)) ~= (":"));
-isAbsolute = exports:isAbsolute(path);
-tail = (result)[(3)];
-if _truthy(device and resolvedDevice and (device:toLowerCase() ~= resolvedDevice:toLowerCase())) then
-_c = _cont; break;
-end
-if (not _truthy(resolvedDevice)) then
-resolvedDevice = device;
-end
-if (not _truthy(resolvedAbsolute)) then
-resolvedTail = ((tail + ("\\")) + resolvedTail);
-resolvedAbsolute = isAbsolute;
-end
-if _truthy(resolvedDevice and resolvedAbsolute) then
-_c = _break; break;
-end
-until true;
-if _c == _break then break end
-if (function () local _r = i; i = _r - 1; return _r end)() then end;
-end
-if _truthy(isUnc) then
-resolvedDevice = normalizeUNCRoot(global, resolvedDevice);
-end
-resolvedTail = normalizeArray(global, resolvedTail:split(_regexp("[\\\\\\/]+", "")):filter(f), (not _truthy(resolvedAbsolute))):join(("\\"));
-if true then return ((resolvedDevice + ((_truthy(resolvedAbsolute) and {("\\")} or {("")})[1])) + resolvedTail) or ("."); end;
-end);
-(exports).normalize = (function (this, path)
-local result, device, isUnc, isAbsolute, tail, trailingSlash = result, device, isUnc, isAbsolute, tail, trailingSlash;
-result = splitDeviceRe:exec(path);
-device = (result)[(1)] or ("");
-isUnc = device and (device:charAt((1)) ~= (":"));
-isAbsolute = exports:isAbsolute(path);
-tail = (result)[(3)];
-trailingSlash = _regexp("[\\\\\\/]$", ""):test(tail);
-if _truthy(device and (device:charAt((1)) == (":"))) then
-device = ((device)[(0)]:toLowerCase() + device:substr((1)));
-end
-tail = normalizeArray(global, tail:split(_regexp("[\\\\\\/]+", "")):filter((function (this, p)
-if true then return (not _truthy((not _truthy(p)))); end;
-end)), (not _truthy(isAbsolute))):join(("\\"));
-if _truthy((not _truthy(tail)) and (not _truthy(isAbsolute))) then
-tail = (".");
-end
-if _truthy(tail and trailingSlash) then
-tail = tail + ("\\");
-end
-if _truthy(isUnc) then
-device = normalizeUNCRoot(global, device);
-end
-if true then return ((device + ((_truthy(isAbsolute) and {("\\")} or {("")})[1])) + tail); end;
-end);
-(exports).isAbsolute = (function (this, path)
-local result, device, isUnc = result, device, isUnc;
-result = splitDeviceRe:exec(path);
-device = (result)[(1)] or ("");
-isUnc = device and (device:charAt((1)) ~= (":"));
-if true then return (not _truthy((not _truthy((result)[(2)])))) or isUnc; end;
-end);
-(exports).join = (function (this, ...)
-local arguments = _arguments(...);
-local f, paths, joined = f, paths, joined;
-f = (function (this, p)
-local f = _debug.getinfo(1, 'f').func;
-if (not _truthy(util:isString(p))) then
-_error(_new(TypeError, ("Arguments to path.join must be strings")))
-end
-if true then return p; end;
-end);
-paths = ((Array).prototype).filter:call(arguments, f);
-joined = paths:join(("\\"));
-if (not _truthy(_regexp("^[\\\\\\/]{2}[^\\\\\\/]", ""):test(paths[(0)]))) then
-joined = joined:replace(_regexp("^[\\\\\\/]{2,}", ""), ("\\"));
-end
-if true then return exports:normalize(joined); end;
-end);
-(exports).relative = (function (this, from, to)
-local lowerFrom, lowerTo, trim, toParts, lowerFromParts, lowerToParts, length, samePartsLength, i, outputParts = lowerFrom, lowerTo, trim, toParts, lowerFromParts, lowerToParts, length, samePartsLength, i, outputParts;
-trim = (function (this, arr)
-local trim = _debug.getinfo(1, 'f').func;
-local start, __K__end = start, __K__end;
-start = (0);
 
-while (start < (arr).length) do
+  if _truthy(util:isString(obj)) then obj =  urlParse(global, obj);end
+  if (not _truthy(_instanceof(obj,  Url))) then if true then return (( Url).prototype).format:call(obj); end;end
+  if true then return  obj:format(); end;end);
 
-if ((arr)[start] ~= ("")) then
-_c = _break; break;
-end
+ urlResolve = (function (this, source,  relative)  
 
-if (function () local _r = start; start = _r + 1; return _r end)() then end;
-end
-_K_end = ((arr).length - (1));
+  if true then return  urlParse(global, source,  (false),  (true)):resolve(relative); end;end);
 
-while (_K_end >= (0)) do
+ urlResolveObject = (function (this, source,  relative)  
 
-if ((arr)[_K_end] ~= ("")) then
-_c = _break; break;
-end
+  if (not _truthy(source)) then if true then return  relative; end;end
+  if true then return  urlParse(global, source,  (false),  (true)):resolveObject(relative); end;end);
 
-if (function () local _r = _K_end; _K_end = _r - 1; return _r end)() then end;
-end
-if (start > _K_end) then
-if true then return _arr({}); end;
-end
-if true then return arr:slice(start, ((_K_end - start) + (1))); end;
-end);
-from = exports:resolve(from);
-to = exports:resolve(to);
-lowerFrom = from:toLowerCase();
-lowerTo = to:toLowerCase();
-toParts = trim(global, to:split(("\\")));
-lowerFromParts = trim(global, lowerFrom:split(("\\")));
-lowerToParts = trim(global, lowerTo:split(("\\")));
-length = Math:min(lowerFromParts.length, lowerToParts.length);
-samePartsLength = length;
-i = (0);
-while (i < length) do
+ punycode =  require(global, ("punycode"));
+ util =  require(global, ("util"));(
 
-if ((lowerFromParts)[i] ~= (lowerToParts)[i]) then
-samePartsLength = i;
-_c = _break; break;
-end
+util).isString =  isString;(
+util).isNull =  isNull;(
+util).isObject =  isObject;(
+util).isArray =  isArray;(
 
-if (function () local _r = i; i = _r + 1; return _r end)() then end;
-end
-if _truthy((samePartsLength == (0))) then
-if true then return to; end;
-end
-outputParts = _arr({});
-i = samePartsLength;
-while (i < (lowerFromParts).length) do
+exports).parse =  urlParse;(
+exports).resolve =  urlResolve;(
+exports).resolveObject =  urlResolveObject;(
+exports).format =  urlFormat;(
 
-if outputParts:push(("..")) then end;
+exports).Url =  Url;
 
-if (function () local _r = i; i = _r + 1; return _r end)() then end;
-end
-outputParts = outputParts:concat(toParts:slice(samePartsLength));
-if true then return outputParts:join(("\\")); end;
-end);
-(exports).sep = ("\\");
-(exports).delimiter = (";");
-else
-splitPathRe = _regexp("^(\\/?|)([\\s\\S]*?)((?:\\.{1,2}|[^\\/]+?|)(\\.[^.\\/]*|))(?:[\\/]*)$", "");
-splitPath = (function (this, filename)
-if true then return splitPathRe:exec(filename):slice((1)); end;
-end);
-(exports).resolve = (function (this, ...)
-local arguments = _arguments(...);
-local resolvedPath, resolvedAbsolute, i, path = resolvedPath, resolvedAbsolute, i, path;
-resolvedPath = ("");
-resolvedAbsolute = (false);
-i = ((arguments).length - (1));
-while _truthy((i >= (-(1))) and (not _truthy(resolvedAbsolute))) do
-local _c = nil; repeat
-path = ((i >= (0)) and {(arguments)[i]} or {process:cwd()})[1];
-if (not _truthy(util:isString(path))) then
-_error(_new(TypeError, ("Arguments to path.resolve must be strings")))
-else
-if (not _truthy(path)) then
-_c = _cont; break;
-end
-end
-resolvedPath = ((path + ("/")) + resolvedPath);
-resolvedAbsolute = (path:charAt((0)) == ("/"));
-until true;
-if _c == _break then break end
-if (function () local _r = i; i = _r - 1; return _r end)() then end;
-end
-resolvedPath = normalizeArray(global, resolvedPath:split(("/")):filter((function (this, p)
-if true then return (not _truthy((not _truthy(p)))); end;
-end)), (not _truthy(resolvedAbsolute))):join(("/"));
-if true then return (((_truthy(resolvedAbsolute) and {("/")} or {("")})[1]) + resolvedPath) or ("."); end;
-end);
-(exports).normalize = (function (this, path)
-local isAbsolute, trailingSlash = isAbsolute, trailingSlash;
-isAbsolute = exports:isAbsolute(path);
-trailingSlash = (path:substr((-(1))) == ("/"));
-path = normalizeArray(global, path:split(("/")):filter((function (this, p)
-if true then return (not _truthy((not _truthy(p)))); end;
-end)), (not _truthy(isAbsolute))):join(("/"));
-if _truthy((not _truthy(path)) and (not _truthy(isAbsolute))) then
-path = (".");
-end
-if _truthy(path and trailingSlash) then
-path = path + ("/");
-end
-if true then return (((_truthy(isAbsolute) and {("/")} or {("")})[1]) + path); end;
-end);
-(exports).isAbsolute = (function (this, path)
-if true then return (path:charAt((0)) == ("/")); end;
-end);
-(exports).join = (function (this, ...)
-local arguments = _arguments(...);
-local paths = paths;
-paths = ((Array).prototype).slice:call(arguments, (0));
-if true then return exports:normalize(paths:filter((function (this, p, index)
-if (not _truthy(util:isString(p))) then
-_error(_new(TypeError, ("Arguments to path.join must be strings")))
-end
-if true then return p; end;
-end)):join(("/"))); end;
-end);
-(exports).relative = (function (this, from, to)
-local trim, fromParts, toParts, length, samePartsLength, i, outputParts = trim, fromParts, toParts, length, samePartsLength, i, outputParts;
-trim = (function (this, arr)
-local trim = _debug.getinfo(1, 'f').func;
-local start, __K__end = start, __K__end;
-start = (0);
 
-while (start < (arr).length) do
 
-if ((arr)[start] ~= ("")) then
-_c = _break; break;
-end
 
-if (function () local _r = start; start = _r + 1; return _r end)() then end;
-end
-_K_end = ((arr).length - (1));
 
-while (_K_end >= (0)) do
 
-if ((arr)[_K_end] ~= ("")) then
-_c = _break; break;
-end
 
-if (function () local _r = _K_end; _K_end = _r - 1; return _r end)() then end;
-end
-if (start > _K_end) then
-if true then return _arr({}); end;
-end
-if true then return arr:slice(start, ((_K_end - start) + (1))); end;
-end);
-from = exports:resolve(from):substr((1));
-to = exports:resolve(to):substr((1));
-fromParts = trim(global, from:split(("/")));
-toParts = trim(global, to:split(("/")));
-length = Math:min(fromParts.length, toParts.length);
-samePartsLength = length;
-i = (0);
-while (i < length) do
 
-if ((fromParts)[i] ~= (toParts)[i]) then
-samePartsLength = i;
-_c = _break; break;
-end
 
-if (function () local _r = i; i = _r + 1; return _r end)() then end;
-end
-outputParts = _arr({});
-i = samePartsLength;
-while (i < (fromParts).length) do
 
-if outputParts:push(("..")) then end;
 
-if (function () local _r = i; i = _r + 1; return _r end)() then end;
-end
-outputParts = outputParts:concat(toParts:slice(samePartsLength));
-if true then return outputParts:join(("/")); end;
-end);
-(exports).sep = ("/");
-(exports).delimiter = (":");
-end
-(exports).dirname = (function (this, path)
-local result, root, dir = result, root, dir;
-result = splitPath(global, path);
-root = (result)[(0)];
-dir = (result)[(1)];
-if _truthy((not _truthy(root)) and (not _truthy(dir))) then
-if true then return ("."); end;
-end
-if _truthy(dir) then
-dir = dir:substr((0), ((dir).length - (1)));
-end
-if true then return (root + dir); end;
-end);
-(exports).basename = (function (this, path, ext)
-local f = f;
-f = (splitPath(global, path))[(2)];
-if _truthy(ext and (f:substr(((-(1)) * (ext).length)) == ext)) then
-f = f:substr((0), ((f).length - (ext).length));
-end
-if true then return f; end;
-end);
-(exports).extname = (function (this, path)
-if console:log(path, ("extname"), splitPath(global, path))
-   then end;
-if true then return (splitPath(global, path))[(3)]; end;
-end);
-(exports).exists = util:deprecate((function (this, path, callback)
-if require(global, ("fs")):exists(path, callback) then end;
-end), ("path.exists is now called `fs.exists`."));
-(exports).existsSync = util:deprecate((function (this, path)
-if true then return require(global, ("fs")):existsSync(path); end;
-end), ("path.existsSync is now called `fs.existsSync`."));
-if _truthy(isWindows) then
-(exports)._makeLong = (function (this, path)
-local resolvedPath = resolvedPath;
-if (not _truthy(util:isString(path))) then
-if true then return path; end;
-end
-if (not _truthy(path)) then
-if true then return (""); end;
-end
-resolvedPath = exports:resolve(path);
-if _truthy(_regexp("^[a-zA-Z]\\:\\\\", ""):test(resolvedPath)) then
-if true then return (("\\\\?\\") + resolvedPath); end;
-else
-if _truthy(_regexp("^\\\\\\\\[^?.]", ""):test(resolvedPath)) then
-if true then return (("\\\\?\\UNC\\") + resolvedPath:substring((2))); end;
-end
-end
-if true then return path; end;
-end);
-else
-(exports)._makeLong = (function (this, path)
-if true then return path; end;
-end);
-end
 
-return _module.exports;
-end
+
+
+ protocolPattern =  _regexp("^([a-z0-9.+-]+:)", "i");
+    portPattern =  _regexp(":[0-9]*$", "");
+    delims =  _arr({[0]=("<"),  (">"),  ("\""),  ("`"),  (" "),  ("\r"),  ("\n"),  ("\t")});
+    unwise =  _arr({[0]=("{"),  ("}"),  ("|"),  ("\\"),  ("^"),  ("`")}):concat(delims);
+    autoEscape =  _arr({[0]=("'")}):concat(unwise);
+    nonHostChars =  _arr({[0]=("%"),  ("/"),  ("?"),  (";"),  ("#")}):concat(autoEscape);
+    hostEndingChars =  _arr({[0]=("/"),  ("?"),  ("#")});
+    hostnameMaxLen =  (255);
+    hostnamePartPattern =  _regexp("^[a-z0-9A-Z_-]{0,63}$", "");
+    hostnamePartStart =  _regexp("^([a-z0-9A-Z_-]{0,63})(.*)$", "");
+    unsafeProtocol =  
+
+
+_obj({  ["javascript"]=true,  ["javascript:"]=true});
+    hostlessProtocol =  
+
+
+_obj({  ["javascript"]=true,  ["javascript:"]=true});
+    slashedProtocol =  
+
+
+
+
+
+
+
+
+
+
+_obj({  ["http"]=true,  ["https"]=true,  ["ftp"]=true,  ["gopher"]=true,  ["file"]=true,  ["http:"]=true,  ["https:"]=true,  ["ftp:"]=true,  ["gopher:"]=true,  ["file:"]=true});
+    querystring =  require(global, ("querystring"));((
+
+Url).prototype).parse =  (function (this, url,  parseQueryString,  slashesDenoteHost)  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local  rest,  proto,  lowerProto,  slashes,  hostEnd,  i,  hec,  auth,  atSign,  ipv6Hostname,  hostparts,  l,  part,  newpart,  j,  k,  validParts,  notHost,  bit,  domainArray,  newOut,  s,  p,  h,  ae,  esc,  hash,  qm =  rest,  proto,  lowerProto,  slashes,  hostEnd,  i,  hec,  auth,  atSign,  ipv6Hostname,  hostparts,  l,  part,  newpart,  j,  k,  validParts,  notHost,  bit,  domainArray,  newOut,  s,  p,  h,  ae,  esc,  hash,  qm;
+  if (not _truthy(util:isString(url))) then 
+
+    _error( _new( TypeError, (("Parameter 'url' must be a string, not ") + _typeof( url))))end
+
+   rest =  url;
+  rest =  rest:trim();
+
+   proto =  protocolPattern:exec(rest);
+  if _truthy(proto) then 
+
+    proto = ( proto)[(0)];
+     lowerProto =  proto:toLowerCase();
+    (this).protocol =  lowerProto;
+    rest =  rest:substr(proto.length);end
+  if _truthy(slashesDenoteHost or  proto or  rest:match(_regexp("^\\/\\/[^@\\/]+@[^@\\/]+", ""))) then 
+
+     slashes = ( rest:substr((0),  (2)) ==  ("//"));
+    if _truthy(slashes and  (not _truthy(proto and ( hostlessProtocol)[proto]))) then 
+
+      rest =  rest:substr((2));
+      (this).slashes =  (true);endend
+
+  if _truthy(
+(not _truthy((hostlessProtocol)[proto])) and slashes or proto and  (not _truthy((slashedProtocol)[proto]))) then 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+     hostEnd =  (-(1));
+     i =  (0);while ( i <( hostEndingChars).length) do  
+
+       hec =  rest:indexOf(hostEndingChars[i]);
+      if _truthy((hec ~=  (-(1))) and (hostEnd ==  (-(1))) or ( hec < hostEnd)) then
+        hostEnd =  hec;endlocal _r =  i;  i = _r + 1;end;
+     auth = nil; atSign = nil;
+    if (hostEnd ==  (-(1))) then 
+
+
+      atSign =  rest:lastIndexOf(("@"));else  
+
+
+
+      atSign =  rest:lastIndexOf(("@"),  hostEnd);end
+    if (atSign ~=  (-(1))) then 
+
+      auth =  rest:slice((0),  atSign);
+      rest =  rest:slice((atSign + (1)));
+      (this).auth =  decodeURIComponent(global, auth);end
+    hostEnd =  (-(1));
+     i =  (0);while ( i <( nonHostChars).length) do  
+
+       hec =  rest:indexOf(nonHostChars[i]);
+      if _truthy((hec ~=  (-(1))) and (hostEnd ==  (-(1))) or ( hec < hostEnd)) then
+        hostEnd =  hec;endlocal _r =  i;  i = _r + 1;end;
+    if (hostEnd ==  (-(1))) then
+      hostEnd = ( rest).length;end
+
+    (this).host =  rest:slice((0),  hostEnd);
+    rest =  rest:slice(hostEnd);if 
+    this:parseHost() then end; 
+    (this).hostname =  (this).hostname or  ("");
+     ipv6Hostname = (( (this).hostname)[(0)] ==  ("[")) and ((
+        (this).hostname)[(((this).hostname).length - (1))] ==  ("]"));
+    if (not _truthy(ipv6Hostname)) then 
+
+       hostparts =  (this).hostname:split(_regexp("\\.", ""));
+       i =  (0); l = ( hostparts).length;while ( i < l) do local _c = nil; repeat 
+
+         part = ( hostparts)[i];
+        if (not _truthy(part)) then _c = _cont; break;end
+        if (not _truthy(part:match(hostnamePartPattern))) then 
+
+
+           newpart =  ("");
+           j =  (0); k = ( part).length;while ( j < k) do  
+
+            if (part:charCodeAt(j) > (127)) then 
+
+
+
+
+              newpart = newpart +  ("x");else  
+
+              newpart = newpart + ( part)[j];endlocal _r =  j;  j = _r + 1;end;
+          if (not _truthy(newpart:match(hostnamePartPattern))) then 
+
+             validParts =  hostparts:slice((0),  i);
+             notHost =  hostparts:slice((i + (1)));
+             bit =  part:match(hostnamePartStart);
+            if _truthy(bit) then 
+if 
+              validParts:push(bit[(1)]) then end; if 
+              notHost:unshift(bit[(2)]) then end; end
+            if _truthy((notHost).length) then 
+
+              rest = (( ("/") + notHost:join(("."))) + rest);end
+            (this).hostname =  validParts:join(("."));
+            _c = _break; break;endenduntil true;if _c == _break then break endlocal _r =  i;  i = _r + 1;end;end
+
+    if (((this).hostname).length > hostnameMaxLen) then 
+
+      (this).hostname =  ("");else  
+
+
+      (this).hostname =  (this).hostname:toLowerCase();end
+
+    if (not _truthy(ipv6Hostname)) then 
+
+
+
+
+
+       domainArray =  (this).hostname:split(("."));
+       newOut =  _arr({});
+       i =  (0);while ( i <( domainArray).length) do  
+
+         s = ( domainArray)[i];if 
+        newOut:push((_truthy(s:match(_regexp("[^A-Za-z0-9_-]", ""))) and {(
+            ("xn--") + punycode:encode(s))} or { s})[1]) then end;  (function () i = i + 1; return i; end)()end;
+      (this).hostname =  newOut:join(("."));end
+
+     p = (_truthy( (this).port) and {( (":") + (this).port)} or { ("")})[1];
+     h =  (this).hostname or  ("");
+    (this).host = ( h + p);
+    (this).href = (this).href +  (this).host;
+    if _truthy(ipv6Hostname) then 
+
+      (this).hostname =  (this).hostname:substr((1), (( (this).hostname).length - (2)));
+      if ((rest)[(0)] ~=  ("/")) then 
+
+        rest = ( ("/") + rest);endendend
+  if (not _truthy((unsafeProtocol)[lowerProto])) then 
+
+
+
+
+
+     i =  (0); l = ( autoEscape).length;while ( i < l) do  
+
+       ae = ( autoEscape)[i];
+       esc =  encodeURIComponent(global, ae);
+      if (esc ==  ae) then 
+
+        esc =  escape(global, ae);end
+      rest =  rest:split(ae):join(esc);local _r =  i;  i = _r + 1;end;end
+   hash =  rest:indexOf(("#"));
+  if (hash ~=  (-(1))) then 
+
+
+    (this).hash =  rest:substr(hash);
+    rest =  rest:slice((0),  hash);end
+   qm =  rest:indexOf(("?"));
+  if (qm ~=  (-(1))) then 
+
+    (this).search =  rest:substr(qm);
+    (this).query =  rest:substr((qm + (1)));
+    if _truthy(parseQueryString) then 
+
+      (this).query =  querystring:parse(this.query);end
+    rest =  rest:slice((0),  qm);else  if _truthy(parseQueryString) then 
+
+
+    (this).search =  ("");
+    (this).query =  _obj({  });endend
+  if _truthy(rest) then (this).pathname =  rest;end
+  if _truthy((slashedProtocol)[lowerProto] and 
+      (this).hostname and  (not _truthy((this).pathname))) then 
+
+    (this).pathname =  ("/");end
+  if _truthy((this).pathname or  (this).search) then 
+
+     p =  (this).pathname or  ("");
+     s =  (this).search or  ("");
+    (this).path = ( p + s);end
+  (this).href =  this:format();
+  if true then return this; end;end);((
+
+Url).prototype).format =  (function (this)  local  auth,  protocol, 
+      pathname, 
+      hash, 
+      host, 
+      query,  search =  auth,  protocol, 
+      pathname, 
+      hash, 
+      host, 
+      query,  search;
+   auth =  (this).auth or  ("");
+  if _truthy(auth) then 
+
+    auth =  encodeURIComponent(global, auth);
+    auth =  auth:replace(_regexp("%3A", "i"),  (":"));
+    auth = auth +  ("@");end
+
+   protocol =  (this).protocol or  ("");
+      pathname =  (this).pathname or  ("");
+      hash =  (this).hash or  ("");
+      host =  (false);
+      query =  ("");
+
+  if _truthy((this).host) then 
+
+    host = ( auth + (this).host);else  if _truthy((this).hostname) then 
+
+    host = ( auth + ((((this).hostname:indexOf((":")) ==  (-(1))) and {
+        (this).hostname} or {((
+        ("[") + (this).hostname) + ("]"))})[1]));
+    if _truthy((this).port) then 
+
+      host = host + ( (":") + (this).port);endendend
+
+  if _truthy((this).query and 
+      util:isObject(this.query) and (
+      Object:keys(this.query)).length) then 
+
+    query =  querystring:stringify(this.query);end
+
+   search =  (this).search or query and (("?") + query) or  ("");
+
+  if _truthy(protocol and ( protocol:substr((-(1))) ~=  (":"))) then protocol = protocol +  (":");end
+  if _truthy((this).slashes or 
+      (not _truthy(protocol)) or ( slashedProtocol)[protocol] and ( host ~=  (false))) then 
+
+    host = ( ("//") + (host or  ("")));
+    if _truthy(pathname and ( pathname:charAt((0)) ~=  ("/"))) then pathname = ( ("/") + pathname);endelse  if (not _truthy(host)) then 
+
+    host =  ("");endend
+
+  if _truthy(hash and ( hash:charAt((0)) ~=  ("#"))) then hash = ( ("#") + hash);end
+  if _truthy(search and ( search:charAt((0)) ~=  ("?"))) then search = ( ("?") + search);end
+
+  pathname =  pathname:replace(_regexp("[?#]", "g"),  (function (this, match)  
+
+    if true then return  encodeURIComponent(global, match); end;end));
+  search =  search:replace(("#"),  ("%23"));
+
+  if true then return (((( protocol + host) + pathname) + search) + hash); end;end);((
+
+Url).prototype).resolve =  (function (this, relative)  
+
+  if true then return  this:resolveObject(urlParse(global, relative,  (false),  (true))):format(); end;end);((
+
+Url).prototype).resolveObject =  (function (this, relative)  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local  rel,  result,  relPath,  p,  s,  isSourceAbs, 
+      isRelAbs, 
+      mustEndAbs, 
+      removeAllDots, 
+      srcPath, 
+      relPath, 
+      psychotic,  authInHost,  last,  hasTrailingSlash,  up,  i,  isAbsolute =  rel,  result,  relPath,  p,  s,  isSourceAbs, 
+      isRelAbs, 
+      mustEndAbs, 
+      removeAllDots, 
+      srcPath, 
+      relPath, 
+      psychotic,  authInHost,  last,  hasTrailingSlash,  up,  i,  isAbsolute;
+  if _truthy(util:isString(relative)) then 
+
+     rel =  _new( Url);if 
+    rel:parse(relative,  (false),  (true)) then end; 
+    relative =  rel;end
+
+   result =  _new( Url);if 
+  Object:keys(this):forEach((function (this, k)  
+(
+    result)[k] =  (this)[k];end), this) then end; (
+  result).hash = ( relative).hash;
+  if ((relative).href ==  ("")) then 
+(
+    result).href =  result:format();
+    if true then return  result; end;end
+  if _truthy((relative).slashes and  (not _truthy((relative).protocol))) then 
+
+
+
+if 
+    Object:keys(relative):forEach((function (this, k)  
+
+      if (k ~=  ("protocol")) then(
+        result)[k] = ( relative)[k];endend)) then end; 
+    if _truthy((slashedProtocol)[(result).protocol] and (
+        result).hostname and  (not _truthy((result).pathname))) then 
+(
+      result).path = local _r =  ("/"); ( result).pathname = _r;end(
+
+    result).href =  result:format();
+    if true then return  result; end;end
+
+  if _truthy((relative).protocol and (( relative).protocol ~= ( result).protocol)) then 
+
+
+
+
+
+
+
+
+
+
+    if (not _truthy((slashedProtocol)[(relative).protocol])) then 
+if 
+      Object:keys(relative):forEach((function (this, k)  
+(
+        result)[k] = ( relative)[k];end)) then end; (
+      result).href =  result:format();
+      if true then return  result; end;end(
+
+    result).protocol = ( relative).protocol;
+    if _truthy((not _truthy((relative).host)) and  (not _truthy((hostlessProtocol)[(relative).protocol]))) then 
+
+       relPath =  (relative).pathname or  (""):split(("/"));
+      while _truthy((relPath).length and  (not _truthy(local _r =  relPath:shift(); (relative).host = _r; ))) doend;
+      if (not _truthy((relative).host)) then( relative).host =  ("");end
+      if (not _truthy((relative).hostname)) then( relative).hostname =  ("");end
+      if ((relPath)[(0)] ~=  ("")) thenif  relPath:unshift(("")) then end; end
+      if ((relPath).length < (2)) thenif  relPath:unshift(("")) then end; end(
+      result).pathname =  relPath:join(("/"));else  
+(
+      result).pathname = ( relative).pathname;end(
+    result).search = ( relative).search;(
+    result).query = ( relative).query;(
+    result).host = ( relative).host or  ("");(
+    result).auth = ( relative).auth;(
+    result).hostname = ( relative).hostname or ( relative).host;(
+    result).port = ( relative).port;
+    if _truthy((result).pathname or ( result).search) then 
+
+       p = ( result).pathname or  ("");
+       s = ( result).search or  ("");(
+      result).path = ( p + s);end(
+    result).slashes = ( result).slashes or ( relative).slashes;(
+    result).href =  result:format();
+    if true then return  result; end;end
+
+  
+ isSourceAbs = (result).pathname and (( result).pathname:charAt((0)) ==  ("/"));
+      isRelAbs = (
+          relative).host or (
+          relative).pathname and (( relative).pathname:charAt((0)) ==  ("/"));
+      mustEndAbs = 
+isRelAbs or  isSourceAbs or (result).host and ( relative).pathname;
+      removeAllDots =  mustEndAbs;
+      srcPath = ( result).pathname and ( result).pathname:split(("/")) or  _arr({});
+      relPath = ( relative).pathname and ( relative).pathname:split(("/")) or  _arr({});
+      psychotic = ( result).protocol and  (not _truthy((slashedProtocol)[(result).protocol]));
+  if _truthy(psychotic) then 
+(
+    result).hostname =  ("");(
+    result).port =  (null);
+    if _truthy((result).host) then 
+
+      
+if ((srcPath)[(0)] ==  ("")) then( srcPath)[(0)] = ( result).host;else if  srcPath:unshift(result.host) then end; endend(
+    result).host =  ("");
+    if _truthy((relative).protocol) then 
+(
+      relative).hostname =  (null);(
+      relative).port =  (null);
+      if _truthy((relative).host) then 
+
+        
+if ((relPath)[(0)] ==  ("")) then( relPath)[(0)] = ( relative).host;else if  relPath:unshift(relative.host) then end; endend(
+      relative).host =  (null);end
+    mustEndAbs =  mustEndAbs and ((relPath)[(0)] ==  ("")) or (( srcPath)[(0)] ==  (""));end
+
+  if _truthy(isRelAbs) then 
+
+
+(
+    result).host =  (_truthy((relative).host or (( relative).host ==  (""))) and {(
+                  relative).host} or {( result).host})[1];(
+    result).hostname =  (_truthy((relative).hostname or (( relative).hostname ==  (""))) and {(
+                      relative).hostname} or {( result).hostname})[1];(
+    result).search = ( relative).search;(
+    result).query = ( relative).query;
+    srcPath =  relPath;else  if _truthy((relPath).length) then 
+
+
+
+    if (not _truthy(srcPath)) then srcPath =  _arr({});endif 
+    srcPath:pop() then end; 
+    srcPath =  srcPath:concat(relPath);(
+    result).search = ( relative).search;(
+    result).query = ( relative).query;else  if (not _truthy(util:isNullOrUndefined(relative.search))) then 
+
+
+
+
+
+    if _truthy(psychotic) then 
+
+
+
+(
+      result).hostname = local _r =  srcPath:shift(); ( result).host = _r;
+       authInHost = (_truthy(( result).host and (( result).host:indexOf(("@")) > (0))) and {(
+                       result).host:split(("@"))} or { (false)})[1];
+      if _truthy(authInHost) then 
+(
+        result).auth =  authInHost:shift();(
+        result).host = local _r =  authInHost:shift(); ( result).hostname = _r;endend(
+    result).search = ( relative).search;(
+    result).query = ( relative).query;
+    if _truthy((not _truthy(util:isNull(result.pathname))) or  (not _truthy(util:isNull(result.search)))) then 
+(
+      result).path =  (((_truthy((result).pathname) and {( result).pathname} or { ("")})[1]) +
+                    ((_truthy((result).search) and {( result).search} or { ("")})[1]));end(
+    result).href =  result:format();
+    if true then return  result; end;endendend
+
+  if (not _truthy((srcPath).length)) then 
+
+
+
+(
+    result).pathname =  (null);
+    if _truthy((result).search) then 
+(
+      result).path = ( ("/") +( result).search);else  
+(
+      result).path =  (null);end(
+    result).href =  result:format();
+    if true then return  result; end;end
+   last = ( srcPath:slice((-(1))))[(0)];
+   hasTrailingSlash = 
+      (result).host or ( relative).host and (last ==  (".")) or ( last ==  ("..")) or (
+      last ==  (""));
+   up =  (0);
+   i = ( srcPath).length;while ( i >= (0)) do  
+
+    last = ( srcPath)[i];
+    if _truthy((last == ("."))) then 
+if 
+      srcPath:splice(i,  (1)) then end; else  if (last ==  ("..")) then 
+if 
+      srcPath:splice(i,  (1)) then end; local _r = 
+      up; 
+      up = _r + 1;else  if _truthy(up) then 
+if 
+      srcPath:splice(i,  (1)) then end; local _r = 
+      up; 
+      up = _r - 1;endendendlocal _r =  i;  i = _r - 1;end;
+  if _truthy((not _truthy(mustEndAbs)) and  (not _truthy(removeAllDots))) then 
+
+    while _truthy(local _r =  up;  up = _r - 1;) do  
+if 
+      srcPath:unshift(("..")) then end; if  up then end;end;end
+
+  if _truthy(
+mustEndAbs and (( srcPath)[(0)] ~=  ("")) and (not _truthy((srcPath)[(0)])) or (( srcPath)[(0)]:charAt((0)) ~=  ("/"))) then 
+if 
+    srcPath:unshift(("")) then end; end
+
+  if _truthy(hasTrailingSlash and (srcPath:join(("/")):substr((-(1))) ~=  ("/"))) then 
+if 
+    srcPath:push(("")) then end; end
+
+   isAbsolute = 
+(( srcPath)[(0)] ==  ("")) or (srcPath)[(0)] and (( srcPath)[(0)]:charAt((0)) ==  ("/"));
+  if _truthy(psychotic) then 
+
+
+
+(
+    result).hostname = local _r = (_truthy( isAbsolute) and { ("")} or {(_truthy((
+                                    srcPath).length) and { srcPath:shift()} or { ("")})[1]})[1]; ( result).host = _r;
+     authInHost = (_truthy(( result).host and (( result).host:indexOf(("@")) > (0))) and {(
+                     result).host:split(("@"))} or { (false)})[1];
+    if _truthy(authInHost) then 
+(
+      result).auth =  authInHost:shift();(
+      result).host = local _r =  authInHost:shift(); ( result).hostname = _r;endend
+
+  mustEndAbs =  mustEndAbs or (result).host and ( srcPath).length;
+
+  if _truthy(mustEndAbs and  (not _truthy(isAbsolute))) then 
+if 
+    srcPath:unshift(("")) then end; end
+
+  if (not _truthy((srcPath).length)) then 
+(
+    result).pathname =  (null);(
+    result).path =  (null);else  
+(
+    result).pathname =  srcPath:join(("/"));end
+  if _truthy((not _truthy(util:isNull(result.pathname))) or  (not _truthy(util:isNull(result.search)))) then 
+(
+    result).path =  (((_truthy((result).pathname) and {( result).pathname} or { ("")})[1]) +
+                  ((_truthy((result).search) and {( result).search} or { ("")})[1]));end(
+  result).auth = ( relative).auth or ( result).auth;(
+  result).slashes = ( result).slashes or ( relative).slashes;(
+  result).href =  result:format();
+  if true then return  result; end;end);((
+
+Url).prototype).parseHost =  (function (this)  
+local  host,  port =  host,  port;
+   host =  (this).host;
+   port =  portPattern:exec(host);
+  if _truthy(port) then 
+
+    port = ( port)[(0)];
+    if (port ~=  (":")) then 
+
+      (this).port =  port:substr((1));end
+    host =  host:substr((0), (( host).length -( port).length));end
+  if _truthy(host) then (this).hostname =  host;endend);return _module.exports;end 

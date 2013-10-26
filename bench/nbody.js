@@ -15,7 +15,7 @@ function Body(x,y,z,vx,vy,vz,mass){
    this.vz = vz;
    this.mass = mass;
 }
-
+aaaaaaa.hi()
 Body.prototype.offsetMomentum = function(px,py,pz) {
    this.vx = -px / SOLAR_MASS;
    this.vy = -py / SOLAR_MASS;

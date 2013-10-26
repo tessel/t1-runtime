@@ -124,6 +124,10 @@ str_proto.toString = function (this)
   end
 end
 
+str_proto.trim = function (s)
+  return string.match(s, '^()%s*$') and '' or string.match(s, '^%s*(.*%S)')
+end
+
 str_proto.split = function (str, sep, max)
   if sep == '' then
     local ret = js_arr({})
@@ -155,12 +159,14 @@ str_proto.replace = function (str, match, out)
     return string.gsub(str, string.gsub(match, "(%W)","%%%1"), out)
   elseif js_instanceof(match, global.RegExp) then
     if type(out) == 'function' then 
-      print('REGEX REPLACE NOT SUPPORTED')
+      print('REGEX FUNCTION REPLACE NOT SUPPORTED')
+      return ''
     end
     local count = 1
     if string.find(match.flags, 'g') ~= nil then
       count = nil
     end
+    out = string.gsub(out, "%%", "%%%%")
     local ret, _ = rex.gsub(str, match.pattern, out, count)
     return ret
   else
@@ -677,7 +683,11 @@ if rex then
 
   global.RegExp.prototype.exec = function (this, subj)
     -- TODO wrong
-    return js_arr(table.pack(rex.match(subj, this.pattern)))
+    local ret = {rex.match('aaaaa', 'a(a)')} -- rex.match(subj, this.pattern)
+    if #ret > 1 or ret[0] ~= nil then
+      return js_arr(ret)
+    end
+    return nil
   end
 
   global.RegExp.prototype.test = function (this, subj)
@@ -696,6 +706,31 @@ global.JSON = js_obj({
   end
 })
 
+-- encode
+
+function encodeURIComponent (this, str)
+  str = tostring(str)
+  str = string.gsub (str, "\n", "\r\n")
+  str = string.gsub (str, "([^%w %-%_%.%~])", function (c)
+    return string.format ("%%%02X", string.byte(c))
+  end)
+  str = string.gsub (str, " ", "+")
+  return str  
+end
+
+function decodeURIComponent (this, str)
+  str = tostring(str)
+  str = string.gsub (str, "+", " ")
+  str = string.gsub (str, "%%(%x%x)", function(h)
+    return string.char(tonumber(h,16))
+  end)
+  str = string.gsub (str, "\r\n", "\n")
+  return str
+end
+
+global.encodeURIComponent = encodeURIComponent
+global.decodeURIComponent = decodeURIComponent
+
 -- global.JSON = js_obj({
 --  parse = function (ths, arg)
 --    return json.decode(arg)
@@ -711,72 +746,8 @@ global.JSON = js_obj({
 
 global.eval = function () end
 
--- extern globals
--- TODO fix these
-global.setTimeout = function (this, fn, val) 
-  return _G._colony_global_setTimeout(nil, function ()
-    fn(this)
-  end, val)
-end
-global.setInterval = function (this, fn, val) 
-  return _G._colony_global_setInterval(nil, function ()
-    fn(this)
-  end, val)
-end
-global.setImmediate = function (this, fn, val) 
-  return _G._colony_global_setImmediate(nil, function ()
-    fn(this)
-  end, val)
-end
+-- colony API
 
--- NODE JS
--- Emulation
-
-global.Buffer = _G._colony_global_Buffer
-
-global.Buffer.byteLength = function (this, msg)
-  return type(msg) == 'string' and string.len(msg) or msg.length
-end
-
--- process
-
-global.process = js_obj({
-  memoryUsage = function (ths)
-    return js_obj({
-      heapUsed=collectgarbage('count')*1024
-    });
-  end,
-  platform = "nuttx", --todo change
-  binding = function (self, key)
-    return _G['_colony_binding_' + key](global);
-  end,
-  versions = js_obj({
-    node = "0.10.0"
-  }),
-  env = js_obj({}),
-  stdin = js_obj({
-    resume = function () end,
-    setEncoding = function () end
-  }),
-  stdout = js_obj({})
-})
-
--- dirname, pathname
-
-global:__defineGetter__('____dirname', function (this)
-  return string.gsub(string.sub(debug.getinfo(2).source, 2), "/?[^/]+$", "")
-end)
-
-global:__defineGetter__('____filename', function (this)
-  return string.sub(debug.getinfo(2).source, 2)
-end)
-
--- poor man's eval
-
--- global.collectgarbage = luafunctor(collectgarbage)
-
--- print('[[end colony mem: ' .. collectgarbage('count') .. 'kb]]');
-
-return global
+colony.global = global
 
 end
