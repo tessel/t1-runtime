@@ -5,8 +5,10 @@ var fs = require('fs');
 function gen (f) {
   fs.readFile(__dirname + '/../' + f, 'utf-8', function (err, file) {
     try {
-      fs.writeFile(f.replace(/\.(js)$/i, '.lua'), colony.colonize(file), function (err) {
-        // ...
+      // fs.writeFile(f.replace(/\.(js)$/i, '.lua'), colony.colonize(file), function (err) {
+      //   // ...
+      // });
+      fs.unlink(f.replace(/\.(js)$/i, '.lua'), colony.colonize(file), function (err) {
       });
     } catch (e) {
       console.error('Error parsing ' + f, e);
