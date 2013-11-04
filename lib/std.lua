@@ -695,7 +695,10 @@ if rex then
   end
 end
 
--- json library
+
+--[[
+--|| json library
+--]]
 
 global.JSON = js_obj({
   parse = function (this, arg)
@@ -706,7 +709,10 @@ global.JSON = js_obj({
   end
 })
 
--- encode
+
+--[[
+--|| encode
+--]]
 
 function encodeURIComponent (this, str)
   str = tostring(str)
@@ -740,7 +746,66 @@ global.decodeURIComponent = decodeURIComponent
 --  end,
 -- })
 
--- return namespace
+
+--[[
+--|| Fake Event Loop
+--]]
+
+local _eventQueue = {}
+
+colony.runEventLoop = function ()
+  while #_eventQueue > 0 do
+    local queue = _eventQueue
+    _eventQueue = {}
+    for i=1,#queue do
+      if queue[i]() then
+        table.insert(_eventQueue, queue[i])
+      end
+    end
+  end
+end
+
+
+--[[
+--|| Fake Timers
+--]]
+
+global.setTimeout = function (this, fn, timeout)
+  local start = os.clock()
+  table.insert(_eventQueue, function ()
+    local now = os.clock()
+    if now - start < timeout then
+      return 1
+    end
+    fn()
+    return 0
+  end)
+end
+
+global.setInterval = function (this, fn, timeout)
+  local start = os.clock()
+  table.insert(_eventQueue, function ()
+    local now = os.clock()
+    if now - start < timeout then
+      return 1
+    end
+    fn()
+    start = os.clock() -- fixed time delay *between* calls
+    return 1
+  end)
+end
+
+global.setImmediate = function (this, fn, timeout)
+  table.insert(_eventQueue, function ()
+    fn()
+    return 0
+  end)
+end
+
+
+--[[
+--|| return namespace
+--]]
 
 -- eval stub
 

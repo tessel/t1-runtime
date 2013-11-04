@@ -6,12 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "colony.h"
 #include "tm.h"
-
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
 
 
 /**
@@ -96,28 +91,35 @@ static int handle_script(lua_State *L, char **argv, int n)
   return report(L, status);
 }
 
+static int runtime_panic (lua_State *L)
+{
+  printf("PANIC: unprotected error in call to Lua API (%s)\n", lua_tostring(L, -1));
+  return 0;  /* return to Lua to abort */
+}
+
+int luaopen_rex_pcre (lua_State *L);
+
 int main (int argc, char *argv[])
 {
-  lua_State *L = colony_init();
-  luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_OFF);
+  lua_State *L = lua_open();
+  lua_atpanic(L, &runtime_panic);
 
+  luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
+
+  // Open libraries.
+  luaL_openlibs(L);
+  luaopen_tm(L);
+  lua_register(L, "rex_pcre", luaopen_rex_pcre);
+
+  // // GC control.
   // lua_gc(L, LUA_GCSETPAUSE, 90);
   // lua_gc(L, LUA_GCSETSTEPMUL, 200);
 
-  if (argc < 2) {
-    printf("Need more arguments bro\n");
-    return 1;
-  }
-
   // Parse code.
-  int status = handle_script(L, argv, 1);
+  int status = handle_script(L, argv, 0);
 
-  // Main loop.
-  if (status == 0) {
-    tm_run(tm_default_loop());
-  }
-
-  colony_close(L);
+  // Close runtime.
+  lua_close(L);
 
   return status; 
 }

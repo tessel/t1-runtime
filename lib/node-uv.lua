@@ -2,6 +2,7 @@ return function (colony)
 
 local bit = require('bit32')
 local _, rex = pcall(require, 'rex_pcre')
+local uv = uv_open()
 
 -- locals
 
@@ -31,10 +32,70 @@ local regex_proto = colony.regex_proto
 
 local global = colony.global
 
--- Shorthand for helper functions in compiled code.
 
--- NODE JS
--- Emulation
+--[[
+--|| Event Loop
+--]]
+
+colony.runEventLoop = function ()
+  repeat
+    -- print("\ntick.")
+  until uv.run('once') == 0
+end
+
+
+--[[
+--|| Timers
+--]]
+
+local function setTimeout(this, callback, timeout)
+  local timer = uv.new_timer()
+  function timer:ontimeout()
+    -- p("ontimeout", self)
+    uv.timer_stop(timer)
+    uv.close(timer)
+    callback(this)
+  end
+  function timer:onclose()
+    -- p("ontimerclose", self)
+  end
+  uv.timer_start(timer, timeout or 0, 0)
+  return timer
+end
+
+local function setInterval(this, callback, interval)
+  local timer = uv.new_timer()
+  function timer:ontimeout()
+    -- p("interval", self)
+    callback(self)
+  end
+  function timer:onclose()
+    -- p("onintervalclose", self)
+  end
+  uv.timer_start(timer, interval or 0, interval or 0)
+  return timer
+end
+
+local function setImmediate(this, callback)
+  setTimeout(this, callback, 0)
+end
+
+local function clearTimeout(this, timer)
+  uv.timer_stop(timer)
+  uv.close(timer)
+end
+
+global.setInterval = setInterval;
+global.setImmediate = setImmediate;
+global.setTimeout = setTimeout;
+global.clearInterval = clearTimeout;
+global.clearTimeout = clearTimeout;
+global.clearTimeout = clearTimeout;
+
+
+--[[
+--|| Buffer
+--]]
 
 if _G._colony_global_Buffer then
   global.Buffer = _G._colony_global_Buffer
@@ -44,7 +105,10 @@ if _G._colony_global_Buffer then
   end
 end
 
--- process
+
+--[[
+--|| process
+--]]
 
 global.process = js_obj({
   memoryUsage = function (ths)
@@ -67,7 +131,10 @@ global.process = js_obj({
   stdout = js_obj({})
 })
 
--- dirname, pathname
+
+--[[
+--|| global variables
+--]]
 
 global:__defineGetter__('____dirname', function (this)
   return string.gsub(string.sub(debug.getinfo(2).source, 2), "/?[^/]+$", "")

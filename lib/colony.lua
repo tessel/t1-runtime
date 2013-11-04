@@ -395,10 +395,9 @@ colony = {
 -- Load standard library
 
 require('lib/std')(colony)
+
 if true then
-  require('lib/node')(colony)
-else
-  require('lib/lualoop')(colony)
+  require('lib/node-tm')(colony)
 end
 
 return colony

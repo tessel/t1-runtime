@@ -5,10 +5,8 @@ var fs = require('fs');
 function gen (f) {
   fs.readFile(__dirname + '/../' + f, 'utf-8', function (err, file) {
     try {
-      // fs.writeFile(f.replace(/\.(js)$/i, '.lua'), colony.colonize(file), function (err) {
-      //   // ...
-      // });
-      fs.unlink(f.replace(/\.(js)$/i, '.lua'), colony.colonize(file), function (err) {
+      fs.writeFile(f.replace(/\.(js)$/i, '.colony').replace(/\/([^\/]+)$/, '/~$1'), colony.colonize(file), function (err) {
+        // ...
       });
     } catch (e) {
       console.error('Error parsing ' + f, e);
@@ -22,7 +20,7 @@ wrench.readdirRecursive(__dirname + '/..', function (err, files) {
     return;
   }
   files.filter(function (f) {
-    return f.match(/\.(js)$/i) && (f.match(/^examples\/path\//) || f.match(/^(builtin|bench|etc)\//));
+    return f.match(/\.(js)$/i) && (f.match(/^examples\/http\//) || f.match(/^(builtin)\//));
   }).forEach(function (f) {
     gen(f);
   });
