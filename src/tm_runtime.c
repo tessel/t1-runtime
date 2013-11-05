@@ -205,7 +205,7 @@ static int l_tm_uptime_micro (lua_State* L)
 
 static int l_tm_buffer_create (lua_State *L)
 {
-  size_t n = (size_t) lua_tonumber(L, 2);
+  size_t n = (size_t) lua_tonumber(L, 1);
   lua_newuserdata(L, n);
   return 1;
 }
