@@ -262,9 +262,10 @@ static int l_tm_buffer_copy (lua_State *L)
  * Load Colony.
  */
 
-void luaopen_tm (lua_State *L)
+LUALIB_API int luaopen_tm (lua_State *L)
 {
-  luaL_register(L, "tm", (luaL_reg[]) {
+  lua_newtable (L);
+  luaL_register(L, NULL, (luaL_reg[]) {
 
     { "udp_open", l_tm_udp_open },
     { "tcp_open", l_tm_tcp_open },
@@ -288,4 +289,5 @@ void luaopen_tm (lua_State *L)
 
     { NULL, NULL }
   });
+  return 1;
 }

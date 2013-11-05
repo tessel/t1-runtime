@@ -22,202 +22,12 @@ ffi.cdef[[
   int tm_tcp_listen (tm_socket_t sock, int port);
   int tm_tcp_accept (tm_socket_t sock, uint32_t *ip);
 
-  typedef void* tm_regex_t;
-
-  typedef struct {
-    void *a;
-    void *b;
-  } tm_regex_group_t;
-
-  tm_regex_t tm_regex_compile (const char *str);
-  int tm_regex_exec (tm_regex_t regex, const char *str, tm_regex_group_t *groups, size_t group_count);
-  void tm_regex_sub (const char *src, char *buf, size_t buf_len, tm_regex_group_t *groups, size_t group_count);
-
-
-  /**
-   * Filesystem stuff OS X
-   */
-
-  typedef long ssize_t;
-  typedef unsigned long size_t;
-  typedef uint32_t uid_t;
-  typedef uint32_t gid_t;
-  typedef uint16_t mode_t;
-  typedef uint8_t sa_family_t;
-  typedef uint32_t dev_t;
-  typedef int64_t blkcnt_t;
-  typedef int32_t blksize_t;
-  typedef int32_t suseconds_t;
-  typedef uint16_t nlink_t;
-  typedef uint64_t ino_t; // at least on recent desktop; TODO define as ino64_t
-  typedef long time_t;
-  typedef int32_t daddr_t;
-  typedef unsigned long clock_t;
-  typedef unsigned int nfds_t;
-
-  typedef long int off_t;
-
-  struct timeval {
-    time_t tv_sec;
-    suseconds_t tv_usec;
-  };
-  struct timespec {
-    time_t tv_sec;
-    long   tv_nsec;
-  };
-  struct utimbuf {
-    time_t actime;       /* access time */
-    time_t modtime;      /* modification time */
-  };
-
-  struct stat {
-    dev_t           st_dev;
-    mode_t          st_mode;
-    nlink_t         st_nlink;
-    ino_t           st_ino;
-    uid_t           st_uid;
-    gid_t           st_gid;
-    dev_t           st_rdev;
-    struct timespec st_atimespec;
-    struct timespec st_mtimespec;
-    struct timespec st_ctimespec;
-    struct timespec st_birthtimespec;
-    off_t           st_size;
-    blkcnt_t        st_blocks;
-    blksize_t       st_blksize;
-    uint32_t        st_flags;
-    uint32_t        st_gen;
-    int32_t         st_lspare;
-    int64_t         st_qspare[2];
-  };
-
-  ssize_t sendfile(int out_fd, int in_fd, off_t *offset, size_t count);
-  int stat(const char *path, struct stat *buf);
-  int fstat(int fd, struct stat *buf);
-  int lstat(const char *path, struct stat *buf);
-  int ftruncate(int fildes, off_t length);
-  int truncate(const char *path, off_t length);
-  int utime(const char *filename, const struct utimbuf *times);
-  int futimes(int fd, const struct timeval tv[2]);
-  int chmod(const char *path, mode_t mode);
-  int fchmod(int fd, mode_t mode);
-  int fsync(int fd);
-  int fdatasync(int fd);
-  int unlink(const char *pathname);
-  int rmdir(const char *pathname);
-  int mkdir(const char *pathname, mode_t mode);
-  int rename(const char *oldpath, const char *newpath);
-  int getdirentries(int fd, char *buf, int nbytes, long *basep);
-
-  int link(const char *oldpath, const char *newpath);
-  int symlink(const char *oldpath, const char *newpath);
-  int chown(const char *path, uid_t owner, gid_t group);
-  int fchown(int fd, uid_t owner, gid_t group);
-
-
   /**
    * C stuff
    */
 
   size_t strlen(const char * str);
   int printf(const char *fmt, ...);
-
-  
-  /**
-   * http_parser
-   */
-
-  typedef struct http_parser http_parser;
-  typedef struct http_parser_settings http_parser_settings;
-
-  typedef int (*http_data_cb) (http_parser*, const char *at, size_t length);
-  typedef int (*http_cb) (http_parser*);
-
-  struct http_parser {
-    /** PRIVATE **/
-    unsigned char type : 2;     /* enum http_parser_type */
-    unsigned char flags : 6;    /* F_* values from 'flags' enum; semi-public */
-    unsigned char state;        /* enum state from http_parser.c */
-    unsigned char header_state; /* enum header_state from http_parser.c */
-    unsigned char index;        /* index into current matcher */
-
-    uint32_t nread;          /* # bytes read in various scenarios */
-    uint64_t content_length; /* # bytes in body (0 if no Content-Length header) */
-
-    /** READ-ONLY **/
-    unsigned short http_major;
-    unsigned short http_minor;
-    unsigned short status_code; /* responses only */
-    unsigned char method;       /* requests only */
-    unsigned char http_errno : 7;
-
-    /* 1 = Upgrade header was present and the parser has exited because of that.
-     * 0 = No upgrade header present.
-     * Should be checked when http_parser_execute() returns in addition to
-     * error checking.
-     */
-    unsigned char upgrade : 1;
-
-    /** PUBLIC **/
-    void *data; /* A pointer to get hook to the "connection" or "socket" object */
-  };
-
-  struct http_parser_settings {
-    http_cb      on_message_begin;
-    http_data_cb on_url;
-    http_cb      on_status_complete;
-    http_data_cb on_header_field;
-    http_data_cb on_header_value;
-    http_cb      on_headers_complete;
-    http_data_cb on_body;
-    http_cb      on_message_complete;
-  };
-
-  unsigned long http_parser_version(void);
-
-  void http_parser_init(http_parser *parser, enum http_parser_type type);
-
-
-  size_t http_parser_execute(http_parser *parser,
-                             const http_parser_settings *settings,
-                             const char *data,
-                             size_t len);
-
-
-  /* If http_should_keep_alive() in the on_headers_complete or
-   * on_message_complete callback returns 0, then this should be
-   * the last message on the connection.
-   * If you are the server, respond with the "Connection: close" header.
-   * If you are the client, close the connection.
-   */
-  int http_should_keep_alive(const http_parser *parser);
-
-  /* Returns a string version of the HTTP method. */
-  const char *http_method_str(enum http_method m);
-
-  /* Return a string name of the given error */
-  const char *http_errno_name(enum http_errno err);
-
-  /* Return a string description of the given error */
-  const char *http_errno_description(enum http_errno err);
-
-  /* Parse a URL; return nonzero on failure */
-  int http_parser_parse_url(const char *buf, size_t buflen,
-                            int is_connect,
-                            struct http_parser_url *u);
-
-  /* Pause or un-pause the parser; a nonzero value pauses */
-  void http_parser_pause(http_parser *parser, int paused);
-
-  /* Checks if this is the final chunk of the body. */
-  int http_body_is_final(const http_parser *parser);
-
-  enum http_method
-  {
-  HHHHHHH
-  };
-
-  enum http_parser_type { HTTP_REQUEST, HTTP_RESPONSE, HTTP_BOTH };
 ]]
 
 --------------------
@@ -350,72 +160,53 @@ end
 
 ------------------
 
+local http_parser = require('http_parser')
+
 colony.global.tm__http__parser = function (this, type, cb)
-  local settings = ffi.new("http_parser_settings[1]");
+  local parser
+  parser = http_parser.new(type, {
+    onMessageBegin = function ()
+      if cb.on_message_begin then
+        cb.on_message_begin(this)
+      end
+    end,
+    onUrl = function (value)
+      if cb.on_url then
+        cb.on_url(this, value)
+      end
+    end,
+    onHeaderField = function (field)
+      if cb.on_header_field then
+        cb.on_header_field(this, field)
+      end
+    end,
+    onHeaderValue = function (value)
+      if cb.on_header_value then
+        cb.on_header_value(this, value)
+      end
+    end,
+    onHeadersComplete = function (info)
+      if cb.on_headers_complete then
+        cb.on_headers_complete(this, parser.method)
+      end
+    end,
+    onBody = function (chunk)
+      if cb.on_body then
+        cb.on_body(this, chunk)
+      end
+    end,
+    onMessageComplete = function ()
+      if cb.on_message_complete then
+        cb.on_message_complete(this)
+      end
+    end
+  })
   this.on_error = cb.on_error
-  settings[0].on_message_begin = function (parser)
-    -- print('on_message_begin')
-    if cb.on_message_begin then
-      return cb.on_message_begin(this) or 0
-    end
-    return 0;
-  end
-  settings[0].on_url = function (parser, buf, buf_len)
-    if cb.on_url then
-      return cb.on_url(this, ffi.string(buf, buf_len)) or 0
-    end
-    return 0;
-  end
-  settings[0].on_status_complete = function (parser)
-    if cb.on_status_complete then
-      return cb.on_status_complete(this, ffi.string(parser.method)) or 0
-    end
-    return 0;
-  end
-  settings[0].on_header_field = function (parser, buf, buf_len)
-    if cb.on_header_field then
-      return cb.on_header_field(this, ffi.string(buf, buf_len)) or 0
-    end
-    return 0;
-  end
-  settings[0].on_header_value = function (parser, buf, buf_len)
-    if cb.on_header_value then
-      return cb.on_header_value(this, ffi.string(buf, buf_len)) or 0
-    end
-    return 0;
-  end
-  settings[0].on_headers_complete = function (parser)
-    if cb.on_headers_complete then
-      return cb.on_headers_complete(this, ffi.string(ffi.C.http_method_str(parser[0].method))) or 0
-    end
-    return 0;
-  end
-  settings[0].on_body = function (parser, buf, buf_len)
-    if cb.on_body then
-      return cb.on_body(this, ffi.string(buf, buf_len)) or 0
-    end
-    return 0;
-  end
-  settings[0].on_message_complete = function (parser)
-    if cb.on_message_complete then
-      return cb.on_message_complete(this) or 0
-    end
-    return 0;
-  end
-
-  local parser = ffi.new("http_parser[1]");
-  if type == 'request' then
-    ffi.C.http_parser_init(parser, ffi.C.HTTP_REQUEST)
-  else
-    ffi.C.http_parser_init(parser, 1)
-  end
-
-  this.__settings = settings
   this.__parser = parser
 end
 
 colony.global.tm__http__parser.prototype.write = function (this, str)
-  local nparsed = ffi.C.http_parser_execute(this.__parser, this.__settings, str, string.len(str))
+  local nparsed = this.__parser:execute(str, 0, #str)
   if nparsed ~= string.len(str) and this.on_error then
     this:on_error('Could not parse tokens at character #' .. tostring(nparsed))
   end

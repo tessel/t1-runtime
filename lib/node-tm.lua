@@ -95,13 +95,6 @@ local function Buffer (this, length)
   this = {}
   local buf = tm.buffer_create(length)
   setmetatable(this, {
-    -- __gc = function ()
-    --   print('hi')
-    --   if buf then
-    --     tm.buffer_free(buf)
-    --     buf = nil
-    --   end
-    -- end,
     buffer = buf,
     bufferlen = length,
     getters = {

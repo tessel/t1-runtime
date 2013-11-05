@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "tm.h"
+#include "lhttp_parser.h"
 
 
 /**
@@ -110,8 +111,22 @@ int main (int argc, char *argv[])
 
   // Open libraries.
   luaL_openlibs(L);
-  luaopen_tm(L);
-  lua_register(L, "rex_pcre", luaopen_rex_pcre);
+
+  // Get preload table.
+  lua_getglobal(L, "package");
+  lua_getfield(L, -1, "preload");
+  lua_remove(L, -2);
+  // tm
+  lua_pushcfunction(L, luaopen_tm);
+  lua_setfield(L, -2, "tm");
+  // http_parser
+  lua_pushcfunction(L, luaopen_http_parser);
+  lua_setfield(L, -2, "http_parser");
+  // pcre
+  lua_pushcfunction(L, luaopen_rex_pcre);
+  lua_setfield(L, -2, "rex_pcre");
+  // Done with preload
+  lua_pop(L, 1);
 
   // // GC control.
   // lua_gc(L, LUA_GCSETPAUSE, 90);

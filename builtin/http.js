@@ -175,10 +175,13 @@ function HTTPOutgoingRequest (port, host, path, method) {
     throw new Error('Could not lookup hostname.');
   }
   var ip = [(ipl >> 0) & 0xFF, (ipl >> 8) & 0xFF, (ipl >> 16) & 0xFF, (ipl >> 24) & 0xFF].join('.');
+  if (path[0] != '/') {
+    path = '/' + path;
+  }
 
   var self = this;
   this.socket = net.connect(port, ip, function () {
-    self.socket.write(method + ' /' + path + ' HTTP/1.1\r\nHost: ' + host + '\r\n\r\n');
+    self.socket.write(method + ' ' + path + ' HTTP/1.1\r\nHost: ' + host + '\r\n\r\n');
     // self.emit('connect');
   })
 

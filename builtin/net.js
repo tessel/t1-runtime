@@ -79,7 +79,7 @@ TCPServer.prototype.listen = function (port, ip) {
 
   setInterval(function () {
     var client;
-    // why is "this" null here?
+    // TODO why is "this" null here?
     if (tm_tcp_readable(self.socket) > 0 && (client = tm_tcp_accept(self.socket)) >= 0) {
       var clientsocket = new TCPSocket(client);
       clientsocket.__listen();

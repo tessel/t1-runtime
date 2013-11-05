@@ -47,15 +47,46 @@ uint32_t tm_uptime_micro ();
 
 // fs
 
-#include "dirent.h"
-void *tm_fs_dir_open (const char *path);
-const char *tm_fs_dir_next (void *dir);
-void tm_fs_dir_close (void *dir);
+#include <poll.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+// lowest common denominator: http://elm-chan.org/fsw/ff/en/open.html
+enum {
+  TM_RDONLY = O_RDONLY,
+  TM_WRONLY = O_WRONLY,
+  TM_RDWR = O_RDWR,
+  TM_OPEN_EXISTING = 0,
+  TM_OPEN_ALWAYS = O_CREAT,
+  TM_CREATE_NEW = O_CREAT | O_EXCL,
+  TM_CREATE_ALWAYS = O_TRUNC
+};
+
+// TM_CLOEXEC = O_CLOEXEC
+// TM_DIRECTORY = O_DIRECTORY,
+// TM_EXCL = O_EXCL,
+// TM_NOCTTY = O_NOCTTY,
+// TM_NOFOLLOW = O_NOFOLLOW,
+// TM_TRUNC = O_TRUNC,
+// TM_TTY_INIT = O_TTY_INIT
+
+typedef int tm_fs_t;
+
+tm_fs_t tm_fs_open (const char *pathname, uint32_t flags);
+int tm_fs_close (tm_fs_t fd);
+ssize_t tm_fs_read (int fd, uint8_t *buf, size_t size);
+
+// #include "dirent.h"
+// void *tm_fs_dir_open (const char *path);
+// const char *tm_fs_dir_next (void *dir);
+// void tm_fs_dir_close (void *dir);
 
 
 // runtime
 
-void luaopen_tm (lua_State *L);
+LUALIB_API int luaopen_tm (lua_State *L);
 
 #ifdef __cplusplus
 }

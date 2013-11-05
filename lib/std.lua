@@ -758,7 +758,8 @@ colony.runEventLoop = function ()
     local queue = _eventQueue
     _eventQueue = {}
     for i=1,#queue do
-      if queue[i]() then
+      local val = queue[i]()
+      if val ~= 0 then
         table.insert(_eventQueue, queue[i])
       end
     end
@@ -786,7 +787,7 @@ global.setInterval = function (this, fn, timeout)
   local start = os.clock()
   table.insert(_eventQueue, function ()
     local now = os.clock()
-    if now - start < timeout then
+    if now - start < (timeout/1000) then
       return 1
     end
     fn()
