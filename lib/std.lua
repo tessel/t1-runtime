@@ -775,7 +775,7 @@ global.setTimeout = function (this, fn, timeout)
   local start = os.clock()
   table.insert(_eventQueue, function ()
     local now = os.clock()
-    if now - start < timeout then
+    if now - start < (timeout/1000) then
       return 1
     end
     fn()

@@ -34,6 +34,63 @@ local global = colony.global
 
 
 --[[
+--|| Lua Event Loop
+--]]
+
+local _eventQueue = {}
+
+colony.runEventLoop = function ()
+  while #_eventQueue > 0 do
+    local queue = _eventQueue
+    _eventQueue = {}
+    for i=1,#queue do
+      local val = queue[i]()
+      if val ~= 0 then
+        table.insert(_eventQueue, queue[i])
+      end
+    end
+  end
+end
+
+
+--[[
+--|| Lua Timers
+--]]
+
+global.setTimeout = function (this, fn, timeout)
+  local start = tm.uptime_micro()
+  table.insert(_eventQueue, function ()
+    local now = tm.uptime_micro()
+    if now - start < (timeout*1000) then
+      return 1
+    end
+    fn()
+    return 0
+  end)
+end
+
+global.setInterval = function (this, fn, timeout)
+  local start = tm.uptime_micro()
+  table.insert(_eventQueue, function ()
+    local now = tm.uptime_micro()
+    if now - start < (timeout*1000) then
+      return 1
+    end
+    fn()
+    start = tm.uptime_micro() -- fixed time delay *between* calls
+    return 1
+  end)
+end
+
+global.setImmediate = function (this, fn, timeout)
+  table.insert(_eventQueue, function ()
+    fn()
+    return 0
+  end)
+end
+
+
+--[[
 --|| Buffer
 --]]
 
@@ -143,8 +200,6 @@ local function Buffer (this, length)
   })
   return this
 end
-
-
 
 Buffer.byteLength = function (this, msg)
   return type(msg) == 'string' and string.len(msg) or msg.length

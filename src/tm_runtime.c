@@ -267,6 +267,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
   lua_newtable (L);
   luaL_register(L, NULL, (luaL_reg[]) {
 
+    // net
     { "udp_open", l_tm_udp_open },
     { "tcp_open", l_tm_tcp_open },
     { "tcp_close", l_tm_tcp_close },
@@ -277,11 +278,12 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "tcp_listen", l_tm_tcp_listen },
     { "tcp_accept", l_tm_tcp_accept },
 
+    // uptime
     { "uptime_init", l_tm_uptime_init },
     { "uptime_micro", l_tm_uptime_micro },
 
+    // buffer
     { "buffer_create", l_tm_buffer_create },
-    // { "buffer_free", l_tm_buffer_free },
     { "buffer_set", l_tm_buffer_set },
     { "buffer_get", l_tm_buffer_get },
     { "buffer_fill", l_tm_buffer_fill },
