@@ -13,6 +13,8 @@
  * main
  */
 
+void luaL_traceback (lua_State *L, lua_State *L1, const char *msg, int level);
+
 static int traceback(lua_State *L)
 {
   if (!lua_isstring(L, 1)) { /* Non-string error object? Try metamethod. */
@@ -82,7 +84,7 @@ static int handle_script(lua_State *L, char **argv, int n)
   lua_setglobal(L, "arg");
   // if (strcmp(argv[0], "-") == 0 && strcmp(argv[n-1], "--") != 0)
   //   fname = NULL;  /* stdin */
-  status = luaL_loadfile(L, "runtime.lua");
+  status = luaL_loadfile(L, "src/runtime.lua");
   lua_insert(L, -(narg+1));
   if (status == 0)
     status = docall(L, narg, 0);

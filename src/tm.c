@@ -24,6 +24,18 @@
  */
 
 
+uint32_t tm_hostname_lookup (const uint8_t *hostname)
+{
+  struct hostent *h;
+
+  /* get the host info */
+  if ((h = gethostbyname((const char *) hostname)) == NULL) {
+    herror("gethostbyname(): ");
+    return 0;
+  }
+  return ((struct in_addr *)h->h_addr)->s_addr;
+}
+
 tm_socket_t tm_udp_open ()
 {
     return socket(AF_INET, SOCK_STREAM, 0);
@@ -37,20 +49,8 @@ tm_socket_t tm_tcp_open ()
 
 int tm_tcp_close (tm_socket_t sock)
 {
-    return shutdown(sock, SHUT_WR);
+    return shutdown(sock, SHUT_WR) == 0 ? 0 : -errno;
     // return close(sock);
-}
-
-uint32_t tm_hostname_lookup (const uint8_t *hostname)
-{
-  struct hostent *h;
-
-  /* get the host info */
-  if ((h = gethostbyname((const char *) hostname)) == NULL) {
-    herror("gethostbyname(): ");
-    return 0;
-  }
-  return ((struct in_addr *)h->h_addr)->s_addr;
 }
 
 int tm_tcp_connect (tm_socket_t sock, uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3, uint16_t port)
@@ -90,7 +90,7 @@ int tm_tcp_readable (tm_socket_t sock)
     return FD_ISSET(sock, &readset);
 }
 
-int tm_tcp_listen (tm_socket_t sock, int port)
+int tm_tcp_listen (tm_socket_t sock, uint16_t port)
 {
   // CC3000_START;
 
@@ -127,7 +127,7 @@ int tm_tcp_listen (tm_socket_t sock, int port)
 // Returns -1 on error or no socket.
 // Returns -2 on pending connection.
 // Returns >= 0 for socket descriptor.
-int tm_tcp_accept (tm_socket_t sock, uint32_t *ip)
+tm_socket_t tm_tcp_accept (tm_socket_t sock, uint32_t *ip)
 {
   struct sockaddr addrClient;
   socklen_t addrlen;

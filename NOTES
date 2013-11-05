@@ -1,5 +1,11 @@
-# Sep 26
+# optimizations
+
+array creates new mt for each array (getter)
+
+# semantic changes
 
 Working to change Lua semantics on x86 to not delete things.
+
+# todo
 
 Need to check memory usage and track it.
