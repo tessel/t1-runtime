@@ -63,34 +63,31 @@ end
 
 local colony = require('lib/colony')
 
--------------
-
 -- Lua API for colony
 
 function js_wrap_module (module)
   local m = {}
   setmetatable(m, {
     __index = function (this, key)
-      local fn = function (this, ...)
-        return module[key](...)
+      if type(module[key]) == 'function' then
+        local fn = function (this, ...)
+          return module[key](...)
+        end
+        this[key] = fn
+      else
+        this[key] = module[key]
       end
-      this[key] = fn
-      return fn
+      return this[key]
     end
   })
   return m
 end
-
-------------------
 
 local tm = require('tm')
 local http_parser = require('http_parser')
 
 _G._colony_binding_tm = js_wrap_module(tm)
 _G._colony_binding_http_parser = js_wrap_module(http_parser)
-
-
-------------------
 
 -- Run that runtime
 

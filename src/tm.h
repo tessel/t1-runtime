@@ -77,6 +77,7 @@ typedef int tm_fs_t;
 tm_fs_t tm_fs_open (const char *pathname, uint32_t flags);
 int tm_fs_close (tm_fs_t fd);
 ssize_t tm_fs_read (int fd, uint8_t *buf, size_t size);
+int tm_fs_readable (tm_fs_t fd);
 
 // #include "dirent.h"
 // void *tm_fs_dir_open (const char *path);

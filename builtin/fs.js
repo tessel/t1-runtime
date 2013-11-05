@@ -1,5 +1,21 @@
-exports.readFileSync = function () {
-  return "";
+var tm = process.binding('tm');
+
+exports.readFileSync = function (pathname) {
+  var fd = tm.fs_open(pathname, tm.OPEN_EXISTING);
+  var res = [];
+  while (true) {
+    if (tm.fs_readable(fd)) {
+      var len = 100;
+      var buf = tm.fs_read(fd, len);
+      if (buf.length > 0) {
+        res.push(buf);
+      }
+      if (buf.length < len) {
+        break;
+      }
+    }
+  }
+  return res.join('');
 };
 
 exports.readdirSync = function (path) {

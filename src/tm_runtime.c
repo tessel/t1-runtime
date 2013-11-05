@@ -42,7 +42,9 @@ static void stackDump (lua_State *L)
 
 static int l_tm_hostname_lookup (lua_State* L)
 {
-  uint32_t ip = tm_hostname_lookup((const uint8_t *) lua_tostring(L, 1));
+  const uint8_t *lookup = (const uint8_t *) lua_tostring(L, 1);
+
+  uint32_t ip = tm_hostname_lookup(lookup);
   lua_pushnumber(L, ip);
   return 1;
 }
@@ -266,8 +268,59 @@ static int l_tm_buffer_copy (lua_State *L)
 
 
 /**
+ * fs
+ */
+
+static int l_tm_fs_open (lua_State* L)
+{
+  const char *pathname = (const char *) lua_tostring(L, 1);
+  uint32_t flags = (uint32_t) lua_tonumber(L, 2);
+
+  tm_fs_t fd = tm_fs_open(pathname, flags);
+  lua_pushnumber(L, fd);
+  return 1;
+}
+
+
+static int l_tm_fs_close (lua_State* L)
+{
+  tm_fs_t fd = (tm_fs_t) lua_tonumber(L, 1);
+
+  int ret = tm_fs_close(fd);
+  lua_pushnumber(L, ret);
+  return 1;
+}
+
+
+static int l_tm_fs_read (lua_State* L)
+{
+  tm_fs_t fd = (tm_fs_t) lua_tonumber(L, 1);
+  size_t size = (size_t) lua_tonumber(L, 2);
+
+  uint8_t *buf = (uint8_t *) malloc(size);
+  ssize_t ret = tm_fs_read(fd, buf, size);
+  lua_pushlstring(L, (const char *) buf, ret > 0 ? ret : 0);
+  lua_pushnumber(L, ret);
+  free(buf);
+  return 2;
+}
+
+
+static int l_tm_fs_readable (lua_State* L)
+{
+  tm_fs_t fd = (tm_fs_t) lua_tonumber(L, 1);
+
+  int readable = tm_fs_readable(fd);
+  lua_pushnumber(L, readable);
+  return 2;
+}
+
+
+/**
  * Load Colony.
  */
+
+#define luaL_setfieldnumber(L, str, num) lua_pushnumber (L, num); lua_setfield (L, -2, str);
 
 LUALIB_API int luaopen_tm (lua_State *L)
 {
@@ -299,7 +352,20 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "buffer_fill", l_tm_buffer_fill },
     { "buffer_copy", l_tm_buffer_copy },
 
+    // fs
+    { "fs_open", l_tm_fs_open },
+    { "fs_close", l_tm_fs_close },
+    { "fs_read", l_tm_fs_read },
+    { "fs_readable", l_tm_fs_readable },
+
     { NULL, NULL }
   });
+  luaL_setfieldnumber(L, "RDONLY", TM_RDONLY);
+  luaL_setfieldnumber(L, "WRONLY", TM_WRONLY);
+  luaL_setfieldnumber(L, "RDWR", TM_RDWR);
+  luaL_setfieldnumber(L, "OPEN_EXISTING", TM_OPEN_EXISTING);
+  luaL_setfieldnumber(L, "OPEN_ALWAYS", TM_OPEN_ALWAYS);
+  luaL_setfieldnumber(L, "CREATE_NEW", TM_CREATE_NEW);
+  luaL_setfieldnumber(L, "CREATE_ALWAYS", TM_CREATE_ALWAYS);
   return 1;
 }
