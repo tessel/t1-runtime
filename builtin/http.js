@@ -1,3 +1,6 @@
+var tm = process.binding('tm');
+var http_parser = process.binding('http_parser');
+
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var net = require('net');
@@ -92,7 +95,7 @@ function ServerRequest (socket) {
   this.url = null;
 
   var lastheader;
-  var parser = new tm_http_parser('request', {
+  var parser = new http_parser('request', {
     on_message_begin: function () {
     },
     on_url: function (url) {
@@ -170,7 +173,7 @@ HTTPIncomingResponse.prototype.setEncoding = function () {
  */
 
 function HTTPOutgoingRequest (port, host, path, method) {
-  var ipl = tm_hostname_lookup(host);
+  var ipl = tm.hostname_lookup(host);
   if (ipl == 0) {
     throw new Error('Could not lookup hostname.');
   }
@@ -185,36 +188,44 @@ function HTTPOutgoingRequest (port, host, path, method) {
     // self.emit('connect');
   })
 
+  function js_wrap_function (fn) {
+    return function () {
+      return fn.apply(null, [this].concat(arguments));
+    }
+  }
+
   var response, lastheader;
-  var parser = new tm_http_parser('response', {
-    on_message_begin: function () {
+  var parser = http_parser.new('response', {
+    onMessageBegin: js_wrap_function(function () {
       response = new HTTPIncomingResponse();
-    },
-    on_url: function (url) { },
-    on_header_field: function (field) {
+    }),
+    onUrl: js_wrap_function(function (url) {
+      // nop
+    }),
+    onHeaderField: js_wrap_function(function (field) {
       lastheader = field;
-    },
-    on_header_value: function (value) {
+    }),
+    onHeaderValue: js_wrap_function(function (value) {
       response.headers[lastheader.toLowerCase()] = value;
-    },
-    on_headers_complete: function () {
+    }),
+    onHeadersComplete: js_wrap_function(function () {
       console.log(response);
       self.emit('response', response);
-    },
-    on_body: function (body) {
+    }),
+    onBody: js_wrap_function(function (body) {
       response.emit('data', body);
-    },
-    on_message_complete: function () {
+    }),
+    onMessageComplete: js_wrap_function(function () {
       response.emit('close');
       // TODO close
       self.socket.close();
-    },
-    on_error: function (err) {
-      self.socket.emit('error', err)
-    }
+    })
   })
   this.socket.on('data', function (data) {
-    parser.write(data);
+    var nparsed = parser.execute(data, 0, data.length);
+    if (nparsed != data.length) {
+      this.socket.emit('error', 'Could not parse tokens at character #' + String(nparsed));
+    }
   })
 }
 

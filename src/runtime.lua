@@ -1,40 +1,10 @@
 -- collectgarbage()
 -- print('Start mem:', collectgarbage('count'))
 
-local ffi = require('ffi')
-ffi.cdef[[
-
-  /**
-   * tm 
-   */
-
-  typedef int tm_socket_t;
-  static int const TM_SOCKET_INVALID = 0;
-
-  tm_socket_t tm_udp_open ();
-  tm_socket_t tm_tcp_open ();
-  int tm_tcp_close (tm_socket_t sock);
-  int tm_tcp_connect (tm_socket_t sock, uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3, uint16_t port);
-  int tm_tcp_write (tm_socket_t sock, uint8_t *buf, size_t buflen);
-  int tm_tcp_read (tm_socket_t sock, uint8_t *buf, size_t buflen);
-  int tm_tcp_readable (tm_socket_t sock);
-  uint32_t tm_hostname_lookup (uint8_t *hostname);
-  int tm_tcp_listen (tm_socket_t sock, int port);
-  int tm_tcp_accept (tm_socket_t sock, uint32_t *ip);
-
-  /**
-   * C stuff
-   */
-
-  size_t strlen(const char * str);
-  int printf(const char *fmt, ...);
-]]
-
---------------------
+----------------
 
 -- Returns directory name component of path
 -- Copied and adapted from http://dev.alpinelinux.org/alpine/acf/core/acf-core-0.4.20.tar.bz2/acf-core-0.4.20/lib/fs.lua
-
 
 function readfile (name)
   local prefix = ''
@@ -97,129 +67,27 @@ local colony = require('lib/colony')
 
 -- Lua API for colony
 
-local luafunctor = function (f)
-  return (function (this, ...) return f(...) end)
-end
-
-colony.global.ffi = {
-  C = {}
-}
-setmetatable(colony.global.ffi, {
-  __index = function (this, key)
-    local fn = function (this, ...)
-      return ffi[key](...)
+function js_wrap_module (module)
+  local m = {}
+  setmetatable(m, {
+    __index = function (this, key)
+      local fn = function (this, ...)
+        return module[key](...)
+      end
+      this[key] = fn
+      return fn
     end
-    this[key] = fn
-    return fn
-  end
-})
-setmetatable(colony.global.ffi.C, {
-  __index = function (this, key)
-    local fn = function (this, ...)
-      return ffi.C[key](...)
-    end
-    this[key] = fn
-    return fn
-  end
-})
-
-colony.global.tm__hostname__lookup = function (ths, host)
-  return ffi.C.tm_hostname_lookup(ffi.cast('uint8_t *', host))
+  })
+  return m
 end
-colony.global.tm__tcp__open = function (ths)
-  return ffi.C.tm_tcp_open()
-end
-colony.global.tm__tcp__close = function (ths, sock)
-  return ffi.C.tm_tcp_close(sock)
-end
-colony.global.tm__tcp__connect = function (ths, sock, ip0, ip1, ip2, ip3, port)
-  return ffi.C.tm_tcp_connect(sock, ip0, ip1, ip2, ip3, port)
-end
-colony.global.tm__tcp__write = function (ths, sock, buf, buflen)
-  return ffi.C.tm_tcp_write(sock, ffi.cast('uint8_t *', buf), buflen)
-end
-colony.global.tm__tcp__read = function (ths, socket)
-  local server_reply = ffi.new("char[2000]");
-  if ffi.C.tm_tcp_read(socket, server_reply, 2000) < 0 then
-    print("recv failed");
-    return nil
-  end
-  return ffi.string(server_reply)
-end
-colony.global.tm__tcp__readable = function (ths, sock)
-  return ffi.C.tm_tcp_readable(sock)
-end
-colony.global.tm__tcp__listen = function (this, sock, port)
-  return ffi.C.tm_tcp_listen(sock, port)
-end
-colony.global.tm__tcp__accept = function (this, sock)
-  local ip = ffi.new("uint32_t[1]");
-  return ffi.C.tm_tcp_accept(sock, ip)
-end
-
 
 ------------------
 
+local tm = require('tm')
 local http_parser = require('http_parser')
 
-colony.global.tm__http__parser = function (this, type, cb)
-  local parser
-  parser = http_parser.new(type, {
-    onMessageBegin = function ()
-      if cb.on_message_begin then
-        cb.on_message_begin(this)
-      end
-    end,
-    onUrl = function (value)
-      if cb.on_url then
-        cb.on_url(this, value)
-      end
-    end,
-    onHeaderField = function (field)
-      if cb.on_header_field then
-        cb.on_header_field(this, field)
-      end
-    end,
-    onHeaderValue = function (value)
-      if cb.on_header_value then
-        cb.on_header_value(this, value)
-      end
-    end,
-    onHeadersComplete = function (info)
-      if cb.on_headers_complete then
-        cb.on_headers_complete(this, parser.method)
-      end
-    end,
-    onBody = function (chunk)
-      if cb.on_body then
-        cb.on_body(this, chunk)
-      end
-    end,
-    onMessageComplete = function ()
-      if cb.on_message_complete then
-        cb.on_message_complete(this)
-      end
-    end
-  })
-  this.on_error = cb.on_error
-  this.__parser = parser
-end
-
-colony.global.tm__http__parser.prototype.write = function (this, str)
-  local nparsed = this.__parser:execute(str, 0, #str)
-  if nparsed ~= string.len(str) and this.on_error then
-    this:on_error('Could not parse tokens at character #' .. tostring(nparsed))
-  end
-  -- if (parser->upgrade) {
-  --   /* handle new protocol */
-  --     puts("UPGRADE");
-  -- } else if (nparsed != nread) {
-  --   /* Handle error. Usually just close the connection. */
-  --     puts("ERROR");
-  --     break;
-  -- }
-  return nparsed
-end
+_G._colony_binding_tm = js_wrap_module(tm)
+_G._colony_binding_http_parser = js_wrap_module(http_parser)
 
 
 ------------------

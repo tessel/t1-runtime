@@ -220,7 +220,7 @@ global.process = js_obj({
   end,
   platform = "colony",
   binding = function (self, key)
-    return _G['_colony_binding_' + key](global);
+    return _G['_colony_binding_' + key];
   end,
   versions = js_obj({
     node = "0.10.0"

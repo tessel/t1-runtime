@@ -1,3 +1,5 @@
+var tm = process.binding('tm');
+
 var util = require('util');
 var Stream = require('stream').Stream;
 
@@ -15,7 +17,7 @@ TCPSocket.prototype.connect = function (port, ip, cb) {
   var ips = ip.split('.');
   var client = this;
   setImmediate(function () {
-    tm_tcp_connect(client.socket, Number(ips[0]), Number(ips[1]), Number(ips[2]), Number(ips[3]), Number(port));
+    tm.tcp_connect(client.socket, Number(ips[0]), Number(ips[1]), Number(ips[2]), Number(ips[3]), Number(port));
     client.__listen();
     cb();
   });
@@ -24,8 +26,8 @@ TCPSocket.prototype.connect = function (port, ip, cb) {
 TCPSocket.prototype.__listen = function () {
   var client = this;
   setInterval(function () {
-    while (client.socket && tm_tcp_readable(client.socket) > 0) {
-      var buf = tm_tcp_read(client.socket);
+    while (client.socket && tm.tcp_readable(client.socket) > 0) {
+      var buf = tm.tcp_read(client.socket);
       if (!buf || buf.length == 0) {
         break;
       }
@@ -37,7 +39,7 @@ TCPSocket.prototype.__listen = function () {
 TCPSocket.prototype.write = function (buf, cb) {
   var socket = this.socket;
   setImmediate(function () {
-    tm_tcp_write(socket, buf, buf.length);
+    tm.tcp_write(socket, buf, buf.length);
     if (cb) {
       cb();
     }
@@ -47,14 +49,14 @@ TCPSocket.prototype.write = function (buf, cb) {
 TCPSocket.prototype.close = function () {
   var self = this;
   setImmediate(function () {
-    tm_tcp_close(self.socket);
+    tm.tcp_close(self.socket);
     self.socket = null;
     self.emit('close');
   });
 };
 
 exports.connect = function (port, host, callback) {
-  var client = new TCPSocket(tm_tcp_open());
+  var client = new TCPSocket(tm.tcp_open());
   client.connect(port, host, callback);
   return client;
 };
@@ -72,7 +74,7 @@ util.inherits(TCPServer, TCPSocket);
 
 TCPServer.prototype.listen = function (port, ip) {
   var self = this;
-  var res = tm_tcp_listen(this.socket, port);
+  var res = tm.tcp_listen(this.socket, port);
   if (res < 0) {
     throw "Error listening on TCP socket (port " + port + ", ip " + ip + ")"
   }
@@ -80,7 +82,7 @@ TCPServer.prototype.listen = function (port, ip) {
   setInterval(function () {
     var client;
     // TODO why is "this" null here?
-    if (tm_tcp_readable(self.socket) > 0 && (client = tm_tcp_accept(self.socket)) >= 0) {
+    if (tm.tcp_readable(self.socket) > 0 && (client = tm.tcp_accept(self.socket)) >= 0) {
       var clientsocket = new TCPSocket(client);
       clientsocket.__listen();
       self.emit('socket', clientsocket);
@@ -89,7 +91,7 @@ TCPServer.prototype.listen = function (port, ip) {
 };
 
 exports.createServer = function (onsocket) {
-  var server = new TCPServer(tm_tcp_open());
+  var server = new TCPServer(tm.tcp_open());
   onsocket && server.on('socket', onsocket);
   return server; 
 };
