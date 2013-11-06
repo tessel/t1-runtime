@@ -2,26 +2,30 @@ var tm = process.binding('tm');
 
 exports.readFileSync = function (pathname) {
   var fd = tm.fs_open(pathname, tm.OPEN_EXISTING | tm.RDONLY);
+  if (fd == undefined) {
+    throw 'ENOENT: Could not open file ' + pathname;
+  }
   var res = [];
   while (true) {
     if (tm.fs_readable(fd) == 0) {
       var len = 100;
       var buf = tm.fs_read(fd, len);
-      if (buf.length > 0) {
+      if (buf && buf.length > 0) {
         res.push(buf);
       }
-      if (buf.length < len) {
+      if (!buf || buf.length < len) {
         break;
       }
     }
   }
+  tm.fs_close(fd);
   return res.join('');
 };
 
 exports.readdirSync = function (pathname) {
   var dir = tm.fs_dir_open(pathname);
   if (dir == undefined) {
-    throw 'ENOENT: Could not open ' + pathname;
+    throw 'ENOENT: Could not open directory ' + pathname;
   }
   var entries = [];
   while ((ent = tm.fs_dir_read(dir)) != undefined) {

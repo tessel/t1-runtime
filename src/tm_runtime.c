@@ -277,8 +277,12 @@ static int l_tm_fs_open (lua_State* L)
   uint32_t flags = (uint32_t) lua_tonumber(L, 2);
 
   tm_fs_t* fd = (tm_fs_t*) lua_newuserdata(L, sizeof(tm_fs_t));
-  int res = tm_fs_open(fd, pathname, flags);
-  lua_pushnumber(L, res);
+  int ret = tm_fs_open(fd, pathname, flags);
+  if (ret > 0) {
+    lua_pop(L, 1);
+    lua_pushnil(L);
+  }
+  lua_pushnumber(L, ret);
   return 2;
 }
 
@@ -332,8 +336,6 @@ static int l_tm_fs_dir_open (lua_State* L)
   if (ret > 0) {
     lua_pop(L, 1);
     lua_pushnil(L);
-  } else {
-    lua_pushlightuserdata(L, dir);
   }
   lua_pushnumber(L, ret);
   return 2;

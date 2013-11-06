@@ -1,4 +1,5 @@
 gcc -o runtime ../colony-jit/src/libluajit.a \
+  -DCOLONY_FATFS=0 \
   -DVERSION="\"2.7.2\"" -I/usr/local/include \
   -lpcre ../lrexlib/src/*.c ../lrexlib/src/pcre/*.c -I../lrexlib/src -I../lrexlib/src/pcre \
   ../http-parser/http_parser.c -I../http-parser \

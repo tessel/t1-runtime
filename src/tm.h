@@ -46,7 +46,8 @@ uint32_t tm_uptime_micro ();
 
 // fs
 
-#if 0
+#if !COLONY_FATFS
+
 #include <poll.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -65,27 +66,10 @@ enum {
   TM_CREATE_ALWAYS = O_TRUNC
 };
 
-// TM_CLOEXEC = O_CLOEXEC
-// TM_DIRECTORY = O_DIRECTORY,
-// TM_EXCL = O_EXCL,
-// TM_NOCTTY = O_NOCTTY,
-// TM_NOFOLLOW = O_NOFOLLOW,
-// TM_TRUNC = O_TRUNC,
-// TM_TTY_INIT = O_TTY_INIT
-
 typedef int tm_fs_t;
-
-tm_fs_t tm_fs_open (const char *pathname, uint32_t flags);
-int tm_fs_close (tm_fs_t fd);
-ssize_t tm_fs_read (int fd, uint8_t *buf, size_t size);
-int tm_fs_readable (tm_fs_t fd);
-
 typedef DIR* tm_fs_dir_t;
 
-int tm_fs_dir_open (const char *pathname, tm_fs_dir_t* dirptr);
-int tm_fs_dir_read (tm_fs_dir_t dir, const char **strptr);
-int tm_fs_dir_close (tm_fs_dir_t dir);
-#endif
+#else
 
 #include "ff.h"
 #include "diskio.h"
@@ -105,14 +89,7 @@ enum {
   TM_CREATE_ALWAYS = FA_CREATE_ALWAYS
 };
 
-void tm_fs_init ();
-
 typedef FIL tm_fs_t;
-
-int tm_fs_open (tm_fs_t* fd, const char *pathname, uint32_t flags);
-int tm_fs_close (tm_fs_t* fd);
-int tm_fs_read (tm_fs_t* fd, uint8_t *buf, size_t size, size_t* read);
-int tm_fs_readable (tm_fs_t* fd);
 
 typedef struct {
   DIR dir;
@@ -120,10 +97,18 @@ typedef struct {
   char lfname[256];
 } tm_fs_dir_t;
 
+#endif 
+
+void tm_fs_init ();
+
+int tm_fs_open (tm_fs_t* fd, const char *pathname, uint32_t flags);
+int tm_fs_close (tm_fs_t* fd);
+int tm_fs_read (tm_fs_t* fd, uint8_t *buf, size_t size, size_t* read);
+int tm_fs_readable (tm_fs_t* fd);
+
 int tm_fs_dir_open (tm_fs_dir_t* dir, const char *pathname);
 int tm_fs_dir_read (tm_fs_dir_t* dir, const char **strptr);
 int tm_fs_dir_close (tm_fs_dir_t* dir);
-
 
 // runtime
 

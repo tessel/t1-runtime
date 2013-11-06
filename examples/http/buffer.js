@@ -18,3 +18,6 @@ var fs = require('fs');
 
 console.log(fs.readFileSync('/HELLO.TXT'));
 console.log(fs.readdirSync('/'));
+
+// console.log(fs.readFileSync('README.md'));
+// console.log(fs.readdirSync('examples/http'));

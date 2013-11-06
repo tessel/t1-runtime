@@ -160,72 +160,70 @@ uint32_t tm_uptime_micro ()
  * Filesystem
  */
 
-#if 0
+#if !COLONY_FATFS
+
 void tm_fs_init (void *data)
 {
   // nop
 }
 
 
-tm_fs_t tm_fs_open (const char *pathname, uint32_t flags)
+int tm_fs_open (tm_fs_t* fd, const char *pathname, uint32_t flags)
 {
-  int fd = open(pathname, flags);
-  return fd < 0 ? -errno : fd;
+  *fd = open(pathname, flags);
+  return *fd < 0 ? errno : 0;
 }
 
 
-int tm_fs_close (tm_fs_t fd)
+int tm_fs_close (tm_fs_t* fd)
 {
-  return close(fd) < 0 ? -errno : 0;
+  return close(*fd) < 0 ? errno : 0;
 }
 
 
-ssize_t tm_fs_read (tm_fs_t fd, uint8_t *buf, size_t size)
+int tm_fs_read (tm_fs_t* fd, uint8_t *buf, size_t size, size_t* nread)
 {
-  ssize_t retsize = read(fd, buf, size);
-  return retsize < 0 ? -errno : retsize;
+  ssize_t ret = read(*fd, buf, size);
+  *nread = ret > 0 ? ret : 0;
+  return ret < 0 ? errno : 0;
 }
 
 // returns > 0 if readable
-int tm_fs_readable (tm_fs_t fd)
+int tm_fs_readable (tm_fs_t* fd)
 {
   struct pollfd ufds[1];
-  ufds[0].fd = fd;
+  ufds[0].fd = *fd;
   ufds[0].events = POLLIN;
   if (poll(ufds, 1, 0) > 0) {
-    return ufds[0].revents & POLLIN;
+    return ufds[0].revents & POLLIN ? 0 : 1;
   }
-  return 0;
+  return 1;
 }
 
-int tm_fs_dir_open (const char *pathname, tm_fs_dir_t* dirptr)
+int tm_fs_dir_open (tm_fs_dir_t* dir, const char *pathname)
 {
-  *dirptr = opendir(pathname);
-  return *dirptr == NULL ? -errno : 0;
+  *dir = opendir(pathname);
+  return *dir == NULL ? errno : 0;
 }
 
-int tm_fs_dir_read (tm_fs_dir_t dir, const char **strptr)
+int tm_fs_dir_read (tm_fs_dir_t* dir, const char **strptr)
 {
-  struct dirent *ret = readdir(dir);
+  struct dirent *ret = readdir(*dir);
   if (ret != NULL) {
     *strptr = ret->d_name;
   } else {
     *strptr = NULL;
   }
-  return ret != NULL ? 1 : -errno;
+  return ret != NULL ? 0 : errno;
 }
 
-int tm_fs_dir_close (tm_fs_dir_t dir)
+int tm_fs_dir_close (tm_fs_dir_t* dir)
 {
-  int ret = closedir(dir);
-  return ret < 0 ? -errno : 0;
+  int ret = closedir(*dir);
+  return ret < 0 ? errno : 0;
 }
-#endif
 
-
-
-
-#if 1
+#else
 
 FATFS fs;
 
@@ -245,30 +243,18 @@ int tm_fs_open (tm_fs_t* fd, const char* pathname, uint32_t flags)
 int tm_fs_close (tm_fs_t *fd)
 {
   return f_close(fd);
-  // return close(fd) < 0 ? -errno : 0;
-  // return 0;
 }
-
 
 int tm_fs_read (tm_fs_t* fd, uint8_t* buf, size_t size, size_t* nread)
 {
-  // ssize_t retsize = read(fd, buf, size);
-  // return retsize < 0 ? -errno : retsize;
   uint nread_u;
   int ret = f_read(fd, buf, size, &nread_u);
   *nread = nread_u;
   return ret;
 }
 
-// returns 0 if readable
 int tm_fs_readable (tm_fs_t* fd)
 {
-  // struct pollfd ufds[1];
-  // ufds[0].fd = fd;
-  // ufds[0].events = POLLIN;
-  // if (poll(ufds, 1, 0) > 0) {
-  //   return ufds[0].revents & POLLIN;
-  // }
   return 0;
 }
 
