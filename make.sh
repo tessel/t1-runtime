@@ -11,4 +11,4 @@ gcc -o runtime ../colony-jit/src/libluajit.a \
   -framework CoreServices -framework Cocoa -L/usr/local/lib/ \
   -g \
   -Isrc src/*.c \
-  -Isrc/fatfs/src src/fatfs/src/*.c
+  -Isrc/fatfs/src src/fatfs/src/*.c # FatFS

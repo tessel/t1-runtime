@@ -1,8 +1,11 @@
 return function (colony)
 
 local bit = require('bit32')
-local _, rex = pcall(require, 'rex_pcre')
 local tm = require('tm')
+local http_parser = require('http_parser')
+
+-- TODO change
+local _, rex = nil, nil --pcall(require, 'rex_pcre')
 
 -- locals
 
@@ -219,9 +222,6 @@ global.process = js_obj({
     });
   end,
   platform = "colony",
-  binding = function (self, key)
-    return _G['_colony_binding_' + key];
-  end,
   versions = js_obj({
     node = "0.10.0"
   }),
@@ -246,4 +246,198 @@ global:__defineGetter__('____filename', function (this)
   return string.sub(debug.getinfo(2).source, 2)
 end)
 
+
+--[[
+--|| bindings
+--]]
+
+function js_wrap_module (module)
+  local m = {}
+  setmetatable(m, {
+    __index = function (this, key)
+      if type(module[key]) == 'function' then
+        local fn = function (this, ...)
+          return module[key](...)
+        end
+        this[key] = fn
+      else
+        this[key] = module[key]
+      end
+      return this[key]
+    end
+  })
+  return m
+end
+
+colony.bindings = {
+  tm = js_wrap_module(tm),
+  http_parser = js_wrap_module(http_parser)
+}
+
+global.process.binding = function (self, key)
+  return colony.bindings[key];
+end
+
+
+--[[
+--|| resolve and lookup
+--]]
+
+-- Returns directory name component of path
+-- Copied and adapted from http://dev.alpinelinux.org/alpine/acf/core/acf-core-0.4.20.tar.bz2/acf-core-0.4.20/lib/fs.lua
+
+function fs_readfile (name)
+  local prefix = ''
+  fd, err = tm.fs_open(prefix..name)
+  assert(fd and err == 0)
+  local s = ''
+  while true do
+    local chunk = tm.fs_read(fd, 1024)
+    s = s .. chunk
+    if #chunk < 1024 then
+      break
+    end
+  end
+  tm.fs_close(fd)
+  return s
+  -- local fp = assert(io.open(prefix..name))
+  -- local s = fp:read("*a")
+  -- assert(fp:close())
+end
+
+local function fs_exists (path)
+  fd, err = tm.fs_open(path)
+  if fd and err == 0 then
+    tm.fs_close(fd)
+    return true
+  end
+  return false
+  -- local file = io.open(path)
+  -- if file then
+  --   return file:close() and true
+  -- end
+end
+ 
+
+local LUA_DIRSEP = '/'
+
+-- https://github.com/leafo/lapis/blob/master/lapis/cmd/path.lua
+local function path_normalize (path)
+  while string.find(path, "%w+/%.%./") or string.find(path, "/%./") do
+    path = string.gsub(path, "%w+/%.%./", "/")
+    path = string.gsub(path, "/%./", "/")
+  end
+  return path
+end
+
+-- Returns string with any leading directory components removed. If specified, also remove a trailing suffix. 
+-- Copied and adapted from http://dev.alpinelinux.org/alpine/acf/core/acf-core-0.4.20.tar.bz2/acf-core-0.4.20/lib/fs.lua
+local function path_basename (string_, suffix)
+  string_ = string_ or ''
+  local basename = string.gsub (string_, '[^'.. LUA_DIRSEP ..']*'.. LUA_DIRSEP ..'', '')
+  if suffix then
+    basename = string.gsub (basename, suffix, '')
+  end
+  return basename
+end
+
+local function path_dirname (string_)
+  string_ = string_ or ''
+  -- strip trailing / first
+  string_ = string.gsub (string_, LUA_DIRSEP ..'$', '')
+  local basename = path_basename(string_)
+  string_ = string.sub(string_, 1, #string_ - #basename - 1)
+  return(string_)  
+end
+
+-- lookup and execution
+
+local function require_resolve (name, root)
+  root = root or './'
+  -- print('<-', root, name)
+  if string.sub(name, -3) == '.js' then
+    name = string.sub(name, 1, -4)
+  end 
+
+  if string.sub(name, 1, 1) ~= '.' then
+    if fs_exists('./builtin/' .. name .. '.js') then
+      root = './builtin/'
+      name = name .. '.js'
+    else
+      -- TODO climb hierarchy for node_modules
+      local fullname = name
+      while string.find(name, '/') do
+        name = path_dirname(name)
+      end
+      while not fs_exists(root .. 'node_modules/' .. name) and not fs_exists(root .. 'node_modules/' .. name .. '/package.json') and string.find(path_dirname(root), "/") do
+        root = path_dirname(root) .. '/'
+      end
+      if not root then
+        -- no node_modules folder found
+        return root .. name, false
+      end
+      root = root .. 'node_modules/'
+      if string.find(fullname, '/') then
+        name = fullname
+      else
+        local pkgjson = root .. name .. '/package.json'
+        if not fs_exists(pkgjson) then
+          -- no package.json file found
+          return root .. name, false
+        end
+        _, _, label = string.find(fs_readfile(pkgjson), '"main"%s-:%s-"([^"]+)"')
+        name = name .. '/' .. (label or 'index.js')
+      end
+    end
+  end
+  if string.sub(name, -3) ~= '.js' then
+    name = name .. '.js'
+  end
+  local p = path_normalize(root .. name)
+  return p, true
+end
+
+colony.cache = {}
+
+local function require_load (p)
+  -- Load the script.
+  local res = colony.cache[p]
+  if not res then
+    local luap = string.reverse(string.gsub(string.reverse(string.sub(p, 1, -4)), '/', '~/', 1)) .. '.colony'
+    if fs_exists(luap) then
+      res = assert(loadstring('return ' .. fs_readfile(luap), "@"..p))()
+      colony.cache[p] = res
+    end
+  end
+  return res
+end
+
+colony.run = function (name, root)
+  local p, pfound = require_resolve(name, root)
+
+  -- Load the script.
+  local res = pfound and require_load(p)
+  if not pfound or not res then
+    error('Could not find module "' .. p .. '"')
+  end
+
+  -- Run the script and return its value.
+  setfenv(res, colony.global)
+  colony.global.require = function (ths, value)
+    -- require() is dependent on the script calling it.
+    -- TODO: tail-call elimination makes this invalid,
+    -- requiring us to eventually remove them.
+    local n = 2
+    while debug.getinfo(n).namewhat == 'metamethod' do
+      n = n + 1
+    end
+    local scriptpath = string.sub(debug.getinfo(n).source, 2)
+
+    -- Return the new script.
+    return colony.run(value, path_dirname(scriptpath) .. '/')
+  end
+  return res()
+end
+
+-- node-tm
 end
