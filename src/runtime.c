@@ -128,6 +128,9 @@ int main (int argc, char *argv[])
   // Done with preload
   lua_pop(L, 1);
 
+  // Initialize filesystem.
+  tm_fs_init();
+
   // // GC control.
   // lua_gc(L, LUA_GCSETPAUSE, 90);
   // lua_gc(L, LUA_GCSETSTEPMUL, 200);

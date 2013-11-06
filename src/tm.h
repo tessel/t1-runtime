@@ -27,7 +27,6 @@ extern "C" {
 // net
 
 typedef int tm_socket_t;
-#define TM_SOCKET_INVALID NULL
 
 tm_socket_t tm_udp_open ();
 tm_socket_t tm_tcp_open ();
@@ -47,11 +46,13 @@ uint32_t tm_uptime_micro ();
 
 // fs
 
+#if 0
 #include <poll.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <dirent.h>
 
 // lowest common denominator: http://elm-chan.org/fsw/ff/en/open.html
 enum {
@@ -79,10 +80,45 @@ int tm_fs_close (tm_fs_t fd);
 ssize_t tm_fs_read (int fd, uint8_t *buf, size_t size);
 int tm_fs_readable (tm_fs_t fd);
 
-// #include "dirent.h"
-// void *tm_fs_dir_open (const char *path);
-// const char *tm_fs_dir_next (void *dir);
-// void tm_fs_dir_close (void *dir);
+typedef DIR* tm_fs_dir_t;
+
+int tm_fs_dir_open (const char *pathname, tm_fs_dir_t* dirptr);
+int tm_fs_dir_read (tm_fs_dir_t dir, const char **strptr);
+int tm_fs_dir_close (tm_fs_dir_t dir);
+#endif
+
+#include "ff.h"
+#include "diskio.h"
+
+#define FA_WRITE 0
+#define FA_OPEN_ALWAYS 0
+#define FA_CREATE_NEW 0
+#define FA_CREATE_ALWAYS 0
+
+enum {
+  TM_RDONLY = FA_READ,
+  TM_WRONLY = FA_WRITE,
+  TM_RDWR = FA_READ | FA_WRITE,
+  TM_OPEN_EXISTING = FA_OPEN_EXISTING,
+  TM_OPEN_ALWAYS = FA_OPEN_ALWAYS,
+  TM_CREATE_NEW = FA_CREATE_NEW,
+  TM_CREATE_ALWAYS = FA_CREATE_ALWAYS
+};
+
+void tm_fs_init ();
+
+typedef FIL* tm_fs_t;
+
+tm_fs_t tm_fs_open (const char *pathname, uint32_t flags);
+int tm_fs_close (tm_fs_t fd);
+ssize_t tm_fs_read (tm_fs_t fd, uint8_t *buf, size_t size);
+int tm_fs_readable (tm_fs_t fd);
+
+typedef DIR* tm_fs_dir_t;
+
+int tm_fs_dir_open (const char *pathname, tm_fs_dir_t* dirptr);
+int tm_fs_dir_read (tm_fs_dir_t dir, const char **strptr);
+int tm_fs_dir_close (tm_fs_dir_t dir);
 
 
 // runtime

@@ -160,6 +160,12 @@ uint32_t tm_uptime_micro ()
  * Filesystem
  */
 
+#if 0
+void tm_fs_init (void *data)
+{
+  // nop
+}
+
 
 tm_fs_t tm_fs_open (const char *pathname, uint32_t flags)
 {
@@ -191,6 +197,120 @@ int tm_fs_readable (tm_fs_t fd)
   }
   return 0;
 }
+
+int tm_fs_dir_open (const char *pathname, tm_fs_dir_t* dirptr)
+{
+  *dirptr = opendir(pathname);
+  return *dirptr == NULL ? -errno : 0;
+}
+
+int tm_fs_dir_read (tm_fs_dir_t dir, const char **strptr)
+{
+  struct dirent *ret = readdir(dir);
+  if (ret != NULL) {
+    *strptr = ret->d_name;
+  } else {
+    *strptr = NULL;
+  }
+  return ret != NULL ? 1 : -errno;
+}
+
+int tm_fs_dir_close (tm_fs_dir_t dir)
+{
+  int ret = closedir(dir);
+  return ret < 0 ? -errno : 0;
+}
+#endif
+
+
+
+
+#if 1
+
+FATFS fs;
+
+void tm_fs_init ()
+{
+  int res = f_mount(&fs, "", 0);
+  if (res) { printf("fail mount with %d\n", res); }
+}
+
+
+tm_fs_t tm_fs_open (const char *pathname, uint32_t flags)
+{
+  FIL* fd = (FIL*) malloc(sizeof(FIL));
+  int res = f_open(fd, pathname, flags);
+  if (res != 0) {
+    return NULL; // TODO return file
+  }
+  return fd;
+}
+
+
+int tm_fs_close (tm_fs_t fd)
+{
+  int res = f_close(fd);
+  free(fd);
+  return res;
+  // return close(fd) < 0 ? -errno : 0;
+  // return 0;
+}
+
+
+ssize_t tm_fs_read (tm_fs_t fd, uint8_t *buf, size_t size)
+{
+  // ssize_t retsize = read(fd, buf, size);
+  // return retsize < 0 ? -errno : retsize;
+  uint nread;
+  int res = f_read(fd, buf, size, &nread);
+  if (res > 0) {
+    return -res;
+  }
+  return nread;
+}
+
+// returns > 0 if readable
+int tm_fs_readable (tm_fs_t fd)
+{
+  // struct pollfd ufds[1];
+  // ufds[0].fd = fd;
+  // ufds[0].events = POLLIN;
+  // if (poll(ufds, 1, 0) > 0) {
+  //   return ufds[0].revents & POLLIN;
+  // }
+  return 1;
+}
+
+int tm_fs_dir_open (const char *pathname, tm_fs_dir_t* dirptr)
+{
+  *dirptr = malloc(sizeof(DIR) + sizeof(FILINFO));
+  int res = f_opendir(*dirptr, pathname);
+  if (res != 0) {
+    *dirptr = NULL;
+  }
+  return res != 0 ? -res : 0;
+}
+
+int tm_fs_dir_read (tm_fs_dir_t dir, const char **strptr)
+{
+  FILINFO *fno = (FILINFO *) (((void *) dir) + sizeof(DIR));
+  int res = f_readdir(dir, fno);
+  *strptr = NULL;
+  if (res != 0 || fno->fname[0] == 0) {
+    return -res;
+  }
+  *strptr = fno->fname;
+  return 0;
+}
+
+int tm_fs_dir_close (tm_fs_dir_t dir)
+{
+  int ret = f_closedir(dir);
+  free(dir);
+  return ret > 0 ? -ret : 0;
+}
+
+#endif
 
 
 /*

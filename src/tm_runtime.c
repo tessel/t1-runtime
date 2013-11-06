@@ -277,14 +277,14 @@ static int l_tm_fs_open (lua_State* L)
   uint32_t flags = (uint32_t) lua_tonumber(L, 2);
 
   tm_fs_t fd = tm_fs_open(pathname, flags);
-  lua_pushnumber(L, fd);
+  lua_pushlightuserdata(L, fd);
   return 1;
 }
 
 
 static int l_tm_fs_close (lua_State* L)
 {
-  tm_fs_t fd = (tm_fs_t) lua_tonumber(L, 1);
+  tm_fs_t fd = (tm_fs_t) lua_touserdata(L, 1);
 
   int ret = tm_fs_close(fd);
   lua_pushnumber(L, ret);
@@ -294,7 +294,7 @@ static int l_tm_fs_close (lua_State* L)
 
 static int l_tm_fs_read (lua_State* L)
 {
-  tm_fs_t fd = (tm_fs_t) lua_tonumber(L, 1);
+  tm_fs_t fd = (tm_fs_t) lua_touserdata(L, 1);
   size_t size = (size_t) lua_tonumber(L, 2);
 
   uint8_t *buf = (uint8_t *) malloc(size);
@@ -308,11 +308,51 @@ static int l_tm_fs_read (lua_State* L)
 
 static int l_tm_fs_readable (lua_State* L)
 {
-  tm_fs_t fd = (tm_fs_t) lua_tonumber(L, 1);
+  tm_fs_t fd = (tm_fs_t) lua_touserdata(L, 1);
 
   int readable = tm_fs_readable(fd);
   lua_pushnumber(L, readable);
+  return 1;
+}
+
+
+static int l_tm_fs_dir_open (lua_State* L)
+{
+  const char *pathname = (const char *) lua_tostring(L, 1);
+
+  tm_fs_dir_t dir;
+  int ret = tm_fs_dir_open(pathname, &dir);
+  if (dir == NULL) {
+    lua_pushnil(L);
+  } else {
+    lua_pushlightuserdata(L, dir);
+  }
+  lua_pushnumber(L, ret);
   return 2;
+}
+
+static int l_tm_fs_dir_read (lua_State* L)
+{
+  tm_fs_dir_t dir = (tm_fs_dir_t) lua_touserdata(L, 1);
+
+  const char *pathname;
+  int ret = tm_fs_dir_read(dir, &pathname);
+  if (pathname == NULL) {
+    lua_pushnil(L);
+  } else {
+    lua_pushstring(L, pathname == NULL ? "" : pathname);
+  }
+  lua_pushnumber(L, ret);
+  return 2;
+}
+
+static int l_tm_fs_dir_close (lua_State* L)
+{
+  tm_fs_dir_t dir = (tm_fs_dir_t) lua_touserdata(L, 1);
+
+  int ret = tm_fs_dir_close(dir);
+  lua_pushnumber(L, ret);
+  return 1;
 }
 
 
@@ -357,6 +397,9 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "fs_close", l_tm_fs_close },
     { "fs_read", l_tm_fs_read },
     { "fs_readable", l_tm_fs_readable },
+    { "fs_dir_open", l_tm_fs_dir_open },
+    { "fs_dir_read", l_tm_fs_dir_read },
+    { "fs_dir_close", l_tm_fs_dir_close },
 
     { NULL, NULL }
   });

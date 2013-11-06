@@ -9,4 +9,5 @@ gcc -o runtime ../colony-jit/src/libluajit.a \
   -I../luv/libuv/include ../luv/libuv/libuv.a \
   -framework CoreServices -framework Cocoa -L/usr/local/lib/ \
   -g \
-  -Isrc src/*.c
+  -Isrc src/*.c \
+  -Isrc/fatfs/src src/fatfs/src/*.c

@@ -15,4 +15,6 @@ console.log(c.toString());
 // file system test
 
 var fs = require('fs');
-console.log(fs.readFileSync('examples/http/buffer.js'));
+
+console.log(fs.readFileSync('/HELLO.TXT'));
+console.log(fs.readdirSync('/'));
