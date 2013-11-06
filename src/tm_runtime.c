@@ -276,15 +276,16 @@ static int l_tm_fs_open (lua_State* L)
   const char *pathname = (const char *) lua_tostring(L, 1);
   uint32_t flags = (uint32_t) lua_tonumber(L, 2);
 
-  tm_fs_t fd = tm_fs_open(pathname, flags);
-  lua_pushlightuserdata(L, fd);
-  return 1;
+  tm_fs_t* fd = (tm_fs_t*) lua_newuserdata(L, sizeof(tm_fs_t));
+  int res = tm_fs_open(fd, pathname, flags);
+  lua_pushnumber(L, res);
+  return 2;
 }
 
 
 static int l_tm_fs_close (lua_State* L)
 {
-  tm_fs_t fd = (tm_fs_t) lua_touserdata(L, 1);
+  tm_fs_t* fd = (tm_fs_t*) lua_touserdata(L, 1);
 
   int ret = tm_fs_close(fd);
   lua_pushnumber(L, ret);
@@ -294,12 +295,17 @@ static int l_tm_fs_close (lua_State* L)
 
 static int l_tm_fs_read (lua_State* L)
 {
-  tm_fs_t fd = (tm_fs_t) lua_touserdata(L, 1);
+  tm_fs_t* fd = (tm_fs_t*) lua_touserdata(L, 1);
   size_t size = (size_t) lua_tonumber(L, 2);
 
   uint8_t *buf = (uint8_t *) malloc(size);
-  ssize_t ret = tm_fs_read(fd, buf, size);
-  lua_pushlstring(L, (const char *) buf, ret > 0 ? ret : 0);
+  size_t nread;
+  int ret = tm_fs_read(fd, buf, size, &nread);
+  if (ret == 0 && nread > 0) {
+    lua_pushlstring(L, (const char *) buf, nread);
+  } else {
+    lua_pushnil(L);
+  }
   lua_pushnumber(L, ret);
   free(buf);
   return 2;
@@ -308,7 +314,7 @@ static int l_tm_fs_read (lua_State* L)
 
 static int l_tm_fs_readable (lua_State* L)
 {
-  tm_fs_t fd = (tm_fs_t) lua_touserdata(L, 1);
+  tm_fs_t* fd = (tm_fs_t*) lua_touserdata(L, 1);
 
   int readable = tm_fs_readable(fd);
   lua_pushnumber(L, readable);
@@ -320,9 +326,11 @@ static int l_tm_fs_dir_open (lua_State* L)
 {
   const char *pathname = (const char *) lua_tostring(L, 1);
 
-  tm_fs_dir_t dir;
-  int ret = tm_fs_dir_open(pathname, &dir);
-  if (dir == NULL) {
+  tm_fs_dir_t* dir = (tm_fs_dir_t*) lua_newuserdata(L, sizeof(tm_fs_dir_t));
+  memset(dir, 0, sizeof(tm_fs_dir_t));
+  int ret = tm_fs_dir_open(dir, pathname);
+  if (ret > 0) {
+    lua_pop(L, 1);
     lua_pushnil(L);
   } else {
     lua_pushlightuserdata(L, dir);
@@ -333,7 +341,7 @@ static int l_tm_fs_dir_open (lua_State* L)
 
 static int l_tm_fs_dir_read (lua_State* L)
 {
-  tm_fs_dir_t dir = (tm_fs_dir_t) lua_touserdata(L, 1);
+  tm_fs_dir_t* dir = (tm_fs_dir_t*) lua_touserdata(L, 1);
 
   const char *pathname;
   int ret = tm_fs_dir_read(dir, &pathname);
@@ -348,7 +356,7 @@ static int l_tm_fs_dir_read (lua_State* L)
 
 static int l_tm_fs_dir_close (lua_State* L)
 {
-  tm_fs_dir_t dir = (tm_fs_dir_t) lua_touserdata(L, 1);
+  tm_fs_dir_t* dir = (tm_fs_dir_t*) lua_touserdata(L, 1);
 
   int ret = tm_fs_dir_close(dir);
   lua_pushnumber(L, ret);

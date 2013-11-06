@@ -107,18 +107,22 @@ enum {
 
 void tm_fs_init ();
 
-typedef FIL* tm_fs_t;
+typedef FIL tm_fs_t;
 
-tm_fs_t tm_fs_open (const char *pathname, uint32_t flags);
-int tm_fs_close (tm_fs_t fd);
-ssize_t tm_fs_read (tm_fs_t fd, uint8_t *buf, size_t size);
-int tm_fs_readable (tm_fs_t fd);
+int tm_fs_open (tm_fs_t* fd, const char *pathname, uint32_t flags);
+int tm_fs_close (tm_fs_t* fd);
+int tm_fs_read (tm_fs_t* fd, uint8_t *buf, size_t size, size_t* read);
+int tm_fs_readable (tm_fs_t* fd);
 
-typedef DIR* tm_fs_dir_t;
+typedef struct {
+  DIR dir;
+  FILINFO info;
+  char lfname[256];
+} tm_fs_dir_t;
 
-int tm_fs_dir_open (const char *pathname, tm_fs_dir_t* dirptr);
-int tm_fs_dir_read (tm_fs_dir_t dir, const char **strptr);
-int tm_fs_dir_close (tm_fs_dir_t dir);
+int tm_fs_dir_open (tm_fs_dir_t* dir, const char *pathname);
+int tm_fs_dir_read (tm_fs_dir_t* dir, const char **strptr);
+int tm_fs_dir_close (tm_fs_dir_t* dir);
 
 
 // runtime
