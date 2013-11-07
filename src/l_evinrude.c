@@ -123,7 +123,6 @@ static int l_re_exec (lua_State* L)
 
   const wchar_t* data = lua_tomultibytelstring(L, 2, &datalen);
   int rc = re_exec(cre, data, datalen, NULL, pmatchlen, pmatch, 0);
-  printf("did it work -> %d\n", rc);
   lua_pushnumber(L, rc);
   return 2;
 }

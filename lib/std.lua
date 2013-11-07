@@ -154,21 +154,13 @@ str_proto.split = function (str, sep, max)
   return js_arr(ret)
 end
 
-str_proto.replace = function (str, match, out)
+local str_regex_replace = nil
+
+str_proto.replace = function (this, match, out)
   if type(match) == 'string' then
-    return string.gsub(str, string.gsub(match, "(%W)","%%%1"), out)
-  elseif js_instanceof(match, global.RegExp) then
-    -- if type(out) == 'function' then 
-      print('REGEX REPLACE NOT SUPPORTED')
-      return ''
-    -- end
-    -- local count = 1
-    -- if string.find(match.flags, 'g') ~= nil then
-    --   count = nil
-    -- end
-    -- out = string.gsub(out, "%%", "%%%%")
-    -- local ret, _ = rex.gsub(str, match.pattern, out, count)
-    -- return ret
+    return string.gsub(this, string.gsub(match, "(%W)","%%%1"), out)
+  elseif str_regex_replace and js_instanceof(match, global.RegExp) then
+    return str_regex_replace(this, match, out)
   else
     print(match)
     error('Unknown regex invocation object: ' .. type(match))
@@ -696,6 +688,47 @@ if evin then
     return js_new(global.RegExp, pat, flags)
   end
 
+  str_regex_replace = function (this, regex, out)
+    -- verify regex
+    local cre = getmetatable(regex).cre
+    local crestr = getmetatable(regex).crestr
+    if type(cre) ~= 'userdata' then
+      error('Cannot call String::replace on non-regex')
+    end
+
+    local dorepeat = string.find(regex.flags, 'g')
+    local data = tostring(this)
+    local ret = {}
+    local idx = 0
+    -- TODO: optimize, give string with offset in re_exec
+    repeat
+      local datastr, rc = evin.re_exec(cre, data, nil, evinmatchc, evinmatch, 0)
+      if rc ~= 0 then
+        break
+      end
+      local so, eo = evin.regmatch_so(evinmatch, 0), evin.regmatch_eo(evinmatch, 0)
+      table.insert(ret, string.sub(data, 1, so))
+
+      if type(out) == 'function' then 
+        local args = {this, string.sub(data, so + 1, eo)}
+        for i=1,evin.regex_nsub(cre) do
+          local subso, subeo = evin.regmatch_so(evinmatch, i), evin.regmatch_eo(evinmatch, i)
+          table.insert(args, string.sub(data, subso + 1, subeo))
+        end
+        table.insert(args, idx + so)
+        table.insert(args, this)
+        table.insert(ret, tostring(out(unpack(args)) or 'undefined'))
+      else
+        table.insert(ret, tostring(out))
+      end
+
+      data = string.sub(data, eo+1)
+      idx = eo
+    until not dorepeat
+    table.insert(ret, data)
+    return table.concat(ret, '')
+  end
+
   global.String.prototype.match = function (this, regex)
     -- return rex.match(this, regex.pattern)
 
@@ -736,7 +769,7 @@ if evin then
     end
 
     -- TODO optimize by capturing no subgroups?
-    local rc = evin.re_exec(cre, tostring(subj), nil, evinmatchc, evinmatch, 0)
+    local datastr, rc = evin.re_exec(cre, tostring(subj), nil, evinmatchc, evinmatch, 0)
     return rc == 0
   end
 end
