@@ -1,7 +1,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-#include <luajit.h>
+// #include <luajit.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -25,7 +25,7 @@ static int traceback(lua_State *L)
       return 1;  /* Return non-string error object. */
     lua_remove(L, 1);  /* Replace object by result of __tostring metamethod. */
   }
-  luaL_traceback(L, L, lua_tostring(L, 1), 1);
+  // luaL_traceback(L, L, lua_tostring(L, 1), 1);
   return 1;
 }
 
@@ -78,6 +78,11 @@ static int report(lua_State *L, int status)
   return status;
 }
 
+const char runtime_lua[] = {
+  #include "runtime-lua.h"
+  , 0x00
+};
+
 static int handle_script(lua_State *L, char **argv, int n)
 {
   int status;
@@ -85,7 +90,7 @@ static int handle_script(lua_State *L, char **argv, int n)
   lua_setglobal(L, "arg");
   // if (strcmp(argv[0], "-") == 0 && strcmp(argv[n-1], "--") != 0)
   //   fname = NULL;  /* stdin */
-  status = luaL_loadfile(L, "src/runtime.lua");
+  status = luaL_loadbuffer(L,runtime_lua,sizeof(runtime_lua),"runtime");
   lua_insert(L, -(narg+1));
   if (status == 0)
     status = docall(L, narg, 0);
@@ -101,6 +106,7 @@ static int runtime_panic (lua_State *L)
 }
 
 LUALIB_API int luaopen_evinrude (lua_State *L);
+LUALIB_API int luaopen_bit (lua_State *L);
 
 int main (int argc, char *argv[])
 {
@@ -110,7 +116,7 @@ int main (int argc, char *argv[])
   // Create lua instance.
   lua_State *L = lua_open();
   lua_atpanic(L, &runtime_panic);
-  luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
+  // luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
   // lua_gc(L, LUA_GCSETPAUSE, 90);
   // lua_gc(L, LUA_GCSETSTEPMUL, 200);
 
@@ -120,6 +126,9 @@ int main (int argc, char *argv[])
   lua_getglobal(L, "package");
   lua_getfield(L, -1, "preload");
   lua_remove(L, -2);
+  // bit32
+  lua_pushcfunction(L, luaopen_bit);
+  lua_setfield(L, -2, "bit32");
   // tm
   lua_pushcfunction(L, luaopen_tm);
   lua_setfield(L, -2, "tm");

@@ -5,7 +5,7 @@ var subj3 = " ###    ##     ####  ";
 var a = new RegExp("\\d+");
 console.log(subj1.match(a))
 
-var b = /\d+/;
+var b = /(\d+)(\s+)/;
 console.log(subj1.match(b))
 
 var c = /cav[ea]+t/i;
