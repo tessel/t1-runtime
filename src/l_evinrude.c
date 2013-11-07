@@ -16,6 +16,7 @@
 static int l_regex_create (lua_State* L)
 {
   regex_t* cre = (regex_t*) lua_newuserdata(L, sizeof(regex_t));
+  memset(cre, 0, sizeof(regex_t));
   return 1;
 }
 
@@ -32,6 +33,7 @@ static int l_regmatch_create (lua_State* L)
   size_t n = (size_t) lua_tonumber(L, 1);
 
   regmatch_t* pmatch = (regmatch_t*) lua_newuserdata(L, sizeof(regmatch_t) * n);
+  memset(pmatch, 0, sizeof(regmatch_t) * n);
   return 1;
 }
 
@@ -90,9 +92,10 @@ static const wchar_t* lua_tomultibytelstring (lua_State* L, int pos, size_t* buf
   char *oldbuf = (char *) malloc(len + 1);
   memcpy(oldbuf, patt, len);
   wchar_t *buf = (wchar_t *) lua_newuserdata(L, (len + 1) * sizeof(chr));
+  memset(buf, 0, (len + 1) * sizeof(chr));
   // wchar_t *buf = (wchar_t *) malloc((len + 1) * sizeof(chr));
   // lua_pushlightuserdata(L, buf);
-  *buflen = hexescapes2bin(buf, oldbuf, len + 1);
+  *buflen = hexescapes2bin(buf, oldbuf, len);
   free(oldbuf);
   return buf;
 }
@@ -120,6 +123,7 @@ static int l_re_exec (lua_State* L)
 
   const wchar_t* data = lua_tomultibytelstring(L, 2, &datalen);
   int rc = re_exec(cre, data, datalen, NULL, pmatchlen, pmatch, 0);
+  printf("did it work -> %d\n", rc);
   lua_pushnumber(L, rc);
   return 2;
 }

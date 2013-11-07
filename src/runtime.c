@@ -100,19 +100,22 @@ static int runtime_panic (lua_State *L)
   return 0;  /* return to Lua to abort */
 }
 
-int luaopen_rex_pcre (lua_State *L);
 LUALIB_API int luaopen_evinrude (lua_State *L);
 
 int main (int argc, char *argv[])
 {
+  // Initialize filesystem.
+  tm_fs_init();
+
+  // Create lua instance.
   lua_State *L = lua_open();
   lua_atpanic(L, &runtime_panic);
-
   luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
+  // lua_gc(L, LUA_GCSETPAUSE, 90);
+  // lua_gc(L, LUA_GCSETSTEPMUL, 200);
 
   // Open libraries.
   luaL_openlibs(L);
-
   // Get preload table.
   lua_getglobal(L, "package");
   lua_getfield(L, -1, "preload");
@@ -129,14 +132,7 @@ int main (int argc, char *argv[])
   // Done with preload
   lua_pop(L, 1);
 
-  // Initialize filesystem.
-  tm_fs_init();
-
-  // // GC control.
-  // lua_gc(L, LUA_GCSETPAUSE, 90);
-  // lua_gc(L, LUA_GCSETSTEPMUL, 200);
-
-  // Parse code.
+  // Run script.
   int status = handle_script(L, argv, 0);
 
   // Close runtime.

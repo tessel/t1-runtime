@@ -667,6 +667,11 @@ if evin then
   local evinmatch = evin.regmatch_create(evinmatchc)
 
   global.RegExp = function (this, patt, flags)
+    -- evinrude requires special flags handling
+    if flags and string.find(flags, "i") then
+      patt = '(?i)' .. patt
+    end
+
     local cre = evin.regex_create()
     local crestr, rc = evin.re_comp(cre, patt, evin.ADVANCED)
     if rc ~= 0 then
