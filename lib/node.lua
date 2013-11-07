@@ -1,7 +1,6 @@
 return function (colony)
 
 local bit = require('bit32')
-local _, rex = pcall(require, 'rex_pcre')
 local uv = uv_open()
 
 -- locals

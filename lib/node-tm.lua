@@ -4,9 +4,6 @@ local bit = require('bit32')
 local tm = require('tm')
 local http_parser = require('http_parser')
 
--- TODO change
-local _, rex = nil, nil --pcall(require, 'rex_pcre')
-
 -- locals
 
 local js_arr = colony.js_arr

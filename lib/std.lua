@@ -1,7 +1,7 @@
 return function (colony)
 
 local bit = require('bit32')
-local _, rex = pcall(require, 'rex_pcre')
+local _, evin = pcall(require, 'evinrude')
 
 -- locals
 
@@ -158,17 +158,17 @@ str_proto.replace = function (str, match, out)
   if type(match) == 'string' then
     return string.gsub(str, string.gsub(match, "(%W)","%%%1"), out)
   elseif js_instanceof(match, global.RegExp) then
-    if type(out) == 'function' then 
-      print('REGEX FUNCTION REPLACE NOT SUPPORTED')
+    -- if type(out) == 'function' then 
+      print('REGEX REPLACE NOT SUPPORTED')
       return ''
-    end
-    local count = 1
-    if string.find(match.flags, 'g') ~= nil then
-      count = nil
-    end
-    out = string.gsub(out, "%%", "%%%%")
-    local ret, _ = rex.gsub(str, match.pattern, out, count)
-    return ret
+    -- end
+    -- local count = 1
+    -- if string.find(match.flags, 'g') ~= nil then
+    --   count = nil
+    -- end
+    -- out = string.gsub(out, "%%", "%%%%")
+    -- local ret, _ = rex.gsub(str, match.pattern, out, count)
+    -- return ret
   else
     print(match)
     error('Unknown regex invocation object: ' .. type(match))
@@ -662,12 +662,26 @@ end
 
 -- regexp library
 
-if rex then
-  global.RegExp = function (this, pat, flags)
-    local o = {pattern=pat, flags=flags}
+if evin then
+  local evinmatchc = 100
+  local evinmatch = evin.regmatch_create(evinmatchc)
+
+  global.RegExp = function (this, patt, flags)
+    local cre = evin.regex_create()
+    local crestr, rc = evin.re_comp(cre, patt, evin.ADVANCED)
+    if rc ~= 0 then
+      error('SyntaxError: Invalid regex "' .. patt .. '"')
+    end
+    if evin.regex_nsub(cre) > evinmatchc then
+      error('Too many capturing subgroups (max ' .. evinmatchc .. ', compiled ' .. evin.regex_nsub(cre) .. ')')
+    end
+
+    local o = {pattern=patt, flags=flags}
     setmetatable(o, {
       __index=global.RegExp.prototype,
       __tostring=js_tostring,
+      cre=cre,
+      crestr=crestr,
       proto=global.RegExp.prototype
     })
     return o
@@ -678,20 +692,47 @@ if rex then
   end
 
   global.String.prototype.match = function (this, regex)
-    return rex.match(this, regex.pattern)
+    -- return rex.match(this, regex.pattern)
+
+    -- Match using evinrude
+    local cre = getmetatable(regex).cre
+    local crestr = getmetatable(regex).crestr
+    if type(cre) ~= 'userdata' then
+      error('Cannot call RegExp::match on non-regex')
+    end
+
+    local data = tostring(this)
+    local datastr, rc = evin.re_exec(cre, data, nil, evinmatchc, evinmatch, 0)
+    if rc ~= 0 then
+      return nil
+    end
+    local ret = {}
+    for i=0,evin.regex_nsub(cre) do
+      local so, eo = evin.regmatch_so(evinmatch, i), evin.regmatch_eo(evinmatch, i)
+      -- print('match', i, '=> start:', so, ', end:', eo)
+      table.insert(ret, string.sub(data, so + 1, eo))
+    end
+    return js_arr(ret)
   end
 
   global.RegExp.prototype.exec = function (this, subj)
     -- TODO wrong
-    local ret = {rex.match('aaaaa', 'a(a)')} -- rex.match(subj, this.pattern)
-    if #ret > 1 or ret[0] ~= nil then
-      return js_arr(ret)
-    end
+    -- local ret = {rex.match('aaaaa', 'a(a)')} -- rex.match(subj, this.pattern)
+    -- if #ret > 1 or ret[0] ~= nil then
+      -- return js_arr(ret)
+    -- end
     return nil
   end
 
   global.RegExp.prototype.test = function (this, subj)
-    return rex.match(subj, this.pattern) and true or false
+    local cre = getmetatable(this).cre
+    if type(cre) ~= 'userdata' then
+      error('Cannot call RegExp::match on non-regex')
+    end
+
+    -- TODO optimize by capturing no subgroups?
+    local rc = evin.re_exec(cre, tostring(subj), nil, evinmatchc, evinmatch, 0)
+    return rc == 0
   end
 end
 

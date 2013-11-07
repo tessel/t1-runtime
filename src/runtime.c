@@ -101,6 +101,7 @@ static int runtime_panic (lua_State *L)
 }
 
 int luaopen_rex_pcre (lua_State *L);
+LUALIB_API int luaopen_evinrude (lua_State *L);
 
 int main (int argc, char *argv[])
 {
@@ -122,9 +123,9 @@ int main (int argc, char *argv[])
   // http_parser
   lua_pushcfunction(L, luaopen_http_parser);
   lua_setfield(L, -2, "http_parser");
-  // pcre
-  lua_pushcfunction(L, luaopen_rex_pcre);
-  lua_setfield(L, -2, "rex_pcre");
+  // evinrude
+  lua_pushcfunction(L, luaopen_evinrude);
+  lua_setfield(L, -2, "evinrude");
   // Done with preload
   lua_pop(L, 1);
 

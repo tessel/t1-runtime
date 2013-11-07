@@ -1,7 +1,7 @@
 gcc -o runtime ../colony-jit/src/libluajit.a \
   -DCOLONY_FATFS=0 \
   -DVERSION="\"2.7.2\"" -I/usr/local/include \
-  -lpcre ../lrexlib/src/*.c ../lrexlib/src/pcre/*.c -I../lrexlib/src -I../lrexlib/src/pcre \
+  -DREGEX_WCHAR -I../evinrude/src ../evinrude/libhswrex.a \
   ../http-parser/http_parser.c -I../http-parser \
   -I../colony-jit/src/ \
   -std=c99 -g -pagezero_size 10000 -image_base 100000000 \
