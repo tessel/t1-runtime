@@ -78,10 +78,8 @@ static int report(lua_State *L, int status)
   return status;
 }
 
-const char runtime_lua[] = {
-  #include "runtime-lua.h"
-  , 0x00
-};
+// const char *runtime_lua = "local colony = require('lib/colony'); collectgarbage(); colony.run('./' .. arg[1]); colony.runEventLoop();";
+const char *runtime_lua = "require('lib/cli')";
 
 static int handle_script(lua_State *L, char **argv, int n)
 {
@@ -90,7 +88,7 @@ static int handle_script(lua_State *L, char **argv, int n)
   lua_setglobal(L, "arg");
   // if (strcmp(argv[0], "-") == 0 && strcmp(argv[n-1], "--") != 0)
   //   fname = NULL;  /* stdin */
-  status = luaL_loadbuffer(L,runtime_lua,sizeof(runtime_lua),"runtime");
+  status = luaL_loadbuffer(L,runtime_lua,strlen(runtime_lua),"runtime");
   lua_insert(L, -(narg+1));
   if (status == 0)
     status = docall(L, narg, 0);
@@ -108,13 +106,11 @@ static int runtime_panic (lua_State *L)
 LUALIB_API int luaopen_evinrude (lua_State *L);
 LUALIB_API int luaopen_bit (lua_State *L);
 
-int main (int argc, char *argv[])
-{
-  // Initialize filesystem.
-  tm_fs_init();
 
-  // Create lua instance.
-  lua_State *L = lua_open();
+// Function to be called by javascript
+int colony_runtime (lua_State** stateptr, const char *path, char **argv)
+{
+  lua_State* L = *stateptr = lua_open();
   lua_atpanic(L, &runtime_panic);
   // luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
   // lua_gc(L, LUA_GCSETPAUSE, 90);
@@ -146,6 +142,36 @@ int main (int argc, char *argv[])
 
   // Close runtime.
   lua_close(L);
+  *stateptr = NULL;
+  return status;
+}
 
-  return status; 
+
+#include "ff.h"
+
+void populate_fs ()
+{
+  FATFS fs;
+  int res_mount = f_mount(&fs, "", 0);  /* Register work area to the logical drive 0 */
+  int res_mkfs = f_mkfs("", 1, 0);         /* Create FAT volume on the logical drive 0. 2nd argument is ignored. */
+  tm_fs_t fd;
+  int res_open = f_open(&fd, "~index.colony", TM_RDWR | FA_CREATE_ALWAYS);
+  char *jscode = "function () console:log('hi'); end";
+  UINT written;
+  int res_write = f_write(&fd, jscode, strlen(jscode), &written);
+  int res_close = f_close(&fd);
+  f_mount(NULL, "", 0); // unmount
+}
+
+int main (int argc, char *argv[])
+{
+  if (argc < 2) {
+    printf("Usage: colony script.js\n");
+    return 1;
+  }
+
+  lua_State* L;
+  populate_fs();
+  tm_fs_init();
+  return colony_runtime(&L, argv[1], argv);
 }

@@ -9,7 +9,7 @@ if string.sub(p, 1, 1) ~= '.' then
 end
 
 -- preprocess yay
-os.execute("node preprocessor 2> /dev/null");
+-- os.execute("node preprocessor 2> /dev/null");
 
 -- print('Run mem:', collectgarbage('count'))
 local colony = require('lib/colony')

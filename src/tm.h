@@ -16,7 +16,20 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>  
+#include <stdlib.h>
+#include <time.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdint.h>
 
+#ifdef COLONY_PC
+#include <sys/socket.h>
+#include <arpa/inet.h> //inet_addr
+#include <netdb.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/time.h>
+#endif
 
 // debug
 
@@ -48,7 +61,9 @@ uint32_t tm_uptime_micro ();
 
 #if !COLONY_FATFS
 
-#include <poll.h>
+#ifdef COLONY_PC
+  #include <poll.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -73,11 +88,6 @@ typedef DIR* tm_fs_dir_t;
 
 #include "ff.h"
 #include "diskio.h"
-
-#define FA_WRITE 0
-#define FA_OPEN_ALWAYS 0
-#define FA_CREATE_NEW 0
-#define FA_CREATE_ALWAYS 0
 
 enum {
   TM_RDONLY = FA_READ,

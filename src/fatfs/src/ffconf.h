@@ -20,7 +20,7 @@
 /  data transfer. This reduces memory consumption 512 bytes each file object. */
 
 
-#define _FS_READONLY	1	/* 0:Read/Write or 1:Read only */
+#define _FS_READONLY	0	/* 0:Read/Write or 1:Read only */
 /* Setting _FS_READONLY to 1 defines read only configuration. This removes
 /  writing functions, f_write(), f_sync(), f_unlink(), f_mkdir(), f_chmod(),
 /  f_rename(), f_truncate() and useless f_getfree(). */
@@ -40,7 +40,7 @@
 /* To enable string functions, set _USE_STRFUNC to 1 or 2. */
 
 
-#define	_USE_MKFS		0	/* 0:Disable or 1:Enable */
+#define	_USE_MKFS		1	/* 0:Disable or 1:Enable */
 /* To enable f_mkfs() function, set _USE_MKFS to 1 and set _FS_READONLY to 0 */
 
 

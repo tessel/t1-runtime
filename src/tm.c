@@ -1,29 +1,15 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-#include <stdlib.h>
-#include <time.h>
 
 #include "tm.h"
-
-#include <stdio.h>
-#include <string.h>    //strlen
-#include <sys/socket.h>
-#include <arpa/inet.h> //inet_addr
-#include <stdint.h>
-#include <netdb.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include "time.h"
 
 
 /**
  * Net
  */
 
-
+#ifdef COLONY_PC
 uint32_t tm_hostname_lookup (const uint8_t *hostname)
 {
   struct hostent *h;
@@ -135,6 +121,68 @@ tm_socket_t tm_tcp_accept (tm_socket_t sock, uint32_t *ip)
   *ip = ((struct sockaddr_in *) &addrClient)->sin_addr.s_addr;
   return res;
 }
+#endif
+
+
+#if 0
+
+uint32_t tm_hostname_lookup (const uint8_t *hostname)
+{
+  return 0;
+}
+
+tm_socket_t tm_udp_open ()
+{
+    return 0;
+}
+
+
+tm_socket_t tm_tcp_open ()
+{
+    return 0;
+}
+
+int tm_tcp_close (tm_socket_t sock)
+{
+    return 0;
+}
+
+int tm_tcp_connect (tm_socket_t sock, uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3, uint16_t port)
+{
+    return 0;
+}
+
+// http://publib.boulder.ibm.com/infocenter/iseries/v5r3/index.jsp?topic=%2Frzab6%2Frzab6xnonblock.htm
+
+int tm_tcp_write (tm_socket_t sock, uint8_t *buf, size_t buflen)
+{
+    return 0;
+}
+
+int tm_tcp_read (tm_socket_t sock, uint8_t *buf, size_t buflen)
+{
+    return 0;
+}
+
+int tm_tcp_readable (tm_socket_t sock)
+{
+    return 0;
+}
+
+int tm_tcp_listen (tm_socket_t sock, uint16_t port)
+{
+  return 0;
+}
+
+// Returns -1 on error or no socket.
+// Returns -2 on pending connection.
+// Returns >= 0 for socket descriptor.
+tm_socket_t tm_tcp_accept (tm_socket_t sock, uint32_t *ip)
+{
+  return 0;
+}
+
+#endif
 
 
 /**
@@ -148,11 +196,12 @@ void tm_uptime_init ()
 
 uint32_t tm_uptime_micro ()
 {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
+  // struct timeval tv;
+  // gettimeofday(&tv, NULL);
 
-  double time_in_mill = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000;
-  return (uint32_t) (time_in_mill * 1000);
+  // double time_in_mill = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000;
+  // return (uint32_t) (time_in_mill * 1000);
+  return 0;
 }
 
 

@@ -1,4 +1,5 @@
 *.colony
+*.o
 etc/*
 *.dSYM
 runtime
