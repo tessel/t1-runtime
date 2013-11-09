@@ -125,7 +125,7 @@ precompile: $(patsubst %.lua, %.o, $(LUASRCS))
 
 ifeq ($(EMBED), 0)
 compile: $(patsubst %.lua, %.o, $(LUASRCS)) $(patsubst %.c, %.o, $(CSRCS)) 
-	$(CC) -o runtime -lm ../evinrude/libhswrex.a $^ 
+	$(CC) -o colony -lm ../evinrude/libhswrex.a $^ 
 else
 compile: $(patsubst %.c, %.o, $(CSRCS)) $(patsubst %.lua, %.o, $(LUASRCS))
 	arm-none-eabi-ar rcs libcolony.a ../evinrude/libhswrex.a $^ 
