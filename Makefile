@@ -119,13 +119,15 @@ all: precompile compile
 precompile: $(patsubst %.lua, %.o, $(LUASRCS))
 
 %.o: %.lua
-	$(COPY) -I binary -O $(shell $(DUMP) -i | head -n 2 | tail -n 1) $^ $(patsubst %.lua, %.o, $^)
+	xxd -i $^ $(patsubst %.lua, %.c, $^)
+	gcc -c -o $(patsubst %.lua, %.o, $^) $(patsubst %.lua, %.c, $^)
+	rm $(patsubst %.lua, %.c, $^)
 
 ifeq ($(EMBED), 0)
-compile: $(patsubst %.c, %.o, $(CSRCS))
-	gcc -o runtime -lm ../evinrude/libhswrex.a $^ 
+compile: $(patsubst %.lua, %.o, $(LUASRCS)) $(patsubst %.c, %.o, $(CSRCS)) 
+	$(CC) -o runtime -lm ../evinrude/libhswrex.a $^ 
 else
-compile: $(patsubst %.c, %.o, $(CSRCS))
+compile: $(patsubst %.c, %.o, $(CSRCS)) $(patsubst %.lua, %.o, $(LUASRCS))
 	arm-none-eabi-ar rcs libcolony.a ../evinrude/libhswrex.a $^ 
 endif
 
@@ -135,4 +137,4 @@ endif
 	$(CC) $(CFLAGS) $^ -o $@
 
 clean: 
-	-@rm -rf $(patsubst %.c, %.o, $(CSRCS)) $(patsubst %.lua, %.o, $(LUASRCS)) 2>/dev/null || true
+	-@rm -rf $(patsubst %.c, %.o, $(CSRCS)) $(patsubst %.lua, %.o, $(LUASRCS)) $(patsubst %.lua, %.c, $(LUASRCS)) 2>/dev/null || true

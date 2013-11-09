@@ -11,8 +11,11 @@
 
 
 /**
- * main
+ * Runtime.
  */
+
+LUALIB_API int luaopen_evinrude (lua_State *L);
+LUALIB_API int luaopen_bit (lua_State *L);
 
 void luaL_traceback (lua_State *L, lua_State *L1, const char *msg, int level);
 
@@ -78,17 +81,14 @@ static int report(lua_State *L, int status)
   return status;
 }
 
-// const char *runtime_lua = "local colony = require('lib/colony'); collectgarbage(); colony.run('./' .. arg[1]); colony.runEventLoop();";
-const char *runtime_lua = "require('lib/cli')";
-
-static int handle_script(lua_State *L, char **argv, int n)
+static int handle_script(lua_State *L, const char* script, size_t scriptlen, char **argv, int n)
 {
   int status;
   int narg = getargs(L, argv, n);  /* collect arguments */
   lua_setglobal(L, "arg");
   // if (strcmp(argv[0], "-") == 0 && strcmp(argv[n-1], "--") != 0)
   //   fname = NULL;  /* stdin */
-  status = luaL_loadbuffer(L,runtime_lua,strlen(runtime_lua),"runtime");
+  status = luaL_loadbuffer(L,script, scriptlen, "runtime");
   lua_insert(L, -(narg+1));
   if (status == 0)
     status = docall(L, narg, 0);
@@ -103,14 +103,14 @@ static int runtime_panic (lua_State *L)
   return 0;  /* return to Lua to abort */
 }
 
-LUALIB_API int luaopen_evinrude (lua_State *L);
-LUALIB_API int luaopen_bit (lua_State *L);
 
+#define LOAD_EMBEDDED_LUA(L, NAME) extern unsigned char* NAME; extern unsigned int NAME ## _len; luaL_loadbuffer(L, (const char*) &NAME, NAME ## _len, (const char*) &NAME);
 
 // Function to be called by javascript
-int colony_runtime (lua_State** stateptr, const char *path, char **argv)
+int colony_runtime_open (lua_State** stateptr)
 {
   lua_State* L = *stateptr = lua_open();
+
   lua_atpanic(L, &runtime_panic);
   // luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
   // lua_gc(L, LUA_GCSETPAUSE, 90);
@@ -118,10 +118,12 @@ int colony_runtime (lua_State** stateptr, const char *path, char **argv)
 
   // Open libraries.
   luaL_openlibs(L);
+
   // Get preload table.
   lua_getglobal(L, "package");
   lua_getfield(L, -1, "preload");
   lua_remove(L, -2);
+
   // bit32
   lua_pushcfunction(L, luaopen_bit);
   lua_setfield(L, -2, "bit32");
@@ -134,18 +136,52 @@ int colony_runtime (lua_State** stateptr, const char *path, char **argv)
   // evinrude
   lua_pushcfunction(L, luaopen_evinrude);
   lua_setfield(L, -2, "evinrude");
+
+  // lib/cli.lua
+  LOAD_EMBEDDED_LUA(L, lib_cli_lua);
+  lua_setfield(L, -2, "lib/cli.lua");
+  // lib/colony.lua
+  LOAD_EMBEDDED_LUA(L, lib_colony_lua);
+  lua_setfield(L, -2, "lib/colony.lua");
+  // lib/node-tm.lua
+  LOAD_EMBEDDED_LUA(L, lib_node_tm_lua);
+  lua_setfield(L, -2, "lib/node-tm.lua");
+  // lib/std.lua
+  LOAD_EMBEDDED_LUA(L, lib_std_lua);
+  lua_setfield(L, -2, "lib/std.lua");
+
   // Done with preload
   lua_pop(L, 1);
 
+  return 0;
+}
+
+
+int colony_runtime_run (lua_State** stateptr, const char *path, char **argv)
+{
+  lua_State* L = *stateptr;
+
   // Run script.
-  int status = handle_script(L, argv, 0);
+  // const char *runtime_lua = "local colony = require('lib/colony'); collectgarbage(); colony.run('./' .. arg[1]); colony.runEventLoop();";
+  const char *runtime_lua = "require('lib/cli')";
+  return handle_script(L, runtime_lua, strlen(runtime_lua), argv, 0);
+}
+
+
+int colony_runtime_close (lua_State** stateptr)
+{
+  lua_State* L = *stateptr;
 
   // Close runtime.
   lua_close(L);
   *stateptr = NULL;
-  return status;
+  return 0;
 }
 
+
+/**
+ * Populate FatFS
+ */
 
 #include "ff.h"
 
@@ -171,15 +207,18 @@ void populate_fs ()
   f_mount(NULL, "", 0); // unmount
 }
 
+/**
+ * Run
+ */
+
 int main (int argc, char *argv[])
 {
-  if (argc < 2) {
-    printf("Usage: colony script.js\n");
-    return 1;
-  }
-
   lua_State* L;
   populate_fs();
   tm_fs_init();
-  return colony_runtime(&L, argv[1], argv);
+
+  colony_runtime_open(&L);
+  int ret = colony_runtime_run(&L, argv[1], argv);
+  colony_runtime_close(&L);
+  return ret;
 }
