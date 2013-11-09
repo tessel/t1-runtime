@@ -149,17 +149,25 @@ int colony_runtime (lua_State** stateptr, const char *path, char **argv)
 
 #include "ff.h"
 
+void populate_fs_file (const char *pathname, const uint8_t *src, size_t len)
+{
+  tm_fs_t fd;
+  UINT written;
+  int res_open = f_open(&fd, "~index.colony", TM_RDWR | FA_CREATE_ALWAYS);
+  int res_write = f_write(&fd, src, len, &written);
+  int res_close = f_close(&fd);
+}
+
 void populate_fs ()
 {
   FATFS fs;
   int res_mount = f_mount(&fs, "", 0);  /* Register work area to the logical drive 0 */
   int res_mkfs = f_mkfs("", 1, 0);         /* Create FAT volume on the logical drive 0. 2nd argument is ignored. */
-  tm_fs_t fd;
-  int res_open = f_open(&fd, "~index.colony", TM_RDWR | FA_CREATE_ALWAYS);
-  char *jscode = "function () console:log('hi'); end";
-  UINT written;
-  int res_write = f_write(&fd, jscode, strlen(jscode), &written);
-  int res_close = f_close(&fd);
+
+  // Add index.js file
+  const char *jscode = "function () console:log('hi'); end";
+  populate_fs_file("~index.colony", (const uint8_t*) jscode, strlen(jscode));
+
   f_mount(NULL, "", 0); // unmount
 }
 

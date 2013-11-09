@@ -10,11 +10,16 @@ CSRCS   =
 # Compiler
 ifeq ($(EMBED), 0)
 	CC      = gcc
+	DUMP    = objdump
+	COPY    = gobjcopy
 
 	CFLAGS += -c -o runtime -DCOLONY_PC
 
 else
 	CC      = arm-none-eabi-gcc
+	DUMP    = arm-none-eabi-objdump
+	COPY    = arm-none-eabi-objcopy
+
 	CPU     = cortex-m3
 	OPTIM   = fast
 
@@ -100,10 +105,21 @@ else
 	CSRCS  += $(shell find src/ -maxdepth 1 ! -name "runtime.c" -name "*.c") 
 endif
 
+# Binary lua files
+LUASRCS   = $(wildcard lib/*.lua)
+
+
+
+#
+# Targets
+#
+
 all: precompile compile
 
-precompile:
-	# xxd -i < src/runtime.lua > src/runtime-lua.h
+precompile: $(patsubst %.lua, %.o, $(LUASRCS))
+
+%.o: %.lua
+	$(COPY) -I binary -O $(shell $(DUMP) -i | head -n 2 | tail -n 1) $^ $(patsubst %.lua, %.o, $^)
 
 ifeq ($(EMBED), 0)
 compile: $(patsubst %.c, %.o, $(CSRCS))
@@ -119,4 +135,4 @@ endif
 	$(CC) $(CFLAGS) $^ -o $@
 
 clean: 
-	-@rm -rf $(patsubst %.c, %.o, $(CSRCS)) 2>/dev/null || true
+	-@rm -rf $(patsubst %.c, %.o, $(CSRCS)) $(patsubst %.lua, %.o, $(LUASRCS)) 2>/dev/null || true
