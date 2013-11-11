@@ -237,6 +237,14 @@ int tm_fs_read (tm_fs_t* fd, uint8_t *buf, size_t size, size_t* nread)
   return ret < 0 ? errno : 0;
 }
 
+
+int tm_fs_write (tm_fs_t* fd, uint8_t *buf, size_t size, size_t* nread)
+{
+  ssize_t ret = write(*fd, buf, size);
+  *nread = ret > 0 ? ret : 0;
+  return ret < 0 ? errno : 0;
+}
+
 // returns > 0 if readable
 int tm_fs_readable (tm_fs_t* fd)
 {
@@ -247,6 +255,11 @@ int tm_fs_readable (tm_fs_t* fd)
     return ufds[0].revents & POLLIN ? 0 : 1;
   }
   return 1;
+}
+
+int tm_fs_dir_create (const char *pathname)
+{
+  return mkdir(pathname, 0755) < 0 ? errno : 0;
 }
 
 int tm_fs_dir_open (tm_fs_dir_t* dir, const char *pathname)
@@ -302,9 +315,22 @@ int tm_fs_read (tm_fs_t* fd, uint8_t* buf, size_t size, size_t* nread)
   return ret;
 }
 
+int tm_fs_write (tm_fs_t* fd, uint8_t* buf, size_t size, size_t* nread)
+{
+  uint nread_u;
+  int ret = f_write(fd, buf, size, &nread_u);
+  *nread = nread_u;
+  return ret;
+}
+
 int tm_fs_readable (tm_fs_t* fd)
 {
   return 0;
+}
+
+int tm_fs_dir_create (const char *pathname)
+{
+  return f_mkdir(pathname);
 }
 
 int tm_fs_dir_open (tm_fs_dir_t* dir, const char *pathname)

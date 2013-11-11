@@ -78,7 +78,9 @@ enum {
   TM_OPEN_EXISTING = 0,
   TM_OPEN_ALWAYS = O_CREAT,
   TM_CREATE_NEW = O_CREAT | O_EXCL,
-  TM_CREATE_ALWAYS = O_TRUNC
+  TM_CREATE_ALWAYS = O_TRUNC,
+
+  TM_EXIST = EEXIST
 };
 
 typedef int tm_fs_t;
@@ -96,7 +98,9 @@ enum {
   TM_OPEN_EXISTING = FA_OPEN_EXISTING,
   TM_OPEN_ALWAYS = FA_OPEN_ALWAYS,
   TM_CREATE_NEW = FA_CREATE_NEW,
-  TM_CREATE_ALWAYS = FA_CREATE_ALWAYS
+  TM_CREATE_ALWAYS = FA_CREATE_ALWAYS,
+
+  TM_EXIST = FR_EXIST
 };
 
 typedef FIL tm_fs_t;
@@ -115,7 +119,9 @@ int tm_fs_open (tm_fs_t* fd, const char *pathname, uint32_t flags);
 int tm_fs_close (tm_fs_t* fd);
 int tm_fs_read (tm_fs_t* fd, uint8_t *buf, size_t size, size_t* read);
 int tm_fs_readable (tm_fs_t* fd);
+int tm_fs_write (tm_fs_t* fd, uint8_t *buf, size_t size, size_t* read);
 
+int tm_fs_dir_create (const char *pathname);
 int tm_fs_dir_open (tm_fs_dir_t* dir, const char *pathname);
 int tm_fs_dir_read (tm_fs_dir_t* dir, const char **strptr);
 int tm_fs_dir_close (tm_fs_dir_t* dir);

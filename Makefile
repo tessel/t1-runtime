@@ -1,5 +1,5 @@
 # Config
-EMBED   = 1
+EMBED   = 0
 FATFS   = 1
 LUAJIT  = 0
 
@@ -49,8 +49,6 @@ else
 	CFLAGS        += -lcs3
 	CFLAGS        += -lcs3arm
 	CFLAGS        += -lcolony
-
-	CFLAGS        += -DMAXPATHLEN=256
 endif
 
 # Cflags
@@ -97,8 +95,10 @@ ifeq ($(FATFS), 1)
 endif
 
 # Libtar
-# CFLAGS += -I../libtar/lib/ -I../libtar -I../libtar/compat -I../libtar/listhash
-# CSRCS  += $(wildcard ../libtar/lib/*.c) $(wildcard ../libtar/listhash/*.c)
+CFLAGS += -I../libtar/lib/ -I../libtar -I../libtar/compat -I../libtar/listhash
+CSRCS  += $(shell find ../libtar/lib/ -maxdepth 1 ! -name "wrapper.c" ! -name "extract.c" -name "*.c")  $(wildcard ../libtar/listhash/*.c)
+CFLAGS        += -DMAXPATHLEN=256
+# CFLAGS += -DDEBUG
 
 # Source
 ifeq ($(EMBED), 0)

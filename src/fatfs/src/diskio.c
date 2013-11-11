@@ -20,13 +20,14 @@
 #define ATA		0
 
 
-#define DISKSIZE 512
+#define DISKSIZE 1024
 
 /*-----------------------------------------------------------------------*/
 /* Inidialize a Drive                                                    */
 /*-----------------------------------------------------------------------*/
 
-uint8_t *thisisadrive = (uint8_t *) 0x28000000;
+// uint8_t *thisisadrive = (uint8_t *) 0x28000000;
+uint8_t thisisadrive[512*DISKSIZE] = { 0 };
 
 DSTATUS disk_initialize (
 	BYTE pdrv				/* Physical drive nmuber (0..) */
