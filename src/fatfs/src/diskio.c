@@ -26,7 +26,7 @@
 /* Inidialize a Drive                                                    */
 /*-----------------------------------------------------------------------*/
 
-uint8_t thisisadrive[512*DISKSIZE] = { 0 };
+uint8_t *thisisadrive = (uint8_t *) 0x28000000;
 
 DSTATUS disk_initialize (
 	BYTE pdrv				/* Physical drive nmuber (0..) */
@@ -39,6 +39,9 @@ DSTATUS disk_initialize (
 	case ATA :
 		// result = ATA_disk_initialize();
 		// fd = open("/Users/tim/Code/technical/jolony/runtime/etc/test.img", O_RDONLY);
+//		if (thisisadrive == NULL) {
+//			thisisadrive = (uint8_t*) malloc(512 * DISKSIZE);
+//		}
 		stat = disk_status(pdrv);
 
 		// translate the reslut code here
@@ -96,7 +99,7 @@ DRESULT disk_read (
 		if ((sector + count) > DISKSIZE) {
 			res = RES_PARERR;
 		} else {
-			memcpy(buff, &thisisadrive[sector * 512], count * 512);
+			memcpy(buff, &thisisadrive[(sector) * 512], count * 512);
 			res = 0;
 		}
 		// lseek(fd, sector * 512, SEEK_SET);
@@ -134,7 +137,9 @@ DRESULT disk_write (
 		if ((sector + count) > DISKSIZE) {
 			res = RES_PARERR;
 		} else {
-			memcpy(&thisisadrive[sector * 512], buff, count * 512);
+			// printf("ok %d %d %d, %d %p\n", sector, (sector-1) * 512, count * 512, sizeof(thisisadrive), buff);
+			memcpy(&thisisadrive[(sector) * 512], buff, count * 512);
+			// printf("--> done.\n");
 			res = 0;
 		}
 

@@ -1,5 +1,5 @@
 # Config
-EMBED   = 0
+EMBED   = 1
 FATFS   = 1
 LUAJIT  = 0
 
@@ -21,7 +21,8 @@ else
 	COPY    = arm-none-eabi-objcopy
 
 	CPU     = cortex-m3
-	OPTIM   = fast
+	#OPTIM   = fast
+	OPTIM   = 0
 
 	CFLAGS += -c -DCOLONY_EMBED
 	CFLAGS      += -mcpu=$(CPU) 
@@ -48,13 +49,16 @@ else
 	CFLAGS        += -lcs3
 	CFLAGS        += -lcs3arm
 	CFLAGS        += -lcolony
+
+	CFLAGS        += -DMAXPATHLEN=256
 endif
 
 # Cflags
 CFLAGS += -std=c99 -g
 
 # Regex
-CFLAGS += -DREGEX_WCHAR -I../evinrude/src 
+CFLAGS += -DREGEX_WCHAR -DREGEX_STANDALONE -I../evinrude/src -D_NDEBUG
+CSRCS  += ../evinrude/src/regcomp.c ../evinrude/src/regexec.c ../evinrude/src/regerror.c ../evinrude/src/regfree.c ../evinrude/src/regalone.c
 # CSRCS  += ../evinrude/libhswrex.a 
 
 # Http parser	
@@ -93,8 +97,8 @@ ifeq ($(FATFS), 1)
 endif
 
 # Libtar
-CFLAGS += -I../libtar/lib/ -I../libtar -I../libtar/compat -I../libtar/listhash
-CSRCS  += $(wildcard ../libtar/lib/*.c) $(wildcard ../libtar/listhash/*.c)
+# CFLAGS += -I../libtar/lib/ -I../libtar -I../libtar/compat -I../libtar/listhash
+# CSRCS  += $(wildcard ../libtar/lib/*.c) $(wildcard ../libtar/listhash/*.c)
 
 # Source
 ifeq ($(EMBED), 0)
@@ -106,7 +110,8 @@ else
 endif
 
 # Binary lua files
-LUASRCS   = $(wildcard lib/*.lua)
+BINSRCS   = $(wildcard lib/*.lua) $(wildcard builtin/*.colony)
+BINOBJS   = $(patsubst %.lua, %.o, $(wildcard lib/*.lua)) $(patsubst %.js, %.o, $(wildcard builtin/*.js))
 
 
 
@@ -116,19 +121,35 @@ LUASRCS   = $(wildcard lib/*.lua)
 
 all: precompile compile
 
-precompile: $(patsubst %.lua, %.o, $(LUASRCS))
+precompile: indexify $(patsubst %.lua, %.o, $(BINSRCS))
+
+indexify:
+	D=lib node -e "dir = process.env.D; S = /\.lua$\/; function _(s) { return s.replace(/[^a-z0-9_]/g, '_'); } console.log('\#include <stddef.h>\n',require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return 'extern unsigned char* ' + _(dir+'_'+s) + '; extern unsigned int ' + _(dir+'\/'+s) + '_len;' }).join('\n') + '\nconst dir_reg_t dir_index_' + _(dir) + '[] = { ' + require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return '{' + [JSON.stringify('lib/' + s.replace('.lua', '')), '(unsigned char*) &' + _(dir+'\/'+s), _(dir+'\/'+s) + '_len'].join(', ') + '}'  }).join(', ') + ', { 0, 0, 0 } };')" > lib/index.h
+	node preprocessor builtin
+	D=builtin node -e "dir = process.env.D; S = /\.colony$\/; function _(s) { return s.replace(/[^a-z0-9_]/g, '_'); } console.log('\#include <stddef.h>\n',require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return 'extern unsigned char* ' + _(dir+'_'+s) + '; extern unsigned int ' + _(dir+'\/'+s) + '_len;' }).join('\n') + '\nconst dir_reg_t dir_index_' + _(dir) + '[] = { ' + require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return '{' + [JSON.stringify(s), '(unsigned char*) &' + _(dir+'\/'+s), _(dir+'\/'+s) + '_len'].join(', ') + '}'  }).join(', ') + ', { 0, 0, 0} };')" > builtin/index.h
+
+%.o: %.js
+	xxd -i $(subst /,/~,$(patsubst %.js,%.colony,$^)) $(patsubst %.js, %.c, $^)
+ifeq ($(EMBED), 1)
+	sed -i '' 's/unsigned char/const unsigned char __attribute__ ((section (".text")))/g' $(patsubst %.js, %.c, $^)
+endif
+	$(CC) $(CFLAGS) -o $(patsubst %.js, %.o, $^) $(patsubst %.js, %.c, $^)
+	rm $(patsubst %.js, %.c, $^)
 
 %.o: %.lua
 	xxd -i $^ $(patsubst %.lua, %.c, $^)
-	gcc -c -o $(patsubst %.lua, %.o, $^) $(patsubst %.lua, %.c, $^)
+ifeq ($(EMBED), 1)
+	sed -i '' 's/unsigned char/const unsigned char __attribute__ ((section (".text")))/g' $(patsubst %.lua, %.c, $^)
+endif
+	$(CC) $(CFLAGS) -o $(patsubst %.lua, %.o, $^) $(patsubst %.lua, %.c, $^)
 	rm $(patsubst %.lua, %.c, $^)
 
 ifeq ($(EMBED), 0)
-compile: $(patsubst %.lua, %.o, $(LUASRCS)) $(patsubst %.c, %.o, $(CSRCS)) 
-	$(CC) -o colony -lm ../evinrude/libhswrex.a $^ 
+compile: $(BINOBJS) $(patsubst %.c, %.o, $(CSRCS)) 
+	$(CC) -o colony -lm $^ 
 else
-compile: $(patsubst %.c, %.o, $(CSRCS)) $(patsubst %.lua, %.o, $(LUASRCS))
-	arm-none-eabi-ar rcs libcolony.a ../evinrude/libhswrex.a $^ 
+compile: $(BINOBJS) $(patsubst %.c, %.o, $(CSRCS))
+	arm-none-eabi-ar rcs libcolony.a $(filter-out src/cli.o,$^)
 endif
 
 # You don't even need to be explicit here,
@@ -137,4 +158,4 @@ endif
 	$(CC) $(CFLAGS) $^ -o $@
 
 clean: 
-	-@rm -rf $(patsubst %.c, %.o, $(CSRCS)) $(patsubst %.lua, %.o, $(LUASRCS)) $(patsubst %.lua, %.c, $(LUASRCS)) 2>/dev/null || true
+	-@rm -rf $(patsubst %.c, %.o, $(CSRCS)) $(BINOBJS) $(patsubst %.lua, %.c, $(BINSRCS)) 2>/dev/null || true

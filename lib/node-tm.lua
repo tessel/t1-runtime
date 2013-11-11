@@ -303,7 +303,7 @@ function fs_readfile (name)
 end
 
 local function fs_exists (path)
-  fd, err = tm.fs_open(path)
+  fd, err = tm.fs_open(path, tm.OPEN_EXISTING + tm.RDONLY)
   if fd and err == 0 then
     tm.fs_close(fd)
     return true
@@ -349,6 +349,8 @@ end
 
 -- lookup and execution
 
+colony.cache = {}
+
 local function require_resolve (name, root)
   root = root or './'
   -- print('<-', root, name)
@@ -357,7 +359,7 @@ local function require_resolve (name, root)
   end 
 
   if string.sub(name, 1, 1) ~= '.' then
-    if fs_exists('./builtin/' .. name .. '.js') then
+    if fs_exists('./builtin/' .. name .. '.js') or colony.cache['./builtin/' .. name .. '.js'] then
       root = './builtin/'
       name = name .. '.js'
     else
@@ -397,15 +399,13 @@ local function require_resolve (name, root)
   return p, true
 end
 
-colony.cache = {}
-
 local function require_load (p)
   -- Load the script.
   local res = colony.cache[p]
   if not res then
     local luap = string.reverse(string.gsub(string.reverse(string.sub(p, 1, -4)), '/', '~/', 1)) .. '.colony'
     if fs_exists(luap) then
-      res = assert(loadstring('return ' .. fs_readfile(luap), "@"..p))()
+      res = assert(loadstring(fs_readfile(luap), "@"..p))()
       colony.cache[p] = res
     end
   end

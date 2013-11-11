@@ -124,7 +124,7 @@ tm_socket_t tm_tcp_accept (tm_socket_t sock, uint32_t *ip)
 #endif
 
 
-#if 0
+#if COLONY_EMBED
 
 uint32_t tm_hostname_lookup (const uint8_t *hostname)
 {
