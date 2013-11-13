@@ -2,6 +2,9 @@ var colony = require('colony');
 var wrench = require('wrench');
 var fs = require('fs');
 var path = require('path');
+var spawn = require('child_process').spawn
+
+var doLuac = !!process.argv[3]
 
 var root = path.join(__dirname + '/../', (process.argv[2] || '')) + '/';
 
@@ -10,9 +13,20 @@ console.log(root);
 function gen (f) {
   fs.readFile(root + f, 'utf-8', function (err, file) {
     try {
-      fs.writeFile(root + f.replace(/\.(js)$/i, '.colony').replace(/\/([^\/]+)$|^/, '/~$1'), colony.colonize(file), function (err) {
-        // ...
-      });
+      var out = root + f.replace(/\.(js)$/i, '.colony').replace(/\/([^\/]+)$|^/, '/~$1');
+      if (!doLuac) {
+        fs.writeFile(out, colony.colonize(file), function (err) {
+          // ...
+        });
+      } else {
+        var luac = spawn('./tools/compile', [out]);
+        process.stderr.setMaxListeners(1000);
+        process.stdout.setMaxListeners(1000);
+        luac.stderr.pipe(process.stderr);
+        luac.stdout.pipe(fs.createWriteStream(out));
+        luac.stdin.write(colony.colonize(file));
+        luac.stdin.end();
+      }
     } catch (e) {
       console.error('Error parsing ' + f, e);
     }

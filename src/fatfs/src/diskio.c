@@ -26,8 +26,11 @@
 /* Inidialize a Drive                                                    */
 /*-----------------------------------------------------------------------*/
 
-// uint8_t *thisisadrive = (uint8_t *) 0x28000000;
-uint8_t thisisadrive[512*DISKSIZE] = { 0 };
+#ifdef COLONY_EMBED
+	uint8_t *thisisadrive = (uint8_t *) 0x28000000;
+#else
+	uint8_t thisisadrive[512*DISKSIZE] = { 0 };
+#endif
 
 DSTATUS disk_initialize (
 	BYTE pdrv				/* Physical drive nmuber (0..) */

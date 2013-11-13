@@ -1,5 +1,5 @@
 # Config
-EMBED   = 0
+EMBED   = 1
 FATFS   = 1
 LUAJIT  = 0
 
@@ -110,10 +110,7 @@ else
 endif
 
 # Binary lua files
-BINSRCS   = $(wildcard lib/*.lua) $(wildcard builtin/*.colony)
 BINOBJS   = $(patsubst %.lua, %.o, $(wildcard lib/*.lua)) $(patsubst %.js, %.o, $(wildcard builtin/*.js))
-
-
 
 #
 # Targets
@@ -121,34 +118,46 @@ BINOBJS   = $(patsubst %.lua, %.o, $(wildcard lib/*.lua)) $(patsubst %.js, %.o, 
 
 all: precompile compile
 
-precompile: indexify $(patsubst %.lua, %.o, $(BINSRCS))
+precompile: indexify $(patsubst %.lua, %.o, $(BINOBJS))
 
 indexify:
-	D=lib node -e "dir = process.env.D; S = /\.lua$\/; function _(s) { return s.replace(/[^a-z0-9_]/g, '_'); } console.log('\#include <stddef.h>\n',require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return 'extern unsigned char* ' + _(dir+'_'+s) + '; extern unsigned int ' + _(dir+'\/'+s) + '_len;' }).join('\n') + '\nconst dir_reg_t dir_index_' + _(dir) + '[] = { ' + require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return '{' + [JSON.stringify('lib/' + s.replace('.lua', '')), '(unsigned char*) &' + _(dir+'\/'+s), _(dir+'\/'+s) + '_len'].join(', ') + '}'  }).join(', ') + ', { 0, 0, 0 } };')" > lib/index.h
+	D=lib node -e "dir = process.env.D; S = /\.lua$\/; function _(s) { return s.replace(/[^a-z0-9_]/g, '_'); } console.log('\#include <stddef.h>\n',require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return '#include \"' + s.replace(/^~/, '').replace(/\.lua/, '.c') + '\"' }).join('\n') + '\nconst dir_reg_t dir_index_' + _(dir) + '[] = { ' + require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return '{' + [JSON.stringify('lib/' + s.replace('.lua', '')), '' + _(dir+'\/'+s), _(dir+'\/'+s) + '_len'].join(', ') + '}'  }).join(',\n') + ', { 0, 0, 0 } };')" > lib/index.h
+ifeq ($(EMBED), 1)
+	node preprocessor builtin luac
+else
 	node preprocessor builtin
-	D=builtin node -e "dir = process.env.D; S = /\.colony$\/; function _(s) { return s.replace(/[^a-z0-9_]/g, '_'); } console.log('\#include <stddef.h>\n',require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return 'extern unsigned char* ' + _(dir+'_'+s) + '; extern unsigned int ' + _(dir+'\/'+s) + '_len;' }).join('\n') + '\nconst dir_reg_t dir_index_' + _(dir) + '[] = { ' + require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return '{' + [JSON.stringify(s), '(unsigned char*) &' + _(dir+'\/'+s), _(dir+'\/'+s) + '_len'].join(', ') + '}'  }).join(', ') + ', { 0, 0, 0} };')" > builtin/index.h
+endif
+	D=builtin node -e "dir = process.env.D; S = /\.colony$\/; function _(s) { return s.replace(/[^a-z0-9_]/g, '_'); } console.log('\#include <stddef.h>\n',require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return '#include \"' + s.replace(/^~/, '').replace(/\.colony/, '.c') + '\"' }).join('\n') + '\nconst dir_reg_t dir_index_' + _(dir) + '[] = { ' + require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return '{' + [JSON.stringify('./builtin/' + s.replace(/^~/, '').replace('.colony', '.js')), '' + _(dir+'\/'+s), _(dir+'\/'+s) + '_len'].join(',') + '}'  }).join(',\n') + ', { 0, 0, 0} };')" > builtin/index.h
 
 %.o: %.js
 	xxd -i $(subst /,/~,$(patsubst %.js,%.colony,$^)) $(patsubst %.js, %.c, $^)
+	sed -i '' 's/unsigned char/const unsigned char/g' $(patsubst %.js, %.c, $^)
+	sed -i '' 's/unsigned int \([a-z_]*\) = \([0-9]*\);/\#define \1 \2/g' $(patsubst %.js, %.c, $^)
 ifeq ($(EMBED), 1)
-	sed -i '' 's/unsigned char/const unsigned char __attribute__ ((section (".text")))/g' $(patsubst %.js, %.c, $^)
+	sed -i '' 's/unsigned char/unsigned char __attribute__ ((section (".text")))/g' $(patsubst %.js, %.c, $^)
 endif
-	$(CC) $(CFLAGS) -o $(patsubst %.js, %.o, $^) $(patsubst %.js, %.c, $^)
-	rm $(patsubst %.js, %.c, $^)
+	# $(CC) $(CFLAGS) -o $(patsubst %.js, %.o, $^) $(patsubst %.js, %.c, $^)
+	# rm $(patsubst %.js, %.c, $^)
 
 %.o: %.lua
-	xxd -i $^ $(patsubst %.lua, %.c, $^)
+	cat $^ | ./tools/compile > $(patsubst %.lua, %.luac, $^)
+	xxd -i $(patsubst %.lua, %.luac, $^) $(patsubst %.lua, %.c, $^)
+	rm $(patsubst %.lua, %.luac, $^)
+	sed -i '' 's/_luac/_lua/g' $(patsubst %.lua, %.c, $^)
+	# xxd -i $^ $(patsubst %.lua, %.c, $^)
+	sed -i '' 's/unsigned char/const unsigned char/g' $(patsubst %.lua, %.c, $^)
+	sed -i '' 's/unsigned int \([a-z_]*\) = \([0-9]*\);/\#define \1 \2/g' $(patsubst %.lua, %.c, $^)
 ifeq ($(EMBED), 1)
-	sed -i '' 's/unsigned char/const unsigned char __attribute__ ((section (".text")))/g' $(patsubst %.lua, %.c, $^)
+	sed -i '' 's/unsigned char/unsigned char __attribute__ ((section (".text")))/g' $(patsubst %.lua, %.c, $^)
 endif
-	$(CC) $(CFLAGS) -o $(patsubst %.lua, %.o, $^) $(patsubst %.lua, %.c, $^)
-	rm $(patsubst %.lua, %.c, $^)
+	# $(CC) $(CFLAGS) -o $(patsubst %.lua, %.o, $^) $(patsubst %.lua, %.c, $^)
+	# rm $(patsubst %.lua, %.c, $^)
 
 ifeq ($(EMBED), 0)
-compile: $(BINOBJS) $(patsubst %.c, %.o, $(CSRCS)) 
-	$(CC) -o colony -lm $^ 
+compile: $(patsubst %.c, %.o, $(CSRCS)) 
+	$(CC) -o colony -lm $^
 else
-compile: $(BINOBJS) $(patsubst %.c, %.o, $(CSRCS))
+compile: $(patsubst %.c, %.o, $(CSRCS))
 	arm-none-eabi-ar rcs libcolony.a $(filter-out src/cli.o,$^)
 endif
 
@@ -158,4 +167,4 @@ endif
 	$(CC) $(CFLAGS) $^ -o $@
 
 clean: 
-	-@rm -rf $(patsubst %.c, %.o, $(CSRCS)) $(BINOBJS) $(patsubst %.lua, %.c, $(BINSRCS)) 2>/dev/null || true
+	rm -rf $(patsubst %.c, %.o, $(CSRCS)) $(patsubst %.js, %.c, $(patsubst %.lua, %.c, $(BINOBJS))) 2>/dev/null || true

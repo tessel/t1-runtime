@@ -14,9 +14,16 @@ end
 -- print('Run mem:', collectgarbage('count'))
 local status,err = pcall(function ()
   local colony = require('lib/colony')
+  colony.precache = {}
   for k, v in pairs(_builtin) do
-    k = string.gsub(string.gsub(k, '~', './builtin/'), '.colony', '.js')
-    colony.cache[k] = v()
+    (function (k, v)
+      colony.precache[k] = function ()
+        return _builtin_load(k, v)()
+      end
+      colony.precache[string.sub(k, 2)] = function ()
+        return _builtin_load(k, v)()
+      end
+    end)(k, v)
   end
   collectgarbage()
   colony.run(p)

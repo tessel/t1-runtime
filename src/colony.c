@@ -9,27 +9,31 @@
 #include "tm.h"
 #include "lhttp_parser.h"
 
+LUALIB_API int luaopen_evinrude (lua_State *L);
+LUALIB_API int luaopen_bit (lua_State *L);
+
 
 /**
  * Runtime.
  */
 
-LUALIB_API int luaopen_evinrude (lua_State *L);
-LUALIB_API int luaopen_bit (lua_State *L);
-
-// void luaL_traceback (lua_State *L, lua_State *L1, const char *msg, int level);
-
-static int traceback(lua_State *L)
+static int traceback (lua_State *L)
 {
-  if (!lua_isstring(L, 1)) { /* Non-string error object? Try metamethod. */
-    if (lua_isnoneornil(L, 1) ||
-  !luaL_callmeta(L, 1, "__tostring") ||
-  !lua_isstring(L, -1))
-      return 1;  /* Return non-string error object. */
-    lua_remove(L, 1);  /* Replace object by result of __tostring metamethod. */
+  if (!lua_isstring(L, 1))  /* 'message' not a string? */
+    return 1;  /* keep it intact */
+  lua_getfield(L, LUA_GLOBALSINDEX, "debug");
+  if (!lua_istable(L, -1)) {
+    lua_pop(L, 1);
+    return 1;
   }
-  printf("Error: %s\n", lua_tostring(L, 1));
-  // luaL_traceback(L, L, lua_tostring(L, 1), 1);
+  lua_getfield(L, -1, "traceback");
+  if (!lua_isfunction(L, -1)) {
+    lua_pop(L, 2);
+    return 1;
+  }
+  lua_pushvalue(L, 1);  /* pass error message */
+  lua_pushinteger(L, 2);  /* skip this function and traceback */
+  lua_call(L, 2, 1);  /* call debug.traceback */
   return 1;
 }
 
@@ -98,11 +102,63 @@ static int runtime_panic (lua_State *L)
   return 0;  /* return to Lua to abort */
 }
 
+// static int base64_write(lua_State* L, unsigned char* str, size_t len, 
+//         struct luaL_Buffer *buf)
+// {
+//     unsigned int idx;
+//     for (idx=0; idx<len; idx++){
+//         printf("0x%02x, ", (unsigned int) str[idx]);
+//         //printf(code);
+//         // luaL_addlstring(buf, code, 4);
+//     }
+//     //printf("\n");
+//     return 0;
+// }
+
+// const uint8_t thebytes[] = {
+//   0x1b, 0x4c, 0x75, 0x61, 0x51, 0x00, 0x01, 0x04, 0x04, 0x04, 0x08, 0x00, 0x07, 0x00, 0x00, 0x00, 0x3d, 0x73, 0x74, 0x64, 0x69, 0x6e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x03, 0x00, 0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00, 0x1e, 0x00, 0x00, 0x01, 0x1e, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x06, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x41, 0x00, 0x00, 0x00, 0x81, 0x40, 0x00, 0x00, 0xc1, 0x80, 0x00, 0x00, 0x1c, 0x40, 0x00, 0x02, 0x1e, 0x00, 0x80, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x06, 0x00, 0x00, 0x00, 0x70, 0x72, 0x69, 0x6e, 0x74, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x40, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x23, 0x40, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+// };
+
+// const char SOMECODETOCOMPILE[] = "return function () print('print', 4 + 4, 6.54 + 3.21); end";
+
+// void dump_function(lua_State* L){
+//     int stack_sz;
+//     int res;
+//     luaL_Buffer buf;
+
+//     luaL_buffinit(L, &buf);
+
+//     // ** test 1 - works as expected
+//     lua_settop(L,0);
+//     luaL_loadbuffer(L, SOMECODETOCOMPILE, strlen(SOMECODETOCOMPILE), "=stdin");
+//     printf("stack sz: %i\n", lua_gettop(L));
+//     res = lua_dump(L, (lua_Writer)base64_write, &buf);
+//     printf("\n");
+// }
+
+typedef struct dir_reg { const char *path; const unsigned char *src; unsigned int len; } dir_reg_t;
+#include "../builtin/index.h"
+#include "../lib/index.h"
+
+static int builtin_loader (lua_State* L)
+{
+  const char* path = lua_tostring(L, 1);
+  int i = (int) lua_tonumber(L, 2);
+
+  int res = luaL_loadbuffer(L, (const char *) dir_index_builtin[i].src, dir_index_builtin[i].len, dir_index_builtin[i].path);
+  if (res != 0) {
+    printf("Error in %s: %d\n", dir_index_builtin[i].path, res);
+    report(L, res);
+    exit(1);
+  }
+
+  return 1;
+}
+
 // Function to be called by javascript
 int colony_runtime_open (lua_State** stateptr)
 {
   lua_State* L = *stateptr = lua_open();
-
   lua_atpanic(L, &runtime_panic);
   // luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
   // lua_gc(L, LUA_GCSETPAUSE, 90);
@@ -110,6 +166,12 @@ int colony_runtime_open (lua_State** stateptr)
 
   // Open libraries.
   luaL_openlibs(L);
+
+    // dump_function(L);
+  // int res = luaL_loadbuffer(L, thebytes, sizeof(thebytes), "=stdin");
+  // lua_pcall(L, 0, LUA_MULTRET, 0);
+  // lua_pcall(L, 0, LUA_MULTRET, 0);
+
 
   // Get preload table.
   lua_getglobal(L, "package");
@@ -129,25 +191,37 @@ int colony_runtime_open (lua_State** stateptr)
   lua_pushcfunction(L, luaopen_evinrude);
   lua_setfield(L, -2, "evinrude");
 
-  typedef struct dir_reg { char *path; unsigned char *src; size_t len; } dir_reg_t;
-
-  #include "../lib/index.h"
   for (int i = 0; dir_index_lib[i].path != NULL; i++) {
-    luaL_loadbuffer(L, (const char *) dir_index_lib[i].src, dir_index_lib[i].len, dir_index_lib[i].path);
+    // printf("lib -> %s\n", dir_index_lib[i].path);
+    int res = luaL_loadbuffer(L, (const char *) dir_index_lib[i].src, dir_index_lib[i].len, dir_index_lib[i].path);
+    if (res != 0) {
+      printf("Error in runtime lib %s: %d\n", dir_index_lib[i].path, res);
+      report(L, res);
+      exit(1);
+    }
     lua_setfield(L, -2, dir_index_lib[i].path);
   }
 
   // Done with preload
   lua_pop(L, 1);
 
-  #include "../builtin/index.h"
+
+  lua_pushcfunction(L, builtin_loader);
+  lua_setglobal(L, "_builtin_load");
+
+  
   lua_newtable(L);
   for (int i = 0; dir_index_builtin[i].path != NULL; i++) {
-    int res = luaL_loadbuffer(L, (const char *) dir_index_builtin[i].src, dir_index_builtin[i].len, dir_index_builtin[i].path);
-    if (res != 0) {
-      printf("Error in %s: %d\n", dir_index_builtin[i].src, res);
-      exit(1);
-    }
+    // printf("builtin -> %s\n", dir_index_builtin[i].path);
+    // lua_pushlightuserdata(L, &dir_index_builtin[i]);
+    // lua_pushstring(L, dir_index_builtin[i].path);
+    lua_pushnumber(L, i);
+    // int res = luaL_loadbuffer(L, (const char *) dir_index_builtin[i].src, dir_index_builtin[i].len, dir_index_builtin[i].path);
+    // if (res != 0) {
+    //   printf("Error in %s: %d\n", dir_index_builtin[i].path, res);
+    //   report(L, res);
+    //   exit(1);
+    // }
     lua_setfield(L, -2, dir_index_builtin[i].path);
   }
   lua_setglobal(L, "_builtin");
@@ -155,6 +229,7 @@ int colony_runtime_open (lua_State** stateptr)
   return 0;
 }
 
+const char runtime_lua[] = "require('lib/cli');";
 
 int colony_runtime_run (lua_State** stateptr, const char *path, char **argv, int argc)
 {
@@ -162,7 +237,6 @@ int colony_runtime_run (lua_State** stateptr, const char *path, char **argv, int
 
   // Run script.
   // const char *runtime_lua = "local colony = require('lib/colony'); collectgarbage(); colony.run('./' .. arg[1]); colony.runEventLoop();";
-  const char *runtime_lua = "require('lib/cli');";
   return handle_script(L, runtime_lua, strlen(runtime_lua), argv, argc);
 }
 

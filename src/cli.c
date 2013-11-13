@@ -110,7 +110,7 @@ int main (int argc, char *argv[])
   // WHY IS FILESYSTEM OUT OF SYNC???
   tm_fs_init();
   tm_fs_dir_t dir;
-  tm_fs_dir_open(&dir, "");
+  tm_fs_dir_open(&dir, "/");
   tm_fs_dir_close(&dir);
 
   colony_runtime_open(&L);

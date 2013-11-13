@@ -359,7 +359,7 @@ local function require_resolve (name, root)
   end 
 
   if string.sub(name, 1, 1) ~= '.' then
-    if fs_exists('./builtin/' .. name .. '.js') or colony.cache['./builtin/' .. name .. '.js'] then
+    if fs_exists('./builtin/' .. name .. '.js') or colony.precache['./builtin/' .. name .. '.js'] or colony.cache['./builtin/' .. name .. '.js'] then
       root = './builtin/'
       name = name .. '.js'
     else
@@ -401,7 +401,12 @@ end
 
 local function require_load (p)
   -- Load the script.
-  local res = colony.cache[p]
+  local res = nil
+  if colony.precache[p] then
+    res = colony.precache[p]()
+  else
+    res = colony.cache[p]
+  end
   if not res then
     local luap = string.reverse(string.gsub(string.reverse(string.sub(p, 1, -4)), '/', '~/', 1)) .. '.colony'
     if fs_exists(luap) then
