@@ -30,8 +30,8 @@ Kernel configured for up to 4 processors.
 Processor type: i486 (Intel 80486)
 Processors active: 0 1 2 3
 Primary memory available: 8.00 gigabytes
-Default processor set: 254 tasks, 1790 threads, 4 processors
-Load average: 2.67, Mach factor: 1.32
+Default processor set: 252 tasks, 1611 threads, 4 processors
+Load average: 2.26, Mach factor: 2.06
 /bin/machine           = unknown
 /usr/bin/oslevel       = unknown
 /bin/universe          = unknown
@@ -415,7 +415,7 @@ configure:6154: checking the name lister (/usr/bin/nm) interface
 configure:6161: gcc -c -g -O2  conftest.c >&5
 configure:6164: /usr/bin/nm "conftest.o"
 configure:6167: output
-0000000000000210 S _some_variable
+000000000000021c S _some_variable
 configure:6174: result: BSD nm
 configure:6177: checking whether ln -s works
 configure:6181: result: yes
@@ -1510,7 +1510,6 @@ config.status:1134: creating lib/Makefile
 config.status:1134: creating libtar/Makefile
 config.status:1134: creating doc/Makefile
 config.status:1134: creating config.h
-config.status:1315: config.h is unchanged
 config.status:1363: executing depfiles commands
 config.status:1363: executing libtool commands
 
@@ -1634,7 +1633,7 @@ lt_cv_to_tool_file_cmd=func_convert_file_noop
 ## Output variables. ##
 ## ----------------- ##
 
-ACLOCAL='${SHELL} /Users/tim/Code/technical/jolony/libtar/autoconf/missing aclocal-1.14'
+ACLOCAL='${SHELL} /Users/tim/Code/technical/jolony/runtime/deps/libtar/autoconf/missing aclocal-1.14'
 AMDEPBACKSLASH='\'
 AMDEP_FALSE='#'
 AMDEP_TRUE=''
@@ -1644,9 +1643,9 @@ AM_DEFAULT_V='$(AM_DEFAULT_VERBOSITY)'
 AM_DEFAULT_VERBOSITY='1'
 AM_V='$(V)'
 AR='ar'
-AUTOCONF='${SHELL} /Users/tim/Code/technical/jolony/libtar/autoconf/missing autoconf'
-AUTOHEADER='${SHELL} /Users/tim/Code/technical/jolony/libtar/autoconf/missing autoheader'
-AUTOMAKE='${SHELL} /Users/tim/Code/technical/jolony/libtar/autoconf/missing automake-1.14'
+AUTOCONF='${SHELL} /Users/tim/Code/technical/jolony/runtime/deps/libtar/autoconf/missing autoconf'
+AUTOHEADER='${SHELL} /Users/tim/Code/technical/jolony/runtime/deps/libtar/autoconf/missing autoheader'
+AUTOMAKE='${SHELL} /Users/tim/Code/technical/jolony/runtime/deps/libtar/autoconf/missing automake-1.14'
 AWK='awk'
 CC='gcc'
 CCDEPMODE='depmode=none'
@@ -1684,7 +1683,7 @@ LISTHASH_DIR='listhash'
 LISTHASH_PREFIX='libtar'
 LN_S='ln -s'
 LTLIBOBJS=''
-MAKEINFO='${SHELL} /Users/tim/Code/technical/jolony/libtar/autoconf/missing makeinfo'
+MAKEINFO='${SHELL} /Users/tim/Code/technical/jolony/runtime/deps/libtar/autoconf/missing makeinfo'
 MANIFEST_TOOL=':'
 MKDIR='mkdir -p -m 755'
 MKDIR_P='autoconf/install-sh -c -d'
@@ -1742,7 +1741,7 @@ host_vendor='apple'
 htmldir='${docdir}'
 includedir='${prefix}/include'
 infodir='${datarootdir}/info'
-install_sh='${SHELL} /Users/tim/Code/technical/jolony/libtar/autoconf/install-sh'
+install_sh='${SHELL} /Users/tim/Code/technical/jolony/runtime/deps/libtar/autoconf/install-sh'
 libdir='${exec_prefix}/lib'
 libexecdir='${exec_prefix}/libexec'
 localedir='${datarootdir}/locale'
