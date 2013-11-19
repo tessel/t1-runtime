@@ -8,6 +8,7 @@ LUAJIT  = 0
 PATH_HSREGEX       =./deps/hsregex
 PATH_HTTPPARSER    =./deps/http-parser
 PATH_LUABITOP      =./deps/luabitop-1.0
+PATH_LIBTAR        =./deps/libtar
 
 
 CFLAGS  =
@@ -100,8 +101,8 @@ ifeq ($(FATFS), 1)
 endif
 
 # Libtar
-CFLAGS += -I../libtar/lib/ -I../libtar -I../libtar/compat -I../libtar/listhash
-CSRCS  += $(shell find ../libtar/lib/ -maxdepth 1 ! -name "wrapper.c" ! -name "extract.c" -name "*.c")  $(wildcard ../libtar/listhash/*.c)
+CFLAGS += -I$(PATH_LIBTAR)/lib/ -I$(PATH_LIBTAR) -I$(PATH_LIBTAR)/compat -I$(PATH_LIBTAR)/listhash
+CSRCS  += $(shell find $(PATH_LIBTAR)/lib/ -maxdepth 1 ! -name "wrapper.c" ! -name "extract.c" -name "*.c")  $(wildcard $(PATH_LIBTAR)/listhash/*.c)
 CFLAGS        += -DMAXPATHLEN=256
 # CFLAGS += -DDEBUG
 
