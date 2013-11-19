@@ -4,4 +4,6 @@ etc/*
 builtin/*.c
 lib/*.c
 *.dSYM
-runtime
+
+colony
+libcolony.a
