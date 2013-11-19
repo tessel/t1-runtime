@@ -393,9 +393,9 @@ local function require_resolve (name, root)
     name = name .. '.js'
   end
   local p = path_normalize(root .. name)
-  if string.sub(p, 1, 1) == '.' then
-    p = path_normalize('/' .. p)
-  end
+  -- if string.sub(p, 1, 1) == '.' then
+  --   p = path_normalize('/' .. p)
+  -- end
   return p, true
 end
 

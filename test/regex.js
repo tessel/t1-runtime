@@ -9,7 +9,7 @@ var b = /(\d+)(\s+)/;
 console.log(subj1.match(b))
 
 var c = /cav[ea]+t/i;
-console.log(subj2.match(c))
+console.log(subj2.match(c)[1] == 'caveaaAEEAAEeaeaEAEaeeaEEAEEAet')
 
 console.log(c.test(subj2))
 

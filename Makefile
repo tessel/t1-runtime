@@ -1,7 +1,12 @@
 # Config
-EMBED   = 1
-FATFS   = 1
+EMBED   = 0
+FATFS   = 0
 LUAJIT  = 0
+
+
+
+PATH_HSREGEX=./deps/hsregex
+PATH_HTTPPARSER=./deps/http-parser
 
 
 CFLAGS  =
@@ -55,13 +60,12 @@ endif
 CFLAGS += -std=c99 -g
 
 # Regex
-CFLAGS += -DREGEX_WCHAR -DREGEX_STANDALONE -I../evinrude/src -D_NDEBUG
-CSRCS  += ../evinrude/src/regcomp.c ../evinrude/src/regexec.c ../evinrude/src/regerror.c ../evinrude/src/regfree.c ../evinrude/src/regalone.c
-# CSRCS  += ../evinrude/libhswrex.a 
+CFLAGS += -DREGEX_WCHAR -DREGEX_STANDALONE -I$(PATH_HSREGEX)/src -D_NDEBUG
+CSRCS  += $(PATH_HSREGEX)/src/regcomp.c $(PATH_HSREGEX)/src/regexec.c $(PATH_HSREGEX)/src/regerror.c $(PATH_HSREGEX)/src/regfree.c $(PATH_HSREGEX)/src/regalone.c
 
 # Http parser	
-CFLAGS += -I../http-parser
-CSRCS  += ../http-parser/http_parser.c
+CFLAGS += -I$(PATH_HTTPPARSER)
+CSRCS  += $(PATH_HTTPPARSER)/http_parser.c
 
 # Lua
 ifeq ($(LUAJIT), 1)

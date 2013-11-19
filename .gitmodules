@@ -1,3 +1,6 @@
 [submodule "deps/hsregex"]
 	path = deps/hsregex
 	url = https://github.com/technicalmachine/hsregex.git
+[submodule "deps/http-parser"]
+	path = deps/http-parser
+	url = https://github.com/joyent/http-parser.git
