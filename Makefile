@@ -5,8 +5,9 @@ LUAJIT  = 0
 
 
 
-PATH_HSREGEX=./deps/hsregex
-PATH_HTTPPARSER=./deps/http-parser
+PATH_HSREGEX       =./deps/hsregex
+PATH_HTTPPARSER    =./deps/http-parser
+PATH_LUABITOP      =./deps/luabitop-1.0
 
 
 CFLAGS  =
@@ -80,8 +81,8 @@ else
 	CFLAGS += -DCOLONY_LUA
 	CFLAGS += -I../lua-5.1/src -Wno-deprecated-declarations -Wno-empty-body
 	CSRCS  += $(shell find ../lua-5.1/src/ ! -name "lua.c" ! -name "luac.c" -name "*.c") 
-	CFLAGS += -I../luabitop-1.0/
-	CSRCS  += ../luabitop-1.0/bit.c
+	CFLAGS += -I$(PATH_LUABITOP)
+	CSRCS  += $(PATH_LUABITOP)/bit.c
 endif
 
 # # Libuv
