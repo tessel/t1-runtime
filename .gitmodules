@@ -1,0 +1,3 @@
+[submodule "deps/hsregex"]
+	path = deps/hsregex
+	url = https://github.com/technicalmachine/hsregex.git
