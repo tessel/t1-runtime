@@ -17,6 +17,7 @@ CSRCS   =
 
 # Compiler
 ifeq ($(EMBED), 0)
+	BUILD   = build/osx
 	CC      = gcc
 	DUMP    = objdump
 	COPY    = gobjcopy
@@ -24,6 +25,7 @@ ifeq ($(EMBED), 0)
 	CFLAGS += -c -o runtime -DCOLONY_PC
 
 else
+	BUILD   = build/embed
 	CC      = arm-none-eabi-gcc
 	DUMP    = arm-none-eabi-objdump
 	COPY    = arm-none-eabi-objcopy
@@ -123,9 +125,12 @@ BINOBJS   = $(patsubst %.lua, %.o, $(wildcard lib/*.lua)) $(patsubst %.js, %.o, 
 # Targets
 #
 
-all: precompile compile
+all: builddir precompile compile
 
 precompile: indexify $(patsubst %.lua, %.o, $(BINOBJS))
+
+builddir:
+	mkdir -p $(BUILD)/obj
 
 indexify:
 	D=lib node -e "dir = process.env.D; S = /\.lua$\/; function _(s) { return s.replace(/[^a-z0-9_]/g, '_'); } console.log('\#include <stddef.h>\n',require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return '#include \"' + s.replace(/^~/, '').replace(/\.lua/, '.c') + '\"' }).join('\n') + '\nconst dir_reg_t dir_index_' + _(dir) + '[] = { ' + require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return '{' + [JSON.stringify('lib/' + s.replace('.lua', '')), '' + _(dir+'\/'+s), _(dir+'\/'+s) + '_len'].join(', ') + '}'  }).join(',\n') + ', { 0, 0, 0 } };')" > lib/index.h
@@ -162,16 +167,17 @@ endif
 
 ifeq ($(EMBED), 0)
 compile: $(patsubst %.c, %.o, $(CSRCS)) 
-	$(CC) -o colony -lm $^
+	$(CC) -o colony -lm $(wildcard $(BUILD)/obj/*.o)
 else
 compile: $(patsubst %.c, %.o, $(CSRCS))
-	arm-none-eabi-ar rcs libcolony.a $(filter-out src/cli.o,$^)
+	arm-none-eabi-ar rcs libcolony.a $(filter-out cli.o,$(wildcard $(BUILD)/obj/*.o))
 endif
 
 # You don't even need to be explicit here,
 # compiling C files is handled automagically by Make.
 %.o: %.c
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $(BUILD)/obj/$(shell basename $@)
 
 clean: 
+	rm -rf $(BUILD)
 	rm -rf $(patsubst %.c, %.o, $(CSRCS)) $(patsubst %.js, %.c, $(patsubst %.lua, %.c, $(BINOBJS))) 2>/dev/null || true
