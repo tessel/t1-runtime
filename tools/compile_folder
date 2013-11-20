@@ -16,10 +16,11 @@ console.log('typedef struct dir_reg { const char *path; const unsigned char *src
 
 var dir = process.argv[2];
 var dirname = process.argv[3];
+var section = process.argv[4] ? '__attribute__ ((section ("' + process.argv[4] + '")))' : '';
 
 async.mapSeries(fs.readdirSync(dir), function (f, next) {
   var name = f.replace(/[^a-z0-9_]/g, '_');
-  console.log('static unsigned char ' + name + '[] = {');
+  console.log('static unsigned char ' + section + ' ' + name + '[] = {');
   var first = true;
   var len = 0;
 

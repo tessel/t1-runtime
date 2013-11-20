@@ -3,6 +3,14 @@ EMBED   = 0
 FATFS   = 0
 LUAJIT  = 0
 
+.PHONY: all
+
+osx:
+	@make all
+
+embed:
+	@make EMBED=1 FATFS=1 all
+
 
 
 PATH_HSREGEX       =./deps/hsregex
@@ -22,6 +30,7 @@ ifeq ($(EMBED), 0)
 	CC      = gcc
 	DUMP    = objdump
 	COPY    = gobjcopy
+	SECT    = 
 
 	CFLAGS += -c -o runtime -DCOLONY_PC
 
@@ -30,6 +39,7 @@ else
 	CC      = arm-none-eabi-gcc
 	DUMP    = arm-none-eabi-objdump
 	COPY    = arm-none-eabi-objcopy
+	SECT    = .text
 
 	CPU     = cortex-m3
 	#OPTIM   = fast
@@ -101,7 +111,7 @@ endif
 ifeq ($(FATFS), 1)
 	CFLAGS += -DCOLONY_FATFS=1
 	CFLAGS += -I$(PATH_FATFS)/src
-	CSRCS  += $(wildcard $(PATH_FATFS)/src/*.c)
+	CSRCS  += $(wildcard $(PATH_FATFS)/src/*.c) src/opt/diskio.c
 endif
 
 # Libtar
@@ -139,8 +149,8 @@ precompile:
 	@make -j8 precompile.parallel
 
 precompile.parallel: $(patsubst builtin/%.js, $(BUILD)/builtin/%.lua, $(wildcard builtin/*.js))  $(patsubst lib/%.lua, $(BUILD)/runtime/%.lua, $(wildcard lib/*.lua)) 
-	tools/compile_folder $(BUILD)/builtin dir_builtin | gcc -c -o $(BUILD)/obj/dir_builtin.o -xc -
-	tools/compile_folder $(BUILD)/runtime dir_runtime_lib | gcc -c -o $(BUILD)/obj/dir_runtime_lib.o -xc -
+	tools/compile_folder $(BUILD)/builtin dir_builtin $(SECT) | $(CC) -c -o $(BUILD)/obj/dir_builtin.o -xc -
+	tools/compile_folder $(BUILD)/runtime dir_runtime_lib $(SECT) | $(CC) -c -o $(BUILD)/obj/dir_runtime_lib.o -xc -
 
 $(BUILD)/builtin/%.lua : builtin/%.js
 	cat $^ | tools/compile_js | tools/compile_lua > $@
