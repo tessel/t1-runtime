@@ -394,10 +394,10 @@ colony = {
 
 -- Load standard library
 
-require('lib/std')(colony)
+require('std')(colony)
 
 if true then
-  require('lib/node-tm')(colony)
+  require('node-tm')(colony)
 end
 
 return colony

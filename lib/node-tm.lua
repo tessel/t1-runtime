@@ -359,9 +359,8 @@ local function require_resolve (name, root)
   end 
 
   if string.sub(name, 1, 1) ~= '.' then
-    if fs_exists('./builtin/' .. name .. '.js') or colony.precache['./builtin/' .. name .. '.js'] or colony.cache['./builtin/' .. name .. '.js'] then
-      root = './builtin/'
-      name = name .. '.js'
+    if colony.precache[name] or colony.cache[name] then
+      root = ''
     else
       -- TODO climb hierarchy for node_modules
       local fullname = name
@@ -389,7 +388,7 @@ local function require_resolve (name, root)
       end
     end
   end
-  if string.sub(name, -3) ~= '.js' then
+  if root ~= '' and string.sub(name, -3) ~= '.js' then
     name = name .. '.js'
   end
   local p = path_normalize(root .. name)
@@ -408,13 +407,16 @@ local function require_load (p)
     res = colony.cache[p]
   end
   if not res then
-    local luap = string.reverse(string.gsub(string.reverse(string.sub(p, 1, -4)), '/', '~/', 1)) .. '.colony'
-    if fs_exists(luap) then
-      res = assert(loadstring(fs_readfile(luap), "@"..p))()
+    if fs_exists(p) then
+      res = assert(loadstring(colony._load(p), "@"..p))()
       colony.cache[p] = res
     end
   end
   return res
+end
+
+colony._load = function (p)
+  return fs_readfile(p)
 end
 
 colony.run = function (name, root)

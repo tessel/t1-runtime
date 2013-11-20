@@ -192,14 +192,15 @@ int colony_runtime_open (lua_State** stateptr)
   lua_setfield(L, -2, "evinrude");
 
   for (int i = 0; dir_runtime_lib[i].path != NULL; i++) {
-    // printf("lib -> %s\n", dir_index_lib[i].path);
+    // printf("lib -> %s\n", dir_runtime_lib[i].path);
+    lua_pushlstring(L, dir_runtime_lib[i].path, strchr(dir_runtime_lib[i].path, '.') - dir_runtime_lib[i].path);
     int res = luaL_loadbuffer(L, (const char *) dir_runtime_lib[i].src, dir_runtime_lib[i].len, dir_runtime_lib[i].path);
     if (res != 0) {
       printf("Error in runtime lib %s: %d\n", dir_runtime_lib[i].path, res);
       report(L, res);
       exit(1);
     }
-    lua_setfield(L, -2, dir_runtime_lib[i].path);
+    lua_settable(L, -3);
   }
 
   // Done with preload
@@ -212,9 +213,10 @@ int colony_runtime_open (lua_State** stateptr)
   
   lua_newtable(L);
   for (int i = 0; dir_builtin[i].path != NULL; i++) {
-    // printf("builtin -> %s\n", dir_index_builtin[i].path);
+    // printf("builtin -> %s\n", dir_builtin[i].path);
     // lua_pushlightuserdata(L, &dir_index_builtin[i]);
     // lua_pushstring(L, dir_index_builtin[i].path);
+    lua_pushlstring(L, dir_builtin[i].path, strchr(dir_builtin[i].path, '.') - dir_builtin[i].path);
     lua_pushnumber(L, i);
     // int res = luaL_loadbuffer(L, (const char *) dir_index_builtin[i].src, dir_index_builtin[i].len, dir_index_builtin[i].path);
     // if (res != 0) {
@@ -222,14 +224,14 @@ int colony_runtime_open (lua_State** stateptr)
     //   report(L, res);
     //   exit(1);
     // }
-    lua_setfield(L, -2, dir_builtin[i].path);
+    lua_settable(L, -3);
   }
   lua_setglobal(L, "_builtin");
 
   return 0;
 }
 
-const char runtime_lua[] = "require('lib/cli');";
+const char runtime_lua[] = "require('cli');";
 
 int colony_runtime_run (lua_State** stateptr, const char *path, char **argv, int argc)
 {

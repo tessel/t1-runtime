@@ -13,7 +13,7 @@ end
 
 -- print('Run mem:', collectgarbage('count'))
 local status,err = pcall(function ()
-  local colony = require('lib/colony')
+  local colony = require('colony')
   colony.precache = {}
   for k, v in pairs(_builtin) do
     (function (k, v)
@@ -26,6 +26,17 @@ local status,err = pcall(function ()
     end)(k, v)
   end
   collectgarbage()
+
+  -- This is temporary until we have proper compilation in C.
+  -- Compile JS script before running.
+  colony._load = function (file)
+    os.execute('colony -c ' .. file .. ' > /tmp/colonyunique')
+    local file = io.open('/tmp/colonyunique', 'r')
+    local output = file:read('*all')
+    file:close()
+    return output
+  end
+
   colony.run(p)
   colony.runEventLoop();
   -- print('End mem:', collectgarbage('count'))

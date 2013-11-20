@@ -125,11 +125,15 @@ endif
 all: builddir precompile compile
 
 builddir:
+	(cd tools && ./build_tools.sh)
 	mkdir -p $(BUILD)/obj
 	mkdir -p $(BUILD)/runtime
 	mkdir -p $(BUILD)/builtin
 
-precompile: $(patsubst builtin/%.js, $(BUILD)/builtin/%.lua, $(wildcard builtin/*.js))  $(patsubst lib/%.lua, $(BUILD)/runtime/%.lua, $(wildcard lib/*.lua)) 
+precompile:
+	@make -j8 precompile.parallel
+
+precompile.parallel: $(patsubst builtin/%.js, $(BUILD)/builtin/%.lua, $(wildcard builtin/*.js))  $(patsubst lib/%.lua, $(BUILD)/runtime/%.lua, $(wildcard lib/*.lua)) 
 	tools/compile_folder $(BUILD)/builtin dir_builtin | gcc -c -o $(BUILD)/obj/dir_builtin.o -xc -
 	tools/compile_folder $(BUILD)/runtime dir_runtime_lib | gcc -c -o $(BUILD)/obj/dir_runtime_lib.o -xc -
 
@@ -139,11 +143,13 @@ $(BUILD)/builtin/%.lua : builtin/%.js
 $(BUILD)/runtime/%.lua : lib/%.lua
 	cat $^ | tools/compile_lua > $@
 
+compile:
+	@make -j8 compile.parallel
+
+compile.parallel: $(patsubst %.c, %.o, $(CSRCS)) 
 ifeq ($(EMBED), 0)
-compile: $(patsubst %.c, %.o, $(CSRCS)) 
 	$(CC) -o $(BUILD)/colony -lm $(wildcard $(BUILD)/obj/*.o)
 else
-compile: $(patsubst %.c, %.o, $(CSRCS))
 	arm-none-eabi-ar rcs $(BUILD)/libcolony.a $(filter-out cli.o,$(wildcard $(BUILD)/obj/*.o))
 endif
 
