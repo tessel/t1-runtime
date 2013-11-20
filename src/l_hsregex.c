@@ -150,7 +150,7 @@ static int l_regfree (lua_State* L)
 
 #define luaL_setfieldnumber(L, str, num) lua_pushnumber (L, num); lua_setfield (L, -2, str);
 
-LUALIB_API int luaopen_evinrude (lua_State *L)
+LUALIB_API int luaopen_hsregex (lua_State *L)
 {
   lua_newtable (L);
   luaL_register(L, NULL, (luaL_reg[]) {

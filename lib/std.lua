@@ -1,7 +1,7 @@
 return function (colony)
 
 local bit = require('bit32')
-local _, evin = pcall(require, 'evinrude')
+local _, hs = pcall(require, 'hsregex')
 
 -- locals
 
@@ -654,23 +654,23 @@ end
 
 -- regexp library
 
-if evin then
-  local evinmatchc = 100
-  local evinmatch = evin.regmatch_create(evinmatchc)
+if hs then
+  local hsmatchc = 100
+  local hsmatch = hs.regmatch_create(hsmatchc)
 
   global.RegExp = function (this, patt, flags)
-    -- evinrude requires special flags handling
+    -- hsrude requires special flags handling
     if flags and string.find(flags, "i") then
       patt = '(?i)' .. patt
     end
 
-    local cre = evin.regex_create()
-    local crestr, rc = evin.re_comp(cre, patt, evin.ADVANCED)
+    local cre = hs.regex_create()
+    local crestr, rc = hs.re_comp(cre, patt, hs.ADVANCED)
     if rc ~= 0 then
       error('SyntaxError: Invalid regex "' .. patt .. '"')
     end
-    if evin.regex_nsub(cre) > evinmatchc then
-      error('Too many capturing subgroups (max ' .. evinmatchc .. ', compiled ' .. evin.regex_nsub(cre) .. ')')
+    if hs.regex_nsub(cre) > hsmatchc then
+      error('Too many capturing subgroups (max ' .. hsmatchc .. ', compiled ' .. hs.regex_nsub(cre) .. ')')
     end
 
     local o = {pattern=patt, flags=flags}
@@ -702,17 +702,17 @@ if evin then
     local idx = 0
     -- TODO: optimize, give string with offset in re_exec
     repeat
-      local datastr, rc = evin.re_exec(cre, data, nil, evinmatchc, evinmatch, 0)
+      local datastr, rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
       if rc ~= 0 then
         break
       end
-      local so, eo = evin.regmatch_so(evinmatch, 0), evin.regmatch_eo(evinmatch, 0)
+      local so, eo = hs.regmatch_so(hsmatch, 0), hs.regmatch_eo(hsmatch, 0)
       table.insert(ret, string.sub(data, 1, so))
 
       if type(out) == 'function' then 
         local args = {this, string.sub(data, so + 1, eo)}
-        for i=1,evin.regex_nsub(cre) do
-          local subso, subeo = evin.regmatch_so(evinmatch, i), evin.regmatch_eo(evinmatch, i)
+        for i=1,hs.regex_nsub(cre) do
+          local subso, subeo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
           table.insert(args, string.sub(data, subso + 1, subeo))
         end
         table.insert(args, idx + so)
@@ -732,7 +732,7 @@ if evin then
   global.String.prototype.match = function (this, regex)
     -- return rex.match(this, regex.pattern)
 
-    -- Match using evinrude
+    -- Match using hsrude
     local cre = getmetatable(regex).cre
     local crestr = getmetatable(regex).crestr
     if type(cre) ~= 'userdata' then
@@ -740,13 +740,13 @@ if evin then
     end
 
     local data = tostring(this)
-    local datastr, rc = evin.re_exec(cre, data, nil, evinmatchc, evinmatch, 0)
+    local datastr, rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
     if rc ~= 0 then
       return nil
     end
     local ret = {}
-    for i=0,evin.regex_nsub(cre) do
-      local so, eo = evin.regmatch_so(evinmatch, i), evin.regmatch_eo(evinmatch, i)
+    for i=0,hs.regex_nsub(cre) do
+      local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
       -- print('match', i, '=> start:', so, ', end:', eo)
       table.insert(ret, string.sub(data, so + 1, eo))
     end
@@ -769,7 +769,7 @@ if evin then
     end
 
     -- TODO optimize by capturing no subgroups?
-    local datastr, rc = evin.re_exec(cre, tostring(subj), nil, evinmatchc, evinmatch, 0)
+    local datastr, rc = hs.re_exec(cre, tostring(subj), nil, hsmatchc, hsmatch, 0)
     return rc == 0
   end
 end

@@ -4,11 +4,6 @@
 extern "C" {
 #endif
 
-
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-
 #include <stdint.h>
 #include <setjmp.h>
 #include <stdio.h>
@@ -125,10 +120,6 @@ int tm_fs_dir_create (const char *pathname);
 int tm_fs_dir_open (tm_fs_dir_t* dir, const char *pathname);
 int tm_fs_dir_read (tm_fs_dir_t* dir, const char **strptr);
 int tm_fs_dir_close (tm_fs_dir_t* dir);
-
-// runtime
-
-LUALIB_API int luaopen_tm (lua_State *L);
 
 #ifdef __cplusplus
 }

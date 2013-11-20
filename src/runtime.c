@@ -7,10 +7,10 @@
 #include <string.h>
 
 #include "tm.h"
-#include "lhttp_parser.h"
-
-LUALIB_API int luaopen_evinrude (lua_State *L);
-LUALIB_API int luaopen_bit (lua_State *L);
+#include "l_http_parser.h"
+#include "l_tm.h"
+#include "l_hsregex.h"
+#include "l_bit.h"
 
 
 /**
@@ -195,9 +195,9 @@ int colony_runtime_open (lua_State** stateptr)
   // http_parser
   lua_pushcfunction(L, luaopen_http_parser);
   lua_setfield(L, -2, "http_parser");
-  // evinrude
-  lua_pushcfunction(L, luaopen_evinrude);
-  lua_setfield(L, -2, "evinrude");
+  // hsregex
+  lua_pushcfunction(L, luaopen_hsregex);
+  lua_setfield(L, -2, "hsregex");
 
   for (int i = 0; dir_runtime_lib[i].path != NULL; i++) {
     // printf("lib -> %s\n", dir_runtime_lib[i].path);
