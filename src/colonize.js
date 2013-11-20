@@ -13,7 +13,7 @@ var fs = require('fs')
 var keywords = ['end', 'do', 'nil', 'error', 'until', 'repeat'];
 var mask = ['string', 'math', 'print', 'type', 'pairs'];
 
-var joiner = '';
+var joiner = '\n';
 
 function fixIdentifiers (str) {
   if (keywords.indexOf(str) > -1) {
@@ -121,8 +121,8 @@ function colonize (node) {
       // Used in another expression, assignments must be wrapped by a closure.
       if (node.parent.type != 'ExpressionStatement') {
         // OPTIM
-        // node.update('(function () local _r = ' + node.right.source() + '; ' + node.left.source() + ' = _r; return _r; end)()');
-        node.update('local _r = ' + node.right.source() + '; ' + node.left.source() + ' = _r; ');
+        node.update('(function () local _r = ' + node.right.source() + '; ' + node.left.source() + ' = _r; return _r; end)()');
+        // node.update('local _r = ' + node.right.source() + '; ' + node.left.source() + ' = _r; ');
       } else {
         // Need to refresh thanks to += updating.
         node.update(node.left.source() + ' = ' + node.right.source());
@@ -193,8 +193,8 @@ function colonize (node) {
         node.update('(function () ' + node.argument.source() + ' = ' + node.argument.source() + ' ' + node.operator.substr(0, 1) + ' 1; return ' + node.argument.source() + '; end)()');
       } else {
         // OPTIM
-        // node.update('(function () local _r = ' + node.argument.source() + '; ' + node.argument.source() + ' = _r ' + node.operator.substr(0, 1) + ' 1; return _r end)()');
-        node.update('local _r = ' + node.argument.source() + '; ' + node.argument.source() + ' = _r ' + node.operator.substr(0, 1) + ' 1;');
+        node.update('(function () local _r = ' + node.argument.source() + '; ' + node.argument.source() + ' = _r ' + node.operator.substr(0, 1) + ' 1; return _r end)()');
+        // node.update('local _r = ' + node.argument.source() + '; ' + node.argument.source() + ' = _r ' + node.operator.substr(0, 1) + ' 1;');
       }
       break;
 
@@ -296,7 +296,7 @@ function colonize (node) {
         'repeat',
         (node.usesContinue ? 'local _c' + name + ' = nil; repeat' : ''),
         node.body.source(),
-        (node.usesContinue ? 'until true;' + joiner + 'if _c' + name + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end' : ''),
+        (node.usesContinue ? 'until true;' + joiner + 'if _c' + name + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end;' : ''),
         'until not ' + truthy(node.test) + ';'
       ].join(joiner))
       break;
@@ -312,28 +312,28 @@ function colonize (node) {
       });
 
       node.update([
-        'while ' + truthy(node.test) + ' do',
+        'while ' + truthy(node.test) + ' do ',
         (node.usesContinue ? 'local _c' + name + ' = nil; repeat' : ''),
         node.body.source(),
-        (node.usesContinue ? 'until true;' + joiner + 'if _c' + name + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end' : ''),
-        'end'
+        (node.usesContinue ? 'until true;' + joiner + 'if _c' + name + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end;' : ''),
+        'end;'
       ].join(joiner))
       break;
 
     case 'ForStatement':
       node.update([
         node.init ? node.init.source() : '',
-        'while ' + (node.test ? truthy(node.test) : 'true') + ' do',
+        'while ' + (node.test ? truthy(node.test) : 'true') + ' do ',
         (node.usesContinue ? 'local _c = nil; repeat' : ''),
         node.body.source(),
-        (node.usesContinue ? 'until true;' + joiner + 'if _c == _break then break end' : ''),
+        (node.usesContinue ? 'until true;' + joiner + 'if _c == _break then break end;' : ''),
         (node.update && node.update.source
           // TODO make this better
           ? (node.update.type == 'BinaryExpression' || node.update.type == 'LogicalExpression' || node.update.type == 'UpdateExpression' || node.update.type == 'Literal' || node.update.type == 'CallExpression' || node.update.type == 'ConditionalExpression'
             ? node.update.source()
             : 'if ' + node.update.source().replace(/;?$/, '') + ' then end;')
           : ''),
-        'end'
+        'end;'
       ].join(joiner))
       break;
 
@@ -411,7 +411,7 @@ function colonize (node) {
         "if " + truthy(node.test) + " then" + joiner,
         node.consequent.source() + joiner,
         (node.alternate ? 'else ' + joiner + node.alternate.source() + joiner : ""),
-        "end"
+        "end;"
       ].join(''));
       break;
 
@@ -435,7 +435,7 @@ function colonize (node) {
       }
 
       if (node.parent.type == 'ExpressionStatement') {
-        node.update('if ' + node.source() + ' then end');
+        node.update('if ' + node.source() + ' then end;');
       }
       break;
 
@@ -445,7 +445,7 @@ function colonize (node) {
       // Can't have and/or be statements.
       if (node.expression.type == 'BinaryExpression' || node.expression.type == 'LogicalExpression' || node.expression.type == 'Literal' || node.expression.type == 'CallExpression' || node.expression.type == 'ConditionalExpression') {
         // console.log('>>>', JSON.stringify(node.source()))
-        node.update('if ' + node.source().replace(/;?$/, '') + ' then end;');
+        node.update('if ' + node.source().replace(/;?$/, '') + ' then end; ');
       }
       break;
 
@@ -464,7 +464,7 @@ function colonize (node) {
       node.update([
         'for ' + name + ' in _pairs(' + node.right.source() + ') do',
         node.body.source(),
-        'end'
+        'end;'
       ].join(joiner))
       break;
 
@@ -490,7 +490,7 @@ node.block.source(),
 node.handlers[0].param.source() + ' = _e;' + joiner + node.handlers[0].body.source(),
 
 // break clause.
-'end',
+'end;',
 node.finalizer ? node.finalizer.source() : ''
 ].concat(
 !getLoops(node).length ? [] : [
@@ -501,7 +501,7 @@ node.finalizer ? node.finalizer.source() : ''
 'elseif _r == _cont then',
 //'  return _r',
 (getLoops(node).length && getLoops(node).slice(-1)[0][0] == 'TryStatement' ? 'return _cont;' : 'break;'),
-'end'
+'end;'
       ]).join(joiner));
       break;
 
@@ -531,7 +531,7 @@ node.finalizer ? node.finalizer.source() : ''
       var namestr = "";
       if (name) {
         // OPTIM
-        // namestr = "local " + name + " = _debug.getinfo(1, 'f').func;\n";
+        namestr = "local " + name + " = _debug.getinfo(1, 'f').func;\n";
       }
 
       var loopsbkp = loops;
@@ -560,14 +560,14 @@ node.finalizer ? node.finalizer.source() : ''
     case 'Program':
       colonizeContext(node.identifiers, node);
       node.update([
-        "function (_ENV)",
+        joiner + "return function (_ENV)",
         'local ' + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
         "local _module = _obj({exports=_obj({})}); local exports, module = _module.exports, _module;",
         "",
         node.source(),
         "",
         "return _module.exports;",
-        "end"
+        "end "
       ].join(joiner));
       break;
 
@@ -577,7 +577,7 @@ node.finalizer ? node.finalizer.source() : ''
 }
 
 module.exports = function (src) {
-  src = src.replace(/^#/, '//#');
+  src = src.replace(/^#.*\n/, '');
   return String(falafel(src, colonize))
     // inline lingering comments are converted to lua comments
     .replace(/^(([^"']|"[^"]*"|'[^']*')*?)\/\//gm, '$1--')
