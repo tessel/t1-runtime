@@ -173,6 +173,14 @@ int colony_runtime_open (lua_State** stateptr)
   // lua_pcall(L, 0, LUA_MULTRET, 0);
 
 
+  // Type of build.
+#ifdef COLONY_EMBED
+  lua_pushboolean(L, 1);
+#else
+  lua_pushboolean(L, 0);
+#endif
+  lua_setglobal(L, "COLONY_EMBED");
+
   // Get preload table.
   lua_getglobal(L, "package");
   lua_getfield(L, -1, "preload");

@@ -392,9 +392,7 @@ local function require_resolve (name, root)
     name = name .. '.js'
   end
   local p = path_normalize(root .. name)
-  -- if string.sub(p, 1, 1) == '.' then
-  --   p = path_normalize('/' .. p)
-  -- end
+  p = colony._normalize(p, path_normalize)
   return p, true
 end
 
@@ -413,6 +411,10 @@ local function require_load (p)
     end
   end
   return res
+end
+
+colony._normalize = function (p, path_normalize)
+  return p
 end
 
 colony._load = function (p)

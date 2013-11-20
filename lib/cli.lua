@@ -27,14 +27,24 @@ local status,err = pcall(function ()
   end
   collectgarbage()
 
-  -- This is temporary until we have proper compilation in C.
-  -- Compile JS script before running.
-  colony._load = function (file)
-    os.execute('colony -c ' .. file .. ' > /tmp/colonyunique')
-    local file = io.open('/tmp/colonyunique', 'r')
-    local output = file:read('*all')
-    file:close()
-    return output
+  if _G.COLONY_EMBED then
+    -- This is temporary until we have tm_pwd() working
+    colony._normalize = function (p, path_normalize)
+      if string.sub(p, 1, 1) == '.' then
+        p = path_normalize('/' .. p)
+      end
+      return p
+    end
+  else
+    -- This is temporary until we have proper compilation in C.
+    -- Compile JS script before running.
+    colony._load = function (file)
+      os.execute('colony -c ' .. file .. ' > /tmp/colonyunique')
+      local file = io.open('/tmp/colonyunique', 'r')
+      local output = file:read('*all')
+      file:close()
+      return output
+    end
   end
 
   colony.run(p)

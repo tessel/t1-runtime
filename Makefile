@@ -10,6 +10,7 @@ PATH_HTTPPARSER    =./deps/http-parser
 PATH_LUABITOP      =./deps/luabitop-1.0
 PATH_LIBTAR        =./deps/libtar
 PATH_LUA           =./deps/lua-5.1
+PATH_FATFS         =./deps/fatfs
 
 
 CFLAGS  =
@@ -99,8 +100,8 @@ endif
 # Fatfs
 ifeq ($(FATFS), 1)
 	CFLAGS += -DCOLONY_FATFS=1
-	CFLAGS += -Isrc/fatfs/src
-	CSRCS  += $(wildcard src/fatfs/src/*.c)
+	CFLAGS += -I$(PATH_FATFS)/src
+	CSRCS  += $(wildcard $(PATH_FATFS)/src/*.c)
 endif
 
 # Libtar
@@ -122,10 +123,14 @@ endif
 # Targets
 #
  
-all: builddir precompile compile
+all: buildtools builddir precompile compile
+
+buildtools: tools/compile_lua
+
+tools/compile_lua :
+	(cd tools && ./build_tools.sh)
 
 builddir:
-	(cd tools && ./build_tools.sh)
 	mkdir -p $(BUILD)/obj
 	mkdir -p $(BUILD)/runtime
 	mkdir -p $(BUILD)/builtin
@@ -153,10 +158,9 @@ else
 	arm-none-eabi-ar rcs $(BUILD)/libcolony.a $(filter-out cli.o,$(wildcard $(BUILD)/obj/*.o))
 endif
 
-# You don't even need to be explicit here,
-# compiling C files is handled automagically by Make.
 %.o: %.c
 	$(CC) $(CFLAGS) $^ -o $(BUILD)/obj/$(shell basename $@)
 
 clean: 
+	rm tools/compile_lua 2>/dev/null || true
 	rm -rf $(BUILD) 2>/dev/null || true
