@@ -137,17 +137,17 @@ static int runtime_panic (lua_State *L)
 // }
 
 typedef struct dir_reg { const char *path; const unsigned char *src; unsigned int len; } dir_reg_t;
-#include "../builtin/index.h"
-#include "../lib/index.h"
+extern dir_reg_t dir_runtime_lib[];
+extern dir_reg_t dir_builtin[];
 
 static int builtin_loader (lua_State* L)
 {
   const char* path = lua_tostring(L, 1);
   int i = (int) lua_tonumber(L, 2);
 
-  int res = luaL_loadbuffer(L, (const char *) dir_index_builtin[i].src, dir_index_builtin[i].len, dir_index_builtin[i].path);
+  int res = luaL_loadbuffer(L, (const char *) dir_builtin[i].src, dir_builtin[i].len, dir_builtin[i].path);
   if (res != 0) {
-    printf("Error in %s: %d\n", dir_index_builtin[i].path, res);
+    printf("Error in %s: %d\n", dir_builtin[i].path, res);
     report(L, res);
     exit(1);
   }
@@ -191,15 +191,15 @@ int colony_runtime_open (lua_State** stateptr)
   lua_pushcfunction(L, luaopen_evinrude);
   lua_setfield(L, -2, "evinrude");
 
-  for (int i = 0; dir_index_lib[i].path != NULL; i++) {
+  for (int i = 0; dir_runtime_lib[i].path != NULL; i++) {
     // printf("lib -> %s\n", dir_index_lib[i].path);
-    int res = luaL_loadbuffer(L, (const char *) dir_index_lib[i].src, dir_index_lib[i].len, dir_index_lib[i].path);
+    int res = luaL_loadbuffer(L, (const char *) dir_runtime_lib[i].src, dir_runtime_lib[i].len, dir_runtime_lib[i].path);
     if (res != 0) {
-      printf("Error in runtime lib %s: %d\n", dir_index_lib[i].path, res);
+      printf("Error in runtime lib %s: %d\n", dir_runtime_lib[i].path, res);
       report(L, res);
       exit(1);
     }
-    lua_setfield(L, -2, dir_index_lib[i].path);
+    lua_setfield(L, -2, dir_runtime_lib[i].path);
   }
 
   // Done with preload
@@ -211,7 +211,7 @@ int colony_runtime_open (lua_State** stateptr)
 
   
   lua_newtable(L);
-  for (int i = 0; dir_index_builtin[i].path != NULL; i++) {
+  for (int i = 0; dir_builtin[i].path != NULL; i++) {
     // printf("builtin -> %s\n", dir_index_builtin[i].path);
     // lua_pushlightuserdata(L, &dir_index_builtin[i]);
     // lua_pushstring(L, dir_index_builtin[i].path);
@@ -222,7 +222,7 @@ int colony_runtime_open (lua_State** stateptr)
     //   report(L, res);
     //   exit(1);
     // }
-    lua_setfield(L, -2, dir_index_builtin[i].path);
+    lua_setfield(L, -2, dir_builtin[i].path);
   }
   lua_setglobal(L, "_builtin");
 

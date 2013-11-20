@@ -1,0 +1,13 @@
+{
+  "name": "runtime",
+  "version": "0.0.0",
+  "private": true,
+  "directories": {
+    "example": "examples",
+    "test": "test"
+  },
+  "dependencies": {
+    "async": "~0.2.9",
+    "colony": "~0.3.1"
+  },
+}

@@ -1,0 +1,44 @@
+#!/usr/bin/env node
+
+var fs = require('fs');
+var async = require('async');
+var path = require('path');
+
+
+if (process.argv.length < 4) {
+  console.error('Usage: ./compile_folder.js pathfolder token_name') 
+  process.exit(1);
+}
+
+console.log('#include <stddef.h>\n');
+console.log('typedef struct dir_reg { const char *path; const unsigned char *src; unsigned int len; } dir_reg_t;')
+
+
+var dir = process.argv[2];
+var dirname = process.argv[3];
+
+async.mapSeries(fs.readdirSync(dir), function (f, next) {
+  var name = f.replace(/[^a-z0-9_]/g, '_');
+  console.log('static unsigned char ' + name + '[] = {');
+  var first = true;
+  var len = 0;
+
+  fs.createReadStream(path.join(dir, f)).on('data', function (d) {
+    d = new Buffer(d, 'utf-8');
+    len += d.length;
+    !first && console.log(',');
+    first = false;
+    console.log([].slice.apply(d).map(function (h) {
+      return '0x' + h.toString(16)
+    }).join(', '), '\n');
+  }).on('end', function () {
+    console.log('};\n');
+    setImmediate(next, null, [f, name, len]);
+  });
+}, function (err, results) {
+  console.log('\n\nconst dir_reg_t ' + dirname + '[] = {')
+  console.log(results.map(function (e) {
+    return '{' + [JSON.stringify(e[0]), e[1], e[2]].join(', ') + '}'
+  }).join(',\n'));
+  console.log(', {0, 0, 0} };');
+});

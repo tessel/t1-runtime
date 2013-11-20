@@ -118,59 +118,33 @@ else
 	CSRCS  += $(shell find src/ -maxdepth 1 ! -name "runtime.c" -name "*.c") 
 endif
 
-# Binary lua files
-BINOBJS   = $(patsubst %.lua, %.o, $(wildcard lib/*.lua)) $(patsubst %.js, %.o, $(wildcard builtin/*.js))
-
 #
 # Targets
 #
-
+ 
 all: builddir precompile compile
-
-precompile: indexify $(patsubst %.lua, %.o, $(BINOBJS))
 
 builddir:
 	mkdir -p $(BUILD)/obj
+	mkdir -p $(BUILD)/runtime
+	mkdir -p $(BUILD)/builtin
 
-indexify:
-	D=lib node -e "dir = process.env.D; S = /\.lua$\/; function _(s) { return s.replace(/[^a-z0-9_]/g, '_'); } console.log('\#include <stddef.h>\n',require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return '#include \"' + s.replace(/^~/, '').replace(/\.lua/, '.c') + '\"' }).join('\n') + '\nconst dir_reg_t dir_index_' + _(dir) + '[] = { ' + require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return '{' + [JSON.stringify('lib/' + s.replace('.lua', '')), '' + _(dir+'\/'+s), _(dir+'\/'+s) + '_len'].join(', ') + '}'  }).join(',\n') + ', { 0, 0, 0 } };')" > lib/index.h
-ifeq ($(EMBED), 1)
-	node preprocessor builtin luac
-else
-	node preprocessor builtin
-endif
-	D=builtin node -e "dir = process.env.D; S = /\.colony$\/; function _(s) { return s.replace(/[^a-z0-9_]/g, '_'); } console.log('\#include <stddef.h>\n',require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return '#include \"' + s.replace(/^~/, '').replace(/\.colony/, '.c') + '\"' }).join('\n') + '\nconst dir_reg_t dir_index_' + _(dir) + '[] = { ' + require('fs').readdirSync(dir).filter(function (f) { return f.match(S); }).map(function (s) { return '{' + [JSON.stringify('./builtin/' + s.replace(/^~/, '').replace('.colony', '.js')), '' + _(dir+'\/'+s), _(dir+'\/'+s) + '_len'].join(',') + '}'  }).join(',\n') + ', { 0, 0, 0} };')" > builtin/index.h
+precompile: $(patsubst builtin/%.js, $(BUILD)/builtin/%.lua, $(wildcard builtin/*.js))  $(patsubst lib/%.lua, $(BUILD)/runtime/%.lua, $(wildcard lib/*.lua)) 
+	tools/compile_folder $(BUILD)/builtin dir_builtin | gcc -c -o $(BUILD)/obj/dir_builtin.o -xc -
+	tools/compile_folder $(BUILD)/runtime dir_runtime_lib | gcc -c -o $(BUILD)/obj/dir_runtime_lib.o -xc -
 
-%.o: %.js
-	xxd -i $(subst /,/~,$(patsubst %.js,%.colony,$^)) $(patsubst %.js, %.c, $^)
-	sed -i '' 's/unsigned char/const unsigned char/g' $(patsubst %.js, %.c, $^)
-	sed -i '' 's/unsigned int \([a-z_]*\) = \([0-9]*\);/\#define \1 \2/g' $(patsubst %.js, %.c, $^)
-ifeq ($(EMBED), 1)
-	sed -i '' 's/unsigned char/unsigned char __attribute__ ((section (".text")))/g' $(patsubst %.js, %.c, $^)
-endif
-	# $(CC) $(CFLAGS) -o $(patsubst %.js, %.o, $^) $(patsubst %.js, %.c, $^)
-	# rm $(patsubst %.js, %.c, $^)
+$(BUILD)/builtin/%.lua : builtin/%.js
+	cat $^ | tools/compile_js | tools/compile_lua > $@
 
-%.o: %.lua
-	cat $^ | ./tools/compile > $(patsubst %.lua, %.luac, $^)
-	xxd -i $(patsubst %.lua, %.luac, $^) $(patsubst %.lua, %.c, $^)
-	rm $(patsubst %.lua, %.luac, $^)
-	sed -i '' 's/_luac/_lua/g' $(patsubst %.lua, %.c, $^)
-	# xxd -i $^ $(patsubst %.lua, %.c, $^)
-	sed -i '' 's/unsigned char/const unsigned char/g' $(patsubst %.lua, %.c, $^)
-	sed -i '' 's/unsigned int \([a-z_]*\) = \([0-9]*\);/\#define \1 \2/g' $(patsubst %.lua, %.c, $^)
-ifeq ($(EMBED), 1)
-	sed -i '' 's/unsigned char/unsigned char __attribute__ ((section (".text")))/g' $(patsubst %.lua, %.c, $^)
-endif
-	# $(CC) $(CFLAGS) -o $(patsubst %.lua, %.o, $^) $(patsubst %.lua, %.c, $^)
-	# rm $(patsubst %.lua, %.c, $^)
+$(BUILD)/runtime/%.lua : lib/%.lua
+	cat $^ | tools/compile_lua > $@
 
 ifeq ($(EMBED), 0)
 compile: $(patsubst %.c, %.o, $(CSRCS)) 
-	$(CC) -o colony -lm $(wildcard $(BUILD)/obj/*.o)
+	$(CC) -o $(BUILD)/colony -lm $(wildcard $(BUILD)/obj/*.o)
 else
 compile: $(patsubst %.c, %.o, $(CSRCS))
-	arm-none-eabi-ar rcs libcolony.a $(filter-out cli.o,$(wildcard $(BUILD)/obj/*.o))
+	arm-none-eabi-ar rcs $(BUILD)/libcolony.a $(filter-out cli.o,$(wildcard $(BUILD)/obj/*.o))
 endif
 
 # You don't even need to be explicit here,
@@ -179,5 +153,4 @@ endif
 	$(CC) $(CFLAGS) $^ -o $(BUILD)/obj/$(shell basename $@)
 
 clean: 
-	rm -rf $(BUILD)
-	rm -rf $(patsubst %.c, %.o, $(CSRCS)) $(patsubst %.js, %.c, $(patsubst %.lua, %.c, $(BINOBJS))) 2>/dev/null || true
+	rm -rf $(BUILD) 2>/dev/null || true
