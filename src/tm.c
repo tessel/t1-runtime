@@ -189,6 +189,8 @@ tm_socket_t tm_tcp_accept (tm_socket_t sock, uint32_t *ip)
  * Uptime
  */
 
+#ifndef COLONY_EMBED
+
 void tm_uptime_init ()
 {
   // nop
@@ -196,13 +198,15 @@ void tm_uptime_init ()
 
 uint32_t tm_uptime_micro ()
 {
-  // struct timeval tv;
-  // gettimeofday(&tv, NULL);
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
 
-  // double time_in_mill = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000;
-  // return (uint32_t) (time_in_mill * 1000);
-  return 0;
+  double time_in_mill = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000;
+  return (uint32_t) (time_in_mill * 1000);
+  // return 0;
 }
+
+#endif
 
 
 /**

@@ -654,7 +654,7 @@ end
 
 -- regexp library
 
-if hs then
+if type(hs) == 'table' then
   local hsmatchc = 100
   local hsmatch = hs.regmatch_create(hsmatchc)
 

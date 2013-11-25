@@ -126,7 +126,7 @@ ifeq ($(EMBED), 0)
 	CSRCS  += $(wildcard src/*.c)
 else
 	CFLAGS += -Isrc
-	CSRCS  += $(shell find src/ -maxdepth 1 ! -name "runtime.c" -name "*.c") 
+	CSRCS  += $(shell find src/ -maxdepth 1 ! -name "cli.c" -name "*.c") 
 endif
 
 #
@@ -165,7 +165,7 @@ compile.parallel: $(patsubst %.c, %.o, $(CSRCS))
 ifeq ($(EMBED), 0)
 	$(CC) -o $(BUILD)/colony -lm $(wildcard $(BUILD)/obj/*.o)
 else
-	arm-none-eabi-ar rcs $(BUILD)/libcolony.a $(filter-out cli.o,$(wildcard $(BUILD)/obj/*.o))
+	arm-none-eabi-ar rcs $(BUILD)/libcolony.a $(wildcard $(BUILD)/obj/*.o)
 endif
 
 %.o: %.c
@@ -173,4 +173,4 @@ endif
 
 clean: 
 	rm tools/compile_lua 2>/dev/null || true
-	rm -rf $(BUILD) 2>/dev/null || true
+	rm -rf build 2>/dev/null || true
