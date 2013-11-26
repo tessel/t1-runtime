@@ -54,34 +54,7 @@ uint32_t tm_uptime_micro ();
 
 // fs
 
-#if !COLONY_FATFS
-
-#ifdef COLONY_PC
-  #include <poll.h>
-#endif
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <dirent.h>
-
-// lowest common denominator: http://elm-chan.org/fsw/ff/en/open.html
-enum {
-  TM_RDONLY = O_RDONLY,
-  TM_WRONLY = O_WRONLY,
-  TM_RDWR = O_RDWR,
-  TM_OPEN_EXISTING = 0,
-  TM_OPEN_ALWAYS = O_CREAT,
-  TM_CREATE_NEW = O_CREAT | O_EXCL,
-  TM_CREATE_ALWAYS = O_TRUNC,
-
-  TM_EXIST = EEXIST
-};
-
-typedef int tm_fs_t;
-typedef DIR* tm_fs_dir_t;
-
-#else
+#ifdef TM_FS_fat
 
 #include "ff.h"
 #include "diskio.h"
@@ -105,6 +78,31 @@ typedef struct {
   FILINFO info;
   char lfname[256];
 } tm_fs_dir_t;
+
+#else
+
+#include <poll.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <dirent.h>
+
+// lowest common denominator: http://elm-chan.org/fsw/ff/en/open.html
+enum {
+  TM_RDONLY = O_RDONLY,
+  TM_WRONLY = O_WRONLY,
+  TM_RDWR = O_RDWR,
+  TM_OPEN_EXISTING = 0,
+  TM_OPEN_ALWAYS = O_CREAT,
+  TM_CREATE_NEW = O_CREAT | O_EXCL,
+  TM_CREATE_ALWAYS = O_TRUNC,
+
+  TM_EXIST = EEXIST
+};
+
+typedef int tm_fs_t;
+typedef DIR* tm_fs_dir_t;
 
 #endif 
 

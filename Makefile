@@ -1,15 +1,19 @@
 # Config
-EMBED   = 0
-FATFS   = 0
-LUAJIT  = 0
+LUAJIT     =
+ARM        =
+CLI        =
 
-.PHONY: all
+TM_NET     =
+TM_FS      =
+TM_UPTIME  =
+
+.PHONY: osx
 
 osx:
-	@make all
+	@make CLI=1 TM_FS=posix TM_NET=posix TM_UPTIME=posix all
 
 embed:
-	@make EMBED=1 FATFS=1 all
+	@make ARM=1 TM_FS=fat all
 
 
 
@@ -25,7 +29,7 @@ CFLAGS  =
 CSRCS   =
 
 # Compiler
-ifeq ($(EMBED), 0)
+ifneq ($(ARM), 1)
 	BUILD   = build/osx
 	CC      = gcc
 	DUMP    = objdump
@@ -43,7 +47,7 @@ else
 
 	CPU     = cortex-m3
 	#OPTIM   = fast
-	OPTIM   = 0
+	OPTIM        = 0
 
 	CFLAGS += -c -DCOLONY_EMBED
 	CFLAGS      += -mcpu=$(CPU) 
@@ -63,13 +67,13 @@ else
 	CFLAGS      += -ffunction-sections 
 	CFLAGS      += -fdata-sections 
 	#CFLAGS      += -fpermissive
-	CFLAGS        += -lm
-	CFLAGS        += -lgcc
-	CFLAGS        += -lc
-	CFLAGS        += -lcs3unhosted
-	CFLAGS        += -lcs3
-	CFLAGS        += -lcs3arm
-	CFLAGS        += -lcolony
+	CFLAGS      += -lm
+	CFLAGS      += -lgcc
+	CFLAGS      += -lc
+	CFLAGS      += -lcs3unhosted
+	CFLAGS      += -lcs3
+	CFLAGS      += -lcs3arm
+	CFLAGS      += -lcolony
 endif
 
 # Cflags
@@ -84,20 +88,20 @@ CFLAGS += -I$(PATH_HTTPPARSER)
 CSRCS  += $(PATH_HTTPPARSER)/http_parser.c
 
 # Lua
-ifeq ($(LUAJIT), 1)
-	# LuaJIT
-	CFLAGS += -DCOLONY_LUAJIT
-	CFLAGS += -pagezero_size 10000 -image_base 100000000
-	CFLAGS += -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-	CFLAGS += -I../luajit-2.0/src/
-	CSRCS  += ../luajit-2.0/src/libluajit.a
-else
+ifneq ($(LUAJIT), 1)
 	# Lua 5.1
 	CFLAGS += -DCOLONY_LUA
 	CFLAGS += -I$(PATH_LUA)/src -Wno-deprecated-declarations -Wno-empty-body
 	CSRCS  += $(shell find $(PATH_LUA)/src/ ! -name "lua.c" ! -name "luac.c" -name "*.c") 
 	CFLAGS += -I$(PATH_LUABITOP)
 	CSRCS  += $(PATH_LUABITOP)/bit.c
+else
+	# LuaJIT
+	CFLAGS += -DCOLONY_LUAJIT
+	CFLAGS += -pagezero_size 10000 -image_base 100000000
+	CFLAGS += -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+	CFLAGS += -I../luajit-2.0/src/
+	CSRCS  += ../luajit-2.0/src/libluajit.a
 endif
 
 # # Libuv
@@ -108,10 +112,10 @@ endif
 # -DVERSION="\"2.7.2\"" -I/usr/local/include
 
 # Fatfs
-ifeq ($(FATFS), 1)
+ifeq ($(TM_FS),fat)
 	CFLAGS += -DCOLONY_FATFS=1
 	CFLAGS += -I$(PATH_FATFS)/src
-	CSRCS  += $(wildcard $(PATH_FATFS)/src/*.c) src/opt/diskio.c
+	CSRCS  += $(wildcard $(PATH_FATFS)/src/*.c)
 endif
 
 # Libtar
@@ -120,14 +124,26 @@ CSRCS  += $(shell find $(PATH_LIBTAR)/lib/ -maxdepth 1 ! -name "wrapper.c" ! -na
 CFLAGS        += -DMAXPATHLEN=256
 # CFLAGS += -DDEBUG
 
-# Source
-ifeq ($(EMBED), 0)
-	CFLAGS += -Isrc
-	CSRCS  += $(wildcard src/*.c)
-else
-	CFLAGS += -Isrc
+# Sources
+CFLAGS += -Isrc
+ifneq ($(CLI),1)
 	CSRCS  += $(shell find src/ -maxdepth 1 ! -name "cli.c" -name "*.c") 
+else
+	CSRCS  += $(shell find src/ -maxdepth 1 -name "*.c") 
 endif
+ifneq ($(TM_NET),)
+	CFLAGS += -DTM_NET_$(TM_NET)
+	CSRCS  += $(wildcard src/net/$(TM_NET)/*.c)
+endif
+ifneq ($(TM_FS),)
+	CFLAGS += -DTM_FS_$(TM_FS)
+	CSRCS  += $(wildcard src/fs/$(TM_FS)/*.c)
+endif
+ifneq ($(TM_UPTIME),)
+	CFLAGS += -DTM_UPTIME_$(TM_UPTIME)
+	CSRCS  += $(wildcard src/uptime/$(TM_UPTIME)/*.c)
+endif
+
 
 #
 # Targets
@@ -162,7 +178,7 @@ compile:
 	@make -j8 compile.parallel
 
 compile.parallel: $(patsubst %.c, %.o, $(CSRCS)) 
-ifeq ($(EMBED), 0)
+ifneq ($(ARM),1)
 	$(CC) -o $(BUILD)/colony -lm $(wildcard $(BUILD)/obj/*.o)
 else
 	arm-none-eabi-ar rcs $(BUILD)/libcolony.a $(wildcard $(BUILD)/obj/*.o)

@@ -14,9 +14,7 @@
  * Populate FatFS
  */
 
-#ifdef COLONY_FATFS
-
-#include "ff.h"
+#ifdef TM_FS_fat
 
 void populate_fs_file (const char *pathname, const uint8_t *src, size_t len)
 {
