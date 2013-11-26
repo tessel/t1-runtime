@@ -7,7 +7,6 @@
     "test": "test"
   },
   "dependencies": {
-    "async": "~0.2.9",
-    "colony": "~0.3.1"
-  },
+    "async": "~0.2.9"
+  }
 }
