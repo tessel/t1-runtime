@@ -14,6 +14,9 @@ end
 -- print('Run mem:', collectgarbage('count'))
 local status,err = pcall(function ()
   local colony = require('colony')
+  -- This is temporary until we can do global._arr in extension methods
+  _G._colony = colony
+
   colony.precache = {}
   for k, v in pairs(_builtin) do
     (function (k, v)
@@ -28,6 +31,9 @@ local status,err = pcall(function ()
   collectgarbage()
 
   if _G.COLONY_EMBED then
+    -- This is temporary until _builtin takes pointer arugments
+    colony.precache['tessel'] = _tessel_lib
+
     -- This is temporary until we have tm_pwd() working
     colony._normalize = function (p, path_normalize)
       if string.sub(p, 1, 1) == '.' then

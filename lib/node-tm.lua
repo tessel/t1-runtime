@@ -266,13 +266,8 @@ function js_wrap_module (module)
   return m
 end
 
-colony.bindings = {
-  tm = js_wrap_module(tm),
-  http_parser = js_wrap_module(http_parser)
-}
-
 global.process.binding = function (self, key)
-  return colony.bindings[key];
+  return js_wrap_module(require(key))
 end
 
 
@@ -401,13 +396,10 @@ local function require_load (p)
   local res = nil
   if colony.precache[p] then
     res = colony.precache[p]()
-  else
-    res = colony.cache[p]
   end
   if not res then
     if fs_exists(p) then
       res = assert(loadstring(colony._load(p), "@"..p))()
-      colony.cache[p] = res
     end
   end
   return res
@@ -425,6 +417,9 @@ colony.run = function (name, root)
   local p, pfound = require_resolve(name, root)
 
   -- Load the script.
+  if colony.cache[p] then
+    return colony.cache[p]
+  end
   local res = pfound and require_load(p)
   if not pfound or not res then
     error('Could not find module "' .. p .. '"')
@@ -445,7 +440,10 @@ colony.run = function (name, root)
     -- Return the new script.
     return colony.run(value, path_dirname(scriptpath) .. '/')
   end
-  return res()
+  
+  colony.cache[p] = {} --dummy
+  colony.cache[p] = res()
+  return colony.cache[p]
 end
 
 -- node-tm

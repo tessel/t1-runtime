@@ -142,16 +142,16 @@ tar_extract_file(TAR *t, char *realname)
   int pathname_len;
   int realname_len;
 
-  if (t->options & TAR_NOOVERWRITE)
-  {
-    struct stat s;
+  // if (t->options & TAR_NOOVERWRITE)
+  // {
+  //   struct stat s;
 
-    if (lstat(realname, &s) == 0 || errno != ENOENT)
-    {
-      errno = EEXIST;
-      return -1;
-    }
-  }
+  //   if (lstat(realname, &s) == 0 || errno != ENOENT)
+  //   {
+  //     errno = EEXIST;
+  //     return -1;
+  //   }
+  // }
 
   if (TH_ISDIR(t))
   {
@@ -375,32 +375,32 @@ tar_extract_hardlink(TAR * t, char *realname)
 int
 tar_extract_symlink(TAR *t, char *realname)
 {
-  char *filename;
+//   char *filename;
 
-  if (!TH_ISSYM(t))
-  {
-    errno = EINVAL;
-    return -1;
-  }
+//   if (!TH_ISSYM(t))
+//   {
+//     errno = EINVAL;
+//     return -1;
+//   }
 
-  filename = (realname ? realname : th_get_pathname(t));
-  if (tm_mkdirhier(dirname(filename)) == -1)
-    return -1;
+//   filename = (realname ? realname : th_get_pathname(t));
+//   if (tm_mkdirhier(dirname(filename)) == -1)
+//     return -1;
 
-  if (unlink(filename) == -1 && errno != ENOENT)
-    return -1;
+//   if (unlink(filename) == -1 && errno != ENOENT)
+//     return -1;
 
-#ifdef DEBUG
-  printf("  ==> extracting: %s (symlink to %s)\n",
-         filename, th_get_linkname(t));
-#endif
-  if (symlink(th_get_linkname(t), filename) == -1)
-  {
-#ifdef DEBUG
-    perror("symlink()");
-#endif
-    return -1;
-  }
+// #ifdef DEBUG
+//   printf("  ==> extracting: %s (symlink to %s)\n",
+//          filename, th_get_linkname(t));
+// #endif
+//   if (symlink(th_get_linkname(t), filename) == -1)
+//   {
+// #ifdef DEBUG
+//     perror("symlink()");
+// #endif
+//     return -1;
+//   }
 
   return 0;
 }
@@ -410,36 +410,36 @@ tar_extract_symlink(TAR *t, char *realname)
 int
 tar_extract_chardev(TAR *t, char *realname)
 {
-  mode_t mode;
-  unsigned long devmaj, devmin;
-  char *filename;
+//   mode_t mode;
+//   unsigned long devmaj, devmin;
+//   char *filename;
 
-  if (!TH_ISCHR(t))
-  {
-    errno = EINVAL;
-    return -1;
-  }
+//   if (!TH_ISCHR(t))
+//   {
+//     errno = EINVAL;
+//     return -1;
+//   }
 
-  filename = (realname ? realname : th_get_pathname(t));
-  mode = th_get_mode(t);
-  devmaj = th_get_devmajor(t);
-  devmin = th_get_devminor(t);
+//   filename = (realname ? realname : th_get_pathname(t));
+//   mode = th_get_mode(t);
+//   devmaj = th_get_devmajor(t);
+//   devmin = th_get_devminor(t);
 
-  if (tm_mkdirhier(dirname(filename)) == -1)
-    return -1;
+//   if (tm_mkdirhier(dirname(filename)) == -1)
+//     return -1;
 
-#ifdef DEBUG
-  printf("  ==> extracting: %s (character device %ld,%ld)\n",
-         filename, devmaj, devmin);
-#endif
-  if (mknod(filename, mode | S_IFCHR,
-      compat_makedev(devmaj, devmin)) == -1)
-  {
-#ifdef DEBUG
-    perror("mknod()");
-#endif
-    return -1;
-  }
+// #ifdef DEBUG
+//   printf("  ==> extracting: %s (character device %ld,%ld)\n",
+//          filename, devmaj, devmin);
+// #endif
+//   if (mknod(filename, mode | S_IFCHR,
+//       compat_makedev(devmaj, devmin)) == -1)
+//   {
+// #ifdef DEBUG
+//     perror("mknod()");
+// #endif
+//     return -1;
+//   }
 
   return 0;
 }
@@ -449,36 +449,36 @@ tar_extract_chardev(TAR *t, char *realname)
 int
 tar_extract_blockdev(TAR *t, char *realname)
 {
-  mode_t mode;
-  unsigned long devmaj, devmin;
-  char *filename;
+//   mode_t mode;
+//   unsigned long devmaj, devmin;
+//   char *filename;
 
-  if (!TH_ISBLK(t))
-  {
-    errno = EINVAL;
-    return -1;
-  }
+//   if (!TH_ISBLK(t))
+//   {
+//     errno = EINVAL;
+//     return -1;
+//   }
 
-  filename = (realname ? realname : th_get_pathname(t));
-  mode = th_get_mode(t);
-  devmaj = th_get_devmajor(t);
-  devmin = th_get_devminor(t);
+//   filename = (realname ? realname : th_get_pathname(t));
+//   mode = th_get_mode(t);
+//   devmaj = th_get_devmajor(t);
+//   devmin = th_get_devminor(t);
 
-  if (tm_mkdirhier(dirname(filename)) == -1)
-    return -1;
+//   if (tm_mkdirhier(dirname(filename)) == -1)
+//     return -1;
 
-#ifdef DEBUG
-  printf("  ==> extracting: %s (block device %ld,%ld)\n",
-         filename, devmaj, devmin);
-#endif
-  if (mknod(filename, mode | S_IFBLK,
-      compat_makedev(devmaj, devmin)) == -1)
-  {
-#ifdef DEBUG
-    perror("mknod()");
-#endif
-    return -1;
-  }
+// #ifdef DEBUG
+//   printf("  ==> extracting: %s (block device %ld,%ld)\n",
+//          filename, devmaj, devmin);
+// #endif
+//   if (mknod(filename, mode | S_IFBLK,
+//       compat_makedev(devmaj, devmin)) == -1)
+//   {
+// #ifdef DEBUG
+//     perror("mknod()");
+// #endif
+//     return -1;
+//   }
 
   return 0;
 }
@@ -545,31 +545,31 @@ tar_extract_dir(TAR *t, char *realname)
 int
 tar_extract_fifo(TAR *t, char *realname)
 {
-  mode_t mode;
-  char *filename;
+//   mode_t mode;
+//   char *filename;
 
-  if (!TH_ISFIFO(t))
-  {
-    errno = EINVAL;
-    return -1;
-  }
+//   if (!TH_ISFIFO(t))
+//   {
+//     errno = EINVAL;
+//     return -1;
+//   }
 
-  filename = (realname ? realname : th_get_pathname(t));
-  mode = th_get_mode(t);
+//   filename = (realname ? realname : th_get_pathname(t));
+//   mode = th_get_mode(t);
 
-  if (tm_mkdirhier(dirname(filename)) == -1)
-    return -1;
+//   if (tm_mkdirhier(dirname(filename)) == -1)
+//     return -1;
 
-#ifdef DEBUG
-  printf("  ==> extracting: %s (fifo)\n", filename);
-#endif
-  if (mkfifo(filename, mode) == -1)
-  {
-#ifdef DEBUG
-    perror("mkfifo()");
-#endif
-    return -1;
-  }
+// #ifdef DEBUG
+//   printf("  ==> extracting: %s (fifo)\n", filename);
+// #endif
+//   if (mkfifo(filename, mode) == -1)
+//   {
+// #ifdef DEBUG
+//     perror("mkfifo()");
+// #endif
+//     return -1;
+//   }
 
   return 0;
 }
