@@ -2,6 +2,7 @@
 LUAJIT     =
 ARM        =
 CLI        =
+OPTIM      =0
 
 TM_NET     =
 TM_FS      =
@@ -10,10 +11,10 @@ TM_UPTIME  =
 .PHONY: osx
 
 osx:
-	@make CLI=1 TM_FS=posix TM_NET=posix TM_UPTIME=posix all
+	@make CLI=1 TM_FS=posix TM_NET=posix TM_UPTIME=posix OPTIM=$(OPTIM) all
 
 embed:
-	@make ARM=1 TM_FS=fat all
+	@make ARM=1 TM_FS=fat OPTIM=$(OPTIM) all
 
 
 
@@ -47,7 +48,7 @@ else
 
 	CPU     = cortex-m3
 	#OPTIM   = fast
-	OPTIM        = 0
+	OPTIM        =$(OPTIM)
 
 	CFLAGS += -c -DCOLONY_EMBED
 	CFLAGS      += -mcpu=$(CPU) 
