@@ -6,4 +6,4 @@
 	url = https://github.com/joyent/http-parser.git
 [submodule "deps/lua-5.1"]
 	path = deps/lua-5.1
-	url = https://github.com/technicalmachine/lua-5.1.git
+	url = https://github.com/tessel/colony-lua.git
