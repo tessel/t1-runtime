@@ -257,10 +257,11 @@ function js_wrap_module (module)
           return module[key](...)
         end
         this[key] = fn
+        return fn
       else
         this[key] = module[key]
+        return module[key]
       end
-      return this[key]
     end
   })
   return m
