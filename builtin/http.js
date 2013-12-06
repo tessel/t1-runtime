@@ -173,11 +173,12 @@ HTTPIncomingResponse.prototype.setEncoding = function () {
  */
 
 function HTTPOutgoingRequest (port, host, path, method) {
-  var ipl = tm.hostname_lookup(host);
-  if (ipl == 0) {
-    throw new Error('Could not lookup hostname.');
-  }
-  var ip = [(ipl >> 0) & 0xFF, (ipl >> 8) & 0xFF, (ipl >> 16) & 0xFF, (ipl >> 24) & 0xFF].join('.');
+  // var ipl = tm.hostname_lookup(host);
+  // if (ipl == 0) {
+    // throw new Error('Could not lookup hostname.');
+  // }
+  // var ip = [(ipl >> 0) & 0xFF, (ipl >> 8) & 0xFF, (ipl >> 16) & 0xFF, (ipl >> 24) & 0xFF].join('.');
+  var ip = host;
   if (path[0] != '/') {
     path = '/' + path;
   }
