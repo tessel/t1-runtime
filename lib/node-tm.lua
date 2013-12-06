@@ -57,21 +57,31 @@ end
 --|| Lua Timers
 --]]
 
+local timeouttable = {}
+setmetatable(timeouttable, {
+  __mode = "v"
+})
+
 global.setTimeout = function (this, fn, timeout)
+  timeout = timeout or 0 
   local start = tm.uptime_micro()
-  table.insert(_eventQueue, function ()
+  local timefn = function ()
     local now = tm.uptime_micro()
     if now - start < (timeout*1000) then
       return 1
     end
     fn()
     return 0
-  end)
+  end
+  table.insert(_eventQueue, timefn)
+  table.insert(timeouttable, timefn)
+  return #timeouttable
 end
 
 global.setInterval = function (this, fn, timeout)
+  timeout = timeout or 0 
   local start = tm.uptime_micro()
-  table.insert(_eventQueue, function ()
+  local timefn = function ()
     local now = tm.uptime_micro()
     if now - start < (timeout*1000) then
       return 1
@@ -79,15 +89,35 @@ global.setInterval = function (this, fn, timeout)
     fn()
     start = tm.uptime_micro() -- fixed time delay *between* calls
     return 1
-  end)
+  end
+  table.insert(_eventQueue, timefn)
+  table.insert(timeouttable, timefn)
+  return #timeouttable
 end
 
-global.setImmediate = function (this, fn, timeout)
-  table.insert(_eventQueue, function ()
+global.setImmediate = function (this, fn)
+  local timefn = function ()
     fn()
     return 0
-  end)
+  end
+  table.insert(_eventQueue, timefn)
+  table.insert(timeouttable, timefn)
+  return #timeouttable
 end
+
+global.clearTimeout = function (this, id)
+  if timeouttable[id] ~= nil then
+    for i=1,#_eventQueue do
+      if _eventQueue[i] == timeouttable[id] then
+        _eventQueue[i] = function () return 0 end
+      end
+    end
+    timeouttable[id] = nil
+  end
+end
+
+global.clearInterval = global.clearTimeout
+global.clearImmediate = global.clearTimeout
 
 
 --[[
