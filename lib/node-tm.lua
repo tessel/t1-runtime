@@ -133,9 +133,18 @@ local buffer_proto = js_obj({
     end
     tm.buffer_copy(sourceBuffer, targetBuffer, targetStart, sourceStart, sourceEnd)
   end,
-  toString = function (this)
+  toString = function (this, strtype)
     local sourceBuffer = getmetatable(this).buffer
     local sourceBufferLength = getmetatable(this).bufferlen
+
+    if string.lower(strtype) == 'utf8' then
+      local str = ''
+      for i=0,sourceBufferLength-1 do
+        str = str .. string.char(this[i])
+      end
+      return str
+    end
+
     local out = {'<Buffer'}
     for i=0,math.min(sourceBufferLength, 51)-1 do
       table.insert(out, string.format("%02x", this[i]))
@@ -148,7 +157,15 @@ local buffer_proto = js_obj({
 })
 
 local function Buffer (this, length)
-  length = tonumber(length)
+  -- args
+  local str = ''
+  if type(length) == 'number' then
+    length = tonumber(length)
+  else
+    str = length
+    length = str.length
+  end
+
   this = {}
   local buf = tm.buffer_create(length)
   setmetatable(this, {
@@ -198,6 +215,17 @@ local function Buffer (this, length)
     __tostring = js_tostring,
     proto = buffer_proto
   })
+
+  for i = 1, str.length do
+    if type(str) == 'string' then
+      -- string
+      this[i - 1] = string.byte(str, i)
+    else
+      -- array
+      this[i - 1] = str[i - 1]
+    end
+  end
+
   return this
 end
 
@@ -222,6 +250,7 @@ global.process = js_obj({
   versions = js_obj({
     node = "0.10.0"
   }),
+  argv = js_arr({}),
   env = js_obj({}),
   stdin = js_obj({
     resume = function () end,

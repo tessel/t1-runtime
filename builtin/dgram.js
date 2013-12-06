@@ -23,6 +23,9 @@ UDP.prototype.bind = function (port) {
 
 UDP.prototype.send = function (text, offset, len, port, ip) {
   var ips = ip.split('.');
+  if (typeof text != 'string') {
+    text = text.toString('utf8')
+  }
   tm.udp_send(this.socket, ips[0], ips[1], ips[2], ips[3], port, text.substr(offset, len));
 }
 
