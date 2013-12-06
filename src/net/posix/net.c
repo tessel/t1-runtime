@@ -21,11 +21,80 @@ uint32_t tm_hostname_lookup (const uint8_t *hostname)
   return ((struct in_addr *)h->h_addr)->s_addr;
 }
 
+/**
+ * UDP
+ */
+
 tm_socket_t tm_udp_open ()
 {
-    return socket(AF_INET, SOCK_STREAM, 0);
+    return socket(AF_INET, SOCK_DGRAM, 0);
 }
 
+int tm_udp_close (int sock)
+{
+  return shutdown(sock, SHUT_WR) == 0 ? 0 : -errno;
+}
+
+int tm_udp_listen (int sock, int port)
+{
+  struct sockaddr_in localSocketAddr;
+  localSocketAddr.sin_family = AF_INET;
+  localSocketAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+  localSocketAddr.sin_port = htons(port);
+
+  // Bind socket
+  // TM_COMMAND('w', "Binding local socket...");
+  int sockStatus;
+  if ((sockStatus = bind(sock, (struct sockaddr *) &localSocketAddr, sizeof(localSocketAddr))) != 0) {
+    // TM_DEBUG("binding failed: %d on port %d", sockStatus, port);
+    // CC3000_END;
+    return -1;
+  }
+  return 0;
+}
+
+int tm_udp_receive (int sock, uint8_t *buf, unsigned long buf_len, uint32_t *ip)
+{
+  struct sockaddr from;
+  socklen_t from_len;
+  signed long ret = recvfrom(sock, buf, buf_len, 0, &from, &from_len);
+  *ip = *((uint32_t *) &(from.sa_data[2]));
+  return ret;
+}
+
+int tm_udp_readable (tm_socket_t sock)
+{
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+
+    fd_set readset;
+    FD_ZERO(&readset);
+    FD_SET(sock, &readset);
+    if (select(sock+1, &readset, NULL, NULL, &tv) <= 0) {
+        return 0;
+    }
+    return FD_ISSET(sock, &readset);
+}
+
+int tm_udp_send (int sock, uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3, int port, uint8_t *buf, unsigned long buf_len)
+{
+  struct sockaddr_in tSocketAddr;
+  tSocketAddr.sin_family = AF_INET;
+  tSocketAddr.sin_addr.s_addr = htonl(ip0 << 24 | ip1 << 16 | ip2 << 8 | ip3);
+  tSocketAddr.sin_port = htons(port);
+
+  // CC3000_START
+  int sent = sendto(sock, buf, buf_len, 0, (struct sockaddr *) &tSocketAddr, sizeof(tSocketAddr));
+  // TM_DEBUG("sent %d with sock %d, %p len %d, to %d.%d.%d.%d:%d", sent, sock, buf, buf_len, ip0, ip1, ip2, ip3, port);
+  // perror("WHAT: ");
+  // CC3000_END;
+  return sent;
+}
+
+/**
+ * TCP
+ */
 
 tm_socket_t tm_tcp_open ()
 {

@@ -37,6 +37,12 @@ extern "C" {
 typedef int tm_socket_t;
 
 tm_socket_t tm_udp_open ();
+int tm_udp_close (int sock);
+int tm_udp_listen (int ulSocket, int port);
+int tm_udp_receive (int ulSocket, uint8_t *buf, unsigned long buf_len, uint32_t *ip);
+int tm_udp_readable (tm_socket_t sock);
+int tm_udp_send (int ulSocket, uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3, int port, uint8_t *buf, unsigned long buf_len);
+
 tm_socket_t tm_tcp_open ();
 int tm_tcp_close ();
 int tm_tcp_connect (tm_socket_t sock, uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3, uint16_t port);

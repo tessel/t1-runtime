@@ -49,6 +49,8 @@ static int l_tm_hostname_lookup (lua_State* L)
   return 1;
 }
 
+
+
 static int l_tm_udp_open (lua_State* L)
 {
   tm_socket_t socket = tm_udp_open();
@@ -57,53 +59,63 @@ static int l_tm_udp_open (lua_State* L)
   return 1;
 }
 
-// static int l_tm_net_udp_close_socket (lua_State* L)
-// {
-//   int socket = (int) lua_tonumber(L, 2);
-//   int newsocket = tm_net_udp_close_socket(socket);
+static int l_tm_udp_close (lua_State* L)
+{
+  int socket = (int) lua_tonumber(L, 1);
+  int res = tm_udp_close(socket);
 
-//   lua_pushnumber(L, newsocket);
-//   return 1;
-// }
+  lua_pushnumber(L, res);
+  return 1;
+}
 
-// static int l_tm_net_udp_send (lua_State* L)
-// {
-//   int socket = (int) lua_tonumber(L, 2);
-//   int ip0 = (int) lua_tonumber(L, 3);
-//   int ip1 = (int) lua_tonumber(L, 4);
-//   int ip2 = (int) lua_tonumber(L, 5);
-//   int ip3 = (int) lua_tonumber(L, 6);
-//   int port = (int) lua_tonumber(L, 7);
-//   size_t len;
-//   const char *text = lua_tolstring(L, 8, &len);
+static int l_tm_udp_send (lua_State* L)
+{
+  int socket = (int) lua_tonumber(L, 1);
+  int ip0 = (int) lua_tonumber(L, 2);
+  int ip1 = (int) lua_tonumber(L, 3);
+  int ip2 = (int) lua_tonumber(L, 4);
+  int ip3 = (int) lua_tonumber(L, 5);
+  int port = (int) lua_tonumber(L, 6);
+  size_t len;
+  const char *text = lua_tolstring(L, 7, &len);
 
-//   tm_net_udp_send(socket, ip0, ip1, ip2, ip3, port, (uint8_t *) text, len);
-//   return 0;
-// }
+  tm_udp_send(socket, ip0, ip1, ip2, ip3, port, (uint8_t *) text, len);
+  return 0;
+}
 
-// static int l_tm_net_udp_listen (lua_State *L)
-// {
-//   int socket = (int) lua_tonumber(L, 2);
-//   int port = (int) lua_tonumber(L, 3);
+static int l_tm_udp_listen (lua_State *L)
+{
+  int socket = (int) lua_tonumber(L, 1);
+  int port = (int) lua_tonumber(L, 2);
 
-//   lua_pushnumber(L, tm_net_udp_listen(socket, port));
+  lua_pushnumber(L, tm_udp_listen(socket, port));
 
-//   return 1;
-// }
+  return 1;
+}
 
-// static int l_tm_net_udp_receive (lua_State *L)
-// {
-//   int socket = (int) lua_tonumber(L, 2);
+static int l_tm_udp_receive (lua_State *L)
+{
+  int socket = (int) lua_tonumber(L, 1);
 
-//   uint8_t buf[256];
-//   sockaddr from;
-//   socklen_t from_len;
-//   size_t buf_len = tm_net_udp_receive(socket, buf, sizeof(buf), &from, &from_len);
+  uint8_t buf[256];
+  uint32_t from;
+  size_t buf_len = tm_udp_receive(socket, buf, sizeof(buf), &from);
 
-//   lua_pushlstring(L, buf, buf_len);
+  lua_pushlstring(L, buf, buf_len);
 
-//   return 1;
-// }
+  return 1;
+}
+
+
+static int l_tm_udp_readable (lua_State* L)
+{
+  tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
+
+  lua_pushnumber(L, tm_udp_readable(socket));
+  return 1;
+}
+
+
 
 static int l_tm_tcp_open (lua_State* L)
 {
@@ -382,6 +394,12 @@ LUALIB_API int luaopen_tm (lua_State *L)
 
     // net
     { "udp_open", l_tm_udp_open },
+    { "udp_close", l_tm_udp_close },
+    { "udp_listen", l_tm_udp_listen },
+    { "udp_receive", l_tm_udp_receive },
+    { "udp_readable", l_tm_udp_readable }, 
+    { "udp_send", l_tm_udp_send },
+
     { "tcp_open", l_tm_tcp_open },
     { "tcp_close", l_tm_tcp_close },
     { "tcp_connect", l_tm_tcp_connect },
