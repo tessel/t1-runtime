@@ -6,9 +6,10 @@ var port = 3333;
 
 console.log('Connecting to IP', ip, 'port', port);
 
-var udp = dgram.createSocket();
+var udp = dgram.createSocket('udp4');
 var i = 0;
 setInterval(function () {
   console.log('Sending UDP packet #' + i + '...');
-  udp.send(ip, port, "Packet #" + i++);
+  var buf = "Packet #" + i++;
+  udp.send(buf, 0, buf.length, port, ip);
 }, 250)

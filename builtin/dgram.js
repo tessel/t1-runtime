@@ -15,15 +15,15 @@ UDP.prototype.bind = function (port) {
     var r = tm.udp_readable(client.socket);
     while (r) {
       var buf = tm.udp_receive(client.socket);
-      client.emit('data', buf);
+      client.emit('message', buf);
     }
   }, 100);
   cb && cb();
 }
 
-UDP.prototype.send = function (ip, port, text) {
+UDP.prototype.send = function (text, offset, len, port, ip) {
   var ips = ip.split('.');
-  tm.udp_send(this.socket, ips[0], ips[1], ips[2], ips[3], port, text);
+  tm.udp_send(this.socket, ips[0], ips[1], ips[2], ips[3], port, text.substr(offset, len));
 }
 
 UDP.prototype.close = function () {
