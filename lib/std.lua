@@ -603,7 +603,7 @@ local function objtostring (obj, sset)
     if #vals == 0 then
       return "[]"
     end
-    -- table.insert(vals, 1, table.remove(vals))
+    table.insert(vals, 1, table.remove(vals))
     return "[ " + table.concat(vals, ", ") + " ]"
   else
     if #vals == 0 then
