@@ -351,7 +351,7 @@ function colonize (node) {
     case 'CallExpression':
       if (node.callee.type == 'MemberExpression') {
         // Method call
-        if (node.callee.property.type == 'Identifier' && fixIdentifiers(node.callee.property.name) != node.callee.property.name) {
+        if (node.callee.property.type == 'Identifier' && fixIdentifiers(node.callee.property.name) != node.callee.property.name && !node.callee.computed) {
           // Escape keywords awkwardly.
           node.update("(function () local base, prop = " + node.callee.object.source() + ', '
             + (node.callee.property.type == 'Identifier' ? JSON.stringify(node.callee.property.source()) : node.callee.property.source())
@@ -359,12 +359,12 @@ function colonize (node) {
             + ['base'].concat(node.arguments.map(function (arg) {
               return arg.source()
             })).join(', ') + '); end)()');
-        } else if (node.callee.property.type != 'Identifier') {
+        } else if (node.callee.property.type != 'Identifier' || node.callee.computed) {
           // Dynamic properties can't be method calls
-          node.update("(function () local base, prop = " + node.callee.object.source() + ', '
-            + (node.callee.property.type == 'Identifier' ? JSON.stringify(node.callee.property.source()) : node.callee.property.source())
-            + '; return base[prop]('
-            + ['base'].concat(node.arguments.map(function (arg) {
+          node.update("(function () local _base, _prop = " + node.callee.object.source() + ', '
+            + node.callee.property.source()
+            + '; local _val = _base[_prop]; console:log(_base, _prop, _val); return _val('
+            + ['_base'].concat(node.arguments.map(function (arg) {
               return arg.source()
             })).join(', ') + '); end)()');
         } else {
@@ -549,8 +549,7 @@ node.finalizer ? node.finalizer.source() : ''
       }
 
       // Wrap functions with names used in expressions to assign inside closure.
-
-      if (name && prefix && node.parent.type.match(/Expression$|^VariableDeclarator$|^ReturnStatement$/)) {
+      if (name && prefix && node.parent.type.match(/Expression$|^VariableDeclarator$|^ReturnStatement$|^Property$/)) {
         node.update('(function () ' + node.source() + '; return ' + name + '; end)()');
       }
 
