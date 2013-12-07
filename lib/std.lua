@@ -302,10 +302,10 @@ end
 arr_proto.unshift = function (ths, elem)
   local _val = nil
   if ths.length > 0 then
-    _val = table.insert(ths, 1, elem[0])
+    _val = table.insert(ths, 0, elem[0])
   end
   ths[0] = elem
-  return _val
+  return ths.length
 end
 
 arr_proto.splice = function (ths, i, del, ...)
