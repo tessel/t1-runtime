@@ -313,6 +313,9 @@ arr_proto.splice = function (ths, i, del, ...)
   for j=1,del do
     ret:push(ths[i])
     table.remove(ths, i)
+    if i == 0 then
+      ths[0] = table.remove(ths, 1)
+    end
   end
   local args = table.pack(...)
   for j=1,args.length do
