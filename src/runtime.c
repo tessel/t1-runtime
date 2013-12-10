@@ -12,6 +12,8 @@
 #include "l_hsregex.h"
 #include "l_bit.h"
 
+LUALIB_API int luaopen_yajl(lua_State *L);
+
 
 /**
  * Runtime.
@@ -262,4 +264,27 @@ int colony_runtime_close (lua_State** stateptr)
   lua_close(L);
   *stateptr = NULL;
   return 0;
+}
+
+
+void colony_newarray (lua_State* L, int size)
+{
+  lua_getglobal(L, "_colony");
+  lua_getfield(L, -1, "global");
+  lua_pushliteral(L,"_arr");
+  lua_gettable(L, -2);
+  lua_remove(L, -2);
+  lua_createtable(L, size > 0 ? size - 1 : size, size > 0 ? 1 : 0);
+  lua_call(L,1,1);
+}
+
+void colony_newobj (lua_State* L, int size)
+{
+  lua_getglobal(L, "_colony");
+  lua_getfield(L, -1, "global");
+  lua_pushliteral(L,"_obj");
+  lua_gettable(L, -2);
+  lua_remove(L, -2);
+  lua_createtable(L, 0, size);
+  lua_call(L,1,1);
 }

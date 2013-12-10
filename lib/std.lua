@@ -1,6 +1,7 @@
 return function (colony)
 
 local bit = require('bit32')
+local yajl = require('yajl')
 local _, hs = pcall(require, 'hsregex')
 
 -- locals
@@ -819,14 +820,14 @@ end
 global.encodeURIComponent = encodeURIComponent
 global.decodeURIComponent = decodeURIComponent
 
--- global.JSON = js_obj({
---  parse = function (ths, arg)
---    return json.decode(arg)
---  end,
---  stringify = function (ths, arg)
---    return json.encode(arg, { indent = true })
---  end,
--- })
+global.JSON = js_obj({
+  parse = function (ths, arg)
+    return yajl.to_value(arg)
+  end,
+  stringify = function (ths, arg)
+    return yajl.to_string(arg)
+  end,
+})
 
 
 --[[
