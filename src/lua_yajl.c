@@ -773,7 +773,11 @@ static int js_generator_value(lua_State *L) {
         }
 
         /* Simply ignore it, perhaps we should warn? */
-        if ( type != LUA_TTABLE ) return 0;
+        if ( type != LUA_TTABLE )  {
+            js_generator_open_object(L);
+            js_generator_close(L);
+            return 0;
+        }
 
         max      = 0;
         is_array = 1;
