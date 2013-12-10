@@ -25,7 +25,6 @@ PATH_LIBTAR        =./deps/libtar
 PATH_LUA           =./deps/lua-5.1
 PATH_FATFS         =./deps/fatfs
 PATH_YAJL					 =./deps/yajl
-PATH_LIBYAJL			 =./deps/lua-yajl
 
 
 CFLAGS  =
@@ -130,10 +129,6 @@ CFLAGS        += -DMAXPATHLEN=256
 # yajl
 CFLAGS += -I$(PATH_YAJL)/src/ -I./src
 CSRCS  += $(shell find $(PATH_YAJL)/src/ -maxdepth 1 -name "*.c")
-
-# lua_yajl
-CFLAGS += -I$(PATH_LIBYAJL)/
-CSRCS  += $(shell find $(PATH_LIBYAJL)/ -maxdepth 1 -name "*.c")
 
 # Sources
 CFLAGS += -Isrc

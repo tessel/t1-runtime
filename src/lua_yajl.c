@@ -7,6 +7,8 @@
 #include <errno.h>
 #include <string.h>
 
+#include <colony.h>
+
 #define js_check_generator(L, narg) \
     (yajl_gen*)luaL_checkudata((L), (narg), "yajl.generator.meta")
 
@@ -169,7 +171,8 @@ static int to_value_start_map(void* ctx) {
         return luaL_error(L, "lua stack overflow");
     }
 
-    lua_newtable(L);
+    // lua_newtable(L);
+    colony_newobj(L, 0);
     lua_pushnil(L); /* Store future key here. */
     lua_pushcfunction(L, got_map_key);
 
@@ -192,8 +195,9 @@ static int to_value_start_array(void* ctx) {
         return luaL_error(L, "lua stack overflow");
     }
 
-    lua_newtable(L);
-    lua_pushinteger(L, 1);
+    // lua_newtable(L);
+    colony_newarray(L, 0);
+    lua_pushinteger(L, 0);
     lua_pushcfunction(L, got_array_value);
 
     return 1;
@@ -797,7 +801,7 @@ static int js_generator_value(lua_State *L) {
         if ( is_array ) {
             int i;
             js_generator_open_array(L);
-            for ( i=1; i <= max; i++ ) {
+            for ( i=0; i <= max; i++ ) {
                 lua_pushinteger(L, i);
                 lua_gettable(L, 2);
 
