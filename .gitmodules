@@ -7,3 +7,9 @@
 [submodule "deps/lua-5.1"]
 	path = deps/lua-5.1
 	url = https://github.com/tessel/colony-lua.git
+[submodule "deps/lua-yajl"]
+	path = deps/lua-yajl
+	url = https://github.com/brimworks/lua-yajl.git
+[submodule "deps/yajl"]
+	path = deps/yajl
+	url = https://github.com/lloyd/yajl.git

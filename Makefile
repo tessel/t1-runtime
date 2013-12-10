@@ -24,6 +24,8 @@ PATH_LUABITOP      =./deps/luabitop-1.0
 PATH_LIBTAR        =./deps/libtar
 PATH_LUA           =./deps/lua-5.1
 PATH_FATFS         =./deps/fatfs
+PATH_YAJL					 =./deps/yajl
+PATH_LIBYAJL			 =./deps/lua-yajl
 
 
 CFLAGS  =
@@ -124,6 +126,14 @@ CFLAGS += -I$(PATH_LIBTAR)/lib/ -I$(PATH_LIBTAR) -I$(PATH_LIBTAR)/compat -I$(PAT
 CSRCS  += $(shell find $(PATH_LIBTAR)/lib/ -maxdepth 1 ! -name "wrapper.c" ! -name "extract.c" -name "*.c")  $(wildcard $(PATH_LIBTAR)/listhash/*.c)
 CFLAGS        += -DMAXPATHLEN=256
 # CFLAGS += -DDEBUG
+
+# yajl
+CFLAGS += -I$(PATH_YAJL)/src/ -I./src
+CSRCS  += $(shell find $(PATH_YAJL)/src/ -maxdepth 1 -name "*.c")
+
+# lua_yajl
+CFLAGS += -I$(PATH_LIBYAJL)/
+CSRCS  += $(shell find $(PATH_LIBYAJL)/ -maxdepth 1 -name "*.c")
 
 # Sources
 CFLAGS += -Isrc

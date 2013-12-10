@@ -198,6 +198,9 @@ int colony_runtime_open (lua_State** stateptr)
   // hsregex
   lua_pushcfunction(L, luaopen_hsregex);
   lua_setfield(L, -2, "hsregex");
+  // yajl
+  lua_pushcfunction(L, luaopen_yajl);
+  lua_setfield(L, -2, "yajl");
 
   for (int i = 0; dir_runtime_lib[i].path != NULL; i++) {
     // printf("lib -> %s\n", dir_runtime_lib[i].path);
