@@ -162,15 +162,15 @@ function colonize (node) {
         // TODO strict
         node.update('(' + node.left.source() + ' == ' + node.right.source() + ')');
       } else if (node.operator == '<<') {
-        node.update('_bit.lshift(' + node.left.source() + ', ' + node.right.source() + ')');
+        node.update('_bit.lshift(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
       } else if (node.operator == '>>') {
-        node.update('_bit.rshift(' + node.left.source() + ', ' + node.right.source() + ')');
+        node.update('_bit.rshift(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
       } else if (node.operator == '>>>') {
-        node.update('_bit.rrotate(' + node.left.source() + ', ' + node.right.source() + ')');
+        node.update('_bit.rrotate(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
       } else if (node.operator == '&') {
-        node.update('_bit.band(' + node.left.source() + ', ' + node.right.source() + ')');
+        node.update('_bit.band(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
       } else if (node.operator == '|') {
-        node.update('_bit.bor(' + node.left.source() + ', ' + node.right.source() + ')');
+        node.update('_bit.bor(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
       } else if (node.operator == 'instanceof') {
         node.update('_instanceof(' + node.left.source() + ', ' + node.right.source() + ')');
       } else if (node.operator == 'in') {
@@ -427,8 +427,8 @@ function colonize (node) {
 
     case 'MemberExpression':
       if (node.parent.type != 'CallExpression' || node.parent.callee != node) {
-        if (!node.computed && node.property.source().match(/^[\w_\$]+$/) && keywords.indexOf(node.property.source()) == -1) {
-          node.update("(" + node.object.source() + ")." + fixIdentifiers(node.property.source()));
+        if (!node.computed && node.property.source().match(/^[\w_]+$/) && keywords.indexOf(node.property.source()) == -1) {
+          node.update("(" + node.object.source() + ")." + node.property.source());
         } else {
           node.update("(" + node.object.source() + ")"
             + '[' + (!node.computed ? JSON.stringify(node.property.source()) : fixIdentifiers(node.property.source())) + ']');
