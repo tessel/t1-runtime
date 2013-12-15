@@ -10,7 +10,7 @@ var fs = require('fs')
  * Colonize
  */
 
-var keywords = ['end', 'do', 'nil', 'error', 'until', 'repeat'];
+var keywords = ['end', 'do', 'nil', 'error', 'until', 'repeat', 'local', 'in'];
 var mask = ['string', 'math', 'print', 'type', 'pairs'];
 
 var joiner = '\n';
@@ -91,6 +91,7 @@ var loops = [];
 
 function colonize (node) {
   // console.error(process.memoryUsage().heapUsed/1024);
+  // console.error(node.type)
 
   switch (node.type) {
     case 'Identifier':
@@ -342,7 +343,7 @@ function colonize (node) {
         node.update('_regexp(' + JSON.stringify(node.value.source) + ', ' + JSON.stringify(String(node.value).replace(/^.*\//, '')) + ')');
       } else if (typeof node.value == 'string') {
         // TODO update
-        node.update('(' + JSON.stringify(node.value).replace(/\\u00/, '\\x') + ')');
+        node.update('(' + JSON.stringify(node.value).replace(/\\u00/g, '\\x').replace(/\*/g, '\\*') + ')');
       } else if (node.parent.type != 'Property') {
         node.update('(' + JSON.stringify(node.value) + ')');
       }
@@ -425,9 +426,9 @@ function colonize (node) {
       break;
 
     case 'MemberExpression':
-      if (node.parent.type != 'CallExpression') {
+      if (node.parent.type != 'CallExpression' || node.parent.callee != node) {
         if (!node.computed && node.property.source().match(/^[\w_\$]+$/) && keywords.indexOf(node.property.source()) == -1) {
-          node.update("(" + node.object.source() + ")." + node.property.source());
+          node.update("(" + node.object.source() + ")." + fixIdentifiers(node.property.source()));
         } else {
           node.update("(" + node.object.source() + ")"
             + '[' + (!node.computed ? JSON.stringify(node.property.source()) : fixIdentifiers(node.property.source())) + ']');
@@ -483,16 +484,17 @@ node.block.source(),
 //    #{if tryStat.stats[-1..][0].type != 'ret-stat' then "return _cont" else ""}
 '    end, function (err)',
 '        _e = err',
-'    end)',
-
+'    end);'
+].concat(node.handlers.length ? [
 // catch clause
 'if _s == false then',
 node.handlers[0].param.source() + ' = _e;' + joiner + node.handlers[0].body.source(),
 
 // break clause.
-'end;',
+'end;'
+] : []).concat([
 node.finalizer ? node.finalizer.source() : ''
-].concat(
+]).concat(
 !getLoops(node).length ? [] : [
 //break
 'if _r == _break then',
@@ -559,9 +561,9 @@ node.finalizer ? node.finalizer.source() : ''
     case 'Program':
       colonizeContext(node.identifiers, node);
       node.update([
-        joiner + "return function (_ENV)",
+        joiner + "return function (_ENV, _module)",
         'local ' + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
-        "local _module = _obj({exports=_obj({})}); local exports, module = _module.exports, _module;",
+        "local exports, module = _module.exports, _module;",
         "",
         node.source(),
         "",
