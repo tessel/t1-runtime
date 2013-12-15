@@ -311,7 +311,7 @@ end
 
 arr_proto.splice = function (ths, i, del, ...)
   local ret = js_arr({})
-  for j=1,del do
+  for j=1,(tonumber(del) or 0) do
     ret:push(ths[i])
     table.remove(ths, i)
     if i == 0 then
@@ -653,6 +653,10 @@ end
 -- Date
 
 global.Date = function (ths)
+  return 0
+end
+
+global.Date.now = function ()
   return 0
 end
 

@@ -442,6 +442,12 @@ local function require_resolve (name, root)
         name = name .. '/' .. (label or 'index.js')
       end
     end
+  else
+    -- todo not do "module/index.js" from "module.js"
+    local p = path_normalize(root .. name)
+    if not fs_exists(p .. '.js') and fs_exists(p .. '/index.js') then
+      name = name .. '/index'
+    end
   end
   if root ~= '' and string.sub(name, -3) ~= '.js' then
     name = name .. '.js'
@@ -466,19 +472,19 @@ local function require_load (p)
 end
 
 colony._normalize = function (p, path_normalize)
-  return p
+  return string.gsub(p, "//", "/")
 end
 
 colony._load = function (p)
   return fs_readfile(p)
 end
 
-colony.run = function (name, root)
+colony.run = function (name, root, parent)
   local p, pfound = require_resolve(name, root)
 
   -- Load the script.
   if colony.cache[p] then
-    return colony.cache[p]
+    return colony.cache[p].exports
   end
   local res = pfound and require_load(p)
   if not pfound or not res then
@@ -498,12 +504,12 @@ colony.run = function (name, root)
     local scriptpath = string.sub(debug.getinfo(n).source, 2)
 
     -- Return the new script.
-    return colony.run(value, path_dirname(scriptpath) .. '/')
+    return colony.run(value, path_dirname(scriptpath) .. '/', colony.cache[scriptpath])
   end
   
-  colony.cache[p] = {} --dummy
-  colony.cache[p] = res()
-  return colony.cache[p]
+  colony.cache[p] = js_obj({exports=js_obj({}),parent=parent}) --dummy
+  res(colony.global, colony.cache[p])
+  return colony.cache[p].exports
 end
 
 -- node-tm

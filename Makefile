@@ -175,10 +175,10 @@ precompile.parallel: $(patsubst builtin/%.js, $(BUILD)/builtin/%.lua, $(wildcard
 	tools/compile_folder $(BUILD)/runtime dir_runtime_lib $(SECT) | $(CC) -c -o $(BUILD)/obj/dir_runtime_lib.o -xc -
 
 $(BUILD)/builtin/%.lua : builtin/%.js
-	cat $^ | tools/compile_js | tools/compile_lua > $@
+	cat $^ | tools/compile_js | tools/compile_lua =$^ > $@
 
 $(BUILD)/runtime/%.lua : lib/%.lua
-	cat $^ | tools/compile_lua > $@
+	cat $^ | tools/compile_lua =$^ > $@
 
 compile:
 	@make -j8 compile.parallel

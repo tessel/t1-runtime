@@ -80,7 +80,7 @@ end
 -- this can cause conflicts with other modules if they utilize the string prototype
 -- (or expect number/booleans to have metatables)
 
-local func_mt, str_mt, nil_mt = {}, {}, {}
+local func_mt, str_mt, nil_mt, num_mt = {}, {}, {}, {}
 
 debug.setmetatable((function () end), func_mt)
 debug.setmetatable(true, {
@@ -88,13 +88,25 @@ debug.setmetatable(true, {
     return js_proto_get(self, bool_proto, key)
   end
 })
-debug.setmetatable(0, {
-  __index=function (self, key)
-    return js_proto_get(self, num_proto, key)
-  end
-})
+debug.setmetatable(0, num_mt)
 debug.setmetatable("", str_mt)
 debug.setmetatable(nil, nil_mt)
+
+--[[
+--  number
+--]]
+
+num_mt.__index=function (self, key)
+  return js_proto_get(self, num_proto, key)
+end
+
+num_mt.__lt = function (op1, op2)
+  return tonumber(op1) < tonumber(op1)
+end
+
+num_mt.__le = function (op1, op2)
+  return tonumber(op1) <= tonumber(op1)
+end
 
 
 --[[
@@ -278,7 +290,7 @@ function js_pairs (arg)
   if type(arg) == 'function' then
     return pairs({})
   else
-    return pairs(arg)
+    return pairs(arg or {})
   end
 end
 

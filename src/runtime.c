@@ -21,8 +21,8 @@ LUALIB_API int luaopen_yajl(lua_State *L);
 
 static int traceback (lua_State *L)
 {
-  if (!lua_isstring(L, 1))  /* 'message' not a string? */
-    return 1;  /* keep it intact */
+  // if (!lua_isstring(L, 1))  /* 'message' not a string? */
+    // return 1;  /* keep it intact */
   lua_getfield(L, LUA_GLOBALSINDEX, "debug");
   if (!lua_istable(L, -1)) {
     lua_pop(L, 1);
@@ -37,19 +37,6 @@ static int traceback (lua_State *L)
   lua_pushinteger(L, 2);  /* skip this function and traceback */
   lua_call(L, 2, 1);  /* call debug.traceback */
   return 1;
-}
-
-static int docall(lua_State *L, int narg, int clear)
-{
-  int status;
-  int base = lua_gettop(L) - narg;  /* function index */
-  lua_pushcfunction(L, traceback);  /* push traceback function */
-  lua_insert(L, base);  /* put it under chunk and args */
-  status = lua_pcall(L, narg, (clear ? 0 : LUA_MULTRET), base);
-  lua_remove(L, base);  /* remove traceback function */
-  /* force a complete garbage collection in case of errors */
-  if (status != 0) lua_gc(L, LUA_GCCOLLECT, 0);
-  return status;
 }
 
 static int getargs(lua_State *L, char **argv, int argc)
@@ -89,11 +76,14 @@ static int handle_script(lua_State *L, const char* script, size_t scriptlen, cha
   lua_setglobal(L, "arg");
   // if (strcmp(argv[0], "-") == 0 && strcmp(argv[n-1], "--") != 0)
   //   fname = NULL;  /* stdin */
+  lua_pushcfunction(L, traceback);
   status = luaL_loadbuffer(L,script, scriptlen, "runtime");
-  if (status == 0)
-    status = docall(L, 1, 0);
-  else
+  if (status == 0) {
+    // status = docall(L, 1, 0);
+    status = lua_pcall(L, 0, 0, lua_gettop(L) - 1);
+  } else {
     lua_pop(L, narg);
+  }
 
   return report(L, status);
 }

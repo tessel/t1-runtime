@@ -12,7 +12,7 @@ end
 -- os.execute("node preprocessor 2> /dev/null");
 
 -- print('Run mem:', collectgarbage('count'))
-local status,err = pcall(function ()
+-- local status,err = pcall(function ()
   local colony = require('colony')
   -- This is temporary until we can do global._arr in extension methods
   _G._colony = colony
@@ -21,10 +21,14 @@ local status,err = pcall(function ()
   for k, v in pairs(_builtin) do
     (function (k, v)
       colony.precache[k] = function ()
-        return _builtin_load(k, v)()
+        ret = _builtin_load(k, v)()
+        setfenv(ret, colony.global)
+        return ret;
       end
       colony.precache[string.sub(k, 2)] = function ()
-        return _builtin_load(k, v)()
+        ret = _builtin_load(k, v)()
+        setfenv(ret, colony.global)
+        return ret;
       end
     end)(k, v)
   end
@@ -53,11 +57,14 @@ local status,err = pcall(function ()
     end
   end
 
+  -- apparently
+  colony.global.process.EventEmitter = colony.precache['events']()(colony.global, js_obj({exports=js_obj({}),parent=parent})).EventEmitter
+
   colony.run(p)
   colony.runEventLoop();
   -- print('End mem:', collectgarbage('count'))
-end)
+-- end)
 
-if not status then
-  print(err)
-end
+-- if not status then
+--   print(err)
+-- end
