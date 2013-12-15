@@ -94,38 +94,44 @@ function ServerRequest (socket) {
   this.socket = socket;
   this.url = null;
 
+  function js_wrap_function (fn) {
+    return function () {
+      return fn.apply(null, [this].concat(arguments));
+    }
+  }
+
   var lastheader;
-  var parser = new http_parser('request', {
-    on_message_begin: function () {
-    },
-    on_url: function (url) {
+  var parser = http_parser.new('request', {
+    onMessageBegin: js_wrap_function(function () {
+    }),
+    onUrl: js_wrap_function(function (url) {
       self.url = url;
-    },
-    on_header_field: function (field) {
+    }),
+    onHeaderField: js_wrap_function(function (field) {
       lastheader = field;
-    },
-    on_header_value: function (value) {
+    }),
+    onHeaderValue: js_wrap_function(function (value) {
       self.headers[lastheader.toLowerCase()] = value;
-    },
-    on_headers_complete: function (method) {
+    }),
+    onHeadersComplete: js_wrap_function(function (method) {
       self.method = method;
       self.emit('request', self);
-    },
-    on_body: function (body) {
+    }),
+    onBody: js_wrap_function(function (body) {
       self.emit('data', body);
-    },
-    on_message_complete: function () {
+    }),
+    onMessageComplete: js_wrap_function(function () {
       self.emit('close');
       self._closed = true;
       // TODO close
-    },
-    on_error: function (err) {
+    }),
+    onError: js_wrap_function(function (err) {
       self.socket.emit('error', err)
-    }
+    })
   })
   this.socket.on('data', function (data) {
     // console.log('received', data.length, data.substr(0, 15));
-    parser.write(data);
+    parser.execute(data, 0, data.length);
   })
 }
 

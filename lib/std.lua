@@ -99,6 +99,20 @@ str_proto.substr = function (str, i, len)
   end
 end
 
+str_proto.substring = function (str, i, j)
+  if i < 0 then
+    i = i - 1
+  end
+  if j < 0 then
+    j = j - 1
+  end
+  if j ~= nil then
+    return string.sub(str, i+1, j)
+  else
+    return string.sub(str, i+1)
+  end
+end
+
 str_proto.slice = function (str, i, len)
   return string.sub(str, i+1, len or -1)
 end
@@ -114,6 +128,11 @@ end
 str_proto.indexOf = function (str, needle)
   local ret = string.find(str, tostring(needle), 1, true) 
   if ret == null then return -1; else return ret - 1; end
+end
+
+str_proto.lastIndexOf = function (str, needle)
+  local ret = string.find(string.reverse(str), tostring(needle), 1, true) 
+  if ret == null then return -1; else return str.length - ret; end
 end
 
 str_proto.toString = function (this)
@@ -173,6 +192,8 @@ end
 obj_proto.toString = function (this)
   if getmetatable(this) and getmetatable(this).proto == arr_proto then
     return '[object Array]'
+  elseif type(this) == 'function' then
+    return '[object Function]'
   else
     return '[object Object]'
   end
@@ -761,13 +782,28 @@ if type(hs) == 'table' then
     return js_arr(ret)
   end
 
-  global.RegExp.prototype.exec = function (this, subj)
+  global.RegExp.prototype.exec = function (regex, subj)
     -- TODO wrong
-    -- local ret = {rex.match('aaaaa', 'a(a)')} -- rex.match(subj, this.pattern)
-    -- if #ret > 1 or ret[0] ~= nil then
-      -- return js_arr(ret)
-    -- end
-    return nil
+    local cre = getmetatable(regex).cre
+    local crestr = getmetatable(regex).crestr
+    if type(cre) ~= 'userdata' then
+      error('Cannot call RegExp::match on non-regex')
+    end
+
+    local data = tostring(subj)
+    local datastr, rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
+    if rc ~= 0 then
+      return nil
+    end
+    local ret = {}
+    for i=0,hs.regex_nsub(cre) do
+      local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
+      -- print('match', i, '=> start:', so, ', end:', eo)
+      table.insert(ret, string.sub(data, so + 1, eo))
+    end
+    local arrret = js_arr(ret)
+    arrret:shift()
+    return arrret
   end
 
   global.RegExp.prototype.test = function (this, subj)

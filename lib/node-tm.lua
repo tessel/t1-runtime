@@ -295,11 +295,11 @@ global.process = js_obj({
 --]]
 
 global:__defineGetter__('____dirname', function (this)
-  return string.gsub(string.sub(debug.getinfo(2).source, 2), "/?[^/]+$", "")
+  return string.gsub(string.sub(debug.getinfo(3).source, 2), "/?[^/]+$", "")
 end)
 
 global:__defineGetter__('____filename', function (this)
-  return string.sub(debug.getinfo(2).source, 2)
+  return string.sub(debug.getinfo(3).source, 2)
 end)
 
 
