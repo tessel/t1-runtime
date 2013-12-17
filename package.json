@@ -20,6 +20,9 @@
     "type": "git",
     "url": "https://github.com/tcr/antfarm.git"
   },
+  "scripts": {
+    "preinstall": "node -e \"process.platform == 'win32' && process.exit(1)\" && cd bin && node-gyp rebuild"
+  },
   "author": "Tim Cameron Ryan",
   "license": "MIT",
   "readmeFilename": "README.md"

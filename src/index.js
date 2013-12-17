@@ -10,7 +10,9 @@ var colonize = require('./colonize');
  * Bytecode
  */
 
-var compile_lua = __dirname + '/../build/Release/compile_lua';
+var compile_lua = process.platform != 'win32'
+  ? __dirname + '/../bin/build/Release/compile_lua'
+  : __dirname + '/../bin/compile_lua_x64.exe';
 
 function toBytecode (lua, next) {
   var bufs = [];
