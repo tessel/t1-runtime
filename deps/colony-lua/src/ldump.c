@@ -17,8 +17,8 @@
 #include "lstate.h"
 #include "lundump.h"
 
-typedef __int16 int16_t;
-typedef unsigned __int16 uint16_t;
+typedef __int16 __int16;
+typedef unsigned __int16 u__int16;
 
 typedef struct {
  lua_State* L;
@@ -82,7 +82,7 @@ static void DumpIntWithSize(int x, int sizeof_int, DumpState* D)
   } break;
   case 2: {
    if (x>0x7FFF || x<(-0x8000)) D->status=LUA_ERR_CC_INTOVERFLOW; 
-   int16_t y=(int16_t)x;
+   __int16 y=(__int16)x;
    MaybeByteSwap((char*)&y,2,D);
    DumpVar(y,D);
   } break;
@@ -112,7 +112,7 @@ static void DumpSize(uint32_t x, DumpState* D)
   } break;
   case 2: {
    if (x>0xFFFF) D->status=LUA_ERR_CC_INTOVERFLOW;
-   uint16_t y=(uint16_t)x;
+   unsigned __int16 y=(unsigned __int16)x;
    MaybeByteSwap((char*)&y,2,D);
    DumpVar(y,D);
   } break;
