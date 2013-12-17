@@ -120,7 +120,7 @@ static void DumpInt(int x, DumpState* D)
 static void DumpSize(uint32_t x, DumpState* D)
 {
   uint16_t y16;
-  uint32_t y16;
+  uint32_t y32;
  /* dump unsigned integer */
  switch(D->target.sizeof_strsize_t) {
   case 1: {
