@@ -21,7 +21,7 @@
     "url": "https://github.com/tcr/antfarm.git"
   },
   "scripts": {
-    "preinstall": "node -e \"process.platform == 'win32' && process.exit(1)\" && cd bin && node-gyp rebuild"
+    "preinstall": "(node ./bin/iswindows.js && cd bin && node-gyp rebuild) || true"
   },
   "author": "Tim Cameron Ryan",
   "license": "MIT",
