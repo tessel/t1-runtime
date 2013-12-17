@@ -4,114 +4,43 @@ var fs = require('fs')
   , falafel = require('falafel')
   , colors = require('colors')
   , path = require('path')
-  , mdeps = require('module-deps')
-  , JSONStream = require('JSONStream')
   , optimist = require('optimist');
 
 var colony = require('./');
 
 var args = optimist
-  .usage('Compile JavaScript to Lua.\nUsage: $0 file1 [file2 file3...]')
-  .alias('b', 'bundle').boolean('b').describe('b', 'Concatenate source files.')
-  .alias('B', 'bundle-colony').boolean('B').describe('B', 'Concatenate library and source files.')
-  .alias('c', 'compile').boolean('c').describe('c', 'Compile code to lua and output.')
-  .alias('l', 'library').boolean('l').describe('l', 'Output the colony library.')
-  .alias('e', 'evalsource').describe('e', 'Evaluate a line of code.')
-  .alias('m', 'minify').boolean('m').describe('m', 'Minify output.');
+  .usage('Compile JavaScript to Lua.\nUsage: $0 file.js')
+  .alias('e', 'evalsource').describe('e', 'Compile a line of code.')
+  .alias('m', 'minify').boolean('m').describe('m', 'Compile code to bytecode.');
 
 function cli () {
   var argv = args.argv;
 
-  var flagconcat = argv.b || argv.B || !argv.c;
-  var evalsource = argv.e;
+  var source = argv.e;
 
-  // List out just the colony lib.
-  if (argv.l) {
-    fs.createReadStream(path.join(__dirname, '../lib/colony.lua')).pipe(process.stdout);
+  // Compile file.
+  if (!source) {
+    args.demand(1).argv;
 
-  } else {
-    // Run file.
-    if (!flagconcat) {
-      args.demand(1).argv;
-
-      try {
-        var file = argv._[0];
-        if (!fs.existsSync(file) && fs.existsSync(file + '.js')) {
-          file = file + '.js';
-        }
-        var src = fs.readFileSync(file, 'utf-8');
-        var luacode = colony.colonize(src);
-      } catch (e) {
-        console.error(String(e.stack).red);
-        process.exit(100);
+    try {
+      var file = argv._[0];
+      if (!fs.existsSync(file) && fs.existsSync(file + '.js')) {
+        file = file + '.js';
       }
-
-      cli_run(luacode);
-
-    // Evaluate string.
-    } else if (evalsource) {
-
-      colony.bundleDependencies([
-        {"id": "/example.js","source":evalsource,"entry":true,"deps":{}}
-      ], {
-        inject: {
-          events: null,
-          net: null,
-          dgram: null,
-          util: null,
-          buffer: null,
-          fs: null,
-          stream: null,
-          path: null,
-          child_process: null,
-          repl: null
-        }
-      }, cli_run);
-
-    // Bundle code.
-    } else {
-      args.demand(1).argv;
-
-      // List of filenames or streams
-      var srcs = argv._.map(function (name) {
-        if (name == '-') {
-          return process.stdin;
-        }
-        name = path.join(process.cwd(), name);
-        if (!fs.existsSync(name)) {
-          if (!fs.existsSync(name + '.js')) {
-            throw new Error('File doesn\'t exist: ' + name);
-          }
-          name = name + '.js';
-        }
-        return name;
-      });
-
-      colony.bundleFiles(srcs, {
-        minify: argv.m,
-        bundleLib: argv.B,
-        inject: {
-          events: null,
-          net: null,
-          dgram: null,
-          util: null,
-          buffer: null,
-          fs: null,
-          stream: null,
-          path: null,
-          child_process: null,
-          repl: null
-        }
-      }, cli_run);
+      source = fs.readFileSync(file, 'utf-8');
+    } catch (e) {
+      console.error(String(e.stack).red);
+      process.exit(100);
     }
   }
-}
 
-function cli_run (luacode) {
-  if (args.argv.c) {
-    console.log(luacode);
+  var luacode = colony.colonize(source);
+  if (argv.m) {
+    colony.toBytecode(luacode, function (err, bin) {
+      process.stdout.write(bin);
+    })
   } else {
-    colony.runlua(luacode);
+    console.log(luacode);
   }
 }
 
