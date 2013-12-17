@@ -6,9 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define BUF_SIZE 1024
 
-static int base64_write(lua_State* L, unsigned char* str, size_t len, 
-        struct luaL_Buffer *buf)
+static int base64_write(lua_State* L, unsigned char* str, size_t len, struct luaL_Buffer *buf)
 {
     unsigned int idx;
     for (idx=0; idx<len; idx++){
@@ -23,12 +23,17 @@ static int base64_write(lua_State* L, unsigned char* str, size_t len,
 
 int main (int argc, char *argv[])
 {
-    #define BUF_SIZE 1024
     char buffer[BUF_SIZE];
     size_t contentSize = 1; // includes NULL
+    char *content;
+    char *old;
+    lua_State *L;
+    int stack_sz, res;
+    luaL_Buffer buf;
+
     /* Preallocate space.  We could just allocate one char here, 
     but that wouldn't be efficient. */
-    char *content = malloc(sizeof(char) * BUF_SIZE);
+    content = malloc(sizeof(char) * BUF_SIZE);
     if(content == NULL)
     {
         perror("Failed to allocate content");
@@ -37,7 +42,7 @@ int main (int argc, char *argv[])
     content[0] = '\0'; // make null-terminated
     while(fgets(buffer, BUF_SIZE, stdin))
     {
-        char *old = content;
+        old = content;
         contentSize += strlen(buffer);
         content = realloc(content, contentSize);
         if(content == NULL)
@@ -56,11 +61,7 @@ int main (int argc, char *argv[])
         exit(3);
     }
 
-    lua_State *L = lua_open();  /* create state */
-    int stack_sz;
-    int res;
-    luaL_Buffer buf;
-
+    L = lua_open();  /* create state */
     luaL_buffinit(L, &buf);
 
     // ** test 1 - works as expected
