@@ -17,9 +17,6 @@
 #include "lstate.h"
 #include "lundump.h"
 
-typedef __int16 __int16;
-typedef unsigned __int16 u__int16;
-
 typedef struct {
  lua_State* L;
  lua_Writer writer;
