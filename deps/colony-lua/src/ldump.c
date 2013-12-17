@@ -79,7 +79,7 @@ static void DumpIntWithSize(int x, int sizeof_int, DumpState* D)
   } break;
   case 2: {
    if (x>0x7FFF || x<(-0x8000)) D->status=LUA_ERR_CC_INTOVERFLOW; 
-   __int16 y = (__int16) x;
+   __int16 y = x;
    MaybeByteSwap((char*)&y,2,D);
    DumpVar(y,D);
   } break;
@@ -109,7 +109,7 @@ static void DumpSize(uint32_t x, DumpState* D)
   } break;
   case 2: {
    if (x>0xFFFF) D->status=LUA_ERR_CC_INTOVERFLOW;
-   unsigned __int16 y = (unsigned __int16) x;
+   unsigned __int16 y = x;
    MaybeByteSwap((char*)&y,2,D);
    DumpVar(y,D);
   } break;
