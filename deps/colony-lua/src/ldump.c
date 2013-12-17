@@ -187,9 +187,9 @@ static void DumpNumber(lua_Number x, DumpState* D)
 
 static void DumpCode(const Proto *f, DumpState* D)
 {
- DumpInt(f->sizecode,D);
  char buf[10];
  int i;
+ DumpInt(f->sizecode,D);
  Align4(D);
  for (i=0; i<f->sizecode; i++)
  {
