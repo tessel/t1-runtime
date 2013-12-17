@@ -17,14 +17,14 @@
 #include "lstate.h"
 #include "lundump.h"
 
-#if (_MSC_VER < 1300)
+#if defined(_MSC_VER) && (_MSC_VER < 1300)
    typedef signed char       int8_t;
    typedef signed short      int16_t;
    typedef signed int        int32_t;
    typedef unsigned char     uint8_t;
    typedef unsigned short    uint16_t;
    typedef unsigned int      uint32_t;
-#elif (_MSC_VER >= 1300)
+#elif defined(_MSC_VER) && (_MSC_VER >= 1300)
    typedef signed __int8     int8_t;
    typedef signed __int16    int16_t;
    typedef signed __int32    int32_t;
