@@ -17,6 +17,22 @@
 #include "lstate.h"
 #include "lundump.h"
 
+#if (_MSC_VER < 1300)
+   typedef signed char       int8_t;
+   typedef signed short      int16_t;
+   typedef signed int        int32_t;
+   typedef unsigned char     uint8_t;
+   typedef unsigned short    uint16_t;
+   typedef unsigned int      uint32_t;
+#elif (_MSC_VER >= 1300)
+   typedef signed __int8     int8_t;
+   typedef signed __int16    int16_t;
+   typedef signed __int32    int32_t;
+   typedef unsigned __int8   uint8_t;
+   typedef unsigned __int16  uint16_t;
+   typedef unsigned __int32  uint32_t;
+#endif
+
 typedef struct {
  lua_State* L;
  lua_Writer writer;
@@ -71,6 +87,8 @@ static void MaybeByteSwap(char *number, size_t numbersize, DumpState *D)
 
 static void DumpIntWithSize(int x, int sizeof_int, DumpState* D)
 {
+  int16_t y16;
+  int32_t y32;
  /* dump signed integer */
  switch(sizeof_int) {
   case 1: {
@@ -79,16 +97,16 @@ static void DumpIntWithSize(int x, int sizeof_int, DumpState* D)
   } break;
   case 2: {
    if (x>0x7FFF || x<(-0x8000)) D->status=LUA_ERR_CC_INTOVERFLOW; 
-   __int16 y = x;
-   MaybeByteSwap((char*)&y,2,D);
-   DumpVar(y,D);
+   y16=(int16_t)x;
+   MaybeByteSwap((char*)&y16,2,D);
+   DumpVar(y16,D);
   } break;
   case 4: {
    /* Need to reduce bounds by 1 to avoid messing 32-bit compilers up */
    if (x>0x7FFFFFFE || x<(-0x7FFFFFFF)) D->status=LUA_ERR_CC_INTOVERFLOW; 
-   int32_t y=(int32_t)x;
-   MaybeByteSwap((char*)&y,4,D);
-   DumpVar(y,D);
+   y32=(int32_t)x;
+   MaybeByteSwap((char*)&y32,4,D);
+   DumpVar(y32,D);
   } break;
   default: lua_assert(0);
  }
@@ -101,6 +119,8 @@ static void DumpInt(int x, DumpState* D)
 
 static void DumpSize(uint32_t x, DumpState* D)
 {
+  uint16_t y16;
+  uint32_t y16;
  /* dump unsigned integer */
  switch(D->target.sizeof_strsize_t) {
   case 1: {
@@ -109,16 +129,16 @@ static void DumpSize(uint32_t x, DumpState* D)
   } break;
   case 2: {
    if (x>0xFFFF) D->status=LUA_ERR_CC_INTOVERFLOW;
-   unsigned __int16 y = x;
-   MaybeByteSwap((char*)&y,2,D);
-   DumpVar(y,D);
+   y16=(uint16_t)x;
+   MaybeByteSwap((char*)&y16,2,D);
+   DumpVar(y16,D);
   } break;
   case 4: {
    /* Reduce bounds to avoid messing 32-bit compilers up */
    if (x>0xFFFFFFFE) D->status=LUA_ERR_CC_INTOVERFLOW;
-   uint32_t y=x;
-   MaybeByteSwap((char*)&y,4,D);
-   DumpVar(y,D);
+   y32=x;
+   MaybeByteSwap((char*)&y32,4,D);
+   DumpVar(y32,D);
   } break;
   default: lua_assert(0);
  }
