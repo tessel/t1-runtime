@@ -278,7 +278,8 @@ global.process = js_obj({
   end,
   platform = "colony",
   versions = js_obj({
-    node = "0.10.0"
+    node = "0.10.0",
+    tessel_board = _G._tessel_version or -1
   }),
   argv = js_arr({}),
   env = js_obj({}),
