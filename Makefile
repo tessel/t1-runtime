@@ -2,7 +2,7 @@
 LUAJIT     =
 ARM        =
 CLI        =
-OPTIM      =0
+OPTIM      =fast
 
 TM_NET     =
 TM_FS      =
