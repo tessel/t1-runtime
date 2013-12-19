@@ -49,7 +49,7 @@ end
     -- This is temporary until we have proper compilation in C.
     -- Compile JS script before running.
     colony._load = function (file)
-      os.execute('colony -c ' .. file .. ' > /tmp/colonyunique')
+      os.execute('colony ' .. file .. ' > /tmp/colonyunique')
       local file = io.open('/tmp/colonyunique', 'r')
       local output = file:read('*all')
       file:close()
