@@ -417,10 +417,38 @@ arr_proto.filter = function (this, fn)
   return a
 end
 
-arr_proto.reduce = function (ths, fn)
-  local a = js_arr({})
-  -- TODO
-  return a
+arr_proto.reduce = function (this, callback, opt_initialValue)
+  if this == nil then
+    error('Array.prototype.reduce called on null or undefined')
+  end
+  if type(callback) ~= 'function' then
+    error(callback + ' is not a function')
+  end
+  local index = 0
+  local value = nil
+  local length = bit.bor(this.length, 0)
+  local isValueSet = false
+
+  if opt_initialValue ~= nil then
+    value = opt_initialValue
+    isValueSet = true
+  end
+
+  while length > index do
+    if this:hasOwnProperty(index) then
+      if isValueSet then
+        value = callback(global, value, this[index], index, this)
+      else
+        value = this[index]
+        isValueSet = true
+      end
+    end
+    index = index + 1
+  end
+  if not isValueSet then
+    error('Reduce of empty array with no initial value')
+  end
+  return value
 end
 
 arr_proto.forEach = function (ths, fn)
