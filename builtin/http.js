@@ -1,6 +1,7 @@
 var tm = process.binding('tm');
 var http_parser = process.binding('http_parser');
 
+var url = require('url');
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var net = require('net');
@@ -179,12 +180,16 @@ HTTPIncomingResponse.prototype.setEncoding = function () {
  */
 
 function HTTPOutgoingRequest (port, host, path, method) {
-  // var ipl = tm.hostname_lookup(host);
-  // if (ipl == 0) {
-    // throw new Error('Could not lookup hostname.');
-  // }
-  // var ip = [(ipl >> 0) & 0xFF, (ipl >> 8) & 0xFF, (ipl >> 16) & 0xFF, (ipl >> 24) & 0xFF].join('.');
-  var ip = host;
+  if (!host.match(/^[0-9.]+$/)) {
+    var ipl = tm.hostname_lookup(host);
+    if (ipl == 0) {
+      throw new Error('Could not lookup hostname.');
+    }
+    var ip = [(ipl >> 0) & 0xFF, (ipl >> 8) & 0xFF, (ipl >> 16) & 0xFF, (ipl >> 24) & 0xFF].join('.');
+  } else {
+    var ip = host;
+  }
+
   if (path[0] != '/') {
     path = '/' + path;
   }
@@ -215,8 +220,8 @@ function HTTPOutgoingRequest (port, host, path, method) {
     onHeaderValue: js_wrap_function(function (value) {
       response.headers[lastheader.toLowerCase()] = value;
     }),
-    onHeadersComplete: js_wrap_function(function () {
-      console.log(response);
+    onHeadersComplete: js_wrap_function(function (obj) {
+      response.statusCode = obj.status_code
       self.emit('response', response);
     }),
     onBody: js_wrap_function(function (body) {
@@ -251,6 +256,17 @@ HTTPOutgoingRequest.prototype.end = function () {
 exports.request = function (opts, onresponse) {
   var req = new HTTPOutgoingRequest(opts.port || 80, opts.hostname, opts.path || '', opts.method || 'GET');
   onresponse && req.on('response', onresponse);
+  return req;
+};
+
+exports.get = function (opts, onresponse) {
+  if (typeof opts == 'string') {
+    opts = url.parse(opts);
+  }
+  opts.method = 'GET';
+
+  var req = exports.request(opts, onresponse);
+  req.end();
   return req;
 };
 
