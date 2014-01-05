@@ -328,6 +328,9 @@ function js_wrap_module (module)
 end
 
 global.process.binding = function (self, key)
+  if key == 'lua' then
+    return js_wrap_module(_G)
+  end
   return js_wrap_module(require(key))
 end
 
