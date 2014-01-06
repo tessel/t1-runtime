@@ -13,7 +13,7 @@ var fs = require('fs')
 var keywords = ['end', 'do', 'nil', 'error', 'until', 'repeat', 'local', 'in'];
 var mask = ['string', 'math', 'print', 'type', 'pairs'];
 
-var joiner = '\n';
+var joiner = '\n', wrapmodule = true;
 
 function fixIdentifiers (str) {
   if (keywords.indexOf(str) > -1) {
@@ -560,16 +560,18 @@ node.finalizer ? node.finalizer.source() : ''
 
     case 'Program':
       colonizeContext(node.identifiers, node);
-      node.update([
-        joiner + "return function (_ENV, _module)",
-        'local ' + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
-        "local exports, module = _module.exports, _module;",
-        "",
-        node.source(),
-        "",
-        "return _module.exports;",
-        "end "
-      ].join(joiner));
+      if (wrapmodule) {
+        node.update([
+          joiner + "return function (_ENV, _module)",
+          'local ' + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
+          "local exports, module = _module.exports, _module;",
+          "",
+          node.source(),
+          "",
+          "return _module.exports;",
+          "end "
+        ].join(joiner));
+      }
       break;
 
     default:
@@ -577,7 +579,8 @@ node.finalizer ? node.finalizer.source() : ''
   }
 }
 
-module.exports = function (src) {
+module.exports = function (src, _wrapmodule) {
+  wrapmodule = _wrapmodule == null || _wrapmodule ? true : false;
   src = src.replace(/^#.*\n/, '');
   return String(falafel(src, colonize))
     // inline lingering comments are converted to lua comments
