@@ -58,7 +58,7 @@ end
   end
 
   -- apparently
-  colony.global.process.EventEmitter = colony.precache['events']()(colony.global, js_obj({exports=js_obj({}),parent=parent})).EventEmitter
+  -- colony.global.process.EventEmitter = colony.precache['events']()(colony.global, js_obj({exports=js_obj({}),parent=parent})).EventEmitter
 
   colony.run(p)
   colony.runEventLoop();

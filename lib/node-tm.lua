@@ -39,14 +39,29 @@ local global = colony.global
 
 local _eventQueue = {}
 
+_G._colony_ipc = {}
+
 colony.runEventLoop = function ()
-  while #_eventQueue > 0 do
+  while #_eventQueue > 0 or #_colony_ipc > 0 do
     local queue = _eventQueue
     _eventQueue = {}
     for i=1,#queue do
       local val = queue[i]()
       if val ~= 0 then
         table.insert(_eventQueue, queue[i])
+      end
+    end
+
+    local ipc = _colony_ipc
+    _G._colony_ipc = {}
+    for i=1,#ipc do
+      if ipc[i][1] == 'M' then
+        local jsondata = nil
+        if pcall(function ()
+          jsondata = colony.global.JSON:parse(ipc[i][2])
+        end) then
+          colony.global.process:emit('message', jsondata);
+        end
       end
     end
   end
@@ -267,28 +282,94 @@ global.Buffer = Buffer
 
 
 --[[
+--|| EventEmitter
+--]]
+
+local EventEmitter = function (this) end
+
+((EventEmitter).prototype).listeners = (function (this, type)
+if true then return (js_truthy((this).hasOwnProperty:call((this)._events or (function () local _r = js_obj({
+  }); (this)._events = _r; return _r; end)(), type)) and {((this)._events)[type]} or {(function () local _r = js_arr({}); ((this)._events)[type] = _r; return _r; end)()})[1]; end;
+end);
+
+((EventEmitter).prototype).on = (function () local _r = (function (this, type, f)
+if js_truthy(((this)._maxListeners ~= (0)) and (this:listeners(type):push(f) > ((this)._maxListeners or (10)))) then
+if console and console:warn(((("Possible EventEmitter memory leak detected. ") + (((this)._events)[type]).length) + (" listeners added. Use emitter.setMaxListeners() to increase limit."))) then end;
+end;
+if this:emit(("newListener"), type, f) then end;
+if true then return this; end;
+end); ((EventEmitter).prototype).addListener = _r; return _r; end)();
+
+((EventEmitter).prototype).once = (function (this, type, f)
+local g = g;
+if this:on(type, (function (this, ...)
+local g = debug.getinfo(1, 'f').func;
+local arguments = js_arguments(...);
+if f:call(this, (arguments)[(0)], (arguments)[(1)], (arguments)[(2)]) then end;
+if this:removeListener(type, g)
+     then end;
+end)) then end;
+end);
+
+((EventEmitter).prototype).removeListener = (function (this, type, f)
+local i = i;
+i = nil;
+if ((function () local _r = this:listeners(type):indexOf(f); i = _r; return _r; end)() ~= (-(1))) and this:listeners(type):splice(i, (1)) then end;
+if true then return this; end;
+end);
+
+((EventEmitter).prototype).removeAllListeners = (function (this, type)
+local k = k;
+for k in js_pairs((this)._events) do
+if (not js_truthy(type)) or (type == k) and ((this)._events)[k]:splice((0), (((this)._events)[k]).length) then end;
+end;
+if true then return this; end;
+end);
+
+((EventEmitter).prototype).emit = (function (this, ...)
+local arguments = js_arguments(...);
+local type = ...;
+local args, i, fns = args, i, fns;
+args = ((global.Array).prototype).slice:call(arguments, (1));
+i = (0);
+fns = this:listeners(type):slice();
+while (i < (fns).length) do
+
+if (fns)[i]:call(this, (args)[(0)], (args)[(1)], (args)[(2)]) then end;
+
+(function () local _r = i; i = _r + 1; return _r end)()
+end;
+if true then return (fns).length; end;
+end);
+
+((EventEmitter).prototype).setMaxListeners = (function (this, maxListeners)
+(this)._maxListeners = maxListeners;
+end);
+
+
+--[[
 --|| process
 --]]
 
-global.process = js_obj({
-  memoryUsage = function (ths)
-    return js_obj({
-      heapUsed=collectgarbage('count')*1024
-    });
-  end,
-  platform = "colony",
-  versions = js_obj({
-    node = "0.10.0",
-    tessel_board = _G._tessel_version or -1
-  }),
-  argv = js_arr({}),
-  env = js_obj({}),
-  stdin = js_obj({
-    resume = function () end,
-    setEncoding = function () end
-  }),
-  stdout = js_obj({})
+global.process = js_new(EventEmitter)
+global.process.memoryUsage = function (ths)
+  return js_obj({
+    heapUsed=collectgarbage('count')*1024
+  });
+end
+global.process.platform = "colony"
+global.process.versions = js_obj({
+  node = "0.10.0",
+  tessel_board = _G._tessel_version or -1
 })
+global.process.EventEmitter = EventEmitter
+global.process.argv = js_arr({})
+global.process.env = js_obj({})
+global.process.stdin = js_obj({
+  resume = function () end,
+  setEncoding = function () end
+})
+global.process.stdout = js_obj({})
 
 
 --[[

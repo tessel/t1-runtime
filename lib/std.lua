@@ -852,12 +852,12 @@ end
 --]]
 
 global.JSON = js_obj({
-  parse = function (this, arg)
-    return js_obj({})
+  parse = function (ths, arg)
+    return yajl.to_value(arg)
   end,
-  stringify = function (this, arg)
-    return "{}"
-  end
+  stringify = function (ths, arg)
+    return yajl.to_string(arg)
+  end,
 })
 
 
@@ -887,15 +887,6 @@ end
 
 global.encodeURIComponent = encodeURIComponent
 global.decodeURIComponent = decodeURIComponent
-
-global.JSON = js_obj({
-  parse = function (ths, arg)
-    return yajl.to_value(arg)
-  end,
-  stringify = function (ths, arg)
-    return yajl.to_string(arg)
-  end,
-})
 
 
 --[[
