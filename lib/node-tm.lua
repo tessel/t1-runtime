@@ -52,7 +52,7 @@ colony.runEventLoop = function ()
       end
     end
 
-    local ipc = _colony_ipc
+    local ipc = _G._colony_ipc
     _G._colony_ipc = {}
     for i=1,#ipc do
       if ipc[i][1] == 'M' then
