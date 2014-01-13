@@ -5,7 +5,7 @@ exports.resolve = function (name, abs) {
 	try {
 		require(precompiled + 'package.json');
 	} catch (e) {
-		return abs ? path.join(__dirname + '/../node_modules', compiled + name) : compiled + name;
+		return compiled + name;
 	}
 	return abs ? path.join(__dirname + '/../node_modules', precompiled + name) : precompiled + name;
 };
