@@ -1,6 +1,9 @@
 {
   "name": "colony",
-  "version": "0.3.1",
+  "version": "0.3.2",
+  "optionalDependencies": {
+    "colony-bin-win32-x64": "0.3.2"
+  },
   "private": "true",
   "description": "Colony compiles JavaScript to Lua 5.2 source code, using a small runtime library.",
   "main": "./src/index.js",
@@ -17,7 +20,7 @@
     "falafel": "~0.3.1"
   },
   "scripts": {
-    "preinstall": "(node ./bin/iswindows.js && cd bin && node-gyp rebuild) || exit 0"
+    "preinstall": "(node ./bin/blacklist.js win32-x64 && cd bin && node-gyp rebuild) || exit 0"
   },
   "author": "Tim Cameron Ryan",
   "license": "MIT",
