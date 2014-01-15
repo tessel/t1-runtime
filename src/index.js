@@ -10,7 +10,7 @@ var colonize = require('./colonize');
  * Bytecode
  */
 
-var compile_lua = path.dirname(require('bindings-shyp')({ path: true })) + '/compile_lua' + (process.platform == 'win32' ? '.exe' : '');
+var compile_lua = path.dirname(require('bindings-shyp')({ binding: 'binding', path: true })) + '/compile_lua' + (process.platform == 'win32' ? '.exe' : '');
 
 function toBytecode (lua, f, next) {
   next = typeof f == 'function' ? f : next;

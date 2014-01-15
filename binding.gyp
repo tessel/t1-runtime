@@ -1,7 +1,10 @@
 {
   "targets": [
     {
-      "target_name": "bindings"
+      "target_name": "bindings",
+      "sources": [
+        'bin/hello.cc'
+      ]
     },
     {
       'target_name': 'compile_lua',
