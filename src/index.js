@@ -16,6 +16,10 @@ function toBytecode (lua, f, next) {
   next = typeof f == 'function' ? f : next;
   f = typeof f == 'string' ? f : 'usercode.js';
 
+  // Disabled until this works
+  setImmediate(next, lua, 0);
+  return;
+
   if (!fs.existsSync(compile_lua)) {
     console.error('WARNING: Bytecode compiler was not compiled for module "colony". Check that node-gyp is installed properly on your system and reinstall. Skipping for now...');
     setImmediate(next, lua, 0);
