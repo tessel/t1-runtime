@@ -7,11 +7,11 @@
       'target_name': 'compile_lua',
       'type': 'executable',
       'sources': [
-        'compile_lua.c'
+        'bin/compile_lua.c'
       ],
       'dependencies': [
-        'colony-lua/lua.gyp:liblua',
-        'colony-lua/lua.gyp:lua'
+        'bin/colony-lua/lua.gyp:liblua',
+        'bin/colony-lua/lua.gyp:lua'
       ]
     }
   ]
