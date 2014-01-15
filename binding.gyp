@@ -1,7 +1,7 @@
 {
   "targets": [
     {
-      "target_name": "binding"
+      "target_name": "bindings"
     },
     {
       'target_name': 'compile_lua',

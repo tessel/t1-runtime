@@ -2,8 +2,8 @@
   "name": "colony",
   "version": "0.3.2",
   "optionalDependencies": {
-    "colony-bin-win32-x64": "0.3.2",
-    "colony-bin-win32-ia32": "0.3.2"
+    "colony-shyp-win32-x64": "0.3.2",
+    "colony-shyp-win32-ia32": "0.3.2"
   },
   "private": "true",
   "description": "Colony compiles JavaScript to Lua 5.2 source code, using a small runtime library.",
@@ -18,10 +18,11 @@
     "colors": "~0.6.1",
     "optimist": "~0.5.2",
     "JSONStream": "~0.6.4",
-    "falafel": "~0.3.1"
+    "falafel": "~0.3.1",
+    "bindings-shyp": "~0.2.0"
   },
   "scripts": {
-    "preinstall": "(node ./bin/blacklist.js win32-x64 win32-ia32 && cd bin && node-gyp rebuild) || exit 0"
+    "preinstall": "node ./shyp-blacklist.js win32-x64 win32-ia32 || node-gyp rebuild"
   },
   "author": "Tim Cameron Ryan",
   "license": "MIT",
