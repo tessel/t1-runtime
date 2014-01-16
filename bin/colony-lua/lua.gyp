@@ -7,6 +7,7 @@
         'defines': [ 'DEBUG', '_DEBUG' ],
         'msvs_settings': {
           'VCCLCompilerTool': {
+            'CompileAs': 2,
             'RuntimeLibrary': 1, # static debug
           },
         },
@@ -15,6 +16,7 @@
         'defines': [ 'NDEBUG' ],
         'msvs_settings': {
           'VCCLCompilerTool': {
+            'CompileAs': 2,
             'RuntimeLibrary': 0, # static release
           },
         },
