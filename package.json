@@ -23,7 +23,7 @@
     "bindings-shyp": "~0.2.0"
   },
   "scripts": {
-    "preinstall": "node ./shyp-blacklist.js win32-x64 win32-ia32 darwin-x64 || node-gyp rebuild"
+    "install": "node ./shyp-blacklist.js win32-x64 win32-ia32 darwin-x64 || node-gyp rebuild"
   },
   "author": "Tim Cameron Ryan",
   "license": "MIT",
