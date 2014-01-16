@@ -1,6 +1,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+#include <lua.hpp>
 // #include <luajit.h>
 
 #include <stdlib.h>
