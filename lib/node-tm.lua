@@ -379,7 +379,9 @@ global.process.exit = function (this, code)
     global.process._exited = true
     global.process:emit('exit', code)
   end
-  os.exit(tonumber(code))
+
+  local exitfn = _G._exit or os.exit
+  exitfn(tonumber(code))
 end
 
 
