@@ -110,6 +110,8 @@ function colonize (node) {
           node.right.update('_bit.bor(' + node.left.source() + ', ' + node.right.source() + ')');
         } else if (node.operator == '&=') {
           node.right.update('_bit.band(' + node.left.source() + ', ' + node.right.source() + ')');
+        } else if (node.operator == '^=') {
+          node.right.update('_bit.bxor(' + node.left.source() + ', ' + node.right.source() + ')');
         } else if (node.operator == '>>=') {
           node.right.update('_bit.rshift(' + node.left.source() + ', ' + node.right.source() + ')');
         } else if (node.operator == '<<=') {
@@ -169,6 +171,8 @@ function colonize (node) {
         node.update('_bit.rrotate(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
       } else if (node.operator == '&') {
         node.update('_bit.band(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
+      } else if (node.operator == '^') {
+        node.update('_bit.bxor(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
       } else if (node.operator == '|') {
         node.update('_bit.bor(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
       } else if (node.operator == 'instanceof') {
