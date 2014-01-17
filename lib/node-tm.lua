@@ -66,7 +66,7 @@ colony.runEventLoop = function ()
     end
   end
 
-  colony.global.process:emit('exit', 0)
+  colony.global.process:exit(0)
   -- once more for the gipper
   -- TODO actually exit
 end
@@ -374,8 +374,12 @@ global.process.stdin = js_obj({
   setEncoding = function () end
 })
 global.process.stdout = js_obj({})
-global.process.exit = function ()
-  -- TODO
+global.process.exit = function (this, code)
+  if not global.process._exited then
+    global.process._exited = true
+    global.process:emit('exit', code)
+  end
+  os.exit(tonumber(code))
 end
 
 
