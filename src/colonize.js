@@ -10,7 +10,7 @@ var fs = require('fs')
  * Colonize
  */
 
-var keywords = ['end', 'do', 'nil', 'error', 'until', 'repeat', 'local', 'in'];
+var keywords = ['end', 'do', 'nil', 'error', 'until', 'repeat', 'local', 'in', 'not'];
 var mask = ['string', 'math', 'print', 'type', 'pairs'];
 
 var joiner = '\n', wrapmodule = true;
