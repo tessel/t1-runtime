@@ -250,7 +250,7 @@ str_mt.proto = str_proto
 --]]
 
 function array_getter_length (arr)
-  if arr[0] then return #arr + 1 end
+  if arr[0] ~= nil then return #arr + 1 end
   return #arr
 end
 
