@@ -11,6 +11,8 @@ Stream.prototype.pipe = function (target) {
   this.on('data', function (data) {
     target.write(data);
   })
+  return target;
 }
 
-exports.Stream = Stream;
+module.exports = Stream;
+Stream.Stream = Stream;

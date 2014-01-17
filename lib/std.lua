@@ -481,6 +481,12 @@ end
 Globals
 ]]--
 
+-- Boolean
+
+global.Boolean = function (ths, n) 
+  return not not n
+end
+
 -- toString
 
 -- Number
