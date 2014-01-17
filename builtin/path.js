@@ -62,12 +62,12 @@ function normalizeArray(parts, allowAboveRoot) {
 if (isWindows) {
   // Regex to split a windows path into three parts: [*, device, slash,
   // tail] windows-only
-  var splitDeviceRe = /^$/;
-      // /^([a-zA-Z]:|[\\\/]{2}[^\\\/]+[\\\/]+[^\\\/]+)?([\\\/])?([\s\S]*?)$/;
+  var splitDeviceRe =
+      /^([a-zA-Z]:|[\\\/]{2}[^\\\/]+[\\\/]+[^\\\/]+)?([\\\/])?([\s\S]*?)$/;
 
   // Regex to split the tail part of the above into [*, dir, basename, ext]
-  var splitTailRe = /^$/;
-      // /^([\s\S]*?)((?:\.{1,2}|[^\\\/]+?|)(\.[^.\/\\]*|))(?:[\\\/]*)$/;
+  var splitTailRe =
+      /^([\s\S]*?)((?:\.{1,2}|[^\\\/]+?|)(\.[^.\/\\]*|))(?:[\\\/]*)$/;
 
   // Function to split a filename into [root, dir, basename, ext]
   // windows version
@@ -311,8 +311,8 @@ if (isWindows) {
 
   // Split a filename into [root, dir, basename, ext], unix version
   // 'root' is just a slash, or nothing.
-  var splitPathRe = /^$/;
-      // /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
+  var splitPathRe = 
+      /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
   var splitPath = function(filename) {
     return splitPathRe.exec(filename).slice(1);
   };
