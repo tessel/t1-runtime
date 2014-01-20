@@ -62,8 +62,7 @@ else
 	CFLAGS      += -Wall 
 	CFLAGS      += -O$(OPTIM) 
 	CFLAGS      += -mapcs-frame 
-	#CFLAGS      += -msoft-float
-	# -mfpu=vfp -mfloat-abi=softfp
+	CFLAGS      += -msoft-float
 	CFLAGS      += -mno-sched-prolog 
 	#CFLAGS      += -fno-hosted   
 	CFLAGS      += -ffunction-sections 
@@ -72,9 +71,6 @@ else
 	CFLAGS      += -lm
 	CFLAGS      += -lgcc
 	CFLAGS      += -lc
-	CFLAGS      += -lcs3unhosted
-	CFLAGS      += -lcs3
-	CFLAGS      += -lcs3arm
 	CFLAGS      += -lcolony
 endif
 
