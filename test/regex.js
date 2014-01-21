@@ -1,9 +1,8 @@
-// test rig
-var t = 1, tmax = 10;
+/* test rig */ var t = 1, tmax = 9
 function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + ' -', d); }
 console.log(t + '..' + tmax);
-
 ok(process.versions.colony, 'running in colony')
+
 ok("garbage 09 _ - !@#$%".match(/^[\s\S]+$/), 'regex match');
 
 ok("a".match(/^[\S]+$/), '\\S in class matches non-whitespace');
@@ -22,6 +21,14 @@ ok(true, 'regex compilation from connect socket.js');
 var a = /^(\/?|)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
 var a = /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
 ok(true,  'regex compilation from path.js')
+
+// url.js
+var a = /^[a-z]/i;
+var a = /^[a-z]$/i;
+var a = /^[a-z][a-z0-9]*$/i;
+var a = /^[a-z][a-z0-9\-+]*$/i;
+var a = /^[a-z][a-z0-9\-+]*$/i;
+ok(true, 'regex compilation from url.js')
 
 // more matches
 var subj1 = "there are 99 red balloons";

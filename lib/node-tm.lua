@@ -311,62 +311,58 @@ global.Buffer = Buffer
 local EventEmitter = function (this) end
 
 ((EventEmitter).prototype).listeners = (function (this, type)
-if true then return (js_truthy((this).hasOwnProperty:call((this)._events or (function () local _r = js_obj({
-  }); (this)._events = _r; return _r; end)(), type)) and {((this)._events)[type]} or {(function () local _r = js_arr({}); ((this)._events)[type] = _r; return _r; end)()})[1]; end;
+  if true then return (js_truthy((this).hasOwnProperty:call((this)._events or (function () local _r = js_obj({}); (this)._events = _r; return _r; end)(), type)) and {((this)._events)[type]} or {(function () local _r = js_arr({}); ((this)._events)[type] = _r; return _r; end)()})[1]; end;
 end);
 
 ((EventEmitter).prototype).on = (function () local _r = (function (this, type, f)
-if js_truthy(((this)._maxListeners ~= (0)) and (this:listeners(type):push(f) > ((this)._maxListeners or (10)))) then
-if console and console:warn(((("Possible EventEmitter memory leak detected. ") + (((this)._events)[type]).length) + (" listeners added. Use emitter.setMaxListeners() to increase limit."))) then end;
-end;
-if this:emit(("newListener"), type, f) then end;
-if true then return this; end;
+  if js_truthy(((this)._maxListeners ~= (0)) and (this:listeners(type):push(f) > ((this)._maxListeners or (10)))) then
+  if console and console:warn(((("Possible EventEmitter memory leak detected. ") + (((this)._events)[type]).length) + (" listeners added. Use emitter.setMaxListeners() to increase limit."))) then end;
+  end;
+  if this:emit(("newListener"), type, f) then end;
+  if true then return this; end;
 end); ((EventEmitter).prototype).addListener = _r; return _r; end)();
 
 ((EventEmitter).prototype).once = (function (this, type, f)
-local g = g;
-if this:on(type, (function (this, ...)
-local g = debug.getinfo(1, 'f').func;
-local arguments = js_arguments(...);
-if f:call(this, (arguments)[(0)], (arguments)[(1)], (arguments)[(2)]) then end;
-if this:removeListener(type, g)
-     then end;
-end)) then end;
+  local g = g;
+  if this:on(type, (function (this, ...)
+  local g = debug.getinfo(1, 'f').func;
+  local arguments = js_arguments(...);
+  if f:call(this, (arguments)[(0)], (arguments)[(1)], (arguments)[(2)]) then end;
+  if this:removeListener(type, g)
+       then end;
+  end)) then end;
 end);
 
 ((EventEmitter).prototype).removeListener = (function (this, type, f)
-local i = i;
-i = nil;
-if ((function () local _r = this:listeners(type):indexOf(f); i = _r; return _r; end)() ~= (-(1))) and this:listeners(type):splice(i, (1)) then end;
-if true then return this; end;
+  local i = i;
+  i = nil;
+  if ((function () local _r = this:listeners(type):indexOf(f); i = _r; return _r; end)() ~= (-(1))) and this:listeners(type):splice(i, (1)) then end;
+  if true then return this; end;
 end);
 
 ((EventEmitter).prototype).removeAllListeners = (function (this, type)
-local k = k;
-for k in js_pairs((this)._events) do
-if (not js_truthy(type)) or (type == k) and ((this)._events)[k]:splice((0), (((this)._events)[k]).length) then end;
-end;
-if true then return this; end;
+  local k = k;
+  for k in js_pairs((this)._events) do
+  if (not js_truthy(type)) or (type == k) and ((this)._events)[k]:splice((0), (((this)._events)[k]).length) then end;
+  end;
+  if true then return this; end;
 end);
 
-((EventEmitter).prototype).emit = (function (this, ...)
-local arguments = js_arguments(...);
-local type = ...;
-local args, i, fns = args, i, fns;
-args = ((global.Array).prototype).slice:call(arguments, (1));
-i = (0);
-fns = this:listeners(type):slice();
-while (i < (fns).length) do
+((EventEmitter).prototype).emit = (function (this, type, ...)
+  local args, i, fns = args, i, fns;
+  fns = this:listeners(type):slice();
+  i = 0;
+  while (i < (fns).length) do
 
-if (fns)[i]:call(this, (args)[(0)], (args)[(1)], (args)[(2)]) then end;
+  if (fns)[i]:call(this, ...) then end;
 
-(function () local _r = i; i = _r + 1; return _r end)()
-end;
-if true then return (fns).length; end;
+  (function () local _r = i; i = _r + 1; return _r end)()
+  end;
+  if true then return (fns).length; end;
 end);
 
 ((EventEmitter).prototype).setMaxListeners = (function (this, maxListeners)
-(this)._maxListeners = maxListeners;
+  (this)._maxListeners = maxListeners;
 end);
 
 

@@ -272,8 +272,10 @@ end
 func_proto.bind = function (func, ths1, ...)
   local args1 = table.pack(...)
   return function (ths2, ...)
-    local args2 = table.pack(...)
-    return func(ths1, unpack(table.augment(args1, args2)))
+    local argset = {}
+    table.augment(argset, args1)
+    table.augment(argset, table.pack(...))
+    return func(ths1, unpack(argset))
   end
 end
 
@@ -361,7 +363,7 @@ end
 arr_proto.slice = function (ths, start, len)
   local a = js_arr({})
   if not len then
-    len = ths.length - (start or 0)
+    len = ths.length - (start or 0) + 1
   end
   for i=start or 0,len-1 do
     a:push(ths[i])
