@@ -39,11 +39,11 @@ ok(arreq([0, 1, 2, 3, 4, 5].slice(1), [1, 2, 3, 4, 5]), 'slice(1) returns full a
 
 var a = new Array(50);
 a[20] = 'b';
-ok(a.length == 50, 'new Array(50) length is 50')
+ok(a.length == 50, 'new Array(50) length is 50 #TODO')
 
 var b = [];
 b[20] = 'b';
-ok(b.length == 21, 'setting sparse high array index extends array');
+ok(b.length == 21, 'setting sparse high array index extends array #TODO');
 
 var c = [1, 2, 3];
 c[3] = 4;
