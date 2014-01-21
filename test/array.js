@@ -1,7 +1,7 @@
 // test rig
-function ok (a) { return a ? 'ok -' : 'not ok -'; }
-var t = 1;
-console.log('1..7')
+var t = 1, tmax = 7;
+function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + ' -', d); }
+console.log(t + '..' + tmax);
 
 function eq (a, b) {
 	if (a.length != b.length) {
@@ -17,20 +17,20 @@ function eq (a, b) {
 
 var a = [1];
 a.splice(0, 1);
-console.log(ok(eq(a, [])), t++);
+ok(eq(a, []));
 
 var a = [1, 2, 3];
 a.splice(1, 1);
-console.log(ok(eq(a, [1, 3])), t++);
+ok(eq(a, [1, 3]));
 
 var a = [2, 3];
 a.unshift(1);
-console.log(ok(eq(a, [1, 2, 3])), t++);
+ok(eq(a, [1, 2, 3]))
 
 var a = [];
 a.unshift(1);
-console.log(ok(eq(a, [1])), t++);
+ok(eq(a, [1]))
 
-console.log(ok([0, 0, 0, 0, 0, 0].length == 6), t++);
-console.log(ok(eq([0, 1, 2, 3, 4, 5].slice(0, 5), [0, 1, 2, 3, 4])), t++);
-console.log(ok(eq([0, 0, 0, 0, 0, 0].slice(0, 5), [0, 0, 0, 0, 0])), t++);
+ok([0, 0, 0, 0, 0, 0].length == 6);
+ok(eq([0, 1, 2, 3, 4, 5].slice(0, 5), [0, 1, 2, 3, 4]))
+ok(eq([0, 0, 0, 0, 0, 0].slice(0, 5), [0, 0, 0, 0, 0]));

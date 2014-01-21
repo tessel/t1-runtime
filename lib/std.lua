@@ -810,11 +810,12 @@ if type(hs) == 'table' then
     if rc ~= 0 then
       return nil
     end
-    local ret = {}
+    local ret, pos = {}, 0
     for i=0,hs.regex_nsub(cre) do
       local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
       -- print('match', i, '=> start:', so, ', end:', eo)
-      table.insert(ret, string.sub(data, so + 1, eo))
+      table.insert(ret, pos, string.sub(data, so + 1, eo))
+      pos = pos + 1
     end
     return js_arr(ret)
   end
