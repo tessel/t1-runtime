@@ -11,10 +11,10 @@ TM_UPTIME  =
 .PHONY: osx
 
 osx:
-	@make CLI=1 TM_FS=posix TM_NET=posix TM_UPTIME=posix OPTIM=$(OPTIM) all
+	@+make CLI=1 TM_FS=posix TM_NET=posix TM_UPTIME=posix OPTIM=$(OPTIM) all
 
 embed:
-	@make ARM=1 TM_FS=fat OPTIM=$(OPTIM) all
+	@+make ARM=1 TM_FS=fat OPTIM=$(OPTIM) all
 
 
 
@@ -32,13 +32,19 @@ CSRCS   =
 
 # Compiler
 ifneq ($(ARM), 1)
-	BUILD   = build/osx
+	BUILD   = build/pc
 	CC      = gcc
 	DUMP    = objdump
 	COPY    = gobjcopy
 	SECT    = 
 
-	CFLAGS += -c -o runtime -DCOLONY_PC
+	CFLAGS += -DCOLONY_PC -D_GNU_SOURCE
+
+	LINKFLAGS += -lm
+
+	ifeq ($(shell uname), Linux)
+	LINKFLAGS += -lbsd
+	endif
 
 else
 	BUILD   = build/embed
@@ -51,7 +57,7 @@ else
 	#OPTIM   = fast
 	OPTIM        =$(OPTIM)
 
-	CFLAGS += -c -DCOLONY_EMBED
+	CFLAGS +=  -DCOLONY_EMBED
 	CFLAGS      += -mcpu=$(CPU) 
 	CFLAGS      += -mthumb
 	CFLAGS      += -gdwarf-2 
@@ -62,20 +68,12 @@ else
 	CFLAGS      += -Wall 
 	CFLAGS      += -O$(OPTIM) 
 	CFLAGS      += -mapcs-frame 
-	#CFLAGS      += -msoft-float
-	# -mfpu=vfp -mfloat-abi=softfp
+	CFLAGS      += -msoft-float
 	CFLAGS      += -mno-sched-prolog 
 	#CFLAGS      += -fno-hosted   
 	CFLAGS      += -ffunction-sections 
 	CFLAGS      += -fdata-sections 
 	#CFLAGS      += -fpermissive
-	CFLAGS      += -lm
-	CFLAGS      += -lgcc
-	CFLAGS      += -lc
-	CFLAGS      += -lcs3unhosted
-	CFLAGS      += -lcs3
-	CFLAGS      += -lcs3arm
-	CFLAGS      += -lcolony
 endif
 
 # Cflags
@@ -155,49 +153,55 @@ endif
 # Targets
 #
  
-all: buildtools builddir precompile compile link
+all: buildtools compile
 
-buildtools: tools/compile_lua
+buildtools: node_modules tools/compile_lua
+
+node_modules:
+	npm install
 
 tools/compile_lua :
 	(cd tools && ./build_tools.sh)
 
-builddir:
-	mkdir -p $(BUILD)/obj
-	mkdir -p $(BUILD)/runtime
-	mkdir -p $(BUILD)/builtin
+$(BUILD)/obj/dir_builtin.o: $(patsubst builtin/%.js, $(BUILD)/builtin/%.lua, $(wildcard builtin/*.js))
+	tools/compile_folder $(BUILD)/builtin dir_builtin $(SECT) > $(@:.o=.c)
+	$(CC) -c -o $@ $(@:.o=.c)
 
-precompile:
-	@make -j8 precompile.parallel
-
-precompile.parallel: $(patsubst builtin/%.js, $(BUILD)/builtin/%.lua, $(wildcard builtin/*.js))  $(patsubst lib/%.lua, $(BUILD)/runtime/%.lua, $(wildcard lib/*.lua)) 
-	tools/compile_folder $(BUILD)/builtin dir_builtin $(SECT) | $(CC) -c -o $(BUILD)/obj/dir_builtin.o -xc -
-	tools/compile_folder $(BUILD)/runtime dir_runtime_lib $(SECT) | $(CC) -c -o $(BUILD)/obj/dir_runtime_lib.o -xc -
+$(BUILD)/obj/dir_runtime_lib.o: $(patsubst lib/%.lua, $(BUILD)/runtime/%.lua, $(wildcard lib/*.lua))
+	tools/compile_folder $(BUILD)/runtime dir_runtime_lib $(SECT) > $(@:.o=.c)
+	$(CC) -c -o $@ $(@:.o=.c)
 
 $(BUILD)/builtin/%.lua : builtin/%.js
+	mkdir -p $(@D)
 	cat $^ | tools/compile_js | tools/compile_lua =$^ > $@
 
 $(BUILD)/runtime/%.lua : lib/%.lua
+	mkdir -p $(@D)
 	cat $^ | tools/compile_lua =$^ > $@
 
-compile:
-	@make -j8 compile.parallel
+BUILTIN_OBJS = $(BUILD)/obj/dir_builtin.o $(BUILD)/obj/dir_runtime_lib.o
+OBJS = $(patsubst %.c, $(BUILD)/obj/%.o, $(CSRCS)) $(BUILTIN_OBJS)
 
-compile.parallel: $(patsubst %.c, %.o, $(CSRCS)) 
 ifneq ($(ARM),1)
-	$(CC) -o $(BUILD)/colony -lm $(wildcard $(BUILD)/obj/*.o)
+
+compile: bin/colony
+
+bin/colony: $(OBJS)
+	mkdir -p $(@D)
+	$(CC) -o  bin/colony $(OBJS) $(LINKFLAGS)
+
 else
-	arm-none-eabi-ar rcs $(BUILD)/libcolony.a $(wildcard $(BUILD)/obj/*.o)
+
+compile: $(BUILD)/libcolony.a
+
+$(BUILD)/libcolony.a: $(OBJS)
+	arm-none-eabi-ar rcs $@ $(OBJS)
+
 endif
 
-link:
-ifneq ($(ARM),1)
-	mkdir -p bin
-	cp $(BUILD)/colony bin/colony
-endif
-
-%.o: %.c
-	$(CC) $(CFLAGS) $^ -o $(BUILD)/obj/$(shell basename $@)
+$(BUILD)/obj/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) -c $(CFLAGS) $^ -o $@
 
 clean: 
 	rm tools/compile_lua 2>/dev/null || true
