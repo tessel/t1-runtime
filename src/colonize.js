@@ -41,6 +41,15 @@ function attachIdentifierToContext (id, node) {
   }
 }
 
+function declareWithBlock (block, node) {
+  while (node = node.parent) {
+    if (node.type == 'Program') {
+      node.withBlocks || (node.withBlocks = []);
+      return node.withBlocks.push(block.source());
+    }
+  }
+}
+
 function truthy (node) {
   if (['!', '<', '<=', '>', '>=', '===', '!=', '!==', 'instanceof', 'in'].indexOf(node.operator) == -1) {
     node.update("_truthy(" + node.source() + ")");
@@ -429,6 +438,11 @@ function colonize (node) {
       colonizeContext(node.parent.type == 'FunctionDeclaration' || node.parent.type == 'FunctionExpression' ? node.parent.identifiers : [], node);
       break;
 
+    case 'WithStatement':
+      declareWithBlock(node.body, node);
+      node.update("local _ret = _with(obj, _G._with_fn1); if _ret ~= _with then return _ret end");
+      break;
+
     case 'MemberExpression':
       if (node.parent.type != 'CallExpression' || node.parent.callee != node) {
         if (!node.computed && node.property.source().match(/^[\w_]+$/) && keywords.indexOf(node.property.source()) == -1) {
@@ -565,6 +579,14 @@ node.finalizer ? node.finalizer.source() : ''
     case 'Program':
       colonizeContext(node.identifiers, node);
       if (wrapmodule) {
+        if (node.withBlocks) {
+          var w = '';
+          node.withBlocks.forEach(function (b, i) {
+            w += 'function _with_fn' + (i + 1) + '(_with)' + joiner + b + joiner + 'return _with;' + joiner + 'end' + joiner;
+          })
+          console.log(w)
+        }
+
         node.update([
           joiner + "return function (_ENV, _module)",
           'local ' + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
