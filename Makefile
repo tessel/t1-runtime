@@ -11,10 +11,10 @@ TM_UPTIME  =
 .PHONY: osx
 
 osx:
-	@make CLI=1 TM_FS=posix TM_NET=posix TM_UPTIME=posix OPTIM=$(OPTIM) all
+	@+make CLI=1 TM_FS=posix TM_NET=posix TM_UPTIME=posix OPTIM=$(OPTIM) all
 
 embed:
-	@make ARM=1 TM_FS=fat OPTIM=$(OPTIM) all
+	@+make ARM=1 TM_FS=fat OPTIM=$(OPTIM) all
 
 
 
