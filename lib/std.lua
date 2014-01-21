@@ -363,7 +363,7 @@ arr_proto.slice = function (ths, start, len)
   if not len then
     len = ths.length - (start or 0)
   end
-  for i=start or 0,len do
+  for i=start or 0,len-1 do
     a:push(ths[i])
   end
   return a
