@@ -4,4 +4,4 @@ console.log(t + '..' + tmax);
 ok(process.versions.colony, 'running in colony')
 
 function a (a, b, c, d, e) { }
-ok(a.length == 5, 'function arity')
+ok(a.length == 5, 'function arity == 5')
