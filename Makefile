@@ -32,7 +32,7 @@ CSRCS   =
 
 # Compiler
 ifneq ($(ARM), 1)
-	BUILD   = build/osx
+	BUILD   = build/pc
 	CC      = gcc
 	DUMP    = objdump
 	COPY    = gobjcopy
@@ -41,6 +41,10 @@ ifneq ($(ARM), 1)
 	CFLAGS += -DCOLONY_PC -D_GNU_SOURCE
 
 	LINKFLAGS += -lm
+
+	ifeq ($(shell uname), Linux)
+	LINKFLAGS += -lbsd
+	endif
 
 else
 	BUILD   = build/embed
