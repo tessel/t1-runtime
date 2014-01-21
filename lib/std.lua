@@ -22,6 +22,7 @@ local js_setter_index = colony.js_setter_index
 local js_getter_index = colony.js_getter_index
 local js_proto_get = colony.js_proto_get
 local js_func_proxy = colony.js_func_proxy
+local js_with = colony.js_with
 
 local obj_proto = colony.obj_proto
 local num_proto = colony.num_proto
@@ -48,6 +49,8 @@ global._seq = js_seq
 global._in = js_in
 global._break = js_break
 global._cont = js_cont
+global._with = js_with
+global._G = _G
 
 -- in-code modules
 

@@ -373,6 +373,49 @@ function js_in (key, obj)
   return obj[key]
 end
 
+-- with
+
+function js_with (env, fn)
+  local genv = getfenv(2)
+
+  local locals = {}
+  local idx = 1
+  while true do
+    local ln, lv = debug.getlocal(2, idx)
+    if ln ~= nil then
+      locals[ln] = idx
+    else
+      break
+    end
+    idx = 1 + idx
+  end
+  
+  local mt = getmetatable(env) or {};
+
+  mt.__index = function (this, key)
+    if locals[key] ~= nil then
+      local ln, lv = debug.getlocal(4, locals[key])
+      return lv
+    else
+      return genv[key]
+    end
+  end
+
+  mt.__newindex = function (this, key, value)
+    if locals[key] ~= nil then
+      debug.setlocal(4, locals[key], value)
+    else
+      genv[key] = value
+    end
+  end
+
+  setmetatable(env, mt);
+
+  setfenv(fn, env)
+  
+  return fn(js_with)
+end
+
 
 --[[
 --  Public API
@@ -395,6 +438,7 @@ colony = {
   js_getter_index = js_getter_index,
   js_proto_get = js_proto_get,
   js_func_proxy = js_func_proxy,
+  js_with = js_with,
 
   obj_proto = obj_proto,
   num_proto = num_proto,

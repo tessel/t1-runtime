@@ -1,22 +1,9 @@
-var subj1 = "there are 99 red balloons";
-var subj2 = "here is a caveaaAEEAAEeaeaEAEaeeaEEAEEAet about regexes."
-var subj3 = " ###    ##     ####  ";
+#!/Users/tim/Code/technical/git/runtime/build/osx/colony
 
-var a = new RegExp("\\d+");
-console.log(subj1.match(a))
+var test = require('tape');
 
-var b = /(\d+)(\s+)/;
-console.log(subj1.match(b))
+test('timing test', function (t) {
+    t.plan(1);
 
-var c = /cav[ea]+t/i;
-console.log(subj2.match(c)[1] == 'caveaaAEEAAEeaeaEAEaeeaEEAEEAet')
-
-console.log(c.test(subj2))
-
-console.log(subj3.replace(/\#+/, '___'))
-console.log(subj3.replace(/\#+/g, '___'))
-
-console.log(subj3.replace(/\#(\#*)/g, function (whole, p1, offset, str) {
-  console.log('-->', whole, p1, offset, str);
-  return whole.length
-}));
+    t.ok("garbage 09 _ - !@#$%".match(/^[\s\S]+$/), "Invalid regex match.");
+});
