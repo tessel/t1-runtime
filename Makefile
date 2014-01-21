@@ -38,7 +38,9 @@ ifneq ($(ARM), 1)
 	COPY    = gobjcopy
 	SECT    = 
 
-	CFLAGS += -c -o runtime -DCOLONY_PC
+	CFLAGS += -DCOLONY_PC -D_GNU_SOURCE
+
+	LINKFLAGS += -lm
 
 else
 	BUILD   = build/embed
@@ -51,7 +53,7 @@ else
 	#OPTIM   = fast
 	OPTIM        =$(OPTIM)
 
-	CFLAGS += -c -DCOLONY_EMBED
+	CFLAGS +=  -DCOLONY_EMBED
 	CFLAGS      += -mcpu=$(CPU) 
 	CFLAGS      += -mthumb
 	CFLAGS      += -gdwarf-2 
@@ -68,10 +70,6 @@ else
 	CFLAGS      += -ffunction-sections 
 	CFLAGS      += -fdata-sections 
 	#CFLAGS      += -fpermissive
-	CFLAGS      += -lm
-	CFLAGS      += -lgcc
-	CFLAGS      += -lc
-	CFLAGS      += -lcolony
 endif
 
 # Cflags
@@ -185,7 +183,8 @@ ifneq ($(ARM),1)
 compile: bin/colony
 
 bin/colony: $(OBJS)
-	$(CC) -o  bin/colony -lm $(OBJS)
+	mkdir -p $(@D)
+	$(CC) -o  bin/colony $(OBJS) $(LINKFLAGS)
 
 else
 
@@ -198,7 +197,7 @@ endif
 
 $(BUILD)/obj/%.o: %.c
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) -c $(CFLAGS) $^ -o $@
 
 clean: 
 	rm tools/compile_lua 2>/dev/null || true
