@@ -101,10 +101,12 @@ num_mt.__index=function (self, key)
 end
 
 num_mt.__lt = function (op1, op2)
+  if op2 == nil then return op1 < 0 end
   return tonumber(op1) < tonumber(op1)
 end
 
 num_mt.__le = function (op1, op2)
+  if op2 == nil then return op1 <= 0 end
   return tonumber(op1) <= tonumber(op1)
 end
 

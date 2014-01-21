@@ -89,7 +89,7 @@ global.setTimeout = function (this, fn, timeout)
     if now - start < (timeout*1000) then
       return 1
     end
-    fn()
+    fn(global)
     return 0
   end
   table.insert(_eventQueue, timefn)
@@ -105,7 +105,7 @@ global.setInterval = function (this, fn, timeout)
     if now - start < (timeout*1000) then
       return 1
     end
-    fn()
+    fn(global)
     start = tm.uptime_micro() -- fixed time delay *between* calls
     return 1
   end
@@ -116,7 +116,7 @@ end
 
 global.setImmediate = function (this, fn)
   local timefn = function ()
-    fn()
+    fn(global)
     return 0
   end
   table.insert(_eventQueue, timefn)
