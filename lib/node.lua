@@ -120,7 +120,8 @@ global.process = js_obj({
     return _G['_colony_binding_' + key](global);
   end,
   versions = js_obj({
-    node = "0.10.0"
+    node = "0.10.0",
+    colony = "0.1.0"
   }),
   env = js_obj({}),
   stdin = js_obj({

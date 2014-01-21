@@ -383,6 +383,7 @@ end
 global.process.platform = "colony"
 global.process.versions = js_obj({
   node = "0.10.0",
+  colony = "0.10.0",
   tessel_board = _G._tessel_version or -1
 })
 global.process.EventEmitter = EventEmitter

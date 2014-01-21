@@ -1,9 +1,3 @@
-#!/Users/tim/Code/technical/git/runtime/build/osx/colony
-
-var test = require('tape');
-
-test('timing test', function (t) {
-    t.plan(1);
-
-    t.ok("garbage 09 _ - !@#$%".match(/^[\s\S]+$/), "Invalid regex match.");
-});
+console.log('1..2')
+console.log(process.versions.colony ? 'ok' : 'not ok', '1 - running in colony')
+console.log("garbage 09 _ - !@#$%".match(/^[\s\S]+$/) ? 'ok' : 'not ok', '2 - regex match');

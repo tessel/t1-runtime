@@ -155,7 +155,7 @@ endif
 # Targets
 #
  
-all: buildtools builddir precompile compile
+all: buildtools builddir precompile compile link
 
 buildtools: tools/compile_lua
 
@@ -190,9 +190,16 @@ else
 	arm-none-eabi-ar rcs $(BUILD)/libcolony.a $(wildcard $(BUILD)/obj/*.o)
 endif
 
+link:
+ifneq ($(ARM),1)
+	mkdir -p bin
+	cp $(BUILD)/colony bin/colony
+endif
+
 %.o: %.c
 	$(CC) $(CFLAGS) $^ -o $(BUILD)/obj/$(shell basename $@)
 
 clean: 
 	rm tools/compile_lua 2>/dev/null || true
 	rm -rf build 2>/dev/null || true
+	rm -rf bin/* 2>/dev/null || true

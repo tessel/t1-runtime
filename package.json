@@ -1,13 +1,13 @@
 {
   "name": "runtime",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "directories": {
     "example": "examples",
     "test": "test"
   },
   "scripts": {
-    "test": "tap test/*"
+    "test": "./node_modules/.bin/tap -e ./bin/colony test/*.js"
   },
   "dependencies": {
     "async": "~0.2.9",
@@ -15,6 +15,6 @@
   },
   "devDependencies": {
     "tape": "~2.3.2",
-    "tap": "~0.4.8"
+    "tap": "git+https://github.com/tcr/node-tap.git"
   }
 }
