@@ -607,7 +607,9 @@ node.finalizer ? node.finalizer.source() : ''
 
 module.exports = function (src, _wrapmodule) {
   wrapmodule = _wrapmodule == null || _wrapmodule ? true : false;
-  src = src.replace(/^#.*\n/, '');
+  src = src
+    .replace(/^#.*\n/, '')
+    + '\n;' // prevent "then end" wrapping to next line
   return String(falafel(src, colonize))
     // inline lingering comments are converted to lua comments
     .replace(/^(([^"']|"[^"]*"|'[^']*')*?)\/\//gm, '$1--')
