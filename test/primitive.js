@@ -12,6 +12,7 @@ ok(null != 0, 'null != 0');
 ok(!(null < null), 'null < null')
 ok(!(null > null), 'null > null')
 ok(null == null, 'null == null')
+// ok((null * 5) == 0, 'null * 5')
 
 ok(undefined < 400, 'undefined < positive #TODO');
 ok(undefined > -400, 'undefined > positive #TODO');

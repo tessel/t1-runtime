@@ -618,9 +618,12 @@ global.Math = js_obj({
   ceil = luafunctor(math.ceil),
   floor = luafunctor(math.floor),
   log = luafunctor(math.log),
+  cos = luafunctor(math.cos),
+  sin = luafunctor(math.sin),
   random = function ()
     return math.random()
-  end
+  end,
+  PI = math.pi
 })
 
 -- Error
