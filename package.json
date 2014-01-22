@@ -7,7 +7,8 @@
     "test": "test"
   },
   "scripts": {
-    "test": "./node_modules/.bin/tap -e ./bin/colony test/*.js"
+    "test": "./node_modules/.bin/tap -e ./bin/colony test/*.js",
+    "tessel-test": "./node_modules/.bin/tap -e tessel-node test/*.js"
   },
   "dependencies": {
     "async": "~0.2.9",
