@@ -37,13 +37,14 @@ local global = colony.global
 --|| Lua Event Loop
 --]]
 
-local _eventQueue = {}
+-- event queue, and temporary (processing) queue
+local _eventQueue, queue = {}, {}
 
 _G._colony_ipc = {}
 
 colony.runEventLoop = function ()
   while #_eventQueue > 0 or #_colony_ipc > 0 do
-    local queue = _eventQueue
+    queue = _eventQueue
     _eventQueue = {}
     for i=1,#queue do
       local val = queue[i]()
@@ -129,6 +130,11 @@ global.clearTimeout = function (this, id)
     for i=1,#_eventQueue do
       if _eventQueue[i] == timeouttable[id] then
         _eventQueue[i] = function () return 0 end
+      end
+    end
+    for i=1,#queue do
+      if queue[i] == timeouttable[id] then
+        queue[i] = function () return 0 end
       end
     end
     timeouttable[id] = nil
