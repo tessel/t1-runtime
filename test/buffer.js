@@ -81,6 +81,15 @@ ok(a.readInt16BE(0) == 939, 'readInt16BE')
 ok(a.readInt32LE(0) == 1109633795, 'readInt32LE')
 ok(a.readInt32BE(0) == 61547330, 'readInt32BE')
 
+var f = new Buffer([0xFF, 0x00, 0x00, 0x80, 0x3f, 0xFF]);
+ok(f.readFloatLE(1) == 1, 'readFloatLE');
+var f = new Buffer([0xFF, 0x00, 0x00, 0x80, 0x3f, 0xFF].reverse());
+ok(f.readFloatBE(1) == 1, 'readFloatBE');
+var f = new Buffer([0xFF, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0xd5, 0x3f, 0xFF]);
+ok(f.readDoubleLE(1) == 1/3, 'readDoubleLE');
+var f = new Buffer([0xFF, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0xd5, 0x3f, 0xFF].reverse());
+ok(f.readDoubleBE(1) == 1/3, 'readDoubleBE');
+
 ok(a.readUInt16BE(1) == 43811, 'buffer read offsets')
 
 var a = new Buffer([0, 0, 0, 0]);
@@ -94,6 +103,13 @@ a.writeInt16LE(-21757, 0); ok(a.readInt16LE(0) == -21757, 'writeInt16LE');
 a.writeInt16BE(939, 0); ok(a.readInt16BE(0) == 939, 'writeInt16BE');
 a.writeInt32LE(1109633795, 0); ok(a.readInt32LE(0) == 1109633795, 'writeInt32LE');
 a.writeInt32BE(61547330, 0); ok(a.readInt32BE(0) == 61547330, 'writeInt32BE');
+
+var f = new Buffer(10);
+f.fill(0);
+f.writeFloatLE(1, 1); ok(f.readFloatLE(1) == 1, 'writeFloatLE');
+f.writeFloatBE(1, 1); ok(f.readFloatBE(1) == 1, 'writeFloatBE');
+f.writeDoubleLE(1/3, 1); ok(f.readDoubleLE(1) == 1/3, 'writeDoubleLE');
+f.writeDoubleBE(1/3, 1); ok(f.readDoubleBE(1) == 1/3, 'writeDoubleBE');
 
 a.fill(0)
 a.writeInt16LE(-21757, 1);

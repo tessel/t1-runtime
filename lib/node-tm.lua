@@ -159,9 +159,9 @@ local buffer_proto = js_obj({
   end,
   slice = function (this, sourceStart, len)
     if len == nil then
-      len = ths.length - (sourceStart or 0)
+      len = this.length - (sourceStart or 0)
     end
-    sourceStart = tonumber(sourceStart)
+    sourceStart = tonumber(sourceStart or 0)
     len = tonumber(len)
     if len < 0 or sourceStart > this.length then
       len = 0
@@ -205,7 +205,7 @@ local buffer_proto = js_obj({
     local sourceBuffer = getmetatable(this).buffer
     local sourceBufferLength = getmetatable(this).bufferlen
 
-    if string.lower(strtype) == 'utf8' then
+    if type(strtype) == 'string' and string.lower(strtype) == 'utf8' then
       local str = ''
       for i=0,sourceBufferLength-1 do
         str = str .. string.char(this[i])
@@ -224,7 +224,7 @@ local buffer_proto = js_obj({
   end
 })
 
-function read_buf (this, pos, opts, size, fn)
+function read_buf (this, pos, opts, size, fn, le)
   local sourceBuffer = getmetatable(this).buffer
   local sourceBufferLength = getmetatable(this).bufferlen
   pos = tonumber(pos)
@@ -236,7 +236,7 @@ function read_buf (this, pos, opts, size, fn)
     error('RangeError: Trying to access beyond buffer length')
   end
 
-  return fn(sourceBuffer, pos)
+  return fn(sourceBuffer, pos, le)
 end
 
 buffer_proto.readUInt8 = function (this, pos, opts) return read_buf(this, pos, opts, 1, tm.buffer_read_uint8); end
@@ -250,7 +250,12 @@ buffer_proto.readInt16BE = function (this, pos, opts) return read_buf(this, pos,
 buffer_proto.readInt32LE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_int32le); end
 buffer_proto.readInt32BE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_int32be); end
 
-function write_buf (this, value, pos, opts, size, fn)
+buffer_proto.readFloatLE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_float, 1); end
+buffer_proto.readFloatBE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_float, 0); end
+buffer_proto.readDoubleLE = function (this, pos, opts) return read_buf(this, pos, opts, 8, tm.buffer_read_double, 1); end
+buffer_proto.readDoubleBE = function (this, pos, opts) return read_buf(this, pos, opts, 8, tm.buffer_read_double, 0); end
+
+function write_buf (this, value, pos, opts, size, fn, le)
   local sourceBuffer = getmetatable(this).buffer
   local sourceBufferLength = getmetatable(this).bufferlen
   pos = tonumber(pos)
@@ -262,7 +267,7 @@ function write_buf (this, value, pos, opts, size, fn)
     error('RangeError: Trying to access beyond buffer length')
   end
 
-  return fn(sourceBuffer, pos, value)
+  return fn(sourceBuffer, pos, value, le)
 end
 
 buffer_proto.writeUInt8 = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 1, tm.buffer_write_uint8); end
@@ -275,6 +280,11 @@ buffer_proto.writeInt16LE = function (this, value, pos, opts) return write_buf(t
 buffer_proto.writeInt16BE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 2, tm.buffer_write_int16be); end
 buffer_proto.writeInt32LE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 4, tm.buffer_write_int32le); end
 buffer_proto.writeInt32BE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 4, tm.buffer_write_int32be); end
+
+buffer_proto.writeFloatLE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 4, tm.buffer_write_float, 1); end
+buffer_proto.writeFloatBE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 4, tm.buffer_write_float, 0); end
+buffer_proto.writeDoubleLE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 8, tm.buffer_write_double, 1); end
+buffer_proto.writeDoubleBE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 8, tm.buffer_write_double, 0); end
 
 local function Buffer (this, length)
   -- args

@@ -299,6 +299,76 @@ WRITE_BUFFER(l_tm_buffer_write_int16be, WRITE_16((int16_t) value, a[0], a[1]));
 WRITE_BUFFER(l_tm_buffer_write_int32le, WRITE_32((int32_t) value, a[3], a[2], a[1], a[0]));
 WRITE_BUFFER(l_tm_buffer_write_int32be, WRITE_32((int32_t) value, a[0], a[1], a[2], a[3]));
 
+static int l_tm_buffer_read_float (lua_State *L)
+{
+  uint8_t *ud = (uint8_t *) lua_touserdata(L, 1);
+  size_t index = (size_t) lua_tonumber(L, 2);
+  uint8_t le = (int) lua_tonumber(L, 3);
+  
+  uint8_t *a = &ud[index];
+  uint8_t temp[4];
+  if (le) {
+    temp[0] = a[0]; temp[1] = a[1]; temp[2] = a[2]; temp[3] = a[3];
+  } else {
+    temp[0] = a[3]; temp[1] = a[2]; temp[2] = a[1]; temp[3] = a[0];
+  }
+  lua_pushnumber(L, *((float *) &temp));
+  return 1;
+}
+
+static int l_tm_buffer_read_double (lua_State *L)
+{
+  uint8_t *ud = (uint8_t *) lua_touserdata(L, 1);
+  size_t index = (size_t) lua_tonumber(L, 2);
+  uint8_t le = (int) lua_tonumber(L, 3);
+  
+  uint8_t *a = &ud[index];
+  uint8_t temp[8];
+  if (le) {
+    temp[0] = a[0]; temp[1] = a[1]; temp[2] = a[2]; temp[3] = a[3]; temp[4] = a[4]; temp[5] = a[5]; temp[6] = a[6]; temp[7] = a[7];
+  } else {
+    temp[0] = a[7]; temp[1] = a[6]; temp[2] = a[5]; temp[3] = a[4]; temp[4] = a[3]; temp[5] = a[2]; temp[6] = a[1]; temp[7] = a[0];
+  }
+  lua_pushnumber(L, *((double *) &temp));
+  return 1;
+}
+
+static int l_tm_buffer_write_float (lua_State *L)
+{
+  uint8_t *ud = (uint8_t *) lua_touserdata(L, 1);
+  size_t index = (size_t) lua_tonumber(L, 2);
+  float value = (float) lua_tonumber(L, 3);
+  uint8_t le = (int) lua_tonumber(L, 4);
+  
+  uint8_t *a = &ud[index];
+  uint8_t temp[4];
+  *((float *) temp) = value;
+  if (le) {
+    a[0] = temp[0]; a[1] = temp[1]; a[2] = temp[2]; a[3] = temp[3];
+  } else {
+    a[0] = temp[3]; a[1] = temp[2]; a[2] = temp[1]; a[3] = temp[0];
+  }
+  return 0;
+}
+
+static int l_tm_buffer_write_double (lua_State *L)
+{
+  uint8_t *ud = (uint8_t *) lua_touserdata(L, 1);
+  size_t index = (size_t) lua_tonumber(L, 2);
+  double value = (double) lua_tonumber(L, 3);
+  uint8_t le = (int) lua_tonumber(L, 4);
+  
+  uint8_t *a = &ud[index];
+  uint8_t temp[8];
+  *((double *) temp) = value;
+  if (le) {
+    a[0] = temp[0]; a[1] = temp[1]; a[2] = temp[2]; a[3] = temp[3]; a[4] = temp[4]; a[5] = temp[5]; a[6] = temp[6]; a[7] = temp[7]; 
+  } else {
+    a[0] = temp[7]; a[1] = temp[6]; a[2] = temp[5]; a[3] = temp[4]; a[4] = temp[3]; a[5] = temp[2]; a[6] = temp[1]; a[7] = temp[0];
+  }
+  return 0;
+}
+
 
 static int l_tm_buffer_fill (lua_State *L)
 {
@@ -488,6 +558,10 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "buffer_write_int16be", l_tm_buffer_write_int16be },
     { "buffer_write_int32le", l_tm_buffer_write_int32le },
     { "buffer_write_int32be", l_tm_buffer_write_int32be },
+    { "buffer_read_float", l_tm_buffer_read_float },
+    { "buffer_read_double", l_tm_buffer_read_double },
+    { "buffer_write_float", l_tm_buffer_write_float },
+    { "buffer_write_double", l_tm_buffer_write_double },
 
     // fs
     { "fs_open", l_tm_fs_open },
