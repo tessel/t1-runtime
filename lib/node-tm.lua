@@ -224,6 +224,58 @@ local buffer_proto = js_obj({
   end
 })
 
+function read_buf (this, pos, opts, size, fn)
+  local sourceBuffer = getmetatable(this).buffer
+  local sourceBufferLength = getmetatable(this).bufferlen
+  pos = tonumber(pos)
+
+  if not (pos >= 0 and pos <= sourceBufferLength - size) then
+    if opts and (opts.noAssert or type(opts.assert) == 'boolean' and opts.assert == false) then
+      return nil
+    end
+    error('RangeError: Trying to access beyond buffer length')
+  end
+
+  return fn(sourceBuffer, pos)
+end
+
+buffer_proto.readUInt8 = function (this, pos, opts) return read_buf(this, pos, opts, 1, tm.buffer_read_uint8); end
+buffer_proto.readUInt16LE = function (this, pos, opts) return read_buf(this, pos, opts, 2, tm.buffer_read_uint16le); end
+buffer_proto.readUInt16BE = function (this, pos, opts) return read_buf(this, pos, opts, 2, tm.buffer_read_uint16be); end
+buffer_proto.readUInt32LE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_uint32le); end
+buffer_proto.readUInt32BE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_uint32be); end
+buffer_proto.readInt8 = function (this, pos, opts) return read_buf(this, pos, opts, 1, tm.buffer_read_int8); end
+buffer_proto.readInt16LE = function (this, pos, opts) return read_buf(this, pos, opts, 2, tm.buffer_read_int16le); end
+buffer_proto.readInt16BE = function (this, pos, opts) return read_buf(this, pos, opts, 2, tm.buffer_read_int16be); end
+buffer_proto.readInt32LE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_int32le); end
+buffer_proto.readInt32BE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_int32be); end
+
+function write_buf (this, value, pos, opts, size, fn)
+  local sourceBuffer = getmetatable(this).buffer
+  local sourceBufferLength = getmetatable(this).bufferlen
+  pos = tonumber(pos)
+
+  if not (pos >= 0 and (pos) <= sourceBufferLength - size) then
+    if opts and (opts.noAssert or type(opts.assert) == 'boolean' and opts.assert == false) then
+      return nil
+    end
+    error('RangeError: Trying to access beyond buffer length')
+  end
+
+  return fn(sourceBuffer, pos, value)
+end
+
+buffer_proto.writeUInt8 = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 1, tm.buffer_write_uint8); end
+buffer_proto.writeUInt16LE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 2, tm.buffer_write_uint16le); end
+buffer_proto.writeUInt16BE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 2, tm.buffer_write_uint16be); end
+buffer_proto.writeUInt32LE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 4, tm.buffer_write_uint32le); end
+buffer_proto.writeUInt32BE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 4, tm.buffer_write_uint32be); end
+buffer_proto.writeInt8 = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 1, tm.buffer_write_int8); end
+buffer_proto.writeInt16LE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 2, tm.buffer_write_int16le); end
+buffer_proto.writeInt16BE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 2, tm.buffer_write_int16be); end
+buffer_proto.writeInt32LE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 4, tm.buffer_write_int32le); end
+buffer_proto.writeInt32BE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 4, tm.buffer_write_int32be); end
+
 local function Buffer (this, length)
   -- args
   local str = ''

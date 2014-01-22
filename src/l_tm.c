@@ -231,6 +231,7 @@ static int l_tm_buffer_create (lua_State *L)
   return 1;
 }
 
+
 static int l_tm_buffer_set (lua_State *L)
 {
   uint8_t *ud = (uint8_t *) lua_touserdata(L, 1);
@@ -249,6 +250,54 @@ static int l_tm_buffer_get (lua_State *L)
   lua_pushnumber(L, ud[index]);
   return 1;
 }
+
+#define READ_BUFFER(N, T) static int N (lua_State *L) \
+  { \
+    uint8_t *ud = (uint8_t *) lua_touserdata(L, 1); \
+    size_t index = (size_t) lua_tonumber(L, 2); \
+    uint8_t *a = &ud[index]; \
+    lua_pushnumber(L, T); \
+    return 1; \
+  }
+
+#define TO_16(a, b) ((a << 8) | b)
+#define TO_32(a, b, c, d) ((a << 24) | (b << 16) | (c << 8) | d)
+
+#define WRITE_BUFFER(N, T) static int N (lua_State *L) \
+{ \
+  uint8_t *ud = (uint8_t *) lua_touserdata(L, 1); \
+  size_t index = (size_t) lua_tonumber(L, 2); \
+  uint32_t value = (uint32_t) lua_tonumber(L, 3); \
+  uint8_t *a = &ud[index]; \
+  T; \
+  return 0; \
+}
+
+#define WRITE_8(V, a) a = V & 0xFF;
+#define WRITE_16(V, a, b) a = (V >> 8) & 0xFF; b = V & 0xFF;
+#define WRITE_32(V, a, b, c, d) a = (V >> 24) & 0xFF; b = (V >> 16) & 0xFF; c = (V >> 8) & 0xFF; d = V & 0xFF;
+
+READ_BUFFER(l_tm_buffer_read_uint8, a[0]);
+READ_BUFFER(l_tm_buffer_read_uint16le, TO_16(a[1], a[0]));
+READ_BUFFER(l_tm_buffer_read_uint16be, TO_16(a[0], a[1]));
+READ_BUFFER(l_tm_buffer_read_uint32le, TO_32(a[3], a[2], a[1], a[0]));
+READ_BUFFER(l_tm_buffer_read_uint32be, TO_32(a[0], a[1], a[2], a[3]));
+READ_BUFFER(l_tm_buffer_read_int8, (int8_t) a[0]);
+READ_BUFFER(l_tm_buffer_read_int16le, (int16_t) TO_16(a[1], a[0]));
+READ_BUFFER(l_tm_buffer_read_int16be, (int16_t) TO_16(a[0], a[1]));
+READ_BUFFER(l_tm_buffer_read_int32le, (int32_t) TO_32(a[3], a[2], a[1], a[0]));
+READ_BUFFER(l_tm_buffer_read_int32be, (int32_t) TO_32(a[0], a[1], a[2], a[3]));
+
+WRITE_BUFFER(l_tm_buffer_write_uint8, WRITE_8(value, a[0]));
+WRITE_BUFFER(l_tm_buffer_write_uint16le, WRITE_16(value, a[1], a[0]));
+WRITE_BUFFER(l_tm_buffer_write_uint16be, WRITE_16(value, a[0], a[1]));
+WRITE_BUFFER(l_tm_buffer_write_uint32le, WRITE_32(value, a[3], a[2], a[1], a[0]));
+WRITE_BUFFER(l_tm_buffer_write_uint32be, WRITE_32(value, a[0], a[1], a[2], a[3]));
+WRITE_BUFFER(l_tm_buffer_write_int8, WRITE_8((int8_t) value, a[0]));
+WRITE_BUFFER(l_tm_buffer_write_int16le, WRITE_16((int16_t) value, a[1], a[0]));
+WRITE_BUFFER(l_tm_buffer_write_int16be, WRITE_16((int16_t) value, a[0], a[1]));
+WRITE_BUFFER(l_tm_buffer_write_int32le, WRITE_32((int32_t) value, a[3], a[2], a[1], a[0]));
+WRITE_BUFFER(l_tm_buffer_write_int32be, WRITE_32((int32_t) value, a[0], a[1], a[2], a[3]));
 
 
 static int l_tm_buffer_fill (lua_State *L)
@@ -419,6 +468,26 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "buffer_get", l_tm_buffer_get },
     { "buffer_fill", l_tm_buffer_fill },
     { "buffer_copy", l_tm_buffer_copy },
+    { "buffer_read_uint8", l_tm_buffer_read_uint8 },
+    { "buffer_read_uint16le", l_tm_buffer_read_uint16le },
+    { "buffer_read_uint16be", l_tm_buffer_read_uint16be },
+    { "buffer_read_uint32le", l_tm_buffer_read_uint32le },
+    { "buffer_read_uint32be", l_tm_buffer_read_uint32be },
+    { "buffer_read_int8", l_tm_buffer_read_int8 },
+    { "buffer_read_int16le", l_tm_buffer_read_int16le },
+    { "buffer_read_int16be", l_tm_buffer_read_int16be },
+    { "buffer_read_int32le", l_tm_buffer_read_int32le },
+    { "buffer_read_int32be", l_tm_buffer_read_int32be },
+    { "buffer_write_uint8", l_tm_buffer_write_uint8 },
+    { "buffer_write_uint16le", l_tm_buffer_write_uint16le },
+    { "buffer_write_uint16be", l_tm_buffer_write_uint16be },
+    { "buffer_write_uint32le", l_tm_buffer_write_uint32le },
+    { "buffer_write_uint32be", l_tm_buffer_write_uint32be },
+    { "buffer_write_int8", l_tm_buffer_write_int8 },
+    { "buffer_write_int16le", l_tm_buffer_write_int16le },
+    { "buffer_write_int16be", l_tm_buffer_write_int16be },
+    { "buffer_write_int32le", l_tm_buffer_write_int32le },
+    { "buffer_write_int32be", l_tm_buffer_write_int32be },
 
     // fs
     { "fs_open", l_tm_fs_open },
