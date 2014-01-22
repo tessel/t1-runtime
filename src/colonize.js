@@ -584,7 +584,6 @@ node.finalizer ? node.finalizer.source() : ''
           node.withBlocks.forEach(function (b, i) {
             w += 'function _with_fn' + (i + 1) + '(_with)' + joiner + b + joiner + 'return _with;' + joiner + 'end' + joiner;
           })
-          console.log(w)
         }
 
         node.update([
