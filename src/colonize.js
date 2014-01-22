@@ -439,8 +439,8 @@ function colonize (node) {
       break;
 
     case 'WithStatement':
-      declareWithBlock(node.body, node);
-      node.update("local _ret = _with(obj, _G._with_fn1); if _ret ~= _with then return _ret end");
+      var i = declareWithBlock(node.body, node);
+      node.update("local _ret = _with(" + node.object.source() + ", _G._with_fn" + i + "); if _ret ~= _with then return _ret end");
       break;
 
     case 'MemberExpression':
