@@ -10,10 +10,19 @@ setTimeout(function () {
 }, 10);
 
 var id = setInterval(function () {
-  ok(false, 'error in test');
-  console.log('# error, interval was not cancelled')
+  ok(false, 'error, interval was not cancelled');
   process.exit(1);
 }, 100)
 clearInterval(id);
 
 console.log('# timeout id:', id)
+
+var count = 0;
+var jk = setInterval(function () {
+	count++;
+	clearInterval(jk);
+	if (count > 1) {
+		ok(false, 'error, interval was not cancelled from inside interval')
+		process.exit(1)
+	}
+}, 0)
