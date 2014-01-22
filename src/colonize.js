@@ -31,7 +31,8 @@ function uniqueStrings (arr) {
 }
 
 function attachIdentifierToContext (id, node) {
-  var name = fixIdentifiers(id.source());
+  // var name = fixIdentifiers(id.source());
+  var name = id.source();
   while (node = node.parent) {
     if (node.type == 'FunctionDeclaration' || node.type == 'Program' || node.type == 'FunctionExpression') {
       (node.identifiers || (node.identifiers = [])).push(name);
@@ -449,7 +450,7 @@ function colonize (node) {
           node.update("(" + node.object.source() + ")." + node.property.source());
         } else {
           node.update("(" + node.object.source() + ")"
-            + '[' + (!node.computed ? JSON.stringify(node.property.source()) : fixIdentifiers(node.property.source())) + ']');
+            + '[' + (!node.computed ? JSON.stringify(node.property.source()) : node.property.source()) + ']');
         }
       }
 
@@ -579,14 +580,15 @@ node.finalizer ? node.finalizer.source() : ''
     case 'Program':
       colonizeContext(node.identifiers, node);
       if (wrapmodule) {
+        var w = '';
         if (node.withBlocks) {
-          var w = '';
           node.withBlocks.forEach(function (b, i) {
             w += 'function _with_fn' + (i + 1) + '(_with)' + joiner + b + joiner + 'return _with;' + joiner + 'end' + joiner;
           })
         }
 
         node.update([
+          w +
           joiner + "return function (_ENV, _module)",
           'local ' + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
           "local exports, module = _module.exports, _module;",
