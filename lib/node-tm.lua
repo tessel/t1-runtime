@@ -49,6 +49,8 @@ colony.runEventLoop = function ()
     for i=1,#queue do
       local val = queue[i]()
       if val ~= 0 then
+        -- make sure to reference queue[i] here so 
+        -- clear____ can clear from inside callback
         table.insert(_eventQueue, queue[i])
       end
     end
