@@ -529,8 +529,10 @@ function fs_readfile (name)
   local s = ''
   while true do
     local chunk = tm.fs_read(fd, 1024)
-    s = s .. chunk
-    if #chunk < 1024 then
+    if chunk ~= nil then
+      s = s .. chunk
+    end
+    if chunk == nil or #chunk < 1024 then
       break
     end
   end
