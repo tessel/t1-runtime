@@ -296,7 +296,7 @@ end
 
 arr_proto.toString = function (ths)
   local str = ''
-  for i=0,ths.length-1 do
+  for i=0,(ths.length or 0)-1 do
     str = str .. tostring(ths[i]) .. (i == ths.length-1 and '' or ',')
   end
   return str
