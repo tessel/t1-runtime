@@ -58,13 +58,11 @@ colony.runEventLoop = function ()
     local ipc = _G._colony_ipc
     _G._colony_ipc = {}
     for i=1,#ipc do
-      if ipc[i][1] == 'M' then
-        local jsondata = nil
-        if pcall(function ()
-          jsondata = colony.global.JSON:parse(ipc[i][2])
-        end) then
-          colony.global.process:emit('message', jsondata);
-        end
+      local jsondata = nil
+      if pcall(function ()
+        jsondata = colony.global.JSON:parse(ipc[i][2])
+      end) then
+        colony.global.process:emit(ipc[i][1], jsondata);
       end
     end
   end
