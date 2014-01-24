@@ -116,3 +116,9 @@ f.writeDoubleBE(1/3, 1); ok(f.readDoubleBE(1) == 1/3, 'writeDoubleBE');
 a.fill(0)
 a.writeInt16LE(-21757, 1);
 ok(a.readUInt8(2) == 171, 'buffer write offsets')
+
+var a = new Buffer([1, 2, 3]), b = new Buffer([4, 5, 6]), c = new Buffer([7, 8, 9, 10, 11]);
+var abc = Buffer.concat([a, b, c]);
+ok(abc.length == a.length + b.length + c.length, 'buffer concat length');
+ok(arreq(abc, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 'buffer concat works');
+ok(arreq(abc.toJSON(), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 'buffer toJSON works');
