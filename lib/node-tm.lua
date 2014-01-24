@@ -181,7 +181,7 @@ local buffer_proto = js_obj({
     local sourceBufferLength = getmetatable(this).bufferlen
     local targetBuffer = getmetatable(target).buffer
     local targetBufferLength = getmetatable(target).bufferlen
-    tm.buffer_copy(sourceBuffer, targetBuffer, 0, sourceStart, sourceStart + len)
+    tm.buffer_copy(sourceBuffer, targetBuffer, 0, sourceStart, len)
     return target
   end,
   copy = function (this, target, targetStart, sourceStart, sourceEnd)
