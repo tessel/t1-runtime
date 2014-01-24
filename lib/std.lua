@@ -633,7 +633,7 @@ global.Error = function (self, str)
     return self.message
   end
   self.message = str
-  self.stack = ""
+  self.stack = tostring(debug.traceback())
 end
 
 global.Error.captureStackTrace = function ()

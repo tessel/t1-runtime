@@ -21,8 +21,11 @@ LUALIB_API int luaopen_yajl(lua_State *L);
 
 static int traceback (lua_State *L)
 {
-  // if (!lua_isstring(L, 1))  /* 'message' not a string? */
-    // return 1;  /* keep it intact */
+  // TODO why is the error at index "0" here?
+  if (!lua_isstring(L, 1)) {  /* 'message' not a string? */
+    lua_pushstring(L, lua_tostring(L, 0));
+    lua_replace(L, 1);
+  }
   lua_getfield(L, LUA_GLOBALSINDEX, "debug");
   if (!lua_istable(L, -1)) {
     lua_pop(L, 1);
