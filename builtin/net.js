@@ -60,7 +60,12 @@ TCPSocket.prototype.close = function () {
 };
 
 exports.connect = function (port, host, callback) {
-  var client = new TCPSocket(tm.tcp_open());
+  var sock = tm.tcp_open();
+  if (sock == -1) {
+    throw 'ENOENT: Cannot connect to new socket.'
+  }
+  
+  var client = new TCPSocket(sock);
   client.connect(port, host, callback);
   return client;
 };
