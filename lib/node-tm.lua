@@ -181,7 +181,7 @@ local buffer_proto = js_obj({
     local sourceBufferLength = getmetatable(this).bufferlen
     local targetBuffer = getmetatable(target).buffer
     local targetBufferLength = getmetatable(target).bufferlen
-    tm.buffer_copy(sourceBuffer, targetBuffer, 0, sourceStart, sourceStart + len)
+    tm.buffer_copy(sourceBuffer, targetBuffer, 0, sourceStart, len)
     return target
   end,
   copy = function (this, target, targetStart, sourceStart, sourceEnd)
@@ -222,7 +222,7 @@ local buffer_proto = js_obj({
     end
 
     local out = {'<Buffer'}
-    for i=0,math.min(sourceBufferLength, 51)-1 do
+    for i=0,math.min(sourceBufferLength or 0, 51)-1 do
       table.insert(out, string.format("%02x", this[i]))
     end
     if sourceBufferLength > 51 then
@@ -366,6 +366,12 @@ local function Buffer (this, length)
 
   return this
 end
+
+Buffer.isBuffer = function (this, arg)
+  return js_instanceof(arg, Buffer)
+end
+
+Buffer.prototype = buffer_proto
 
 Buffer.byteLength = function (this, msg)
   return type(msg) == 'string' and string.len(msg) or msg.length

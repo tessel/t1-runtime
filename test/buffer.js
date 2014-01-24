@@ -37,8 +37,10 @@ for (var i = 0; i < a.length; i++) {
 }
 ok(success, 'buffer.fill worked')
 
-// ok(Buffer.isBuffer(new Buffer('hello')), 'Buffer.isBuffer succeeds on buffer')
-// ok(Buffer.isBuffer([]), 'Buffer.isBuffer fails on non-buffer')
+ok(Buffer.isBuffer(new Buffer('hello')), 'Buffer.isBuffer succeeds on buffer')
+ok(!Buffer.isBuffer([]), 'Buffer.isBuffer fails on non-buffer (array)')
+ok(!Buffer.isBuffer(''), 'Buffer.isBuffer fails on non-buffer (string)')
+ok(!Buffer.isBuffer(null), 'Buffer.isBuffer fails on non-buffer (null)')
 
 a = new Buffer(5);
 a.fill(0xFF)
