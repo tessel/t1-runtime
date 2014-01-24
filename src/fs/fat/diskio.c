@@ -17,20 +17,16 @@
 #include <unistd.h>
 
 /* Definitions of physical drive number for each media */
-#define ATA		0
+#define MEM		0
 
 
 #define DISKSIZE 1024
 
 /*-----------------------------------------------------------------------*/
-/* Inidialize a Drive                                                    */
+/* Initialize a Drive                                                    */
 /*-----------------------------------------------------------------------*/
 
-#ifdef COLONY_EMBED
-	uint8_t *thisisadrive = (uint8_t *) 0x28000000;
-#else
-	uint8_t thisisadrive[512*DISKSIZE] = { 0 };
-#endif
+uint8_t *thisisadrive = 0;
 
 DSTATUS disk_initialize (
 	BYTE pdrv				/* Physical drive nmuber (0..) */
@@ -40,15 +36,11 @@ DSTATUS disk_initialize (
 	int result;
 
 	switch (pdrv) {
-	case ATA :
-		// result = ATA_disk_initialize();
-		// fd = open("/Users/tim/Code/technical/jolony/runtime/etc/test.img", O_RDONLY);
-//		if (thisisadrive == NULL) {
-//			thisisadrive = (uint8_t*) malloc(512 * DISKSIZE);
-//		}
+	case MEM :
+		if (thisisadrive == NULL) {
+			thisisadrive = malloc(512 * DISKSIZE);
+		}
 		stat = disk_status(pdrv);
-
-		// translate the reslut code here
 
 		return stat;
 	}
@@ -69,7 +61,7 @@ DSTATUS disk_status (
 	int result;
 
 	switch (pdrv) {
-	case ATA :
+	case MEM :
 		stat = 0;
 		// stat = fd == -1 ? STA_NOINIT : 0;
 
@@ -97,7 +89,7 @@ DRESULT disk_read (
 	int result;
 
 	switch (pdrv) {
-	case ATA :
+	case MEM :
 		// translate the arguments here
 
 		if ((sector + count) > DISKSIZE) {
@@ -134,7 +126,7 @@ DRESULT disk_write (
 	int result;
 
 	switch (pdrv) {
-	case ATA :
+	case MEM :
 		// translate the arguments here
 
 		// result = ATA_disk_write(buff, sector, count);
@@ -171,7 +163,7 @@ DRESULT disk_ioctl (
 	int result;
 
 	switch (pdrv) {
-	case ATA :
+	case MEM :
 		// pre-process here
 		switch (cmd) {
 			case CTRL_SYNC: //	Make sure that the disk drive has finished pending write process. When the disk I/O module has a write back cache, flush the dirty sector immediately. This command is not used in read-only configuration.
