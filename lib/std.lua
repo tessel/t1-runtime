@@ -12,7 +12,6 @@ local js_new = colony.js_new
 local js_tostring = colony.js_tostring
 local js_instanceof = colony.js_instanceof
 local js_typeof = colony.js_typeof
-local js_truthy = colony.js_truthy
 local js_arguments = colony.js_arguments
 local js_break = colony.js_break
 local js_cont = colony.js_cont

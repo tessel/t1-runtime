@@ -12,7 +12,6 @@ local js_new = colony.js_new
 local js_tostring = colony.js_tostring
 local js_instanceof = colony.js_instanceof
 local js_typeof = colony.js_typeof
-local js_truthy = colony.js_truthy
 local js_arguments = colony.js_arguments
 local js_break = colony.js_break
 local js_cont = colony.js_cont
@@ -385,11 +384,11 @@ global.Buffer = Buffer
 local EventEmitter = function (this) end
 
 ((EventEmitter).prototype).listeners = (function (this, type)
-  if true then return (js_truthy((this).hasOwnProperty:call((this)._events or (function () local _r = js_obj({}); (this)._events = _r; return _r; end)(), type)) and {((this)._events)[type]} or {(function () local _r = js_arr({}); ((this)._events)[type] = _r; return _r; end)()})[1]; end;
+  if true then return (((this).hasOwnProperty:call((this)._events or (function () local _r = js_obj({}); (this)._events = _r; return _r; end)(), type)) and {((this)._events)[type]} or {(function () local _r = js_arr({}); ((this)._events)[type] = _r; return _r; end)()})[1]; end;
 end);
 
 ((EventEmitter).prototype).on = (function () local _r = (function (this, type, f)
-  if js_truthy(((this)._maxListeners ~= (0)) and (this:listeners(type):push(f) > ((this)._maxListeners or (10)))) then
+  if (((this)._maxListeners ~= (0)) and (this:listeners(type):push(f) > ((this)._maxListeners or (10)))) then
   if console and console:warn(((("Possible EventEmitter memory leak detected. ") + (((this)._events)[type]).length) + (" listeners added. Use emitter.setMaxListeners() to increase limit."))) then end;
   end;
   if this:emit(("newListener"), type, f) then end;
@@ -417,7 +416,7 @@ end);
 ((EventEmitter).prototype).removeAllListeners = (function (this, type)
   local k = k;
   for k in js_pairs((this)._events) do
-  if (not js_truthy(type)) or (type == k) and ((this)._events)[k]:splice((0), (((this)._events)[k]).length) then end;
+  if (not type) or (type == k) and ((this)._events)[k]:splice((0), (((this)._events)[k]).length) then end;
   end;
   if true then return this; end;
 end);

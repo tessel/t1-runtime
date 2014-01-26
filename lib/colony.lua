@@ -336,12 +336,6 @@ function js_new (f, ...)
   return f(o, ...) or o
 end
 
--- "truthy" values
-
-function js_truthy (o)
-  return o and o ~= 0 and o ~= ""
-end
-
 -- arguments objects
 
 function js_arguments (...)
@@ -430,7 +424,6 @@ colony = {
   js_tostring = js_tostring,
   js_instanceof = js_instanceof,
   js_typeof = js_typeof,
-  js_truthy = js_truthy,
   js_arguments = js_arguments,
   js_break = js_break,
   js_cont = js_cont,
