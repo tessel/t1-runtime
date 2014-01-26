@@ -52,9 +52,9 @@ function declareWithBlock (block, node) {
 }
 
 function truthy (node) {
-  if (['!', '<', '<=', '>', '>=', '===', '!=', '!==', 'instanceof', 'in'].indexOf(node.operator) == -1) {
-    node.update("_truthy(" + node.source() + ")");
-  }
+  // if (['!', '<', '<=', '>', '>=', '===', '!=', '!==', 'instanceof', 'in'].indexOf(node.operator) == -1) {
+  //   node.update("_truthy(" + node.source() + ")");
+  // }
   return node.source();
 }
 
@@ -155,7 +155,7 @@ function colonize (node) {
       } else if (node.operator == '+') {
         node.update('(0+' + node.argument.source() + ')');
       } else if (node.operator == '!') {
-        node.update('(not _truthy(' + node.argument.source() + '))');
+        node.update('(not (' + node.argument.source() + '))');
       } else if (node.operator == 'typeof') {
         node.update('_typeof(' + node.argument.source() + ')');
       } else if (node.operator == 'delete') {
