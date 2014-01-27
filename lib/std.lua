@@ -42,7 +42,8 @@ global._pairs = js_pairs
 global._typeof = js_typeof
 global._instanceof = js_instanceof
 global._new = js_new
-global._truthy = js_truthy
+--TODO remove this _truthy function
+global._truthy = function (arg) return not (not arg); end
 global._arguments = js_arguments
 global._seq = js_seq
 global._in = js_in
