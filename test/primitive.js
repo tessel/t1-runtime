@@ -17,17 +17,6 @@ ok(null == null, 'null == null')
 ok(undefined < 400, 'undefined < positive #TODO');
 ok(undefined > -400, 'undefined > positive #TODO');
 
-console.log('\n# falsy values')
-ok(!(0) == true, '0 is falsy');
-ok(!(false) == true, 'false is falsy');
-ok(!(undefined) == true, 'undefined is falsy')
-ok(!(nil) == true, 'nil is falsy')
-ok(!('') == true, '"" is falsy');
-ok(!!([]) == true, '[] is truthy');
-ok(!!("0") == true, '\"0\" is truthy');
-ok(!!({}) == true, '{} is truthy');
-console.log('')
-
 var b = [1, 2, 3];
 var a = {b: b};
 
