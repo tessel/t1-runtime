@@ -226,6 +226,13 @@ local buffer_proto = js_obj({
       table.insert(out, '...')
     end
     return table.concat(out, ' ') + '>'
+  end,
+  toJSON = function (this)
+    local arr = {}
+    for i=0,this.length-1 do
+      arr[i] = this[i]
+    end
+    return js_arr(arr)
   end
 })
 
@@ -364,11 +371,31 @@ local function Buffer (this, length)
   return this
 end
 
+Buffer.prototype = buffer_proto
+
+Buffer.isEncoding = function ()
+  -- TODO port this properly
+  return true
+end
+
 Buffer.isBuffer = function (this, arg)
   return js_instanceof(arg, Buffer)
 end
 
-Buffer.prototype = buffer_proto
+Buffer.concat = function (this, args)
+  local len = 0
+  for i=0,args.length-1 do
+    len = len + args[i].length
+  end
+  local buf = Buffer(nil, len)
+  local s = 0
+  for i=0,args.length-1 do
+    local arg = args[i]
+    arg:copy(buf, s, 0, arg.length)
+    s = s + args[i].length
+  end
+  return buf
+end
 
 Buffer.byteLength = function (this, msg)
   return type(msg) == 'string' and string.len(msg) or msg.length
