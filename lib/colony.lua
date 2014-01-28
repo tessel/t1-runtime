@@ -366,7 +366,7 @@ end
 -- in
 
 function js_in (key, obj)
-  return obj[key]
+  return obj[key] ~= nil
 end
 
 -- with

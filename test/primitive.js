@@ -17,6 +17,8 @@ ok(null == null, 'null == null')
 ok(undefined < 400, 'undefined < positive #TODO');
 ok(undefined > -400, 'undefined > positive #TODO');
 
+ok(('hasOwnProperty' in {}) == true, 'in works and is boolean');
+
 var b = [1, 2, 3];
 var a = {b: b};
 
