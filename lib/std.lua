@@ -537,7 +537,7 @@ global.Object.defineProperty = function (this, obj, prop, config)
 end
 
 global.Object.defineProperties = function (this, obj, props)
-  for k, v in js_pairs(props) do
+  for k, v in pairs(props) do
     global.Object:defineProperty(obj, k, v)
   end
   return obj

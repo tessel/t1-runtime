@@ -12,6 +12,11 @@ for (var i in arr) {
 	if (i == 0) {
 		had0 = true;
 	}
+	if (arr[i] == null) {
+		console.error('not ok - array string index was null #TODO');
+	} else if (typeof arr[i] != 'string') {
+		console.error('not ok - for..in index was not string #TODO');
+	}
 	console.log(JSON.stringify(i))
 }
 
