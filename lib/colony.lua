@@ -287,7 +287,7 @@ local js_null = {
 local function js_void () end
 
 local function js_next (a, b, c)
-  if b == nil and a[0] ~= nil then
+  if b == nil and rawget(a, 0) ~= nil then
     return 0
   end
   if b == 0 then
