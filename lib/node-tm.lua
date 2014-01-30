@@ -37,23 +37,44 @@ local global = colony.global
 --]]
 
 -- event queue, and temporary (processing) queue
-local _eventQueue, queue = {}, {}
+local _eventQueue, _processEventQueue = {}, {}
+
+local function queue_event (fn)
+  -- Add function to global event queue
+  table.insert(_eventQueue, fn)
+end
+
+local function unqueue_event (fn)
+  -- This does not replace, but invalidates functions
+  -- to not disrupt indexing of runEventLoop
+  for i=1,#_eventQueue do
+    if _eventQueue[i] == fn then
+      _eventQueue[i] = function () return 0 end
+    end
+  end
+  for i=1,#_processEventQueue do
+    if _processEventQueue[i] == fn then
+      _processEventQueue[i] = function () return 0 end
+    end
+  end
+end
 
 _G._colony_ipc = {}
 
 colony.runEventLoop = function ()
   while #_eventQueue > 0 or #_colony_ipc > 0 do
-    queue = _eventQueue
+    _processEventQueue = _eventQueue
     _eventQueue = {}
-    for i=1,#queue do
-      local val = queue[i]()
+    for i=1,#_processEventQueue do
+      local val = _processEventQueue[i]()
       if val ~= 0 then
-        -- make sure to reference queue[i] here so 
+        -- make sure to reference _processEventQueue[i] here so 
         -- clear____ can clear from inside callback
-        table.insert(_eventQueue, queue[i])
+        table.insert(_eventQueue, _processEventQueue[i])
       end
     end
 
+    -- Handle messages from the _colony_ipc global array
     local ipc = _G._colony_ipc
     _G._colony_ipc = {}
     for i=1,#ipc do
@@ -66,9 +87,8 @@ colony.runEventLoop = function ()
     end
   end
 
+  -- Terminate process
   colony.global.process:exit(0)
-  -- once more for the gipper
-  -- TODO actually exit
 end
 
 
@@ -76,6 +96,7 @@ end
 --|| Lua Timers
 --]]
 
+-- Weakly GC'd values
 local timeouttable = {}
 setmetatable(timeouttable, {
   __mode = "v"
@@ -92,7 +113,7 @@ global.setTimeout = function (this, fn, timeout)
     fn(global)
     return 0
   end
-  table.insert(_eventQueue, timefn)
+  queue_event(timefn)
   table.insert(timeouttable, timefn)
   return #timeouttable
 end
@@ -109,7 +130,7 @@ global.setInterval = function (this, fn, timeout)
     start = tm.uptime_micro() -- fixed time delay *between* calls
     return 1
   end
-  table.insert(_eventQueue, timefn)
+  queue_event(timefn)
   table.insert(timeouttable, timefn)
   return #timeouttable
 end
@@ -119,23 +140,15 @@ global.setImmediate = function (this, fn)
     fn(global)
     return 0
   end
-  table.insert(_eventQueue, timefn)
+  queue_event(timefn)
   table.insert(timeouttable, timefn)
   return #timeouttable
 end
 
 global.clearTimeout = function (this, id)
+  -- if value isn't null, function hasn't been GC'd
   if timeouttable[id] ~= nil then
-    for i=1,#_eventQueue do
-      if _eventQueue[i] == timeouttable[id] then
-        _eventQueue[i] = function () return 0 end
-      end
-    end
-    for i=1,#queue do
-      if queue[i] == timeouttable[id] then
-        queue[i] = function () return 0 end
-      end
-    end
+    unqueue_event(timeouttable[id])
     timeouttable[id] = nil
   end
 end
