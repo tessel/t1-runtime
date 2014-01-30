@@ -39,11 +39,31 @@ local global = colony.global
 -- event queue, and temporary (processing) queue
 local _eventQueue, _processEventQueue = {}, {}
 
-local function queue_event (fn)
-  -- Add function to global event queue
-  table.insert(_eventQueue, fn)
+-- Add function to global event queue
+-- timeout: millis before starting (or restarting)
+-- dorepeat: boolean if function should repeat
+-- returns a unique token for unqueue_event
+local function queue_event (fn, timeout, dorepeat)
+  timeout = timeout or 0 
+  local start = tm.uptime_micro()
+  local timefn = function ()
+    local now = tm.uptime_micro()
+    if now - start < (timeout*1000) then
+      return 1
+    end
+    fn(global)
+    if not dorepeat then
+      return 0
+    end
+    start = tm.uptime_micro() -- fixed time delay *between* calls
+    return 1
+  end
+  table.insert(_eventQueue, timefn)
+  return timefn
 end
 
+-- takes a unique token returned by queue_event
+-- to remove it from the event loop
 local function unqueue_event (fn)
   -- This does not replace, but invalidates functions
   -- to not disrupt indexing of runEventLoop
@@ -103,50 +123,25 @@ setmetatable(timeouttable, {
 })
 
 global.setTimeout = function (this, fn, timeout)
-  timeout = timeout or 0 
-  local start = tm.uptime_micro()
-  local timefn = function ()
-    local now = tm.uptime_micro()
-    if now - start < (timeout*1000) then
-      return 1
-    end
-    fn(global)
-    return 0
-  end
-  queue_event(timefn)
-  table.insert(timeouttable, timefn)
+  local ret = queue_event(fn, timeout, false)
+  table.insert(timeouttable, ret)
   return #timeouttable
 end
 
 global.setInterval = function (this, fn, timeout)
-  timeout = timeout or 0 
-  local start = tm.uptime_micro()
-  local timefn = function ()
-    local now = tm.uptime_micro()
-    if now - start < (timeout*1000) then
-      return 1
-    end
-    fn(global)
-    start = tm.uptime_micro() -- fixed time delay *between* calls
-    return 1
-  end
-  queue_event(timefn)
-  table.insert(timeouttable, timefn)
+  local ret = queue_event(fn, timeout, true)
+  table.insert(timeouttable, ret)
   return #timeouttable
 end
 
 global.setImmediate = function (this, fn)
-  local timefn = function ()
-    fn(global)
-    return 0
-  end
-  queue_event(timefn)
-  table.insert(timeouttable, timefn)
+  local ret = queue_event(fn, 0, false)
+  table.insert(timeouttable, ret)
   return #timeouttable
 end
 
 global.clearTimeout = function (this, id)
-  -- if value isn't null, function hasn't been GC'd
+  -- if value isn't null, timeout token hasn't been GC'd
   if timeouttable[id] ~= nil then
     unqueue_event(timeouttable[id])
     timeouttable[id] = nil
