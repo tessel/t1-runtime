@@ -15,6 +15,10 @@ function arreq (a, b) {
 	return true;
 }
 
+var a = [];
+a.push(1, 2, 3, 4, 5);
+ok(a.length == 5, 'array::push accepts multiple args');
+
 var a = [1];
 a.splice(0, 1);
 ok(arreq(a, []));

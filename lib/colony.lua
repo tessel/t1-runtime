@@ -286,13 +286,27 @@ local js_null = {
 
 local function js_void () end
 
+local function js_next (a, b, c)
+  if b == nil and rawget(a, 0) ~= nil then
+    return 0
+  end
+  if b == 0 then
+    b = nil
+  end
+  local k = next(a, b)
+  if k == 0 then
+    return next(a, 0)
+  end
+  return k
+end
+
 -- pairs
 
 function js_pairs (arg)
   if type(arg) == 'function' then
     return pairs({})
   else
-    return pairs(arg or {})
+    return js_next, (arg or {})
   end
 end
 

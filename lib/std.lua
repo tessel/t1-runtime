@@ -302,11 +302,14 @@ arr_proto.toString = function (ths)
   return str
 end
 
-arr_proto.push = function (ths, elem)
-  if ths.length == 0 then
-    ths[0] = elem
-  else
-    table.insert(ths, ths.length, elem)
+arr_proto.push = function (ths, ...)
+  local args = table.pack(...)
+  for i, elem in ipairs(args) do
+    if ths.length == 0 then
+      ths[0] = elem
+    else
+      table.insert(ths, ths.length, elem)
+    end
   end
   return ths.length
 end
@@ -534,7 +537,7 @@ global.Object.defineProperty = function (this, obj, prop, config)
 end
 
 global.Object.defineProperties = function (this, obj, props)
-  for k, v in js_pairs(props) do
+  for k, v in pairs(props) do
     global.Object:defineProperty(obj, k, v)
   end
   return obj
