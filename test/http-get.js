@@ -8,8 +8,8 @@ try {
 	  console.log('ok')
 	  console.log('# statusCode', res.statusCode)
 	}).on('error', function (e) {
-	  console.log('not ok -', e.message, '#SKIP')
+	  console.log('not ok -', e.message, 'error event #SKIP')
 	});
 } catch (e) {
-	console.log('not ok -', e.message, '#SKIP')
+	console.log('not ok -', e.message, 'error thrown #SKIP')
 }

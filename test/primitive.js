@@ -31,3 +31,5 @@ ok(!(b instanceof Function))
 ok(parseFloat instanceof Object)
 ok(!(parseFloat instanceof Array))
 ok(parseFloat instanceof Function)
+
+ok(Number(true) == 1, 'Number(true) == 1')

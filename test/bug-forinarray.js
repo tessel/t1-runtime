@@ -12,6 +12,7 @@ for (var i in arr) {
 	if (i == 0) {
 		had0 = true;
 	}
+	console.log(JSON.stringify(i))
 }
 
 console.log('ok')
