@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "async": "~0.2.9",
-    "colony": "git+https://tmTestUser:tmTestUser1@github.com/tessel/colony.git#0.3.3"
+    "colony": "git+https://tmTestUser:tmTestUser1@github.com/tessel/colony.git#0.3.4"
   },
   "devDependencies": {
     "tape": "~2.3.2",
