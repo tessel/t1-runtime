@@ -418,7 +418,7 @@ function colonize (node) {
       break;
 
     case 'ConditionalExpression':
-      node.update('(' + truthy(node.test) + ' and {' + node.consequent.source() + '} or {' + node.alternate.source() + '})[1]');
+      node.update('((' + truthy(node.test) + ') and {' + node.consequent.source() + '} or {' + node.alternate.source() + '})[1]');
       break;
 
     case 'IfStatement':
