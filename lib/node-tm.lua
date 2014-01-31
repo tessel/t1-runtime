@@ -457,16 +457,17 @@ end);
 end);
 
 ((EventEmitter).prototype).emit = (function (this, type, ...)
-  local args, i, fns = args, i, fns;
-  fns = this:listeners(type):slice();
-  i = 0;
-  while (i < (fns).length) do
-
-  if (fns)[i]:call(this, ...) then end;
-
-  (function () local _r = i; i = _r + 1; return _r end)()
-  end;
-  if true then return (fns).length; end;
+  if not this._events or not this._events[type] then
+    return
+  end
+  local fns, listeners = {}, this._events[type]
+  for i=0,listeners.length do
+    table.insert(fns, listeners[i])
+  end
+  for i=1,#fns do
+    fns[i](this, ...)
+  end
+  return #fns
 end);
 
 ((EventEmitter).prototype).setMaxListeners = (function (this, maxListeners)

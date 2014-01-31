@@ -26,14 +26,14 @@ TCPSocket.prototype.connect = function (port, ip, cb) {
 TCPSocket.prototype.__listen = function () {
   var client = this;
   this.__listenid = setInterval(function () {
-    while (client.socket && tm.tcp_readable(client.socket) > 0) {
+    while (client.socket != null && tm.tcp_readable(client.socket) > 0) {
       var buf = tm.tcp_read(client.socket);
       if (!buf || buf.length == 0) {
         break;
       }
       client.emit('data', buf);
     }
-  }, 100);
+  }, 0);
 };
 
 TCPSocket.prototype.write = function (buf, cb) {
@@ -48,7 +48,7 @@ TCPSocket.prototype.write = function (buf, cb) {
 
 TCPSocket.prototype.close = function () {
   var self = this;
-  if (this.__listenid) {
+  if (this.__listenid != null) {
     clearInterval(this.__listenid);
     this.__listenid = null
   }
