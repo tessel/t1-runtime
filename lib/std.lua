@@ -269,13 +269,20 @@ func_proto.call = function (func, ths, ...)
   return func(ths, ...)
 end
 
+function augmentargs (t1, offn, t2)
+  for i=1,t2.length do
+    t1[offn+i] = t2[i]
+  end
+  return t1
+end
+
 func_proto.bind = function (func, ths1, ...)
   local args1 = table.pack(...)
   return function (ths2, ...)
-    local argset = {}
-    table.augment(argset, args1)
-    table.augment(argset, table.pack(...))
-    return func(ths1, unpack(argset))
+    local argset, args2 = {}, table.pack(...)
+    augmentargs(argset, 0, args1)
+    augmentargs(argset, args1.length, args2)
+    return func(ths1, unpack(argset, 1, args1.length + args2.length))
   end
 end
 
@@ -285,7 +292,7 @@ func_proto.apply = function (func, ths, args)
   if args then
     for i=0,(args.length or 0)-1 do luargs[i+1] = args[i] end
   end
-  return func(ths, unpack(luargs))
+  return func(ths, unpack(luargs, 1, args.length or 0))
 end
 
 func_proto.toString = function ()
