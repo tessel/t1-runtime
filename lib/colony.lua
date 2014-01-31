@@ -251,22 +251,34 @@ str_mt.proto = str_proto
 --  Array
 --]]
 
-function array_getter_length (arr)
-  if arr[0] ~= nil then return #arr + 1 end
-  return #arr
+function array_getter_length (this)
+  return math.max((this[0] ~= nil and {#this + 1} or {#this})[1], getmetatable(this).length)
 end
 
-function js_arr (a)
-  setmetatable(a, {
+function array_setter (this, key, val)
+  local mt = getmetatable(this)
+  mt.length = math.max(mt.length, (tonumber(key) or 0) + 1)
+  rawset(this, key, val)
+end
+
+function js_arr (arr)
+  local len = #arr
+  if len > 1 or arr[0] ~= nil then
+    len = len + 1
+  end
+
+  setmetatable(arr, {
     getters = {
       length = array_getter_length
     },
     values = {},
+    length = len,
     __index = js_getter_index(arr_proto),
+    __newindex = array_setter,
     __tostring = js_tostring,
     proto = arr_proto
   })
-  return a
+  return arr
 end
 
 --[[
@@ -287,16 +299,20 @@ local js_null = {
 local function js_void () end
 
 local function js_next (a, b, c)
-  if b == nil and rawget(a, 0) ~= nil then
+  local mt = getmetatable(a)
+  if b == nil and mt.length ~= nil then
     return 0
   end
-  if b == 0 then
+  if type(b) == 'number' and mt.length ~= nil then
+    if b < a.length - 1 then
+      return b + 1
+    end
     b = nil
   end
-  local k = next(a, b)
-  if k == 0 then
-    return next(a, 0)
-  end
+  local k = b
+  repeat
+    k = next(a, k)
+  until type(k) ~= 'number'
   return k
 end
 

@@ -21,6 +21,8 @@ console.log();
 console.log('... array test');
 var b = [1, 2, 3, 4, 5]
 console.log(b.length, '==5');
+b[4] = null
+console.log(b.length, '==5');
 b[2] = null
 console.log(b.length, '==5');
 b[20] = 5

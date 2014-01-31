@@ -43,15 +43,26 @@ ok(arreq([0, 1, 2, 3, 4, 5].slice(1), [1, 2, 3, 4, 5]), 'slice(1) returns full a
 
 var a = new Array(50);
 a[20] = 'b';
-ok(a.length == 50, 'new Array(50) length is 50 #TODO')
+ok(a.length == 50, 'new Array(50) length is 50')
 
 var b = [];
 b[20] = 'b';
-ok(b.length == 21, 'setting sparse high array index extends array #TODO');
+ok(b.length == 21, 'setting sparse high array index extends array');
 
 var c = [1, 2, 3];
 c[3] = 4;
 ok(c.length == 4, 'setting non-sparse high array index extends array');
+
+var a = [1,2,3];
+console.log("# array full:", a, a.length);
+ok(a.length == 3);
+a[0] = undefined;
+a[1] = undefined;
+console.log("# array two undefined:", a, a.length);
+ok(a.length == 3);
+a[2] = undefined;
+console.log("# array three undefined:", a, a.length);
+ok(a.length == 3);
 
 ok([0, 1, 2, 3].reduce(function(a, b) {
     return a + b;

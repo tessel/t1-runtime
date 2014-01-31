@@ -352,6 +352,7 @@ arr_proto.splice = function (ths, i, del, ...)
     table.insert(ths, i, args[j])
     i = i + 1
   end
+  getmetatable(ths).length = getmetatable(ths).length - (tonumber(del) or 0)
   return ret
 end
 
@@ -576,9 +577,9 @@ global.Array = function (ths, one, ...)
     a[0] = one
     return js_arr(a)
   elseif one ~= nil then
-    local a = {}
-    for i=0,tonumber(one)-1 do a[i]=null end
-    return js_arr(a)
+    local arr = js_arr({})
+    arr[tonumber(one)-1] = nil
+    return arr
   end
   return js_arr({})
 end
@@ -648,7 +649,8 @@ end
 local function objtostring (obj, sset)
   local vals = {}
   sset[obj] = true
-  for k, v in pairs(obj) do
+  for k in js_pairs(obj) do
+    local v = obj[k]
     if sset[v] ~= true then
       if type(v) == 'table' then
         sset[v] = true
@@ -659,6 +661,10 @@ local function objtostring (obj, sset)
         v = objtostring(v, sset)
       elseif type(v) == 'function' then
         v = '[Function]'
+      elseif global.Array:isArray(obj) and v == nil then
+        v = ''
+      else
+        v = tostring(v)
       end
     else
       v = '[Circular]'
@@ -673,7 +679,7 @@ local function objtostring (obj, sset)
     if #vals == 0 then
       return "[]"
     end
-    table.insert(vals, 1, table.remove(vals))
+    -- table.insert(vals, 1, table.remove(vals))
     return "[ " + table.concat(vals, ", ") + " ]"
   else
     if #vals == 0 then
