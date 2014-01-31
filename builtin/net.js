@@ -26,11 +26,14 @@ TCPSocket.prototype.connect = function (port, ip, cb) {
 TCPSocket.prototype.__listen = function () {
   var client = this;
   this.__listenid = setInterval(function () {
+    var buf = '';
     while (client.socket != null && tm.tcp_readable(client.socket) > 0) {
-      var buf = tm.tcp_read(client.socket);
+      var buf = buf + tm.tcp_read(client.socket);
       if (!buf || buf.length == 0) {
         break;
       }
+    }
+    if (buf.length) {
       client.emit('data', buf);
     }
   }, 0);
