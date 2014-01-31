@@ -9,3 +9,5 @@ colony
 libcolony.a
 node_modules
 build/*
+npm-debug.log
+

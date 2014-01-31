@@ -22,7 +22,7 @@ PATH_HSREGEX       =./deps/hsregex
 PATH_HTTPPARSER    =./deps/http-parser
 PATH_LUABITOP      =./deps/luabitop-1.0
 PATH_LIBTAR        =./deps/libtar
-PATH_LUA           =./deps/lua-5.1
+PATH_LUA           =./deps/colony-lua
 PATH_FATFS         =./deps/fatfs
 PATH_YAJL					 =./deps/yajl
 
