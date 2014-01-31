@@ -1,6 +1,6 @@
 /* test rig */ var t = 1, tmax = 3
 function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + ' -', d); }
-console.log(t + '..' + tmax);
+// console.log(t + '..' + tmax);
 ok(process.versions.colony, 'running in colony')
 
 ok(null < 400, 'null < positive');
@@ -33,6 +33,11 @@ ok(!(parseFloat instanceof Array))
 ok(parseFloat instanceof Function)
 
 ok(Number(true) == 1, 'Number(true) == 1')
+
+console.log(JSON.stringify(Object()))
+ok(JSON.stringify(Object()) == '{}', 'Object() constructor')
+console.log('#', Object({a: 5})) // fixed objtostring error
+ok(Object({a: 5}).a == 5, 'Object(obj) constructor')
 
 var initial = true;
 ok((initial || initial != 'low' ? 'a' : 'a') == 'a', 'ternary works with boolean operators');

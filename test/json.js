@@ -27,3 +27,6 @@ ok(JSON.parse("[0, 1, 2]").slice, 'json array is real array');
 ok(JSON.stringify([0, 1, 2]) == '[0,1,2]', 'stringify array');
 ok(JSON.stringify({a: function () {}, b: 5}) == '{"b":5}', 'stringify fn #TODO functions should not be output');
 ok(JSON.stringify({"hi": 5}) == "{\"hi\":5}", 'stringify obj');
+
+ok(JSON.stringify(Object()) == '{}', 'empty obj')
+ok(JSON.stringify([]) == '[]', 'empty array #TODO')

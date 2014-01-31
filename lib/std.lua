@@ -513,7 +513,9 @@ end
 
 -- Object
 
-global.Object = js_obj({})
+global.Object = function (this, obj)
+  return obj or js_obj({})
+end
 
 global.Object.prototype = obj_proto
 
