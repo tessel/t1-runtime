@@ -243,6 +243,10 @@ function HTTPOutgoingRequest (port, host, path, method) {
 
 util.inherits(HTTPOutgoingRequest, EventEmitter);
 
+HTTPOutgoingRequest.prototype.write = function (data) {
+  this.socket.write(data);
+};
+
 HTTPOutgoingRequest.prototype.end = function () {
   // TODO
   // console.log('end');
