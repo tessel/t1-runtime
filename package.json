@@ -1,6 +1,6 @@
 {
   "name": "colony",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "private": "true",
   "description": "Colony compiles JavaScript to Lua 5.2 source code, using a small runtime library.",
   "main": "./src/index.js",

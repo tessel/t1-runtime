@@ -161,6 +161,8 @@ function colonize (node) {
       } else if (node.operator == 'delete') {
         // TODO return true/false
         node.update(node.argument.source() + ' = nil');
+      } else if (node.operator == 'void') {
+        node.update('(_void(' + node.argument.source() + '))');
       } else {
         node.update('(' + node.source() + ')');
       }
