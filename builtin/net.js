@@ -94,7 +94,7 @@ TCPServer.prototype.listen = function (port, ip) {
 
   setInterval(function () {
     var client;
-    if (tm.tcp_readable(self.socket) > 0 && (client = tm.tcp_accept(self.socket)) >= 0) {
+    if ((client = tm.tcp_accept(self.socket)) >= 0) {
       var clientsocket = new TCPSocket(client);
       clientsocket.__listen();
       self.emit('socket', clientsocket);
