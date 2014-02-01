@@ -195,7 +195,9 @@ function HTTPOutgoingRequest (port, host, path, method) {
   }
 
   var self = this;
+  this._connected = false;
   this.socket = net.connect(port, ip, function () {
+    this._connected = true;
     self.socket.write(method + ' ' + path + ' HTTP/1.1\r\nHost: ' + host + '\r\n\r\n');
     // self.emit('connect');
   })
@@ -244,7 +246,13 @@ function HTTPOutgoingRequest (port, host, path, method) {
 util.inherits(HTTPOutgoingRequest, EventEmitter);
 
 HTTPOutgoingRequest.prototype.write = function (data) {
-  this.socket.write(data);
+  if (this._connected) {
+    this.socket.write(data);
+  } else {
+    this.socket.once('connect', function () {
+      this.socket.write(data);
+    })
+  }
 };
 
 HTTPOutgoingRequest.prototype.end = function () {
