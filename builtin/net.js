@@ -20,6 +20,7 @@ TCPSocket.prototype.connect = function (port, ip, cb) {
     tm.tcp_connect(client.socket, Number(ips[0]), Number(ips[1]), Number(ips[2]), Number(ips[3]), Number(port));
     client.__listen();
     cb();
+    client.emit('connect');
   });
 };
 
