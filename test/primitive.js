@@ -32,12 +32,18 @@ ok(parseFloat instanceof Object)
 ok(!(parseFloat instanceof Array))
 ok(parseFloat instanceof Function)
 
+// Number
 ok(Number(true) == 1, 'Number(true) == 1')
 
+// Object
 console.log(JSON.stringify(Object()))
 ok(JSON.stringify(Object()) == '{}', 'Object() constructor')
 console.log('#', Object({a: 5})) // fixed objtostring error
 ok(Object({a: 5}).a == 5, 'Object(obj) constructor')
 
+// ternary
 var initial = true;
 ok((initial || initial != 'low' ? 'a' : 'a') == 'a', 'ternary works with boolean operators');
+
+// void
+ok((void 0) == undefined, 'void')
