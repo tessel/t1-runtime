@@ -47,3 +47,6 @@ ok((initial || initial != 'low' ? 'a' : 'a') == 'a', 'ternary works with boolean
 
 // void
 ok((void 0) == undefined, 'void')
+
+// isNaN
+ok(isNaN(0/0), 'isNaN');

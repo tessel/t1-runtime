@@ -724,7 +724,11 @@ global.console = js_obj({
   end
 });
 
--- parseFloat, parseInt
+-- parseFloat, parseInt, isNan
+
+global.isNaN = function (this, arg)
+  return arg ~= arg -- nan != nan
+end
 
 global.parseFloat = function (ths, str)
   return tonumber(tostring(str)) or 0
