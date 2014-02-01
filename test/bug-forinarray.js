@@ -1,8 +1,13 @@
-console.log('1..1')
+/* test rig */ var t = 1, tmax = 5
+function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + ' -', d); }
+console.log(t + '..' + tmax);
+ok(process.versions.colony, 'running in colony')
 
 var arr = [];
 arr.hello = 'hi';
 arr.push(1, 2, 3, 4, 5);
+
+ok(arr[0] == 1, 'first index was null');
 
 var had0 = false;
 for (var i in arr) {
@@ -13,11 +18,11 @@ for (var i in arr) {
 		had0 = true;
 	}
 	if (arr[i] == null) {
-		console.error('not ok - array string index was null #TODO');
+		ok(false, 'array string index was null #TODO');
 	} else if (typeof arr[i] != 'string') {
-		console.error('not ok - for..in index was not string #TODO');
+		ok(false, 'for..in index was not string #TODO');
 	}
-	console.log(JSON.stringify(i))
+	// console.log(JSON.stringify(i))
 }
 
-console.log('ok')
+// console.log('ok')

@@ -633,13 +633,15 @@ end
 
 colony.cache = {}
 
-local function require_resolve (name, root)
+local function require_resolve (origname, root)
   root = root or './'
+  local name = origname
   -- print('<-', root, name)
   if string.sub(name, -3) == '.js' then
     name = string.sub(name, 1, -4)
   end 
 
+  -- module
   if string.sub(name, 1, 1) ~= '.' then
     if colony.precache[name] or colony.cache[name] then
       root = ''
@@ -669,15 +671,22 @@ local function require_resolve (name, root)
         name = name .. '/' .. (label or 'index.js')
       end
     end
+
+  -- local file
   else
-    -- todo not do "module/index.js" from "module.js"
+    -- TODO: not do "module/index.js" from "module.js"
     local p = path_normalize(root .. name)
-    if not fs_exists(p .. '.js') and fs_exists(p .. '/index.js') then
+    if not fs_exists(p .. '.js') and not fs_exists(p .. '.js') and fs_exists(p .. '/index.js') then
       name = name .. '/index'
     end
   end
   if root ~= '' and string.sub(name, -3) ~= '.js' then
-    name = name .. '.js'
+    local p = path_normalize(root .. name)
+    if string.sub(origname, -5) == '.json' or fs_exists(p .. '.json') then
+      name = name .. '.json'
+    else 
+      name = name .. '.js'
+    end
   end
   local p = path_normalize(root .. name)
   p = colony._normalize(p, path_normalize)
@@ -692,7 +701,14 @@ local function require_load (p)
   end
   if not res then
     if fs_exists(p) then
-      res = assert(loadstring(colony._load(p), "@"..p))()
+      if string.sub(p, -5) == '.json' then
+        local parsed = global.JSON:parse(fs_readfile(p))
+        res = function (global, module)
+          module.exports = parsed
+        end
+      else 
+        res = assert(loadstring(colony._load(p), "@"..p))()
+      end
     end
   end
   return res

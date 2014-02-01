@@ -256,8 +256,10 @@ function array_getter_length (this)
 end
 
 function array_setter (this, key, val)
-  local mt = getmetatable(this)
-  mt.length = math.max(mt.length, (tonumber(key) or 0) + 1)
+  if type(key) == 'number' then
+    local mt = getmetatable(this)
+    mt.length = math.max(mt.length, (tonumber(key) or 0) + 1)
+  end
   rawset(this, key, val)
 end
 
