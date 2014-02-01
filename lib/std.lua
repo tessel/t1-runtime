@@ -384,10 +384,10 @@ end
 
 arr_proto.concat = function (src1, src2)
   local a = js_arr({})
-  for i=0,src1.length-1 do
+  for i=0,(src1.length or 0)-1 do
     a:push(src1[i])
   end
-  for i=0,src2.length-1 do
+  for i=0,(src2.length or 0)-1 do
     a:push(src2[i])
   end
   return a
