@@ -108,7 +108,7 @@ function colonize (node) {
       if (node.source() == 'arguments' && node.parent.type != 'Property') {
         attachIdentifierToContext(node, node);
       }
-      if (node.parent.type != 'MemberExpression' || node.parent.object == node) {
+      if (node.parent.type != 'MemberExpression' || (node.parent.object == node || (node.parent.computed && node.parent.property == node))) {
         node.update(fixIdentifiers(node.source()));
       }
       break;
