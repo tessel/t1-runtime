@@ -192,7 +192,7 @@ func_mt.__index = function (self, key)
   if key == 'prototype' then
     local proxy = js_func_proxy(self)
     if proxy.prototype == nil then
-      proxy.prototype = js_obj({})
+      proxy.prototype = js_obj({constructor = self})
     end
     return proxy.prototype
   end
