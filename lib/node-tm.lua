@@ -165,7 +165,7 @@ local buffer_proto = js_obj({
   end,
   slice = function (this, sourceStart, len)
     if len == nil then
-      len = this.length - (sourceStart or 0)
+      len = this.length
     end
     sourceStart = tonumber(sourceStart or 0)
     len = tonumber(len)
