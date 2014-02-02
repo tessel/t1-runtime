@@ -90,13 +90,29 @@ th_read_internal(TAR *t)
 int
 th_read(TAR *t)
 {
-	int i;
+	int i, k;
 	size_t sz, j, blocks;
 	char *ptr;
 
 #ifdef DEBUG
-	printf("==> th_read(t=0x%lx)\n", t);
+	printf("==> th_read(t=0x%lx, typeflag='%d')\n", t, t->th_buf.typeflag);
 #endif
+
+	// TM: added Jan 30, 2014 to skip Pax extended headers >>>
+	if (t->th_buf.typeflag == 'x' || t->th_buf.typeflag == 'g') {
+		for (i = th_get_size(t); i > 0; i -= T_BLOCKSIZE)
+		{
+			k = tar_block_read(t, &(t->th_buf));
+			if (k != T_BLOCKSIZE)
+			{
+				if (k != -1)
+					errno = EINVAL;
+				return -1;
+			}
+		}
+		return th_read(t);
+	}
+	// <<< TM
 
 	if (t->th_buf.gnu_longname != NULL)
 		free(t->th_buf.gnu_longname);

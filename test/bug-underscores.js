@@ -35,3 +35,9 @@ c_d.func__tastic = function () {
 	ok(false,' underscore in member and base');
 }
 c_d.func_tastic();
+
+var actions = ["a", "b", "c", "d", "e", "f", "g"];
+var _n = 1;
+ok(actions[_n] != undefined, 'underscores in member properties not undefined');
+var _j = {_k: 5}
+ok(actions[_j._k] != undefined, 'underscores in member properties in member properties not undefined');

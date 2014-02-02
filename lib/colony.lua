@@ -192,7 +192,7 @@ func_mt.__index = function (self, key)
   if key == 'prototype' then
     local proxy = js_func_proxy(self)
     if proxy.prototype == nil then
-      proxy.prototype = js_obj({})
+      proxy.prototype = js_obj({constructor = self})
     end
     return proxy.prototype
   end
@@ -251,22 +251,36 @@ str_mt.proto = str_proto
 --  Array
 --]]
 
-function array_getter_length (arr)
-  if arr[0] ~= nil then return #arr + 1 end
-  return #arr
+function array_getter_length (this)
+  return math.max((this[0] ~= nil and {#this + 1} or {#this})[1], getmetatable(this).length)
 end
 
-function js_arr (a)
-  setmetatable(a, {
+function array_setter (this, key, val)
+  if type(key) == 'number' then
+    local mt = getmetatable(this)
+    mt.length = math.max(mt.length, (tonumber(key) or 0) + 1)
+  end
+  rawset(this, key, val)
+end
+
+function js_arr (arr)
+  local len = #arr
+  if len > 1 or arr[0] ~= nil then
+    len = len + 1
+  end
+
+  setmetatable(arr, {
     getters = {
       length = array_getter_length
     },
     values = {},
+    length = len,
     __index = js_getter_index(arr_proto),
+    __newindex = array_setter,
     __tostring = js_tostring,
     proto = arr_proto
   })
-  return a
+  return arr
 end
 
 --[[
@@ -286,13 +300,31 @@ local js_null = {
 
 local function js_void () end
 
+local function js_next (a, b, c)
+  local mt = getmetatable(a)
+  if b == nil and mt and mt.length ~= nil then
+    return 0
+  end
+  if type(b) == 'number' and mt and mt.length ~= nil then
+    if b < a.length - 1 then
+      return b + 1
+    end
+    b = nil
+  end
+  local k = b
+  repeat
+    k = next(a, k)
+  until type(k) ~= 'number'
+  return k
+end
+
 -- pairs
 
 function js_pairs (arg)
   if type(arg) == 'function' then
     return pairs({})
   else
-    return pairs(arg or {})
+    return js_next, (arg or {})
   end
 end
 
@@ -336,12 +368,6 @@ function js_new (f, ...)
   return f(o, ...) or o
 end
 
--- "truthy" values
-
-function js_truthy (o)
-  return o and o ~= 0 and o ~= ""
-end
-
 -- arguments objects
 
 function js_arguments (...)
@@ -372,7 +398,7 @@ end
 -- in
 
 function js_in (key, obj)
-  return obj[key]
+  return obj[key] ~= nil
 end
 
 -- with
@@ -429,8 +455,9 @@ colony = {
   js_new = js_new,
   js_tostring = js_tostring,
   js_instanceof = js_instanceof,
+  js_void = js_void,
+  js_pairs = js_pairs,
   js_typeof = js_typeof,
-  js_truthy = js_truthy,
   js_arguments = js_arguments,
   js_break = js_break,
   js_cont = js_cont,

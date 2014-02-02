@@ -169,6 +169,8 @@ tar_extract_file(TAR *t, char *realname)
     i = tar_extract_blockdev(t, realname);
   else if (TH_ISFIFO(t))
     i = tar_extract_fifo(t, realname);
+  else if ((t)->th_buf.typeflag == 'x' || (t)->th_buf.typeflag == 'g') /* PAX headers */
+    return 0;
   else /* if (TH_ISREG(t)) */
     i = tar_extract_regfile(t, realname);
 
@@ -212,8 +214,8 @@ tar_extract_regfile(TAR *t, char *realname)
   char *filename;
 
 #ifdef DEBUG
-  printf("==> tar_extract_regfile(t=0x%lx, realname=\"%s\")\n", t,
-         realname);
+  printf("==> tar_extract_regfile(t=0x%lx, realname=\"%s\", typeflag)\n", t,
+         realname, t->th_buf.typeflag);
 #endif
 
   if (!TH_ISREG(t))

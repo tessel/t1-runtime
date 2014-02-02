@@ -11,8 +11,9 @@ local js_obj = colony.js_obj
 local js_new = colony.js_new
 local js_tostring = colony.js_tostring
 local js_instanceof = colony.js_instanceof
+local js_void = colony.js_void
+local js_pairs = colony.js_pairs
 local js_typeof = colony.js_typeof
-local js_truthy = colony.js_truthy
 local js_arguments = colony.js_arguments
 local js_break = colony.js_break
 local js_cont = colony.js_cont
@@ -38,23 +39,64 @@ local global = colony.global
 --]]
 
 -- event queue, and temporary (processing) queue
-local _eventQueue, queue = {}, {}
+local _eventQueue, _processEventQueue = {}, {}
+
+-- Add function to global event queue
+-- timeout: millis before starting (or restarting)
+-- dorepeat: boolean if function should repeat
+-- returns a unique token for unqueue_event
+local function queue_event (fn, timeout, dorepeat)
+  timeout = timeout or 0 
+  local start = tm.uptime_micro()
+  local timefn = function ()
+    local now = tm.uptime_micro()
+    if now - start < (timeout*1000) then
+      return 1
+    end
+    fn(global)
+    if not dorepeat then
+      return 0
+    end
+    start = tm.uptime_micro() -- fixed time delay *between* calls
+    return 1
+  end
+  table.insert(_eventQueue, timefn)
+  return timefn
+end
+
+-- takes a unique token returned by queue_event
+-- to remove it from the event loop
+local function unqueue_event (fn)
+  -- This does not replace, but invalidates functions
+  -- to not disrupt indexing of runEventLoop
+  for i=1,#_eventQueue do
+    if _eventQueue[i] == fn then
+      _eventQueue[i] = function () return 0 end
+    end
+  end
+  for i=1,#_processEventQueue do
+    if _processEventQueue[i] == fn then
+      _processEventQueue[i] = function () return 0 end
+    end
+  end
+end
 
 _G._colony_ipc = {}
 
 colony.runEventLoop = function ()
   while #_eventQueue > 0 or #_colony_ipc > 0 do
-    queue = _eventQueue
+    _processEventQueue = _eventQueue
     _eventQueue = {}
-    for i=1,#queue do
-      local val = queue[i]()
+    for i=1,#_processEventQueue do
+      local val = _processEventQueue[i]()
       if val ~= 0 then
-        -- make sure to reference queue[i] here so 
+        -- make sure to reference _processEventQueue[i] here so 
         -- clear____ can clear from inside callback
-        table.insert(_eventQueue, queue[i])
+        table.insert(_eventQueue, _processEventQueue[i])
       end
     end
 
+    -- Handle messages from the _colony_ipc global array
     local ipc = _G._colony_ipc
     _G._colony_ipc = {}
     for i=1,#ipc do
@@ -67,9 +109,8 @@ colony.runEventLoop = function ()
     end
   end
 
+  -- Terminate process
   colony.global.process:exit(0)
-  -- once more for the gipper
-  -- TODO actually exit
 end
 
 
@@ -77,66 +118,34 @@ end
 --|| Lua Timers
 --]]
 
+-- Weakly GC'd values
 local timeouttable = {}
 setmetatable(timeouttable, {
   __mode = "v"
 })
 
 global.setTimeout = function (this, fn, timeout)
-  timeout = timeout or 0 
-  local start = tm.uptime_micro()
-  local timefn = function ()
-    local now = tm.uptime_micro()
-    if now - start < (timeout*1000) then
-      return 1
-    end
-    fn(global)
-    return 0
-  end
-  table.insert(_eventQueue, timefn)
-  table.insert(timeouttable, timefn)
+  local ret = queue_event(fn, timeout, false)
+  table.insert(timeouttable, ret)
   return #timeouttable
 end
 
 global.setInterval = function (this, fn, timeout)
-  timeout = timeout or 0 
-  local start = tm.uptime_micro()
-  local timefn = function ()
-    local now = tm.uptime_micro()
-    if now - start < (timeout*1000) then
-      return 1
-    end
-    fn(global)
-    start = tm.uptime_micro() -- fixed time delay *between* calls
-    return 1
-  end
-  table.insert(_eventQueue, timefn)
-  table.insert(timeouttable, timefn)
+  local ret = queue_event(fn, timeout, true)
+  table.insert(timeouttable, ret)
   return #timeouttable
 end
 
 global.setImmediate = function (this, fn)
-  local timefn = function ()
-    fn(global)
-    return 0
-  end
-  table.insert(_eventQueue, timefn)
-  table.insert(timeouttable, timefn)
+  local ret = queue_event(fn, 0, false)
+  table.insert(timeouttable, ret)
   return #timeouttable
 end
 
 global.clearTimeout = function (this, id)
+  -- if value isn't null, timeout token hasn't been GC'd
   if timeouttable[id] ~= nil then
-    for i=1,#_eventQueue do
-      if _eventQueue[i] == timeouttable[id] then
-        _eventQueue[i] = function () return 0 end
-      end
-    end
-    for i=1,#queue do
-      if queue[i] == timeouttable[id] then
-        queue[i] = function () return 0 end
-      end
-    end
+    unqueue_event(timeouttable[id])
     timeouttable[id] = nil
   end
 end
@@ -412,11 +421,11 @@ global.Buffer = Buffer
 local EventEmitter = function (this) end
 
 ((EventEmitter).prototype).listeners = (function (this, type)
-  if true then return (js_truthy((this).hasOwnProperty:call((this)._events or (function () local _r = js_obj({}); (this)._events = _r; return _r; end)(), type)) and {((this)._events)[type]} or {(function () local _r = js_arr({}); ((this)._events)[type] = _r; return _r; end)()})[1]; end;
+  if true then return (((this).hasOwnProperty:call((this)._events or (function () local _r = js_obj({}); (this)._events = _r; return _r; end)(), type)) and {((this)._events)[type]} or {(function () local _r = js_arr({}); ((this)._events)[type] = _r; return _r; end)()})[1]; end;
 end);
 
 ((EventEmitter).prototype).on = (function () local _r = (function (this, type, f)
-  if js_truthy(((this)._maxListeners ~= (0)) and (this:listeners(type):push(f) > ((this)._maxListeners or (10)))) then
+  if (((this)._maxListeners ~= (0)) and (this:listeners(type):push(f) > ((this)._maxListeners or (10)))) then
   if console and console:warn(((("Possible EventEmitter memory leak detected. ") + (((this)._events)[type]).length) + (" listeners added. Use emitter.setMaxListeners() to increase limit."))) then end;
   end;
   if this:emit(("newListener"), type, f) then end;
@@ -444,22 +453,23 @@ end);
 ((EventEmitter).prototype).removeAllListeners = (function (this, type)
   local k = k;
   for k in js_pairs((this)._events) do
-  if (not js_truthy(type)) or (type == k) and ((this)._events)[k]:splice((0), (((this)._events)[k]).length) then end;
+  if (not type) or (type == k) and ((this)._events)[k]:splice((0), (((this)._events)[k]).length) then end;
   end;
   if true then return this; end;
 end);
 
 ((EventEmitter).prototype).emit = (function (this, type, ...)
-  local args, i, fns = args, i, fns;
-  fns = this:listeners(type):slice();
-  i = 0;
-  while (i < (fns).length) do
-
-  if (fns)[i]:call(this, ...) then end;
-
-  (function () local _r = i; i = _r + 1; return _r end)()
-  end;
-  if true then return (fns).length; end;
+  if not this._events or not this._events[type] then
+    return
+  end
+  local fns, listeners = {}, this._events[type]
+  for i=0,listeners.length do
+    table.insert(fns, listeners[i])
+  end
+  for i=1,#fns do
+    fns[i](this, ...)
+  end
+  return #fns
 end);
 
 ((EventEmitter).prototype).setMaxListeners = (function (this, maxListeners)
@@ -623,13 +633,15 @@ end
 
 colony.cache = {}
 
-local function require_resolve (name, root)
+local function require_resolve (origname, root)
   root = root or './'
+  local name = origname
   -- print('<-', root, name)
   if string.sub(name, -3) == '.js' then
     name = string.sub(name, 1, -4)
   end 
 
+  -- module
   if string.sub(name, 1, 1) ~= '.' then
     if colony.precache[name] or colony.cache[name] then
       root = ''
@@ -659,15 +671,22 @@ local function require_resolve (name, root)
         name = name .. '/' .. (label or 'index.js')
       end
     end
+
+  -- local file
   else
-    -- todo not do "module/index.js" from "module.js"
+    -- TODO: not do "module/index.js" from "module.js"
     local p = path_normalize(root .. name)
-    if not fs_exists(p .. '.js') and fs_exists(p .. '/index.js') then
+    if not fs_exists(p .. '.js') and not fs_exists(p .. '.js') and fs_exists(p .. '/index.js') then
       name = name .. '/index'
     end
   end
   if root ~= '' and string.sub(name, -3) ~= '.js' then
-    name = name .. '.js'
+    local p = path_normalize(root .. name)
+    if string.sub(origname, -5) == '.json' or fs_exists(p .. '.json') then
+      name = name .. '.json'
+    else 
+      name = name .. '.js'
+    end
   end
   local p = path_normalize(root .. name)
   p = colony._normalize(p, path_normalize)
@@ -682,7 +701,14 @@ local function require_load (p)
   end
   if not res then
     if fs_exists(p) then
-      res = assert(loadstring(colony._load(p), "@"..p))()
+      if string.sub(p, -5) == '.json' then
+        local parsed = global.JSON:parse(fs_readfile(p))
+        res = function (global, module)
+          module.exports = parsed
+        end
+      else 
+        res = assert(loadstring(colony._load(p), "@"..p))()
+      end
     end
   end
   return res

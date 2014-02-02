@@ -7,15 +7,15 @@
     "test": "test"
   },
   "scripts": {
-    "test": "./node_modules/.bin/tap -e ./bin/colony test/*.js",
-    "tessel-test": "./node_modules/.bin/tap -e tessel-node test/*.js"
+    "test": "./node_modules/.bin/tap -e './bin/colony' test/*.js",
+    "tessel-test": "./node_modules/.bin/tap -e 'tessel-node -q' test/*.js"
   },
   "dependencies": {
     "async": "~0.2.9",
-    "colony": "git+https://tmTestUser:tmTestUser1@github.com/tessel/colony.git"
+    "colony": "git+https://tmTestUser:tmTestUser1@github.com/tessel/colony.git#0.3.6"
   },
   "devDependencies": {
     "tape": "~2.3.2",
-    "tap": "git+https://github.com/tcr/node-tap.git"
+    "tap": "git+https://github.com/tcr/node-tap.git#4f96b1"
   }
 }

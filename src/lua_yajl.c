@@ -742,6 +742,7 @@ static int js_generator_close(lua_State *L) {
 static int js_generator_value(lua_State *L) {
     int max;
     int is_array;
+    int no_vals;
     int type = lua_type(L, 2);
 
     switch ( type ) {
@@ -781,10 +782,12 @@ static int js_generator_value(lua_State *L) {
 
         max      = 0;
         is_array = 1;
+        no_vals  = 1;
 
         /* First iterate over the table to see if it is an array: */
         lua_pushnil(L);
         while ( lua_next(L, 2) != 0 ) {
+            no_vals = 0;
             if ( lua_type(L, -2) == LUA_TNUMBER ) {
                 double num = lua_tonumber(L, -2);
                 if ( num == floor(num) ) {
@@ -802,7 +805,7 @@ static int js_generator_value(lua_State *L) {
             lua_pop(L, 1);
         }
 
-        if ( is_array ) {
+        if ( is_array && !no_vals ) {
             int i;
             js_generator_open_array(L);
             for ( i=0; i <= max; i++ ) {

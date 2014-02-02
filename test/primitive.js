@@ -1,6 +1,6 @@
 /* test rig */ var t = 1, tmax = 3
 function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + ' -', d); }
-console.log(t + '..' + tmax);
+// console.log(t + '..' + tmax);
 ok(process.versions.colony, 'running in colony')
 
 ok(null < 400, 'null < positive');
@@ -17,9 +17,7 @@ ok(null == null, 'null == null')
 ok(undefined < 400, 'undefined < positive #TODO');
 ok(undefined > -400, 'undefined > positive #TODO');
 
-ok(!(0) == true, '0 is falsy');
-ok(!(false) == true, 'false is falsy');
-ok(!('') == true, '"" is falsy');
+ok(('hasOwnProperty' in {}) == true, 'in works and is boolean');
 
 var b = [1, 2, 3];
 var a = {b: b};
@@ -33,3 +31,22 @@ ok(!(b instanceof Function))
 ok(parseFloat instanceof Object)
 ok(!(parseFloat instanceof Array))
 ok(parseFloat instanceof Function)
+
+// Number
+ok(Number(true) == 1, 'Number(true) == 1')
+
+// Object
+console.log(JSON.stringify(Object()))
+ok(JSON.stringify(Object()) == '{}', 'Object() constructor')
+console.log('#', Object({a: 5})) // fixed objtostring error
+ok(Object({a: 5}).a == 5, 'Object(obj) constructor')
+
+// ternary
+var initial = true;
+ok((initial || initial != 'low' ? 'a' : 'a') == 'a', 'ternary works with boolean operators');
+
+// void
+ok((void 0) == undefined, 'void')
+
+// isNaN
+ok(isNaN(0/0), 'isNaN');

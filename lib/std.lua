@@ -11,8 +11,9 @@ local js_obj = colony.js_obj
 local js_new = colony.js_new
 local js_tostring = colony.js_tostring
 local js_instanceof = colony.js_instanceof
+local js_void = colony.js_void
+local js_pairs = colony.js_pairs
 local js_typeof = colony.js_typeof
-local js_truthy = colony.js_truthy
 local js_arguments = colony.js_arguments
 local js_break = colony.js_break
 local js_cont = colony.js_cont
@@ -39,11 +40,13 @@ global._obj = js_obj
 global._arr = js_arr
 global._void = js_void
 global._null = js_null
+global._void = js_void
 global._pairs = js_pairs
 global._typeof = js_typeof
 global._instanceof = js_instanceof
 global._new = js_new
-global._truthy = js_truthy
+--TODO remove this _truthy function
+global._truthy = function (arg) return not (not arg); end
 global._arguments = js_arguments
 global._seq = js_seq
 global._in = js_in
@@ -269,13 +272,20 @@ func_proto.call = function (func, ths, ...)
   return func(ths, ...)
 end
 
+function augmentargs (t1, offn, t2)
+  for i=1,t2.length do
+    t1[offn+i] = t2[i]
+  end
+  return t1
+end
+
 func_proto.bind = function (func, ths1, ...)
   local args1 = table.pack(...)
   return function (ths2, ...)
-    local argset = {}
-    table.augment(argset, args1)
-    table.augment(argset, table.pack(...))
-    return func(ths1, unpack(argset))
+    local argset, args2 = {}, table.pack(...)
+    augmentargs(argset, 0, args1)
+    augmentargs(argset, args1.length, args2)
+    return func(ths1, unpack(argset, 1, args1.length + args2.length))
   end
 end
 
@@ -285,7 +295,7 @@ func_proto.apply = function (func, ths, args)
   if args then
     for i=0,(args.length or 0)-1 do luargs[i+1] = args[i] end
   end
-  return func(ths, unpack(luargs))
+  return func(ths, unpack(luargs, 1, args.length or 0))
 end
 
 func_proto.toString = function ()
@@ -302,11 +312,14 @@ arr_proto.toString = function (ths)
   return str
 end
 
-arr_proto.push = function (ths, elem)
-  if ths.length == 0 then
-    ths[0] = elem
-  else
-    table.insert(ths, ths.length, elem)
+arr_proto.push = function (ths, ...)
+  local args = table.pack(...)
+  for i, elem in ipairs(args) do
+    if ths.length == 0 then
+      ths[0] = elem
+    else
+      table.insert(ths, ths.length, elem)
+    end
   end
   return ths.length
 end
@@ -349,6 +362,7 @@ arr_proto.splice = function (ths, i, del, ...)
     table.insert(ths, i, args[j])
     i = i + 1
   end
+  getmetatable(ths).length = getmetatable(ths).length - (tonumber(del) or 0)
   return ret
 end
 
@@ -373,10 +387,10 @@ end
 
 arr_proto.concat = function (src1, src2)
   local a = js_arr({})
-  for i=0,src1.length-1 do
+  for i=0,(src1.length or 0)-1 do
     a:push(src1[i])
   end
-  for i=0,src2.length-1 do
+  for i=0,(src2.length or 0)-1 do
     a:push(src2[i])
   end
   return a
@@ -502,7 +516,9 @@ end
 
 -- Object
 
-global.Object = js_obj({})
+global.Object = function (this, obj)
+  return obj or js_obj({})
+end
 
 global.Object.prototype = obj_proto
 
@@ -534,7 +550,7 @@ global.Object.defineProperty = function (this, obj, prop, config)
 end
 
 global.Object.defineProperties = function (this, obj, props)
-  for k, v in js_pairs(props) do
+  for k, v in pairs(props) do
     global.Object:defineProperty(obj, k, v)
   end
   return obj
@@ -573,9 +589,9 @@ global.Array = function (ths, one, ...)
     a[0] = one
     return js_arr(a)
   elseif one ~= nil then
-    local a = {}
-    for i=0,tonumber(one)-1 do a[i]=null end
-    return js_arr(a)
+    local arr = js_arr({})
+    arr[tonumber(one)-1] = nil
+    return arr
   end
   return js_arr({})
 end
@@ -645,7 +661,8 @@ end
 local function objtostring (obj, sset)
   local vals = {}
   sset[obj] = true
-  for k, v in pairs(obj) do
+  for k in js_pairs(obj) do
+    local v = obj[k]
     if sset[v] ~= true then
       if type(v) == 'table' then
         sset[v] = true
@@ -656,6 +673,10 @@ local function objtostring (obj, sset)
         v = objtostring(v, sset)
       elseif type(v) == 'function' then
         v = '[Function]'
+      elseif global.Array:isArray(obj) and v == nil then
+        v = ''
+      else
+        v = tostring(v)
       end
     else
       v = '[Circular]'
@@ -670,7 +691,7 @@ local function objtostring (obj, sset)
     if #vals == 0 then
       return "[]"
     end
-    table.insert(vals, 1, table.remove(vals))
+    -- table.insert(vals, 1, table.remove(vals))
     return "[ " + table.concat(vals, ", ") + " ]"
   else
     if #vals == 0 then
@@ -703,7 +724,11 @@ global.console = js_obj({
   end
 });
 
--- parseFloat, parseInt
+-- parseFloat, parseInt, isNan
+
+global.isNaN = function (this, arg)
+  return arg ~= arg -- nan != nan
+end
 
 global.parseFloat = function (ths, str)
   return tonumber(tostring(str)) or 0

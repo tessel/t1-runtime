@@ -20,20 +20,24 @@ TCPSocket.prototype.connect = function (port, ip, cb) {
     tm.tcp_connect(client.socket, Number(ips[0]), Number(ips[1]), Number(ips[2]), Number(ips[3]), Number(port));
     client.__listen();
     cb();
+    client.emit('connect');
   });
 };
 
 TCPSocket.prototype.__listen = function () {
   var client = this;
   this.__listenid = setInterval(function () {
-    while (client.socket && tm.tcp_readable(client.socket) > 0) {
-      var buf = tm.tcp_read(client.socket);
+    var buf = '';
+    while (client.socket != null && tm.tcp_readable(client.socket) > 0) {
+      var buf = buf + tm.tcp_read(client.socket);
       if (!buf || buf.length == 0) {
         break;
       }
+    }
+    if (buf.length) {
       client.emit('data', buf);
     }
-  }, 100);
+  }, 0);
 };
 
 TCPSocket.prototype.write = function (buf, cb) {
@@ -48,7 +52,7 @@ TCPSocket.prototype.write = function (buf, cb) {
 
 TCPSocket.prototype.close = function () {
   var self = this;
-  if (this.__listenid) {
+  if (this.__listenid != null) {
     clearInterval(this.__listenid);
     this.__listenid = null
   }
@@ -90,7 +94,7 @@ TCPServer.prototype.listen = function (port, ip) {
 
   setInterval(function () {
     var client;
-    if (tm.tcp_readable(self.socket) > 0 && (client = tm.tcp_accept(self.socket)) >= 0) {
+    if ((client = tm.tcp_accept(self.socket)) >= 0) {
       var clientsocket = new TCPSocket(client);
       clientsocket.__listen();
       self.emit('socket', clientsocket);
