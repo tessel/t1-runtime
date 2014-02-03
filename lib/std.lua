@@ -771,11 +771,15 @@ end
 
 -- Date
 
-global.Date = function (this)
+global.Date = function (this, time)
   if not js_instanceof(this, global.Date) then
     return os.date('!%a %h %d %Y %H:%M:%S GMT%z (%Z)')
   end
-  getmetatable(this).date = os.time()
+  if type(time) == 'number' then
+    getmetatable(this).date = time
+  else
+    getmetatable(this).date = os.time()
+  end
   return this
 end
 
@@ -809,7 +813,7 @@ global.Date.prototype.getMinutes = function (this)
 end
 
 global.Date.prototype.getMonth = function (this)
-  return os.date('*t', getmetatable(this).date).min
+  return os.date('*t', getmetatable(this).date).month - 1
 end
 
 global.Date.prototype.getSeconds = function (this)
@@ -836,6 +840,13 @@ global.Date.prototype.getYear = function (this)
   return os.date('*t', getmetatable(this).date).year - 1900
 end
 
+global.Date.prototype.toISOString = function (this)
+  -- TODO don't hardcode microseconds
+  return os.date('!%Y-%m-%dT%H:%M:%S.000Z', getmetatable(this).date)
+end
+global.Date.prototype.toJSON = global.Date.prototype.toISOString
+global.Date.prototype.valueOf = global.Date.prototype.getTime
+
 global.Date.prototype.setDate = function () end
 global.Date.prototype.setFullYear = function () end
 global.Date.prototype.setHours = function () end
@@ -854,26 +865,23 @@ global.Date.prototype.setUTCSeconds = function () end
 global.Date.prototype.setYear = function () end
 
 global.Date.prototype.toDateString = function () return ''; end
-global.Date.prototype.toISOString = function () return ''; end
-global.Date.prototype.toJSON = function () return ''; end
 global.Date.prototype.toGMTString = function () return ''; end
 global.Date.prototype.toLocaleDateString = function () return ''; end
 global.Date.prototype.toLocaleString = function () return ''; end
 global.Date.prototype.toLocaleTimeString = function () return ''; end
 global.Date.prototype.toTimeString = function () return ''; end
 global.Date.prototype.toUTCString = function () return ''; end
-global.Date.prototype.valueOf = function (this) return this:getTime(); end
 
 global.Date.now = function ()
-  return tonumber(os.time())
+  return tonumber(os.time()) or 0
 end
 
 global.Date.parse = function ()
-  return tonumber(os.time())
+  return tonumber(os.time()) or 0
 end
 
 global.Date.UTC = function ()
-  return tonumber(os.time())
+  return tonumber(os.time()) or 0
 end
 
 -- regexp library
