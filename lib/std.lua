@@ -26,6 +26,7 @@ local js_func_proxy = colony.js_func_proxy
 local js_with = colony.js_with
 
 local obj_proto = colony.obj_proto
+local bool_proto = colony.bool_proto
 local num_proto = colony.num_proto
 local func_proto = colony.func_proto
 local str_proto = colony.str_proto
@@ -505,6 +506,8 @@ Globals
 global.Boolean = function (ths, n) 
   return not not n
 end
+global.Boolean.prototype = bool_proto
+bool_proto.constructor = global.Boolean
 
 -- toString
 
@@ -513,14 +516,16 @@ end
 global.Number = function (ths, n) 
   return tonumber(n)
 end
+global.Number.prototype = num_proto
+num_proto.constructor = global.Number
 
 -- Object
 
 global.Object = function (this, obj)
   return obj or js_obj({})
 end
-
 global.Object.prototype = obj_proto
+obj_proto.constructor = global.Object
 
 global.Object.create = function (proto)
   local o = {}
@@ -574,12 +579,13 @@ end
 
 -- Function
 
-global.Function = function (ths)
+global.Function = function (this)
   -- TODO
-  return {}
+  return function () end
 end
 
 global.Function.prototype = func_proto
+func_proto.constructor = global.Function
 
 -- Array
 
@@ -597,6 +603,7 @@ global.Array = function (ths, one, ...)
 end
 
 global.Array.prototype = arr_proto
+arr_proto.constructor = global.Array
 
 global.Array.isArray = function (ths, a)
   return (getmetatable(a) or {}).proto == arr_proto
@@ -611,6 +618,7 @@ global.String = function (ths, str)
   return tostring(str)
 end
 global.String.prototype = str_proto
+str_proto.constructor = global.String
 global.String.fromCharCode = function (ths, ord)
   if ord == nil then return nil end
   if ord < 32 then return string.format('\\x%02x', ord) end

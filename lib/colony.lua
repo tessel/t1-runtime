@@ -470,6 +470,7 @@ colony = {
   js_with = js_with,
 
   obj_proto = obj_proto,
+  bool_proto = bool_proto,
   num_proto = num_proto,
   func_proto = func_proto,
   str_proto = str_proto,
