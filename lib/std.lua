@@ -378,7 +378,7 @@ end
 arr_proto.slice = function (ths, start, len)
   local a = js_arr({})
   if not len then
-    len = ths.length - (start or 0) + 1
+    len = ths.length
   end
   for i=start or 0,len-1 do
     a:push(ths[i])
