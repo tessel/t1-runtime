@@ -667,6 +667,29 @@ end
 -- Console
 
 local function objtostring (obj, sset)
+  -- Special function for buffers
+  if getmetatable(obj) and getmetatable(obj).buffer then
+    local sourceBuffer = getmetatable(obj).buffer
+    local sourceBufferLength = getmetatable(obj).bufferlen
+
+    if type(strtype) == 'string' and string.lower(strtype) == 'utf8' then
+      local str = ''
+      for i=0,sourceBufferLength-1 do
+        str = str .. string.char(obj[i])
+      end
+      return str
+    end
+
+    local out = {'<Buffer'}
+    for i=0,math.min(sourceBufferLength or 0, 51)-1 do
+      table.insert(out, string.format("%02x", obj[i]))
+    end
+    if sourceBufferLength > 51 then
+      table.insert(out, '...')
+    end
+    return table.concat(out, ' ') + '>'
+  end
+
   local vals = {}
   sset[obj] = true
   for k in js_pairs(obj) do

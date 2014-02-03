@@ -219,23 +219,12 @@ local buffer_proto = js_obj({
   toString = function (this, strtype)
     local sourceBuffer = getmetatable(this).buffer
     local sourceBufferLength = getmetatable(this).bufferlen
-
-    if type(strtype) == 'string' and string.lower(strtype) == 'utf8' then
-      local str = ''
-      for i=0,sourceBufferLength-1 do
-        str = str .. string.char(this[i])
-      end
-      return str
+    
+    local str = ''
+    for i=0,sourceBufferLength-1 do
+      str = str .. string.char(this[i])
     end
-
-    local out = {'<Buffer'}
-    for i=0,math.min(sourceBufferLength or 0, 51)-1 do
-      table.insert(out, string.format("%02x", this[i]))
-    end
-    if sourceBufferLength > 51 then
-      table.insert(out, '...')
-    end
-    return table.concat(out, ' ') + '>'
+    return str
   end,
   toJSON = function (this)
     local arr = {}
