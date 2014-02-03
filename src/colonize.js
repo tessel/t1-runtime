@@ -159,8 +159,8 @@ function colonize (node) {
       } else if (node.operator == 'typeof') {
         node.update('_typeof(' + node.argument.source() + ')');
       } else if (node.operator == 'delete') {
-        // TODO return true/false
-        node.update(node.argument.source() + ' = nil');
+        // TODO properly invoke delete operator
+        node.update('(function () local _r = ' + node.argument.source() + '; ' + node.argument.source() + ' = nil; return _r ~= nil; end)()');
       } else if (node.operator == 'void') {
         node.update('(_void(' + node.argument.source() + '))');
       } else {
