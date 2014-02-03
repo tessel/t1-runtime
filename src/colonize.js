@@ -465,7 +465,7 @@ function colonize (node) {
       node.update(node.source().replace(/;?$/, ';')); // Enforce trailing semicolons.
 
       // Can't have and/or be statements.
-      if (node.expression.type == 'BinaryExpression' || node.expression.type == 'LogicalExpression' || node.expression.type == 'Literal' || node.expression.type == 'CallExpression' || node.expression.type == 'ConditionalExpression') {
+      if (node.expression.type == 'UnaryExpression' || node.expression.type == 'BinaryExpression' || node.expression.type == 'LogicalExpression' || node.expression.type == 'Literal' || node.expression.type == 'CallExpression' || node.expression.type == 'ConditionalExpression') {
         // console.log('>>>', JSON.stringify(node.source()))
         node.update('if ' + node.source().replace(/;?$/, '') + ' then end; ');
       }
