@@ -771,12 +771,109 @@ end
 
 -- Date
 
-global.Date = function (ths)
+global.Date = function (this)
+  if not js_instanceof(this, global.Date) then
+    return os.date('!%a %h %d %Y %H:%M:%S GMT%z (%Z)')
+  end
+  getmetatable(this).date = os.time()
+  return this
+end
+
+global.Date.prototype.toString = function (this)
+  -- e.g. Mon Sep 28 1998 14:36:22 GMT-0700 (Pacific Daylight Time)
+  return os.date('!%a %h %d %Y %H:%M:%S GMT%z (%Z)', getmetatable(this).date)
+end
+
+global.Date.prototype.getDate = function (this)
+  return os.date('*t', getmetatable(this).date).day
+end
+
+global.Date.prototype.getDay = function (this)
+  return os.date('*t', getmetatable(this).date).wday - 1
+end
+
+global.Date.prototype.getFullYear = function (this)
+  return os.date('*t', getmetatable(this).date).year
+end
+
+global.Date.prototype.getHours = function (this)
+  return os.date('*t', getmetatable(this).date).hour
+end
+
+global.Date.prototype.getMilliseconds = function (this)
+  return 0 -- TODO
+end
+
+global.Date.prototype.getMinutes = function (this)
+  return os.date('*t', getmetatable(this).date).min
+end
+
+global.Date.prototype.getMonth = function (this)
+  return os.date('*t', getmetatable(this).date).min
+end
+
+global.Date.prototype.getSeconds = function (this)
+  return os.date('*t', getmetatable(this).date).sec
+end
+
+global.Date.prototype.getTime = function (this)
+  return tonumber(getmetatable(this).date) or 0
+end
+
+global.Date.prototype.getTimezoneOffset = function ()
   return 0
 end
 
+global.Date.prototype.getUTCDate = global.Date.prototype.getDate
+global.Date.prototype.getUTCDay = global.Date.prototype.getDay
+global.Date.prototype.getUTCFullYear = global.Date.prototype.getFullYear
+global.Date.prototype.getUTCHours = global.Date.prototype.getHours
+global.Date.prototype.getUTCMilliseconds = global.Date.prototype.getMilliseconds
+global.Date.prototype.getUTCMinutes = global.Date.prototype.getMinutes
+global.Date.prototype.getUTCSeconds = global.Date.prototype.getSeconds
+
+global.Date.prototype.getYear = function (this)
+  return os.date('*t', getmetatable(this).date).year - 1900
+end
+
+global.Date.prototype.setDate = function () end
+global.Date.prototype.setFullYear = function () end
+global.Date.prototype.setHours = function () end
+global.Date.prototype.setMilliseconds = function () end
+global.Date.prototype.setMinutes = function () end
+global.Date.prototype.setMonth = function () end
+global.Date.prototype.setSeconds = function () end
+global.Date.prototype.setTime = function () end
+global.Date.prototype.setUTCDate = function () end
+global.Date.prototype.setUTCFullYear = function () end
+global.Date.prototype.setUTCHours = function () end
+global.Date.prototype.setUTCMilliseconds = function () end
+global.Date.prototype.setUTCMinutes = function () end
+global.Date.prototype.setUTCMonth = function () end
+global.Date.prototype.setUTCSeconds = function () end
+global.Date.prototype.setYear = function () end
+
+global.Date.prototype.toDateString = function () return ''; end
+global.Date.prototype.toISOString = function () return ''; end
+global.Date.prototype.toJSON = function () return ''; end
+global.Date.prototype.toGMTString = function () return ''; end
+global.Date.prototype.toLocaleDateString = function () return ''; end
+global.Date.prototype.toLocaleString = function () return ''; end
+global.Date.prototype.toLocaleTimeString = function () return ''; end
+global.Date.prototype.toTimeString = function () return ''; end
+global.Date.prototype.toUTCString = function () return ''; end
+global.Date.prototype.valueOf = function (this) return this:getTime(); end
+
 global.Date.now = function ()
-  return 0
+  return tonumber(os.time())
+end
+
+global.Date.parse = function ()
+  return tonumber(os.time())
+end
+
+global.Date.UTC = function ()
+  return tonumber(os.time())
 end
 
 -- regexp library
