@@ -302,7 +302,7 @@ local function js_void () end
 
 local function js_next (a, b, c)
   local mt = getmetatable(a)
-  if b == nil and mt and mt.length ~= nil then
+  if b == nil and mt and mt.length ~= nil and mt.length > 0 then
     return 0
   end
   if type(b) == 'number' and mt and mt.length ~= nil then
