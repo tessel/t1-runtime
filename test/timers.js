@@ -26,3 +26,9 @@ var jk = setInterval(function () {
 		process.exit(1)
 	}
 }, 0)
+
+setImmediate(function (arg1, arg2, arg3) {
+	ok(arg1 != null, 'args passed into callback');
+	ok(arg2 == null, 'null args allowed in callback');
+	ok(arg3 != null, 'null args allowed in callback');
+}, 5, null, 6)

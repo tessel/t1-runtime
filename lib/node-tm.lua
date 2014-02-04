@@ -45,7 +45,7 @@ local _eventQueue, _processEventQueue = {}, {}
 -- timeout: millis before starting (or restarting)
 -- dorepeat: boolean if function should repeat
 -- returns a unique token for unqueue_event
-local function queue_event (fn, timeout, dorepeat)
+local function queue_event (fn, timeout, dorepeat, args)
   timeout = timeout or 0 
   local start = tm.uptime_micro()
   local timefn = function ()
@@ -53,7 +53,7 @@ local function queue_event (fn, timeout, dorepeat)
     if now - start < (timeout*1000) then
       return 1
     end
-    fn(global)
+    fn(global, unpack(args))
     if not dorepeat then
       return 0
     end
@@ -124,20 +124,20 @@ setmetatable(timeouttable, {
   __mode = "v"
 })
 
-global.setTimeout = function (this, fn, timeout)
-  local ret = queue_event(fn, timeout, false)
+global.setTimeout = function (this, fn, timeout, ...)
+  local ret = queue_event(fn, timeout, false, table.pack(...))
   table.insert(timeouttable, ret)
   return #timeouttable
 end
 
-global.setInterval = function (this, fn, timeout)
-  local ret = queue_event(fn, timeout, true)
+global.setInterval = function (this, fn, timeout, ...)
+  local ret = queue_event(fn, timeout, true, table.pack(...))
   table.insert(timeouttable, ret)
   return #timeouttable
 end
 
-global.setImmediate = function (this, fn)
-  local ret = queue_event(fn, 0, false)
+global.setImmediate = function (this, fn, ...)
+  local ret = queue_event(fn, 0, false, table.pack(...))
   table.insert(timeouttable, ret)
   return #timeouttable
 end
