@@ -71,3 +71,10 @@ ok([0, 1, 2, 3].reduce(function(a, b) {
 ok(arreq([[0, 1], [2, 3], [4, 5]].reduce(function(a, b) {
     return a.concat(b);
 }), [0, 1, 2, 3, 4, 5]), 'array reduce with init');
+
+// Array::reverse
+var arr = [1, 2, 3];
+arr.reverse();
+ok(arreq(arr, [3, 2, 1]), 'array reverses in place');
+ok(arreq(arr.reverse(), [1, 2, 3]), 'array reverses');
+ok(arreq([0xFF, 0x00, 0x00, 0x80, 0x3f, 0xFF].reverse(), [0xFF, 0x3f, 0x80, 0x00, 0x00, 0xFF]), 'array reverses')

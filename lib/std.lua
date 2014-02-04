@@ -367,12 +367,14 @@ arr_proto.splice = function (ths, i, del, ...)
   return ret
 end
 
-arr_proto.reverse = function (ths)
-  local arr = js_arr({})
-  for i=0,ths.length-1 do
-    arr[ths.length - 1 - i] = ths[i]
+arr_proto.reverse = function (this)
+  local n = this.length
+  for i=0,math.floor(n/2)-1 do
+    local tmp = this[i]
+    this[i] = this[n - 1 - i]
+    this[n - 1 - i] = tmp
   end
-  return arr
+  return this
 end
 
 arr_proto.slice = function (ths, start, len)
