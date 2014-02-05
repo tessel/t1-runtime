@@ -123,22 +123,34 @@ EXP_FUNC int STDCALL getdomainname(char *buf, int buf_size);
 
 #else   /* Not Win32 */
 
+#ifdef CONFIG_PLATFORM_EMBED
+
+#include <cc3000.h>
+#define SOCKET_READ(A,B,C)      recv(A,B,C,0)
+#define SOCKET_WRITE(A,B,C)     send(A,B,C,0)
+#define SOCKET_CLOSE(A)         closesocket(A)
+
+#else
+
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <dirent.h>
+#define SOCKET_READ(A,B,C)      read(A,B,C)
+#define SOCKET_WRITE(A,B,C)     write(A,B,C)
+#define SOCKET_CLOSE(A)         if (A >= 0) close(A)
+
+#endif
+
 #include <unistd.h>
 #include <pwd.h>
-#include <netdb.h>
-#include <dirent.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/socket.h>
 #include <sys/wait.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
-#define SOCKET_READ(A,B,C)      read(A,B,C)
-#define SOCKET_WRITE(A,B,C)     write(A,B,C)
-#define SOCKET_CLOSE(A)         if (A >= 0) close(A)
 #define TTY_FLUSH()
 
 #endif  /* Not Win32 */

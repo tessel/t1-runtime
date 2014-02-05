@@ -130,7 +130,12 @@ CFLAGS += -I$(PATH_YAJL)/src/ -I./src
 CSRCS  += $(shell find $(PATH_YAJL)/src/ -maxdepth 1 -name "*.c")
 
 # axtls
-CFLAGS += -include $(PATH_AXTLS)/config/config.h -include $(PATH_AXTLS)/crypto/crypto.h 
+ifneq ($(ARM), 1)
+CFLAGS += -include $(PATH_AXTLS)/config/config_pc.h
+else
+CFLAGS += -include $(PATH_AXTLS)/config/config_embed.h
+endif
+CFLAGS += -include $(PATH_AXTLS)/crypto/crypto.h 
 CSRCS += $(PATH_AXTLS)/crypto/aes.c  $(PATH_AXTLS)/crypto/bigint.c  $(PATH_AXTLS)/crypto/crypto_misc.c  $(PATH_AXTLS)/crypto/hmac.c  $(PATH_AXTLS)/crypto/md2.c  $(PATH_AXTLS)/crypto/md5.c  $(PATH_AXTLS)/crypto/rc4.c  $(PATH_AXTLS)/crypto/rsa.c  $(PATH_AXTLS)/crypto/sha1.c  $(PATH_AXTLS)/ssl/asn1.c  $(PATH_AXTLS)/ssl/gen_cert.c  $(PATH_AXTLS)/ssl/loader.c  $(PATH_AXTLS)/ssl/openssl.c  $(PATH_AXTLS)/ssl/os_port.c  $(PATH_AXTLS)/ssl/p12.c  $(PATH_AXTLS)/ssl/tls1.c  $(PATH_AXTLS)/ssl/tls1_svr.c  $(PATH_AXTLS)/ssl/tls1_clnt.c  $(PATH_AXTLS)/ssl/x509.c
 CFLAGS += -I$(PATH_AXTLS)/crypto -I$(PATH_AXTLS)/ssl -I$(PATH_AXTLS)/config
 
