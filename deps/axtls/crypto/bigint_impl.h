@@ -31,6 +31,8 @@
 #ifndef BIGINT_IMPL_HEADER
 #define BIGINT_IMPL_HEADER
 
+#include <stdint.h>
+
 /* Maintain a number of precomputed variables when doing reduction */
 #define BIGINT_M_OFFSET     0    /**< Normal modulo offset. */
 #ifdef CONFIG_BIGINT_CRT
