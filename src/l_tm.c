@@ -202,6 +202,83 @@ static int l_tm_tcp_accept (lua_State* L)
 }
 
 
+static int l_tm_ssl_context_create (lua_State* L)
+{
+  tm_ssl_ctx_t ctx;
+
+  int res = tm_ssl_context_create(&ctx);
+
+  if (res != 0) {
+    lua_pushnil(L);
+  } else {
+    lua_pushlightuserdata(L, ctx);
+  }
+  return 1;
+}
+
+
+static int l_tm_ssl_context_free (lua_State* L)
+{
+  tm_ssl_ctx_t ctx = (tm_ssl_ctx_t) lua_touserdata(L, 1);
+
+  int res = tm_ssl_context_free(&ctx);
+
+  lua_pushnumber(L, res);
+  return 1;
+}
+
+static int l_tm_ssl_session_create (lua_State* L)
+{ 
+  tm_ssl_session_t session;
+
+  tm_ssl_ctx_t ctx = (tm_ssl_ctx_t) lua_touserdata(L, 1);
+  tm_socket_t sock = (tm_socket_t) lua_tonumber(L, 2);
+
+  int res = tm_ssl_session_create(&session, ctx, sock);
+
+  if (res > 0) {
+    lua_pushnil(L);
+  } else {
+    lua_pushlightuserdata(L, session);
+  }
+  return 1;
+}
+
+
+static int l_tm_ssl_session_free (lua_State* L)
+{
+  tm_ssl_session_t session = (tm_ssl_session_t) lua_touserdata(L, 1);
+
+  int res = tm_ssl_session_free(&session);
+
+  lua_pushnumber(L, res);
+  return 1;
+}
+
+
+static int l_tm_ssl_write (lua_State* L)
+{
+  tm_ssl_session_t session = (tm_ssl_session_t) lua_touserdata(L, 1);
+  size_t len;
+  const char *text = lua_tolstring(L, 2, &len);
+
+  tm_ssl_write(session, (uint8_t*) text, len);
+  return 0;
+}
+
+
+static int l_tm_ssl_read (lua_State* L)
+{
+  tm_ssl_session_t session = (tm_ssl_session_t) lua_touserdata(L, 1);
+
+  uint8_t buf[20000];
+  size_t buf_len = tm_ssl_read(session, buf, sizeof(buf));
+
+  lua_pushlstring(L, (char *) buf, buf_len);
+  return 1;
+}
+
+
 /**
  * Uptime
  */
@@ -528,6 +605,13 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "tcp_readable", l_tm_tcp_readable },
     { "tcp_listen", l_tm_tcp_listen },
     { "tcp_accept", l_tm_tcp_accept },
+
+    { "ssl_context_create", l_tm_ssl_context_create },
+    { "ssl_context_free", l_tm_ssl_context_free },
+    { "ssl_session_create", l_tm_ssl_session_create },
+    { "ssl_session_free", l_tm_ssl_session_free },
+    { "ssl_write", l_tm_ssl_write },
+    { "ssl_read", l_tm_ssl_read },
 
     // uptime
     { "uptime_init", l_tm_uptime_init },

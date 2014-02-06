@@ -52,6 +52,19 @@ int tm_tcp_readable (tm_socket_t sock);
 int tm_tcp_listen (tm_socket_t sock, uint16_t port);
 tm_socket_t tm_tcp_accept (tm_socket_t sock, uint32_t *ip);
 
+#define SSL_SESSION_ID_SIZE                     32
+#include "tls1.h"
+
+typedef SSL_CTX* tm_ssl_ctx_t;
+typedef SSL* tm_ssl_session_t;
+
+int tm_ssl_context_create (tm_ssl_ctx_t* ctx);
+int tm_ssl_context_free (tm_ssl_ctx_t *ctx);
+int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ctx, tm_socket_t client_fd);
+int tm_ssl_session_free (tm_ssl_session_t *session);
+ssize_t tm_ssl_write (tm_ssl_session_t ssl, uint8_t *buf, size_t buf_len);
+ssize_t tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t buf_len);
+
 uint32_t tm_hostname_lookup (const uint8_t *hostname);
 
 void tm_uptime_init ();
