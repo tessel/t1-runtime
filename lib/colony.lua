@@ -47,6 +47,7 @@ local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_
 -- get from prototype chain while maintaining "self"
 
 local function js_proto_get (self, proto, key)
+  if key == '__proto__' then return proto; end
   return rawget(proto, key) or (getmetatable(proto) and getmetatable(proto).__index and getmetatable(proto).__index(self, key, proto)) or nil
 end
 
@@ -147,6 +148,16 @@ end
 function js_obj (o)
   local mt = getmetatable(o) or {}
   mt.__index = js_obj_index
+  mt.__newindex = function (this, key, value)
+    if key == '__proto__' then
+      mt.proto = value
+      mt.__index = function (self, key)
+        return js_proto_get(self, value, key)
+      end
+    else
+      rawset(this, key, value)
+    end
+  end
   mt.__tostring = js_tostring
   mt.proto = obj_proto
   setmetatable(o, mt)
