@@ -1,11 +1,43 @@
 #include "vfs.h"
 
-vfs_ent* /* ~ */ vfs_dir_create(bool names_owned) {
+bool str_match_range(const char* start, const char* end, const char* ref) {
+	while (start != end && *start) {
+		if (*start++ != *ref++) return false;
+	}
+	return *ref == 0;
+}
+
+char* str_range_copy(const char* start, const char* end) {
+	unsigned len = end-start;
+	char* val = malloc(len + 1);
+	memcpy(val, start, len);
+	val[len] = 0;
+	return val;
+}
+
+char* filename(const char* start) {
+	const char* end = start;
+
+	while (*end) {
+		if (*end == '/') {
+			if (*(end+1) == 0) break;
+			start = end+1;
+		}
+		end++;
+	}
+
+	if (str_match_range(start, end, "") || str_match_range(start, end, ".") || str_match_range(start, end, "..")) {
+		return NULL;
+	}
+
+	return str_range_copy(start, end);
+}
+
+vfs_ent* /* ~ */ vfs_dir_create() {
 	vfs_ent* ent = malloc(sizeof(vfs_ent));
 	ent->type = VFS_TYPE_DIR;
 	ent->parent = 0;
 	ent->dir.num_entries = 0;
-	ent->dir.names_owned = names_owned;
 	ent->dir.entries = 0;
 	return ent;
 }
@@ -15,14 +47,15 @@ int vfs_dir_append(vfs_ent* dir, const char* name, vfs_ent* ent) {
 		return -ENOTDIR;
 	}
 
+	char* fname = filename(name);
+	if (!fname) {
+		return -EINVAL;
+	}
+
 	dir->dir.num_entries += 1;
 	dir->dir.entries = realloc(dir->dir.entries, dir->dir.num_entries*sizeof(vfs_direntry));
 	vfs_direntry* entry = &dir->dir.entries[dir->dir.num_entries - 1];
-	if (dir->dir.names_owned) {
-		entry->name = strdup(name);
-	} else {
-		entry->name = name;
-	}
+	entry->name = fname;
 	entry->ent = ent;
 	ent->parent = dir;
 
@@ -39,11 +72,7 @@ void vfs_destroy(vfs_ent* /* ~ */ ent) {
 		case VFS_TYPE_DIR:
 			for (unsigned i=0; i<ent->dir.num_entries; i++) {
 				vfs_direntry* entry = &ent->dir.entries[i];
-
-				if (ent->dir.names_owned) {
-					free((void*) entry->name);
-				}
-
+				free((void*) entry->name);
 				vfs_destroy(entry->ent);
 			}
 			free(ent->dir.entries);
@@ -87,13 +116,6 @@ void vfs_raw_file_destroy(vfs_raw_file* file) {
 
 void vfs_raw_file_read(vfs_raw_file* file, unsigned offset, unsigned length);
 void vfs_raw_file_write();
-
-bool str_match_range(const char* start, const char* end, const char* ref) {
-	while (start != end && *start) {
-		if (*start++ != *ref++) return false;
-	}
-	return *ref == 0;
-}
 
 int vfs_lookup(vfs_ent* /*&mut 'fs*/ dir, const char* /* & */ path, vfs_ent** out) {
 	if (path == 0) {

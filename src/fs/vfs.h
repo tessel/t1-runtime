@@ -21,7 +21,6 @@ typedef struct vfs_direntry {
 } vfs_direntry;
 
 typedef struct vfs_dir {
-	bool names_owned;
 	unsigned num_entries;
 	vfs_direntry* /* ~ */ entries;
 } vfs_dir;
@@ -57,7 +56,7 @@ typedef struct vfs_ent {
 	};
 } vfs_ent;
 
-vfs_ent* /* ~ */ vfs_dir_create(bool names_owned);
+vfs_ent* /* ~ */ vfs_dir_create();
 void vfs_destroy(/* ~ */ vfs_ent* ent);
 
 vfs_ent* vfs_raw_file_create();

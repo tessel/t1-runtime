@@ -33,15 +33,42 @@ void test_str_match_range() {
 	assert(next == 0);
 }
 
+char* filename(const char* start);
+void test_filename() {
+	char *f = filename("asdf.txt");
+	assert(strcmp(f, "asdf.txt") == 0);
+	free(f);
+
+	f = filename("/foo/bar/asdf.txt");
+	assert(strcmp(f, "asdf.txt") == 0);
+	free(f);
+
+	f = filename("/foo/bar/");
+	assert(strcmp(f, "bar") == 0);
+	free(f);
+
+	f = filename(".");
+	assert(f == NULL);
+
+	f = filename("..");
+	assert(f == NULL);
+
+	f = filename("/foo/bar/.");
+	assert(f == NULL);
+
+	f = filename("/foo/bar/..");
+	assert(f == NULL);
+}
+
 void test_dir() {
-	vfs_ent* dir = vfs_dir_create(true);
+	vfs_ent* dir = vfs_dir_create();
 
 	vfs_ent* file_foo = vfs_raw_file_create();
 
 	const char* data = "hello";
 	vfs_ent* file_bar = vfs_raw_file_from_buf((uint8_t*)data, strlen(data), 0);
 
-	vfs_ent* subdir = vfs_dir_create(true);
+	vfs_ent* subdir = vfs_dir_create();
 
 	assert(vfs_dir_append(dir, "foo", file_foo) == 0);
 	assert(vfs_dir_append(dir, "subdir", subdir) == 0);
@@ -78,5 +105,6 @@ void test_dir() {
 
 int main() {
 	test_str_match_range();
+	test_filename();
 	test_dir();
 }
