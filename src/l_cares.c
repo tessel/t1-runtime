@@ -110,7 +110,7 @@ uint32_t tm__sync_gethostbyname (char *domain)
     ares_destroy(channel);
     ares_library_cleanup();
     // printf("fin\n");
-    printf("result => %d.%d.%d.%d\n", ipaddr[0], ipaddr[1], ipaddr[2], ipaddr[3]);
+    // printf("result => %d.%d.%d.%d\n", ipaddr[0], ipaddr[1], ipaddr[2], ipaddr[3]);
 
     return (ipaddr[0] << 24) | (ipaddr[1] << 16) | (ipaddr[2] << 8) | ipaddr[3];
 }

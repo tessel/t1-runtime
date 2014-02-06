@@ -12,4 +12,4 @@
 	url = https://github.com/lloyd/yajl.git
 [submodule "deps/c-ares"]
 	path = deps/c-ares
-	url = ttps://github.com/tessel/c-ares.git
+	url = https://github.com/tessel/c-ares.git
