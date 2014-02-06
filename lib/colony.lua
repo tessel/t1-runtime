@@ -48,6 +48,7 @@ local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_
 
 local function js_proto_get (self, proto, key)
   if key == '__proto__' then return proto; end
+  proto = funcproxies[proto] or proto
   return rawget(proto, key) or (getmetatable(proto) and getmetatable(proto).__index and getmetatable(proto).__index(self, key, proto)) or nil
 end
 

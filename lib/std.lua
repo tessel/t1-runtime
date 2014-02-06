@@ -165,7 +165,7 @@ str_proto.split = function (str, sep, max)
   end
 
   local ret = {}
-  if string.len(str) > 0 then
+  if type(sep) == 'string' and string.len(str) > 0 then
     max = max or -1
 
     local i, start=1, 1
@@ -178,6 +178,7 @@ str_proto.split = function (str, sep, max)
     end
     ret[i-1] = string.sub(str, start)
   end
+  -- TODO regex
   return js_arr(ret)
 end
 
@@ -192,6 +193,15 @@ str_proto.replace = function (this, match, out)
     print(match)
     error('Unknown regex invocation object: ' .. type(match))
   end
+end
+
+str_proto.concat = function (this, ...)
+  local args1 = table.pack(...)
+  local ret = tostring(this)
+  for i=1,args1.length do
+    ret = ret .. args1[i]
+  end
+  return ret
 end
 
 -- object prototype
@@ -581,12 +591,54 @@ global.Object.keys = function (this, obj)
   local a = js_arr({})
   -- TODO debug this one:
   if type(obj) == 'function' then
-    return a
+    obj = js_func_proxy(obj)
   end
   for k,v in js_pairs(obj) do
     a:push(k)
   end
   return a
+end
+
+global.Object.getOwnPropertyNames = function (this, obj)
+  local a = js_arr({})
+  -- TODO debug this one:
+  if type(obj) == 'function' then
+    obj = js_func_proxy(obj)
+  end
+  for k,v in js_pairs(obj) do
+    a:push(k)
+  end
+  local mt = getmetatable(obj)
+  if mt and mt.getters then
+    for k,v in pairs(mt.getters) do
+      a:push(k)
+    end
+  end
+  if mt and mt.values then
+    for k,v in pairs(mt.values) do
+      a:push(k)
+    end
+  end
+  if mt and mt.setters then
+    for k,v in pairs(mt.setters) do
+      a:push(k)
+    end
+  end
+  return a
+end
+
+global.Object.getOwnPropertyDescriptor = function (this, obj, key)
+  local mt = getmetatable(obj)
+  if mt then
+    return js_obj({
+      value = (mt and {mt.values and mt.values[key]} or {obj[key]})[1],
+      get = mt and mt.getters and mt.getters[key],
+      set = mt and mt.setters and mt.setters[key],
+      writeable = true,
+      configurable = true,
+      enumerable = true
+    })
+  end
 end
 
 -- Function

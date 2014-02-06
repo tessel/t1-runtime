@@ -114,8 +114,8 @@ function ServerRequest (socket) {
     onHeaderValue: js_wrap_function(function (value) {
       self.headers[lastheader.toLowerCase()] = value;
     }),
-    onHeadersComplete: js_wrap_function(function (method) {
-      self.method = method;
+    onHeadersComplete: js_wrap_function(function (info) {
+      self.method = info.method;
       self.emit('request', self);
     }),
     onBody: js_wrap_function(function (body) {
@@ -296,3 +296,5 @@ exports.createServer = function (onrequest) {
 
 exports.ServerResponse = ServerResponse;
 exports.ServerRequest = ServerRequest;
+
+exports.IncomingMessage = ServerResponse;

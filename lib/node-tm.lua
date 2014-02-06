@@ -499,6 +499,10 @@ global.process.exit = function (this, code)
   local exitfn = _G._exit or os.exit
   exitfn(tonumber(code))
 end
+global.process.cwd = function ()
+  -- TODO
+  return '/app'
+end
 
 
 --[[
