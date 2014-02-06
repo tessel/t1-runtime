@@ -15,9 +15,18 @@ function arreq (a, b) {
 	return true;
 }
 
-var a = [];
-a.push(1, 2, 3, 4, 5);
-ok(a.length == 5, 'array::push accepts multiple args');
+var arr = [];
+ok(arr.length == 0, 'array::push - length')
+arr.push(1, 2, 3, 4, 5);
+ok(arr.length == 5, 'array::push - values added, accepts multiple args');
+
+var arr = [1, 2, 3, 4, 5];
+ok(arr.length == 5, 'array::pop - length')
+ok(arr.pop() == 5, 'array::pop - values popped');
+ok(arr.length == 4, 'array::pop - length modified');
+var arr = [];
+ok(arr.pop() == null, 'array::pop - null values popped');
+ok(arr.length == 0, 'array::pop - length unmodified when 0');
 
 var a = [1];
 a.splice(0, 1);
@@ -31,9 +40,20 @@ var a = [2, 3];
 a.unshift(1);
 ok(arreq(a, [1, 2, 3]))
 
-var a = [];
-a.unshift(1);
-ok(arreq(a, [1]))
+var arr = [2];
+ok(arr.length == 1, 'array::unshift - length')
+arr.unshift(1);
+ok(arreq(arr, [1, 2]), 'array::unshift - correct')
+ok(arr.length == 2, 'array::unshift - unshift redefines length')
+
+var arr = ["adrian", "zankich"];
+ok(arr.length == 2, 'array::shift - length')
+var first_name = arr.shift();
+ok(arr.length == 1, 'array::shift - shift redefines length');
+ok(first_name == 'adrian', 'array::shift - shifted value')
+var arr = [];
+ok(arr.shift() == null, 'array::shift - null values shifted');
+ok(arr.length == 0, 'array::shift - length unmodified when 0');
 
 ok([0, 0, 0, 0, 0, 0].length == 6);
 ok(arreq([0, 1, 2, 3, 4, 5].slice(0, 5), [0, 1, 2, 3, 4]))

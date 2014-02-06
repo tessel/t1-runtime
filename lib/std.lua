@@ -325,18 +325,28 @@ arr_proto.push = function (ths, ...)
   return ths.length
 end
 
-arr_proto.pop = function (ths)
-  if ths.length == 1 then
-    local _val = ths[0]
-    ths[0] = nil
-    return _val
+arr_proto.pop = function (this)
+  local _val = nil
+  if this.length == 1 then
+    local _val = this[0]
+    this[0] = nil
+  else
+    _val = table.remove(this, this.length-1)
   end
-  return table.remove(ths, ths.length-1)
+  local mt = getmetatable(this)
+  if mt and type(mt.length) == 'number' and mt.length > 0 then
+    mt.length = mt.length - 1
+  end
+  return _val
 end
 
-arr_proto.shift = function (ths)
-  local ret = ths[0]
-  ths[0] = table.remove(ths, 1)
+arr_proto.shift = function (this)
+  local ret = this[0]
+  this[0] = table.remove(this, 1)
+  local mt = getmetatable(this)
+  if mt and type(mt.length) == 'number' and mt.length > 0 then
+    mt.length = mt.length - 1
+  end
   return ret
 end
 
