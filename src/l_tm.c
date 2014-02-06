@@ -575,6 +575,15 @@ static int l_tm_fs_dir_close (lua_State* L)
 }
 
 
+int cares_demo(void);
+
+static int l_tm_dns_demo (lua_State* L)
+{
+  cares_demo();
+  return 0;
+}
+
+
 /**
  * Load Colony.
  */
@@ -656,6 +665,8 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "fs_dir_open", l_tm_fs_dir_open },
     { "fs_dir_read", l_tm_fs_dir_read },
     { "fs_dir_close", l_tm_fs_dir_close },
+
+    { "dns_demo", l_tm_dns_demo },
 
     { NULL, NULL }
   });
