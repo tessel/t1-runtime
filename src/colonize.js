@@ -180,7 +180,7 @@ function colonize (node) {
       } else if (node.operator == '>>') {
         node.update('_bit.rshift(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
       } else if (node.operator == '>>>') {
-        node.update('_bit.rrotate(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
+        node.update('_bit.ror(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
       } else if (node.operator == '&') {
         node.update('_bit.band(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
       } else if (node.operator == '^') {
