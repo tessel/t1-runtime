@@ -4,4 +4,4 @@ console.log(t + '..' + tmax);
 ok(process.versions.colony, 'running in colony')
 
 ok(require('./jsonload-json').hello == 'hi', 'json imported');
-// ok(require('./jsonload-json.json').hello == 'hi', 'json imported explicitly');
+ok(require('./jsonload-json.json').hello == 'hi', 'json imported explicitly');

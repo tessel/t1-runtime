@@ -628,7 +628,9 @@ local function require_resolve (origname, root)
   -- print('<-', root, name)
   if string.sub(name, -3) == '.js' then
     name = string.sub(name, 1, -4)
-  end 
+  elseif string.sub(name, -5) == '.json' then
+    name = string.sub(name, 1, -6)
+  end
 
   -- module
   if string.sub(name, 1, 1) ~= '.' then
