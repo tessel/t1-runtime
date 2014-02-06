@@ -10,6 +10,7 @@ typedef struct vfs_ent vfs_ent;
 typedef struct vfs_dir vfs_dir;
 
 typedef enum {
+	VFS_TYPE_INVALID,
 	VFS_TYPE_RAW_FILE,
 	VFS_TYPE_DIR,
 	VFS_TYPE_FAT_MOUNT,
@@ -74,6 +75,10 @@ int vfs_lookup(vfs_ent* /*&mut 'fs*/ dir, const char* /* & */ path, vfs_ent** ou
 
 int vfs_mount_tar(vfs_dir* /*&mut*/ root, char* /* & */ path, uint8_t* /* &'fs */ tar, unsigned size);
 int vfs_mount_fat(vfs_dir* /*&mut*/ root, char* /* & */ path, unsigned fatfs_drivenum);
+
+
+int vfs_mkdir(vfs_ent* root, const char* path);
+int vfs_insert(vfs_ent* root, const char* path, vfs_ent* ent);
 
 int vfs_open(vfs_file_handle* /* -> ~<'s> */ out, vfs_dir* /* &'s */ root, char* /* & */ pathname, unsigned flags);
 int vfs_close(vfs_file_handle* /* move */ handle);

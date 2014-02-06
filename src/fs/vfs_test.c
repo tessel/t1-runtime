@@ -60,7 +60,7 @@ void test_filename() {
 	assert(f == NULL);
 }
 
-void test_dir() {
+void test_lookup() {
 	vfs_ent* dir = vfs_dir_create();
 
 	vfs_ent* file_foo = vfs_raw_file_create();
@@ -106,8 +106,44 @@ void test_dir() {
 	vfs_destroy(dir);
 }
 
+vfs_enttype vfs_get_type(vfs_ent* root, const char* path) {
+	vfs_ent* t;
+	if (vfs_lookup(root, path, &t) == 0){
+		return t->type;
+	} else {
+		return VFS_TYPE_INVALID;
+	}
+}
+
+void test_insert() {
+	vfs_ent* dir = vfs_dir_create();
+
+	assert(vfs_mkdir(dir, "/foo") == 0);
+	assert(vfs_get_type(dir, "foo") == VFS_TYPE_DIR);
+
+	assert(vfs_mkdir(dir, "/foo") == 0);
+
+	assert(vfs_mkdir(dir, "/bar/") == 0);
+	assert(vfs_get_type(dir, "/bar/") == VFS_TYPE_DIR);
+
+	assert(vfs_get_type(dir, "foo") == VFS_TYPE_DIR);
+
+	assert(vfs_mkdir(dir, "/a/b") == -ENOENT);
+
+	assert(vfs_insert(dir, "/bar/test.txt", vfs_raw_file_create()) == 0);
+	assert(vfs_get_type(dir, "/bar/test.txt") == VFS_TYPE_RAW_FILE);
+
+	vfs_ent* f = vfs_raw_file_create();
+	assert(vfs_insert(dir, "/bar/test.txt", f) == -EEXIST);
+	assert(vfs_insert(dir, "/a/test.txt", f) == -ENOENT);
+	free(f);
+
+	vfs_destroy(dir);
+}
+
 int main() {
 	test_str_match_range();
 	test_filename();
-	test_dir();
+	test_lookup();
+	test_insert();
 }
