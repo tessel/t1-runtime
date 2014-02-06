@@ -91,6 +91,9 @@ void test_dir() {
 	assert(vfs_lookup(dir, "/subdir/asdf", &t) == -ENOENT);
 	assert(t == subdir);
 
+	assert(vfs_lookup(dir, "/subdir/asdf/", &t) == -ENOENT);
+	assert(t == subdir);
+
 	assert(vfs_lookup(dir, "/subir/noexist/asdf", &t) == -ENOENT);
 	assert(t == NULL);
 

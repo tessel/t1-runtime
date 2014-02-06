@@ -129,10 +129,7 @@ int vfs_lookup(vfs_ent* /*&mut 'fs*/ dir, const char* /* & */ path, vfs_ent** ou
 		return -ENOTDIR;
 	}
 
-	while (path[0] == '/') {
-		// Strip leading slashes
-		path++;
-	}
+	while (path[0] == '/') path++; // Strip leading slashes
 
 	char* next = strchr(path, '/');
 
@@ -152,7 +149,12 @@ int vfs_lookup(vfs_ent* /*&mut 'fs*/ dir, const char* /* & */ path, vfs_ent** ou
 			}
 		}
 
-		if (next == 0) {
+		if (next) {
+			while (next[0] == '/') next++; // Strip trailing slashes
+		}
+
+		if (next == 0 || next[0] == 0) {
+			// No more path components; this is the parent of the requested directory
 			if (out) *out = dir;
 		}
 		return -ENOENT;
