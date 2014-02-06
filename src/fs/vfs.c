@@ -106,20 +106,26 @@ int vfs_lookup(vfs_ent* /*&mut 'fs*/ dir, const char** /* & */ path, bool create
 		(*path)++;
 	}
 
-	if ((*path)[0] == 0) {
-		// Trailing slash
-		if (out_parent_dir) *out_parent_dir = dir->dir.parent;
-		if (out) *out = dir;
-	}
-
 	char* next = strchr(*path, '/');
 
-	if (str_match_range(*path, next, ".")) {
-		*path = next;
-		return vfs_lookup(dir, path, create, out_parent_dir, out);
+	if ((*path)[0] == 0 || str_match_range(*path, next, ".")) {
+		if (next) {
+			*path = next;
+			return vfs_lookup(dir, path, create, out_parent_dir, out);
+		} else { // Trailing slash or dot
+			if (out_parent_dir) *out_parent_dir = dir->dir.parent;
+			if (out) *out = dir;
+			return 0;
+		}
 	} else if (str_match_range(*path, next, "..")) {
-		*path = next;
-		return vfs_lookup(dir->dir.parent, path, create, out_parent_dir, out);
+		if (next) {
+			*path = next;
+			return vfs_lookup(dir->dir.parent, path, create, out_parent_dir, out);
+		} else {
+			if (out_parent_dir) *out_parent_dir = dir->dir.parent->dir.parent;
+			if (out) *out = dir->dir.parent;
+			return 0;
+		}
 	} else {
 		if (out_parent_dir) *out_parent_dir = dir;
 		for (unsigned i=0; i<dir->dir.num_entries; i++) {

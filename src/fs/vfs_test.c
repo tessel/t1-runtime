@@ -1,4 +1,4 @@
-//gcc -Wall -Werror -std=gnu99 -ggdb vfs.c vfs_test.c -o vfs; valgrind ./vfs
+//gcc -Wall -Werror -std=gnu99 -ggdb vfs.c vfs_test.c -o vfs && valgrind ./vfs
 
 #include <assert.h>
 #include "vfs.h"
@@ -56,13 +56,48 @@ void test_dir() {
 	assert(p == subdir);
 	assert(t == file_bar);
 
+	path = ".";
+	assert(vfs_lookup(dir, &path, false, &p, &t) == 0);
+	assert(p == dir);
+	assert(t == dir);
+
+	path = "..";
+	assert(vfs_lookup(dir, &path, false, &p, &t) == 0);
+	assert(p == dir);
+	assert(t == dir);
+
 	path = "asdf";
 	assert(vfs_lookup(dir, &path, false, &p, &t) == -ENOENT);
+
 	path = "asdf";
 	assert(vfs_lookup(dir, &path, true , &p, &t) == 0);
 	assert(strcmp(path, "asdf") == 0);
 	assert(p == dir);
 	assert(t == 0);
+
+	path = "/subdir/asdf";
+	assert(vfs_lookup(dir, &path, false, &p, &t) == -ENOENT);
+
+	path = "/subdir/asdf";
+	assert(vfs_lookup(dir, &path, true , &p, &t) == 0);
+	assert(strcmp(path, "asdf") == 0);
+	assert(p == subdir);
+	assert(t == 0);
+
+	path = "/subir/noexist/asdf";
+	assert(vfs_lookup(dir, &path, true , &p, &t) == -ENOENT);
+
+	path = "/subdir/..";
+	assert(vfs_lookup(dir, &path, false, &p, &t) == 0);
+	assert(strcmp(path, "..") == 0); // TODO: is this ideal?
+	assert(p == dir);
+	assert(t == dir);
+
+	path = "/subdir/../foo";
+	assert(vfs_lookup(dir, &path, false, &p, &t) == 0);
+	assert(strcmp(path, "foo") == 0);
+	assert(p == dir);
+	assert(t == file_foo);
 
 	vfs_destroy(dir);
 }
