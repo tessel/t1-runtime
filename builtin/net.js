@@ -43,6 +43,7 @@ TCPSocket.prototype.__listen = function () {
 TCPSocket.prototype.write = function (buf, cb) {
   var socket = this.socket;
   setImmediate(function () {
+    console.log('--writing', buf);
     tm.tcp_write(socket, buf, buf.length);
     if (cb) {
       cb();

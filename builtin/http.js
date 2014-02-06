@@ -69,6 +69,10 @@ ServerResponse.prototype.write = function (data) {
   this.socket.write('\r\n');
 }
 
+ServerResponse.prototype.getHeader = function (key) {
+  return this.headers[key.toLowerCase()];
+};
+
 ServerResponse.prototype.end = function (data) {
   if (!this._header) {
     this.writeHead(200);
