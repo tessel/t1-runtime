@@ -1,7 +1,8 @@
-//gcc -Wall -Werror -std=gnu99 -ggdb vfs.c vfs_test.c -o vfs && valgrind ./vfs
+//gcc -Wall -Werror -std=gnu99 -ggdb vfs.c vfs_tar.c vfs_test.c -o vfs && valgrind ./vfs
 
 #include <assert.h>
 #include "vfs.h"
+#include <stdio.h>
 
 bool str_match_range(const char* start, const char* end, const char* ref);
 
@@ -141,9 +142,42 @@ void test_insert() {
 	vfs_destroy(dir);
 }
 
+void test_tar() {
+	FILE *fp = fopen ("test.tar" , "rb");
+	assert(fp);
+
+	fseek(fp, 0L, SEEK_END);
+	long size = ftell( fp );
+	rewind(fp);
+
+	uint8_t *buffer = malloc(size);
+	fread(buffer, size, 1 , fp);
+
+	fclose(fp);
+
+	vfs_ent* dir = vfs_dir_create();
+	assert(vfs_mount_tar(dir, ".", buffer, size) == 0);
+
+	vfs_ent* ent;
+	assert(vfs_lookup(dir, "a.txt", &ent) == 0);
+	assert(ent->type == VFS_TYPE_RAW_FILE);
+	assert(ent->file.length == 5);
+	assert(memcmp(ent->file.data, "abcd\n", 5) == 0);
+
+	assert(vfs_lookup(dir, "d", &ent) == 0);
+	assert(ent->type == VFS_TYPE_DIR);
+
+	assert(vfs_lookup(dir, "d/index.js", &ent) == 0);
+	assert(ent->type == VFS_TYPE_RAW_FILE);
+
+	vfs_destroy(dir);
+	free(buffer);
+}
+
 int main() {
 	test_str_match_range();
 	test_filename();
 	test_lookup();
 	test_insert();
+	test_tar();
 }
