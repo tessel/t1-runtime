@@ -151,7 +151,7 @@ function colonize (node) {
 
     case 'UnaryExpression':
       if (node.operator == '~') {
-        node.update('_bit.bnot(' + node.argument.source() + ')');
+        node.update('_bit.bnot(' + node.argument.source() + ' or 0)');
       } else if (node.operator == '+') {
         node.update('(0+' + node.argument.source() + ')');
       } else if (node.operator == '!') {
