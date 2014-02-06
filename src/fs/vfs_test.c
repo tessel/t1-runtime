@@ -48,55 +48,29 @@ void test_dir() {
 	assert(vfs_dir_append(subdir, "bar", file_bar) == 0);
 
 	vfs_ent* t = 0;
-	vfs_ent* p = 0;
-	const char* path = "/subdir/bar";
 
-	assert(vfs_lookup(dir, &path, false, &p, &t) == 0);
-	assert(strcmp(path, "bar") == 0);
-	assert(p == subdir);
+	assert(vfs_lookup(dir, "/subdir/bar", &t) == 0);
 	assert(t == file_bar);
 
-	path = ".";
-	assert(vfs_lookup(dir, &path, false, &p, &t) == 0);
-	assert(p == dir);
+	assert(vfs_lookup(dir, ".", &t) == 0);
 	assert(t == dir);
 
-	path = "..";
-	assert(vfs_lookup(dir, &path, false, &p, &t) == 0);
-	assert(p == dir);
+	assert(vfs_lookup(dir, "..", &t) == -ENOENT);
+	assert(t == NULL);
+
+	assert(vfs_lookup(dir, "asdf", &t) == -ENOENT);
 	assert(t == dir);
 
-	path = "asdf";
-	assert(vfs_lookup(dir, &path, false, &p, &t) == -ENOENT);
+	assert(vfs_lookup(dir, "/subdir/asdf", &t) == -ENOENT);
+	assert(t == subdir);
 
-	path = "asdf";
-	assert(vfs_lookup(dir, &path, true , &p, &t) == 0);
-	assert(strcmp(path, "asdf") == 0);
-	assert(p == dir);
-	assert(t == 0);
+	assert(vfs_lookup(dir, "/subir/noexist/asdf", &t) == -ENOENT);
+	assert(t == NULL);
 
-	path = "/subdir/asdf";
-	assert(vfs_lookup(dir, &path, false, &p, &t) == -ENOENT);
-
-	path = "/subdir/asdf";
-	assert(vfs_lookup(dir, &path, true , &p, &t) == 0);
-	assert(strcmp(path, "asdf") == 0);
-	assert(p == subdir);
-	assert(t == 0);
-
-	path = "/subir/noexist/asdf";
-	assert(vfs_lookup(dir, &path, true , &p, &t) == -ENOENT);
-
-	path = "/subdir/..";
-	assert(vfs_lookup(dir, &path, false, &p, &t) == 0);
-	assert(strcmp(path, "..") == 0); // TODO: is this ideal?
-	assert(p == dir);
+	assert(vfs_lookup(dir, "/subdir/..", &t) == 0);
 	assert(t == dir);
 
-	path = "/subdir/../foo";
-	assert(vfs_lookup(dir, &path, false, &p, &t) == 0);
-	assert(strcmp(path, "foo") == 0);
-	assert(p == dir);
+	assert(vfs_lookup(dir, "/subdir/../foo", &t) == 0);
 	assert(t == file_foo);
 
 	vfs_destroy(dir);

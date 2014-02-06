@@ -3,10 +3,10 @@
 vfs_ent* /* ~ */ vfs_dir_create(bool names_owned) {
 	vfs_ent* ent = malloc(sizeof(vfs_ent));
 	ent->type = VFS_TYPE_DIR;
+	ent->parent = 0;
 	ent->dir.num_entries = 0;
 	ent->dir.names_owned = names_owned;
 	ent->dir.entries = 0;
-	ent->dir.parent = ent;
 	return ent;
 }
 
@@ -24,10 +24,7 @@ int vfs_dir_append(vfs_ent* dir, const char* name, vfs_ent* ent) {
 		entry->name = name;
 	}
 	entry->ent = ent;
-
-	if (ent->type == VFS_TYPE_DIR) {
-		ent->dir.parent = dir;
-	}
+	ent->parent = dir;
 
 	return 0;
 }
@@ -61,6 +58,7 @@ void vfs_destroy(vfs_ent* /* ~ */ ent) {
 vfs_ent* vfs_raw_file_create() {
 	vfs_ent* ent = malloc(sizeof(vfs_ent));
 	ent->type = VFS_TYPE_RAW_FILE;
+	ent->parent = NULL;
 	ent->file.length = 0;
 	ent->file.data = 0;
 	ent->file.data_owned = true;
@@ -71,6 +69,7 @@ vfs_ent* vfs_raw_file_create() {
 vfs_ent* vfs_raw_file_from_buf(const uint8_t* buf, unsigned length, unsigned mtime) {
 	vfs_ent* ent = malloc(sizeof(vfs_ent));
 	ent->type = VFS_TYPE_RAW_FILE;
+	ent->parent = NULL;
 	ent->file.length = length;
 	ent->file.data = (uint8_t*) buf;
 	ent->file.data_owned = false;
@@ -96,57 +95,45 @@ bool str_match_range(const char* start, const char* end, const char* ref) {
 	return *ref == 0;
 }
 
-int vfs_lookup(vfs_ent* /*&mut 'fs*/ dir, const char** /* & */ path, bool create, vfs_ent** out_parent_dir, vfs_ent** out) {
+int vfs_lookup(vfs_ent* /*&mut 'fs*/ dir, const char* /* & */ path, vfs_ent** out) {
+	if (path == 0) {
+		if (out) *out = dir;
+		return 0;
+	}
+
+	if (out) *out = NULL;
+
 	if (dir->type != VFS_TYPE_DIR) {
 		return -ENOTDIR;
 	}
 
-	while ((*path)[0] == '/') {
+	while (path[0] == '/') {
 		// Strip leading slashes
-		(*path)++;
+		path++;
 	}
 
-	char* next = strchr(*path, '/');
+	char* next = strchr(path, '/');
 
-	if ((*path)[0] == 0 || str_match_range(*path, next, ".")) {
-		if (next) {
-			*path = next;
-			return vfs_lookup(dir, path, create, out_parent_dir, out);
-		} else { // Trailing slash or dot
-			if (out_parent_dir) *out_parent_dir = dir->dir.parent;
-			if (out) *out = dir;
-			return 0;
-		}
-	} else if (str_match_range(*path, next, "..")) {
-		if (next) {
-			*path = next;
-			return vfs_lookup(dir->dir.parent, path, create, out_parent_dir, out);
-		} else {
-			if (out_parent_dir) *out_parent_dir = dir->dir.parent->dir.parent;
-			if (out) *out = dir->dir.parent;
-			return 0;
-		}
-	} else {
-		if (out_parent_dir) *out_parent_dir = dir;
-		for (unsigned i=0; i<dir->dir.num_entries; i++) {
-			vfs_direntry* entry = &dir->dir.entries[i];
-			if (str_match_range(*path, next, entry->name)) {
-				if (next == 0) {
-					if (out) *out = entry->ent;
-					return 0;
-				} else {
-					*path = next;
-					return vfs_lookup(entry->ent, path, create, out_parent_dir, out);
-				}
-			}
-		}
-
-		if (create && next == 0) {
-			if (out) *out = NULL;
-			return 0;
+	if (path[0] == 0 || str_match_range(path, next, ".")) {
+		return vfs_lookup(dir, next, out);
+	} else if (str_match_range(path, next, "..")) {
+		if (dir->parent) {
+			return vfs_lookup(dir->parent, next, out);
 		} else {
 			return -ENOENT;
 		}
+	} else {
+		for (unsigned i=0; i<dir->dir.num_entries; i++) {
+			vfs_direntry* entry = &dir->dir.entries[i];
+			if (str_match_range(path, next, entry->name)) {
+				return vfs_lookup(entry->ent, next, out);
+			}
+		}
+
+		if (next == 0) {
+			if (out) *out = dir;
+		}
+		return -ENOENT;
 	}
 }
 

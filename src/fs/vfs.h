@@ -24,7 +24,6 @@ typedef struct vfs_dir {
 	bool names_owned;
 	unsigned num_entries;
 	vfs_direntry* /* ~ */ entries;
-	vfs_ent* parent;
 } vfs_dir;
 
 typedef struct vfs_raw_file {
@@ -50,6 +49,7 @@ typedef struct vfs_dir_handle {
 
 typedef struct vfs_ent {
 	vfs_enttype type;
+	vfs_ent* parent;
 	union {
 		vfs_dir dir;
 		vfs_raw_file file;
@@ -66,7 +66,12 @@ void vfs_raw_file_destroy(vfs_raw_file* file);
 
 int vfs_dir_append(vfs_ent* dir, const char* name, vfs_ent* ent);
 
-int vfs_lookup(vfs_ent* /*&mut 'fs*/ dir, const char** /* & */ path, bool create, vfs_ent** out_parent_dir, vfs_ent** out);
+
+/// Lookup `path` rooted at `dir`
+/// If `dir` is not a directory, returns -ENOTDIR
+/// If the file is not found, returns -ENOENT.
+/// In that case, if the parent directory exists, `out` is set to the parent directory, otherwise NULL.
+int vfs_lookup(vfs_ent* /*&mut 'fs*/ dir, const char* /* & */ path, vfs_ent** out);
 
 int vfs_mount_tar(vfs_dir* /*&mut*/ root, char* /* & */ path, uint8_t* /* &'fs */ tar, unsigned size);
 int vfs_mount_fat(vfs_dir* /*&mut*/ root, char* /* & */ path, unsigned fatfs_drivenum);
