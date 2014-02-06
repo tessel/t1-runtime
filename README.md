@@ -12,52 +12,52 @@ git clone --recursive https://github.com/tessel/runtime.git
 ### Net
 Networking
 
-&#x20;<a href="#api-typedef-int-tm_socket_t" name="api-typedef-int-tm_socket_t">#</a> typedef int tm_socket_t  
+&#x20;<a href="#api-typedef-int-tm_socket_t" name="api-typedef-int-tm_socket_t">#</a> <i>typedef</i>&nbsp; int tm_socket_t  
 socket type
 
-&#x20;<a href="#api-tm_socket_t-tm_udp_open-" name="api-tm_socket_t-tm_udp_open-">#</a> tm_socket_t tm_udp_open ()  
+&#x20;<a href="#api-tm_socket_t-tm_udp_open-" name="api-tm_socket_t-tm_udp_open-">#</a> <i>tm_socket_t</i>&nbsp; <b>tm_udp_open</b>  ()  
 open a udp socket
 
-&#x20;<a href="#api-int-tm_udp_close-int-sock-" name="api-int-tm_udp_close-int-sock-">#</a> int tm_udp_close ( `int` `sock` )  
+&#x20;<a href="#api-int-tm_udp_close-int-sock-" name="api-int-tm_udp_close-int-sock-">#</a> <i>int</i>&nbsp; <b>tm_udp_close</b>  ( `int sock` )  
 close a udp socket
 
-&#x20;<a href="#api-int-tm_udp_listen-int-ulSocket-int-port-" name="api-int-tm_udp_listen-int-ulSocket-int-port-">#</a> int tm_udp_listen ( `int` `ulSocket`, `int` `port` )  
+&#x20;<a href="#api-int-tm_udp_listen-int-ulSocket-int-port-" name="api-int-tm_udp_listen-int-ulSocket-int-port-">#</a> <i>int</i>&nbsp; <b>tm_udp_listen</b>  ( `int ulSocket`, `int port` )  
 listen to udp
 
-&#x20;<a href="#api-int-tm_udp_receive-int-ulSocket-uint8_t-buf-unsigned-long-buf_len-uint32_t-ip-" name="api-int-tm_udp_receive-int-ulSocket-uint8_t-buf-unsigned-long-buf_len-uint32_t-ip-">#</a> int tm_udp_receive ( `int` `ulSocket`, `uint8_t` `*buf`, `unsigned` `long` `buf_len`, `uint32_t` `*ip` );  
+&#x20;<a href="#api-int-tm_udp_receive-int-ulSocket-uint8_t-buf-unsigned-long-buf_len-uint32_t-ip-" name="api-int-tm_udp_receive-int-ulSocket-uint8_t-buf-unsigned-long-buf_len-uint32_t-ip-">#</a> <i>int</i>&nbsp; <b>tm_udp_receive</b>  ( `int ulSocket`, `uint8_t *buf`, `unsigned long buf_len`, `uint32_t *ip` );  
 receive on udp
 
-&#x20;<a href="#api-int-tm_udp_readable-tm_socket_t-sock-" name="api-int-tm_udp_readable-tm_socket_t-sock-">#</a> int tm_udp_readable ( `tm_socket_t` `sock` )  
+&#x20;<a href="#api-int-tm_udp_readable-tm_socket_t-sock-" name="api-int-tm_udp_readable-tm_socket_t-sock-">#</a> <i>int</i>&nbsp; <b>tm_udp_readable</b>  ( `tm_socket_t sock` )  
 is socket readable?
 
-&#x20;<a href="#api-int-tm_udp_send-int-ulSocket-uint8_t-ip0-uint8_t-ip1-uint8_t-ip2-uint8_t-ip3-int-port-uint8_t-buf-unsigned-long-buf_len-" name="api-int-tm_udp_send-int-ulSocket-uint8_t-ip0-uint8_t-ip1-uint8_t-ip2-uint8_t-ip3-int-port-uint8_t-buf-unsigned-long-buf_len-">#</a> int tm_udp_send ( `int` `ulSocket`, `uint8_t` `ip0`, `uint8_t` `ip1`, `uint8_t` `ip2`, `uint8_t` `ip3`, `int` `port`, `uint8_t` `*buf`, `unsigned` `long` `buf_len` )  
+&#x20;<a href="#api-int-tm_udp_send-int-ulSocket-uint8_t-ip0-uint8_t-ip1-uint8_t-ip2-uint8_t-ip3-int-port-uint8_t-buf-unsigned-long-buf_len-" name="api-int-tm_udp_send-int-ulSocket-uint8_t-ip0-uint8_t-ip1-uint8_t-ip2-uint8_t-ip3-int-port-uint8_t-buf-unsigned-long-buf_len-">#</a> <i>int</i>&nbsp; <b>tm_udp_send</b>  ( `int ulSocket`, `uint8_t ip0`, `uint8_t ip1`, `uint8_t ip2`, `uint8_t ip3`, `int port`, `uint8_t *buf`, `unsigned long buf_len` )  
 send on socket
 
-&#x20;<a href="#api-tm_socket_t-tm_tcp_open-" name="api-tm_socket_t-tm_tcp_open-">#</a> tm_socket_t tm_tcp_open ()  
+&#x20;<a href="#api-tm_socket_t-tm_tcp_open-" name="api-tm_socket_t-tm_tcp_open-">#</a> <i>tm_socket_t</i>&nbsp; <b>tm_tcp_open</b>  ()  
 open tcp
 
-&#x20;<a href="#api-int-tm_tcp_close-" name="api-int-tm_tcp_close-">#</a> int tm_tcp_close ()  
+&#x20;<a href="#api-int-tm_tcp_close-" name="api-int-tm_tcp_close-">#</a> <i>int</i>&nbsp; <b>tm_tcp_close</b>  ()  
 close tcp
 
-&#x20;<a href="#api-int-tm_tcp_connect-tm_socket_t-sock-uint8_t-ip0-uint8_t-ip1-uint8_t-ip2-uint8_t-ip3-uint16_t-port-" name="api-int-tm_tcp_connect-tm_socket_t-sock-uint8_t-ip0-uint8_t-ip1-uint8_t-ip2-uint8_t-ip3-uint16_t-port-">#</a> int tm_tcp_connect ( `tm_socket_t` `sock`, `uint8_t` `ip0`, `uint8_t` `ip1`, `uint8_t` `ip2`, `uint8_t` `ip3`, `uint16_t` `port` )  
+&#x20;<a href="#api-int-tm_tcp_connect-tm_socket_t-sock-uint8_t-ip0-uint8_t-ip1-uint8_t-ip2-uint8_t-ip3-uint16_t-port-" name="api-int-tm_tcp_connect-tm_socket_t-sock-uint8_t-ip0-uint8_t-ip1-uint8_t-ip2-uint8_t-ip3-uint16_t-port-">#</a> <i>int</i>&nbsp; <b>tm_tcp_connect</b>  ( `tm_socket_t sock`, `uint8_t ip0`, `uint8_t ip1`, `uint8_t ip2`, `uint8_t ip3`, `uint16_t port` )  
 connect on tcp
 
-&#x20;<a href="#api-int-tm_tcp_write-tm_socket_t-sock-uint8_t-buf-size_t-buflen-" name="api-int-tm_tcp_write-tm_socket_t-sock-uint8_t-buf-size_t-buflen-">#</a> int tm_tcp_write ( `tm_socket_t` `sock`, `uint8_t` `*buf`, `size_t` `buflen` )  
+&#x20;<a href="#api-int-tm_tcp_write-tm_socket_t-sock-uint8_t-buf-size_t-buflen-" name="api-int-tm_tcp_write-tm_socket_t-sock-uint8_t-buf-size_t-buflen-">#</a> <i>int</i>&nbsp; <b>tm_tcp_write</b>  ( `tm_socket_t sock`, `uint8_t *buf`, `size_t buflen` )  
 write on tcp
 
-&#x20;<a href="#api-int-tm_tcp_read-tm_socket_t-sock-uint8_t-buf-size_t-buflen-" name="api-int-tm_tcp_read-tm_socket_t-sock-uint8_t-buf-size_t-buflen-">#</a> int tm_tcp_read ( `tm_socket_t` `sock`, `uint8_t` `*buf`, `size_t` `buflen` )  
+&#x20;<a href="#api-int-tm_tcp_read-tm_socket_t-sock-uint8_t-buf-size_t-buflen-" name="api-int-tm_tcp_read-tm_socket_t-sock-uint8_t-buf-size_t-buflen-">#</a> <i>int</i>&nbsp; <b>tm_tcp_read</b>  ( `tm_socket_t sock`, `uint8_t *buf`, `size_t buflen` )  
 read on tcp
 
-&#x20;<a href="#api-int-tm_tcp_readable-tm_socket_t-sock-" name="api-int-tm_tcp_readable-tm_socket_t-sock-">#</a> int tm_tcp_readable ( `tm_socket_t` `sock` )  
+&#x20;<a href="#api-int-tm_tcp_readable-tm_socket_t-sock-" name="api-int-tm_tcp_readable-tm_socket_t-sock-">#</a> <i>int</i>&nbsp; <b>tm_tcp_readable</b>  ( `tm_socket_t sock` )  
 is socket readable?
 
-&#x20;<a href="#api-int-tm_tcp_listen-tm_socket_t-sock-uint16_t-port-" name="api-int-tm_tcp_listen-tm_socket_t-sock-uint16_t-port-">#</a> int tm_tcp_listen ( `tm_socket_t` `sock`, `uint16_t` `port` )  
+&#x20;<a href="#api-int-tm_tcp_listen-tm_socket_t-sock-uint16_t-port-" name="api-int-tm_tcp_listen-tm_socket_t-sock-uint16_t-port-">#</a> <i>int</i>&nbsp; <b>tm_tcp_listen</b>  ( `tm_socket_t sock`, `uint16_t port` )  
 listen on port
 
-&#x20;<a href="#api-tm_socket_t-tm_tcp_accept-tm_socket_t-sock-uint32_t-ip-" name="api-tm_socket_t-tm_tcp_accept-tm_socket_t-sock-uint32_t-ip-">#</a> tm_socket_t tm_tcp_accept ( `tm_socket_t` `sock`, `uint32_t` `*ip` )  
+&#x20;<a href="#api-tm_socket_t-tm_tcp_accept-tm_socket_t-sock-uint32_t-ip-" name="api-tm_socket_t-tm_tcp_accept-tm_socket_t-sock-uint32_t-ip-">#</a> <i>tm_socket_t</i>&nbsp; <b>tm_tcp_accept</b>  ( `tm_socket_t sock`, `uint32_t *ip` )  
 accept new incoming connection
 
-&#x20;<a href="#api-uint32_t-tm_hostname_lookup-const-uint8_t-hostname-" name="api-uint32_t-tm_hostname_lookup-const-uint8_t-hostname-">#</a> uint32_t tm_hostname_lookup ( `const` `uint8_t` `*hostname` )  
+&#x20;<a href="#api-uint32_t-tm_hostname_lookup-const-uint8_t-hostname-" name="api-uint32_t-tm_hostname_lookup-const-uint8_t-hostname-">#</a> <i>uint32_t</i>&nbsp; <b>tm_hostname_lookup</b>  ( `const uint8_t *hostname` )  
 lookup host
 
 
