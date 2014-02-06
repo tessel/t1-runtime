@@ -47,6 +47,7 @@ wait_ares(ares_channel channel)
         FD_ZERO(&read_fds);
         FD_ZERO(&write_fds);
         nfds = ares_fds(channel, &read_fds, &write_fds);
+        printf("state %d\n", nfds);
         if(nfds == 0){
             break;
         }
