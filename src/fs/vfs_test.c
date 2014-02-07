@@ -175,6 +175,15 @@ void test_rw() {
 	assert(vfs_length(&fd) == 0);
 	assert(vfs_close(&fd) == 0);
 
+	vfs_dir_handle dfd;
+	const char* name;
+	assert(vfs_dir_open(&dfd, dir, ".") == 0);
+	assert(vfs_dir_read(&dfd, &name) == 0);
+	assert(strcmp(name, "test.txt") == 0);
+	assert(vfs_dir_read(&dfd, &name) == 0);
+	assert(name == 0);
+	assert(vfs_dir_close(&dfd) == 0);
+
 	vfs_destroy(dir);
 }
 

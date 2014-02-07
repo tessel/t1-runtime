@@ -284,3 +284,40 @@ const uint8_t* vfs_contents(vfs_file_handle* fd) {
 			return 0;
 	}
 }
+
+int vfs_dir_open(vfs_dir_handle* out, vfs_ent* root, char* pathname) {
+	vfs_ent* ent = 0;
+	int r = vfs_lookup(root, pathname, &ent);
+	if (r != 0) {
+		return r;
+	}
+
+	switch (ent->type) {
+		case VFS_TYPE_DIR:
+			out->ent = ent;
+			out->position = 0;
+			return 0;
+		default:
+			return -ENOTDIR;
+	}
+}
+
+int vfs_dir_close(vfs_dir_handle* handle) {
+	handle->ent = 0;
+	return 0;
+}
+
+int vfs_dir_read(vfs_dir_handle* fd, const char** out) {
+	*out = NULL;
+	if (!fd->ent) return -EINVAL;
+	switch (fd->ent->type) {
+		case VFS_TYPE_DIR:
+			if (fd->position < fd->ent->dir.num_entries) {
+				*out = fd->ent->dir.entries[fd->position].name;
+				fd->position += 1;
+			}
+			return 0;
+		default:
+			return -EINVAL;
+	}
+}

@@ -42,10 +42,7 @@ typedef struct vfs_file_handle {
 	unsigned position;
 } vfs_file_handle;
 
-typedef struct vfs_dir_handle {
-	vfs_dir* /* & */ dir;
-	unsigned position;
-} vfs_dir_handle;
+typedef vfs_file_handle vfs_dir_handle;
 
 typedef struct vfs_ent {
 	vfs_enttype type;
@@ -87,6 +84,10 @@ int vfs_open(vfs_file_handle* /* -> ~<'s> */ out, vfs_ent* /* &'s */ root, char*
 int vfs_close(vfs_file_handle* /* move */ handle);
 int vfs_read (vfs_file_handle* fd, uint8_t *buf, size_t size, size_t* nread);
 int vfs_write (vfs_file_handle* fd, const uint8_t *buf, size_t size);
+
+int vfs_dir_open(vfs_file_handle* out, vfs_ent* root, char* pathname);
+int vfs_dir_close(vfs_file_handle* fd);
+int vfs_dir_read(vfs_file_handle* fd, const char** out);
 
 unsigned vfs_length(vfs_file_handle* fd);
 const uint8_t* vfs_contents(vfs_file_handle* fd);
