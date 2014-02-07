@@ -50,6 +50,12 @@ int tm_udp_listen (int sock, int port)
     // CC3000_END;
     return -1;
   }
+
+  if (fcntl(sock, F_SETFL, O_NDELAY) < 0) {
+    perror("Can't set socket to non-blocking");
+    return -1;
+  }
+  
   return 0;
 }
 
@@ -171,6 +177,11 @@ int tm_tcp_listen (tm_socket_t sock, uint16_t port)
   if (listenStatus != 0) {
     // TM_COMMAND('w', "cannot listen to socket: %d", listenStatus);
     // CC3000_END;
+    return -1;
+  }
+
+  if (fcntl(sock, F_SETFL, O_NDELAY) < 0) {
+    perror("Can't set socket to non-blocking");
     return -1;
   }
 

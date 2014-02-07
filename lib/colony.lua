@@ -43,10 +43,13 @@ end
 -- built-in prototypes
 
 local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_proto = {}, {}, {}, {}, {}, {}, {}
+funcproxies = {}
 
 -- get from prototype chain while maintaining "self"
 
 local function js_proto_get (self, proto, key)
+  if key == '__proto__' then return proto; end
+  proto = funcproxies[proto] or proto
   return rawget(proto, key) or (getmetatable(proto) and getmetatable(proto).__index and getmetatable(proto).__index(self, key, proto)) or nil
 end
 
@@ -146,9 +149,26 @@ end
 
 function js_obj (o)
   local mt = getmetatable(o) or {}
-  mt.__index = js_obj_index
+  local proto = obj_proto
+  if o.__proto__ then
+    proto = o.__proto__
+    o.__proto__ = nil
+  end
+  mt.__index = function (self, key)
+    return js_proto_get(self, proto, key)
+  end
+  mt.__newindex = function (this, key, value)
+    if key == '__proto__' then
+      mt.proto = value
+      mt.__index = function (self, key)
+        return js_proto_get(self, value, key)
+      end
+    else
+      rawset(this, key, value)
+    end
+  end
   mt.__tostring = js_tostring
-  mt.proto = obj_proto
+  mt.proto = proto
   setmetatable(o, mt)
   return o
 end
@@ -170,7 +190,6 @@ js_obj(arr_proto)
 -- so when we access an __index or __newindex, we 
 -- set up an intermediary object to handle it
 
-funcproxies = {}
 setmetatable(funcproxies, {__mode = 'k'})
 
 function js_func_proxy (fn)
@@ -323,6 +342,9 @@ end
 function js_pairs (arg)
   if type(arg) == 'function' then
     return pairs({})
+  elseif type(arg) == 'string' then
+    -- todo what
+    return js_next, {}
   else
     return js_next, (arg or {})
   end
@@ -359,12 +381,24 @@ function js_new (f, ...)
     error('TypeError: object is not a function')
   end
   local o = {}
-  setmetatable(o, {
+  local mt = {
     __index = function (self, key)
       return js_proto_get(self, f.prototype, key)
     end,
+    __newindex = function (this, key, value)
+      if key == '__proto__' then
+        local mt = getmetatable(this)
+        mt.proto = value
+        mt.__index = function (self, key)
+          return js_proto_get(self, value, key)
+        end
+      else
+        rawset(this, key, value)
+      end
+    end,
     proto = f.prototype
-  })
+  }
+  setmetatable(o, mt)
   return f(o, ...) or o
 end
 
