@@ -183,7 +183,7 @@ HTTPIncomingResponse.prototype.setEncoding = function () {
  * HTTPOutgoingRequest
  */
 
-function HTTPOutgoingRequest (port, host, path, method) {
+function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
   if (!host.match(/^[0-9.]+$/)) {
     var ipl = tm._sync_gethostbyname(host);
     if (ipl == 0) {
@@ -207,9 +207,24 @@ function HTTPOutgoingRequest (port, host, path, method) {
     if (method != 'GET') {
       header = 'Content-Length: ' + self._contentLength + '\r\n';
     }
-    self.socket.write(method + ' ' + path + ' HTTP/1.1\r\nHost: ' + host + '\r\n' + header + '\r\n');
+    var usedHost = false, usedUserAgent;
+    for (var key in headers) {
+      if (key.toLowerCase() == 'host') {
+        usedHost = true;
+      } else if (key.toLowerCase() == 'user-agent') {
+        usedUserAgent = true;
+      }
+      header = header + key + ': ' + headers[key] + '\r\n';
+    }
+    if (!usedHost) {
+      header = header + 'Host: ' + host + '\r\n'
+    }
+    if (!usedUserAgent) {
+      header = header + 'User-Agent: tessel\r\n';
+    }
+    self.socket.write(method + ' ' + path + ' HTTP/1.1\r\n' + header + '\r\n');
     // self.emit('connect');
-  })
+  }, _secure)
 
   function js_wrap_function (fn) {
     return function () {
@@ -276,7 +291,7 @@ HTTPOutgoingRequest.prototype.end = function () {
  */
 
 exports.request = function (opts, onresponse) {
-  var req = new HTTPOutgoingRequest(opts.port || 80, opts.hostname, opts.path || '', opts.method || 'GET');
+  var req = new HTTPOutgoingRequest(opts.port || (this._secure ? 443 : 80), opts.hostname, opts.path || '', opts.method || 'GET', opts.headers || {}, this._secure);
   onresponse && req.on('response', onresponse);
   return req;
 };
@@ -287,7 +302,7 @@ exports.get = function (opts, onresponse) {
   }
   opts.method = 'GET';
 
-  var req = exports.request(opts, onresponse);
+  var req = this.request(opts, onresponse);
   req.end();
   return req;
 };

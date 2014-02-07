@@ -4,46 +4,75 @@ var util = require('util');
 var Stream = require('stream').Stream;
 
 /**
+ * ssl
+ */
+
+var ssl_ctx = null;
+
+function ensureSSLCtx () {
+  if (ssl_ctx == null) {
+    ssl_ctx = tm.ssl_context_create();
+  }
+}
+
+
+/**
  * TCPSocket
  */
 
-function TCPSocket (socket) {
+function TCPSocket (socket, _secure) {
   this.socket = socket;
+  this._secure = _secure;
 }
 
 util.inherits(TCPSocket, Stream);
 
 TCPSocket.prototype.connect = function (port, ip, cb) {
   var ips = ip.split('.');
-  var client = this;
+  var self = this;
   setImmediate(function () {
-    tm.tcp_connect(client.socket, Number(ips[0]), Number(ips[1]), Number(ips[2]), Number(ips[3]), Number(port));
-    client.__listen();
+    tm.tcp_connect(self.socket, Number(ips[0]), Number(ips[1]), Number(ips[2]), Number(ips[3]), Number(port));
+    
+    if (self._secure) {
+      var ssl = tm.ssl_session_create(ssl_ctx, self.socket);
+      self._ssl = ssl;
+    }
+
+    self.__listen();
     cb();
-    client.emit('connect');
+    self.emit('connect');
   });
 };
 
 TCPSocket.prototype.__listen = function () {
-  var client = this;
+  var self = this;
   this.__listenid = setInterval(function () {
     var buf = '';
-    while (client.socket != null && tm.tcp_readable(client.socket) > 0) {
-      var buf = buf + tm.tcp_read(client.socket);
-      if (!buf || buf.length == 0) {
+    while (self.socket != null && tm.tcp_readable(self.socket) > 0) {
+      if (self._ssl) {
+        var data = tm.ssl_read(self._ssl);
+      } else {
+        var data = tm.tcp_read(self.socket);
+      }
+      if (!data || data.length == 0) {
         break;
       }
+      buf += data;
     }
     if (buf.length) {
-      client.emit('data', buf);
+      self.emit('data', buf);
     }
   }, 0);
 };
 
 TCPSocket.prototype.write = function (buf, cb) {
-  var socket = this.socket;
+  var self = this;
   setImmediate(function () {
-    tm.tcp_write(socket, buf, buf.length);
+    if (self._ssl) {
+      tm.ssl_write(self._ssl, buf, buf.length);
+    } else {
+      tm.tcp_write(self.socket, buf, buf.length);
+    }
     if (cb) {
       cb();
     }
@@ -63,13 +92,17 @@ TCPSocket.prototype.close = function () {
   });
 };
 
-exports.connect = function (port, host, callback) {
+exports.connect = function (port, host, callback, _secure) {
+  if (_secure) {
+    ensureSSLCtx();
+  }
+
   var sock = tm.tcp_open();
   if (sock == -1) {
     throw 'ENOENT: Cannot connect to new socket.'
   }
   
-  var client = new TCPSocket(sock);
+  var client = new TCPSocket(sock, _secure);
   client.connect(port, host, callback);
   return client;
 };

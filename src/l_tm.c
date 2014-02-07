@@ -272,9 +272,13 @@ static int l_tm_ssl_read (lua_State* L)
   tm_ssl_session_t session = (tm_ssl_session_t) lua_touserdata(L, 1);
 
   uint8_t buf[20000];
-  size_t buf_len = tm_ssl_read(session, buf, sizeof(buf));
+  ssize_t buf_len = tm_ssl_read(session, buf, sizeof(buf));
 
-  lua_pushlstring(L, (char *) buf, buf_len);
+  if (buf_len <= 0) {
+    lua_pushstring(L, "");
+  } else {
+    lua_pushlstring(L, (char *) buf, buf_len);
+  }
   return 1;
 }
 
