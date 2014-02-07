@@ -6,8 +6,7 @@
 #include <string.h>
 #include <errno.h>
 
-typedef struct vfs_ent vfs_ent;
-typedef struct vfs_dir vfs_dir;
+struct vfs_ent;
 
 typedef enum {
 	VFS_TYPE_INVALID,
@@ -18,7 +17,7 @@ typedef enum {
 
 typedef struct vfs_direntry {
 	const char* name;
-	vfs_ent* ent;
+	struct vfs_ent* ent;
 } vfs_direntry;
 
 typedef struct vfs_dir {
@@ -38,7 +37,7 @@ typedef struct vfs_fat_mountpt {
 } vfs_fat_mountpt;
 
 typedef struct vfs_file_handle {
-	vfs_ent* ent;
+	struct vfs_ent* ent;
 	unsigned position;
 } vfs_file_handle;
 
@@ -46,7 +45,7 @@ typedef vfs_file_handle vfs_dir_handle;
 
 typedef struct vfs_ent {
 	vfs_enttype type;
-	vfs_ent* parent;
+	struct vfs_ent* parent;
 	union {
 		vfs_dir dir;
 		vfs_raw_file file;
