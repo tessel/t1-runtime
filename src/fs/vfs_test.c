@@ -142,6 +142,42 @@ void test_insert() {
 	vfs_destroy(dir);
 }
 
+void test_rw() {
+	vfs_ent* dir = vfs_dir_create();
+	vfs_file_handle fd;
+	uint8_t buf[64];
+	size_t nread;
+
+	assert(vfs_open(&fd, dir, "/noexist.txt", 0) == -ENOENT);
+
+	assert(vfs_open(&fd, dir, "/test.txt", VFS_O_CREAT) == 0);
+	assert(vfs_write(&fd, (const uint8_t*)"test foo bar\n", 13));
+	assert(vfs_write(&fd, (const uint8_t*)"line 2\n", 7));
+	assert(vfs_length(&fd) == 13+7);
+	assert(memcmp((const char*)vfs_contents(&fd), "test foo bar\nline 2\n", vfs_length(&fd)) == 0);
+	assert(vfs_close(&fd) == 0);
+
+	assert(vfs_open(&fd, dir, "/test.txt", 0) == 0);
+	assert(vfs_write(&fd, (const uint8_t*)"overwritten.\n", 13));
+	assert(vfs_read(&fd, buf, 4, &nread) == 0);
+	assert(nread == 4);
+	assert(memcmp((const char*)buf, "line", nread) == 0);
+	assert(vfs_read(&fd, buf, 64, &nread) == 0);
+	assert(nread == 3);
+	assert(memcmp((const char*)buf, " 2\n", nread) == 0);
+	assert(vfs_length(&fd) == 13+7);
+	assert(memcmp((const char*)vfs_contents(&fd), "overwritten.\nline 2\n", vfs_length(&fd)) == 0);
+	assert(vfs_close(&fd) == 0);
+
+	assert(vfs_read(&fd, buf, 64, &nread) == -EINVAL);
+
+	assert(vfs_open(&fd, dir, "/test.txt", VFS_O_TRUNC) == 0);
+	assert(vfs_length(&fd) == 0);
+	assert(vfs_close(&fd) == 0);
+
+	vfs_destroy(dir);
+}
+
 void test_tar() {
 	FILE *fp = fopen ("test.tar" , "rb");
 	assert(fp);
@@ -179,5 +215,6 @@ int main() {
 	test_filename();
 	test_lookup();
 	test_insert();
+	test_rw();
 	test_tar();
 }

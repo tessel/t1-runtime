@@ -194,7 +194,93 @@ int vfs_insert(vfs_ent* root, const char* path, vfs_ent* ent) {
 	return r;
 }
 
-int vfs_open(vfs_file_handle* /* -> ~<'s> */ out, vfs_dir* root, char* /* & */ pathname, unsigned flags);
-int vfs_close(vfs_file_handle* /* move */ handle);
-int vfs_read (vfs_file_handle* fd, uint8_t *buf, size_t size, size_t* nread);
-int vfs_write (vfs_file_handle* fd, uint8_t *buf, size_t size, size_t* nread);
+int vfs_open(vfs_file_handle* /* -> ~<'s> */ out, vfs_ent* /* &'s */ root, char* /* & */ pathname, unsigned flags) {
+	vfs_ent* ent = 0;
+	int r = vfs_lookup(root, pathname, &ent);
+	if ((flags & VFS_O_CREAT) && r == -ENOENT && ent != 0) {
+		vfs_ent* parent = ent;
+		ent = vfs_raw_file_create();
+		r = vfs_dir_append(parent, pathname, ent);
+		if (r) {
+			vfs_destroy(ent);
+			return r;
+		}
+	} else if (r != 0) {
+		return r;
+	}
+
+	switch (ent->type) {
+		case VFS_TYPE_RAW_FILE:
+			if (flags & VFS_O_TRUNC) {
+				free(ent->file.data);
+				ent->file.length = 0;
+				ent->file.data = 0;
+			}
+			out->ent = ent;
+			out->position = 0;
+			return 0;
+		case VFS_TYPE_DIR:
+			return -EISDIR;
+		default:
+			return -EINVAL;
+	}
+}
+
+int vfs_close(vfs_file_handle* /* move */ handle) {
+	handle->ent = 0;
+	return 0;
+}
+
+int vfs_read (vfs_file_handle* fd, uint8_t *buf, size_t size, size_t* nread) {
+	if (!fd->ent) return -EINVAL;
+	switch (fd->ent->type) {
+		case VFS_TYPE_RAW_FILE:
+			if (fd->position + size > fd->ent->file.length) {
+				size = fd->ent->file.length - fd->position;
+			}
+			memcpy(buf, fd->ent->file.data+fd->position, size);
+			fd->position += size;
+			*nread = size;
+			return 0;
+		default:
+			return -EINVAL;
+	}
+}
+
+int vfs_write (vfs_file_handle* fd, const uint8_t *buf, size_t size) {
+	if (!fd->ent) return -EINVAL;
+	switch (fd->ent->type) {
+		case VFS_TYPE_RAW_FILE:
+			if (!fd->ent->file.data_owned) {
+				return -EROFS;
+			}
+			if (fd->position + size > fd->ent->file.length) {
+				fd->ent->file.length = fd->position + size;
+				fd->ent->file.data = realloc(fd->ent->file.data, fd->ent->file.length);
+			}
+			memcpy(fd->ent->file.data+fd->position, buf, size);
+			fd->position += size;
+		default:
+			return -EINVAL;
+	}
+}
+
+unsigned vfs_length(vfs_file_handle* fd) {
+	if (!fd->ent) return 0;
+	switch (fd->ent->type) {
+		case VFS_TYPE_RAW_FILE:
+			return fd->ent->file.length;
+		default:
+			return 0;
+	}
+}
+
+const uint8_t* vfs_contents(vfs_file_handle* fd) {
+	if (!fd->ent) return 0;
+	switch (fd->ent->type) {
+		case VFS_TYPE_RAW_FILE:
+			return fd->ent->file.data;
+		default:
+			return 0;
+	}
+}
