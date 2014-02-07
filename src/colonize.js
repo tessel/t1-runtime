@@ -613,7 +613,7 @@ module.exports = function (src, _wrapmodule) {
   src = src
     .replace(/^#.*\n/, '')
     + '\n;' // prevent "then end" wrapping to next line
-  return String(falafel(src, colonize))
+  return String(falafel(src, { tolerant: true }, colonize))
     // inline lingering comments are converted to lua comments
     .replace(/^(([^"']|"[^"]*"|'[^']*')*?)\/\//gm, '$1--')
     // replace multiline comments
