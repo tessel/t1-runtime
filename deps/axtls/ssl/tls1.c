@@ -647,7 +647,7 @@ static void add_hmac_digest(SSL *ssl, int mode, uint8_t *hmac_header,
         const uint8_t *buf, int buf_len, uint8_t *hmac_buf)
 {
     int hmac_len = buf_len + 8 + SSL_RECORD_SIZE;
-    uint8_t *t_buf = (uint8_t *)alloca(hmac_len+10);
+    uint8_t *t_buf = (uint8_t *)malloc(hmac_len+10);
 
     memcpy(t_buf, (mode == SSL_SERVER_WRITE || mode == SSL_CLIENT_WRITE) ? 
                     ssl->write_sequence : ssl->read_sequence, 8);
@@ -683,6 +683,7 @@ static void add_hmac_digest(SSL *ssl, int mode, uint8_t *hmac_header,
     }
     print_blob("hmac", hmac_buf, SHA1_SIZE);
 #endif
+    free(t_buf);
 }
 
 /**
@@ -1073,11 +1074,12 @@ int send_packet(SSL *ssl, uint8_t protocol, const uint8_t *in, int length)
                         ssl->cipher_info->iv_size)
         {
             uint8_t iv_size = ssl->cipher_info->iv_size;
-            uint8_t *t_buf = alloca(msg_length + iv_size);
+            uint8_t *t_buf = malloc(msg_length + iv_size);
             memcpy(t_buf + iv_size, ssl->bm_data, msg_length);
             get_random(iv_size, t_buf);
             msg_length += iv_size;
             memcpy(ssl->bm_data, t_buf, msg_length);
+            free(t_buf);
         }
 
         /* now encrypt the packet */
