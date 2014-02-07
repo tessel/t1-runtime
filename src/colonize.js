@@ -623,6 +623,6 @@ module.exports = function (src, _wrapmodule) {
     // Replace trailing and beginning whitespace
     // .replace(/^\s+|\s+$/g, '')
     // Replace successive semicolons or trailing semicolons
-    .replace(/;([\s\n]*;)+/g, ';')
+    .replace(/;([\s\n]*;)+/g, '$1') // preserve newlines if they exist to push past comments
     .replace(/do\s*;/g, 'do')
 };
