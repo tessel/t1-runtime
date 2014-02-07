@@ -1015,7 +1015,17 @@ if type(hs) == 'table' then
         table.insert(args, this)
         table.insert(ret, tostring(out(unpack(args)) or 'undefined'))
       else
-        table.insert(ret, tostring(out))
+        local ins = tostring(out)
+        local i, j = 0, 0
+        while true do
+          i, j = string.find(ins, "$%d+", i+1)    -- find 'next' newline
+          if i == nil then break end
+          local subindex = tonumber(string.sub(ins, i+1, j))
+          local subso, subeo = hs.regmatch_so(hsmatch, subindex), hs.regmatch_eo(hsmatch, subindex)
+          ins = string.sub(ins, 0, i-1) .. string.sub(data, subso + 1, subeo) .. string.sub(ins, j+1)
+          i = i + (subeo - subso)
+        end
+        table.insert(ret, ins)
       end
 
       data = string.sub(data, eo+1)
