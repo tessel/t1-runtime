@@ -575,6 +575,17 @@ static int l_tm_fs_dir_close (lua_State* L)
 }
 
 
+uint32_t tm__sync_gethostbyname (char *domain);
+
+static int l_tm__sync_gethostbyname (lua_State* L)
+{
+  const char *host = lua_tostring(L, 1);
+
+  lua_pushnumber(L, tm__sync_gethostbyname(host));
+  return 1;
+}
+
+
 /**
  * Load Colony.
  */
@@ -656,6 +667,8 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "fs_dir_open", l_tm_fs_dir_open },
     { "fs_dir_read", l_tm_fs_dir_read },
     { "fs_dir_close", l_tm_fs_dir_close },
+
+    { "_sync_gethostbyname", l_tm__sync_gethostbyname },
 
     { NULL, NULL }
   });

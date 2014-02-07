@@ -26,6 +26,7 @@ PATH_LUA           =./deps/colony-lua
 PATH_FATFS         =./deps/fatfs
 PATH_YAJL					 =./deps/yajl
 PATH_AXTLS         =./deps/axtls
+PATH_C_ARES         =./deps/c-ares
 
 
 CFLAGS  =
@@ -138,6 +139,13 @@ endif
 CFLAGS += -include $(PATH_AXTLS)/crypto/crypto.h 
 CSRCS += $(PATH_AXTLS)/crypto/aes.c  $(PATH_AXTLS)/crypto/bigint.c  $(PATH_AXTLS)/crypto/crypto_misc.c  $(PATH_AXTLS)/crypto/hmac.c  $(PATH_AXTLS)/crypto/md2.c  $(PATH_AXTLS)/crypto/md5.c  $(PATH_AXTLS)/crypto/rc4.c  $(PATH_AXTLS)/crypto/rsa.c  $(PATH_AXTLS)/crypto/sha1.c  $(PATH_AXTLS)/ssl/asn1.c  $(PATH_AXTLS)/ssl/gen_cert.c  $(PATH_AXTLS)/ssl/loader.c  $(PATH_AXTLS)/ssl/openssl.c  $(PATH_AXTLS)/ssl/os_port.c  $(PATH_AXTLS)/ssl/p12.c  $(PATH_AXTLS)/ssl/tls1.c  $(PATH_AXTLS)/ssl/tls1_svr.c  $(PATH_AXTLS)/ssl/tls1_clnt.c  $(PATH_AXTLS)/ssl/x509.c
 CFLAGS += -I$(PATH_AXTLS)/crypto -I$(PATH_AXTLS)/ssl -I$(PATH_AXTLS)/config
+
+# c-ares
+CFLAGS += -I$(PATH_C_ARES)/ -DHAVE_CONFIG_H
+ifeq ($(ARM), 1)
+CSRCS  += $(PATH_C_ARES)/inet_addr.c 
+endif
+CSRCS  += $(PATH_C_ARES)/ares__close_sockets.c $(PATH_C_ARES)/ares__get_hostent.c $(PATH_C_ARES)/ares__read_line.c $(PATH_C_ARES)/ares__timeval.c $(PATH_C_ARES)/ares_cancel.c $(PATH_C_ARES)/ares_data.c $(PATH_C_ARES)/ares_destroy.c $(PATH_C_ARES)/ares_expand_name.c $(PATH_C_ARES)/ares_expand_string.c $(PATH_C_ARES)/ares_fds.c $(PATH_C_ARES)/ares_free_hostent.c $(PATH_C_ARES)/ares_free_string.c $(PATH_C_ARES)/ares_getenv.c $(PATH_C_ARES)/ares_gethostbyaddr.c $(PATH_C_ARES)/ares_gethostbyname.c $(PATH_C_ARES)/ares_getnameinfo.c $(PATH_C_ARES)/ares_getsock.c $(PATH_C_ARES)/ares_init.c $(PATH_C_ARES)/ares_library_init.c $(PATH_C_ARES)/ares_llist.c $(PATH_C_ARES)/ares_mkquery.c $(PATH_C_ARES)/ares_create_query.c $(PATH_C_ARES)/ares_nowarn.c $(PATH_C_ARES)/ares_options.c $(PATH_C_ARES)/ares_parse_a_reply.c $(PATH_C_ARES)/ares_parse_aaaa_reply.c $(PATH_C_ARES)/ares_parse_mx_reply.c $(PATH_C_ARES)/ares_parse_naptr_reply.c $(PATH_C_ARES)/ares_parse_ns_reply.c $(PATH_C_ARES)/ares_parse_ptr_reply.c $(PATH_C_ARES)/ares_parse_soa_reply.c $(PATH_C_ARES)/ares_parse_srv_reply.c $(PATH_C_ARES)/ares_parse_txt_reply.c $(PATH_C_ARES)/ares_platform.c $(PATH_C_ARES)/ares_process.c $(PATH_C_ARES)/ares_query.c $(PATH_C_ARES)/ares_search.c $(PATH_C_ARES)/ares_send.c $(PATH_C_ARES)/ares_strcasecmp.c $(PATH_C_ARES)/ares_strdup.c $(PATH_C_ARES)/ares_strerror.c $(PATH_C_ARES)/ares_timeout.c $(PATH_C_ARES)/ares_version.c $(PATH_C_ARES)/ares_writev.c $(PATH_C_ARES)/bitncmp.c $(PATH_C_ARES)/inet_net_pton.c $(PATH_C_ARES)/inet_ntop.c $(PATH_C_ARES)/windows_port.c
 
 # Sources
 CFLAGS += -Isrc
