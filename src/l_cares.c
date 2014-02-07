@@ -46,6 +46,7 @@ callback(void *arg, int status, int timeouts, struct hostent *host)
         ipaddr[1] = ap[1];
         ipaddr[2] = ap[2];
         ipaddr[3] = ap[3];
+        break;
     }
 }
  
