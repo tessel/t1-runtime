@@ -8,12 +8,46 @@
     "c_ares_path": "./deps/c-ares",
     "colony_lua_path": "./deps/colony-lua",
     "lua_bitop_path": "./deps/luabitop-1.0",
+    "fatfs_path": "./deps/fatfs",
   },
 
   'target_defaults': {
-    'default_configuration': 'Debug',
+    'default_configuration': 'ARM',
     'configurations': {
+      'ARM': {
+        'defines': [
+          'COLONY_EMBED',
+          'CONFIG_PLATFORM_EMBED',
+          'TM_FS_fat',
+        ],
+        'include_dirs': [
+          '<(fatfs_path)/src',
+          '<(axtls_path)/config/'
+        ],
+        'cflags': [
+          '-mcpu=cortex-m3',
+          '-mthumb',
+          '-gdwarf-2',
+          '-mtune=cortex-m3',
+          '-march=armv7-m',
+          '-mlong-calls',
+          '-mfix-cortex-m3-ldrd',
+          '-Ofast',
+          '-Wall',
+          '-mapcs-frame',
+          '-msoft-float',
+          '-mno-sched-prolog',
+          # '-fno-hosted',
+          '-ffunction-sections',
+          '-fdata-sections',
+          # '-fpermissive',
+          '-std=c99'
+        ]
+      },
       'Debug': {
+        'defines': [
+          'COLONY_PC'
+        ],
         'cflags': [ '-Wall', '-Wextra', '-O0', '-g', '-ftrapv' ],
         'msvs_settings': {
           'VCCLCompilerTool': {
@@ -111,18 +145,18 @@
         "<(libtar_path)/lib/handle.c",
         "<(libtar_path)/lib/output.c",
         "<(libtar_path)/lib/util.c",
-        "<(libtar_path)/lib/wrapper.c",
         "<(libtar_path)/listhash/libtar_hash.c",
         "<(libtar_path)/listhash/libtar_list.c"
       ],
       "include_dirs": [
-        "<(libtar_path)/lib",
         "<(libtar_path)",
+        "<(libtar_path)/lib",
         "<(libtar_path)/compat",
         "<(libtar_path)/listhash"
       ],
       'direct_dependent_settings': {
         'include_dirs': [
+          "<(libtar_path)/",
           "<(libtar_path)/lib",
           "<(libtar_path)/compat",
           "<(libtar_path)/listhash",
@@ -193,6 +227,7 @@
       'direct_dependent_settings': {
         'include_dirs': [
           "<(axtls_path)/crypto",
+          "<(axtls_path)/config",
           "<(axtls_path)/config/pc",
           "<(axtls_path)/ssl"
         ]
@@ -314,8 +349,225 @@
           'COLONY_LUA'
         ],
         'include_dirs': [
+          "<(colony_lua_path)/src",
         ]
       }
+    },
+
+    {
+      "target_name": "fatfs",
+      "product_name": "fatfs",
+      "type": "static_library",
+      "defines": [
+        'COLONY_FATFS',
+        'TM_FS_fat',
+      ],
+      "sources": [
+        '<(fatfs_path)/src/ff.c',
+        '<(fatfs_path)/src/ff_convert.c',
+      ],
+      "include_dirs": [
+        '<(fatfs_path)/src',
+        '<(axtls_path)/config/'
+      ],
+      "direct_dependent_settings": {
+        "defines": [
+          'COLONY_FATFS',
+          'TM_FS_fat',
+        ],
+        "include_dirs": [
+          '<(fatfs_path)/src',
+          '<(axtls_path)/config/'
+        ],
+      }
+    },
+
+    {
+      "target_name": "tm-ssl",
+      "type": "static_library",
+      "sources": [
+        'src/tm_ssl.c',
+      ],
+      "include_dirs": [
+        'src/',
+      ],
+      "dependencies": [
+        "axtls"
+      ]
+    },
+
+    {
+      "target_name": "tm-tar",
+      "type": "static_library",
+      "defines": [
+        'MAXPATHLEN=256',
+      ],
+      "sources": [
+        'src/tar_extract.c',
+      ],
+      "include_dirs": [
+        'src/',
+      ],
+      "dependencies": [
+        "libtar"
+      ]
+    },
+
+    {
+      "target_name": "tm",
+      "product_name": "tm",
+      "type": "static_library",
+      "defines": [
+      ],
+      "sources": [
+        'src/l_cares.c',
+        'src/l_hsregex.c',
+        'src/l_http_parser.c',
+        'src/l_tm.c',
+        'src/lua_yajl.c',
+        'src/runtime.c',
+      ],
+      "include_dirs": [
+        'src/',
+        "<(colony_lua_path)/src",
+      ],
+      "dependencies": [
+        "tm-ssl",
+        "tm-tar",
+        "http_parser",
+        "hsregex",
+        "yajl",
+        "c-ares",
+        "colony-lua",
+      ]
+    },
+
+    {
+      'target_name': 'dir_builtin',
+      'type': 'none',
+      'sources': [
+        '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c'
+      ],
+      'actions': [
+        {
+          'action_name': '<(_target_name)_compile',
+          'inputs': [
+            'builtin/assert.js',
+            'builtin/buffer.js',
+            'builtin/child_process.js',
+            'builtin/crypto.js',
+            'builtin/dgram.js',
+            'builtin/dns.js',
+            'builtin/events.js',
+            'builtin/fs.js',
+            'builtin/http.js',
+            'builtin/https.js',
+            'builtin/net.js',
+            'builtin/os.js',
+            'builtin/path.js',
+            'builtin/punycode.js',
+            'builtin/querystring.js',
+            'builtin/stream.js',
+            'builtin/string_decoder.js',
+            'builtin/tty.js',
+            'builtin/url.js',
+            'builtin/util.js',
+            'builtin/zlib.js',
+          ],
+          'outputs': [
+            '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c',
+          ],
+          'action': [ 'tools/compile_folder', '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c', '<(_target_name)', '.text', '<@(_inputs)' ],
+        },
+      ]
+    },
+
+    {
+      'target_name': 'dir_runtime_lib',
+      'type': 'none',
+      'sources': [
+        '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c'
+      ],
+      'actions': [
+        {
+          'action_name': '<(_target_name)_compile',
+          'inputs': [
+            'lib/cli.lua',
+            'lib/colony.lua',
+            'lib/node-tm.lua',
+            'lib/std.lua'
+          ],
+          'outputs': [
+            '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c',
+          ],
+          'action': [ 'tools/compile_folder', '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c', '<(_target_name)', '.text', '<@(_inputs)' ],
+        },
+      ]
+    },
+
+    {
+      "target_name": "runtime-arm-deps",
+      "type": "static_library",
+      "sources": [
+        'src/fs/fat/diskio.c',
+        'src/fs/fat/fs.c',
+        '<(c_ares_path)/inet_addr.c',
+        
+        '<(SHARED_INTERMEDIATE_DIR)/dir_builtin.c',
+        '<(SHARED_INTERMEDIATE_DIR)/dir_runtime_lib.c',
+      ],
+      "include_dirs": [
+        'src/',
+        "<(colony_lua_path)/src",
+      ],
+      'dependencies': [
+        'dir_builtin',
+        'dir_runtime_lib',
+        'tm',
+        "fatfs",
+      ]
+    },
+
+    {
+      'target_name': 'tm-arm',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'tm-arm-action',
+          'inputs': [ 'colony.gyp' ],
+          'outputs': [ '<(PRODUCT_DIR)/lib<(_target_name).a' ],
+          'action': [ 'tools/dist_static_lib.sh', 'lib<(_target_name).a', '<@(_dependencies)' ],
+        }
+      ],
+      'dependencies': [
+        # what i have to include
+        "libtar",
+        "fatfs",
+        "axtls",
+        "tm-ssl",
+        "tm-tar",
+        "http_parser",
+        "hsregex",
+        "yajl",
+        "c-ares",
+        "colony-lua",
+
+        # what i want to include
+        "tm",
+        "runtime-arm-deps",
+      ]
+    },
+
+    {
+      "target_name": "tm-posix-net",
+      "type": "static_library",
+      "sources": [
+        'src/net/posix/net.c',
+      ],
+      "include_dirs": [
+        'src/',
+        "<(colony_lua_path)/src",
+      ],
     },
 
     {
@@ -323,36 +575,23 @@
       "product_name": "colony",
       "type": "executable",
       "defines": [
-        'COLONY_PC'
       ],
       "sources": [
-        './src/cli.c',
-        './src/l_cares.c',
-        './src/l_hsregex.c',
-        './src/l_http_parser.c',
-        './src/l_ssl.c',
-        './src/l_tm.c',
-        './src/lua_yajl.c',
-        './src/runtime.c',
-        './src/tar_extract.c',
-        './src/tm_ssl.c',
-        './src/uptime/posix/uptime.c',
-        './src/net/posix/net.c',
-        './src/fs/posix/fs.c',
-        './build/pc/obj/dir_builtin.c',
-        './build/pc/obj/dir_runtime_lib.c'
+        'src/cli.c',
+        'src/uptime/posix/uptime.c',
+        
+        'src/fs/posix/fs.c',
+        
+        'build/pc/obj/dir_builtin.c',
+        'build/pc/obj/dir_runtime_lib.c',
       ],
       "include_dirs": [
-        './src/'
+        'src/',
+        "<(colony_lua_path)/src",
       ],
       "dependencies": [
-        "http_parser",
-        "hsregex",
-        "libtar",
-        "yajl",
-        "axtls",
-        "c-ares",
-        "colony-lua"
+        "tm-posix-net",
+        "tm"
       ]
     }
   ]

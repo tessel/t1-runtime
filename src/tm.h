@@ -11,20 +11,7 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>  
-#include <stdlib.h>
 #include <time.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdint.h>
-
-#ifdef COLONY_PC
-#include <sys/socket.h>
-#include <arpa/inet.h> //inet_addr
-#include <netdb.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/time.h>
-#endif
 
 // debug
 
@@ -53,10 +40,9 @@ int tm_tcp_listen (tm_socket_t sock, uint16_t port);
 tm_socket_t tm_tcp_accept (tm_socket_t sock, uint32_t *ip);
 
 #define SSL_SESSION_ID_SIZE                     32
-#include "tls1.h"
 
-typedef SSL_CTX* tm_ssl_ctx_t;
-typedef SSL* tm_ssl_session_t;
+typedef void* tm_ssl_ctx_t;
+typedef void* tm_ssl_session_t;
 
 int tm_ssl_context_create (tm_ssl_ctx_t* ctx);
 int tm_ssl_context_free (tm_ssl_ctx_t *ctx);
@@ -75,8 +61,8 @@ uint32_t tm_uptime_micro ();
 
 #ifdef TM_FS_fat
 
-#include "ff.h"
-#include "diskio.h"
+#include <ff.h>
+#include <diskio.h>
 
 enum {
   TM_RDONLY = FA_READ,
@@ -100,11 +86,8 @@ typedef struct {
 
 #else
 
-#include <poll.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <sys/stat.h> 
 #include <fcntl.h>
-#include <unistd.h>
 #include <dirent.h>
 
 // lowest common denominator: http://elm-chan.org/fsw/ff/en/open.html

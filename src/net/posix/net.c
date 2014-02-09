@@ -4,6 +4,13 @@
 
 #include "tm.h"
 
+#include <sys/socket.h>
+#include <arpa/inet.h> //inet_addr
+#include <netdb.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/time.h>
 
 /**
  * Net
