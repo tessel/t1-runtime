@@ -535,7 +535,7 @@
       'actions': [
         {
           'action_name': 'tm-arm-action',
-          'inputs': [ 'colony.gyp' ],
+          'inputs': [ 'runtime.gyp' ],
           'outputs': [ '<(PRODUCT_DIR)/lib<(_target_name).a' ],
           'action': [ 'tools/dist_static_lib.sh', 'lib<(_target_name).a', '<@(_dependencies)' ],
         }
