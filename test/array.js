@@ -92,6 +92,26 @@ ok(arreq([[0, 1], [2, 3], [4, 5]].reduce(function(a, b) {
     return a.concat(b);
 }), [0, 1, 2, 3, 4, 5]), 'array reduce with init');
 
+var i = 1;
+var arr = [].concat(i);
+ok(arreq(arr, [i]), 'array concats values');
+console.log('#', arr)
+
+var i = 1;
+var arr = [].concat([5], i);
+ok(arreq(arr, [5, i]), 'array concats values and arrays');
+console.log('#', arr)
+
+var i = 1;
+var arr = [].concat([5], [6, 7]);
+ok(arreq(arr, [5, 6, 7]), 'array concats arrays');
+console.log('#', arr)
+
+var i = 1;
+var arr = [5].concat([6, 7], [8]);
+ok(arreq(arr, [5, 6, 7, 8]), 'array concats arrays');
+console.log('#', arr)
+
 // Array::reverse
 var arr = [1, 2, 3];
 arr.reverse();

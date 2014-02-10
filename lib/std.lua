@@ -408,15 +408,22 @@ arr_proto.slice = function (ths, start, len)
   return a
 end
 
-arr_proto.concat = function (src1, src2)
-  local a = js_arr({})
-  for i=0,(src1.length or 0)-1 do
-    a:push(src1[i])
+arr_proto.concat = function (this, ...)
+  local arr = js_arr({})
+  for i=0,(this.length or 0)-1 do
+    arr:push(this[i])
   end
-  for i=0,(src2.length or 0)-1 do
-    a:push(src2[i])
+  local args1 = table.pack(...)
+  for i=1,args1.length do
+    if global.Array:isArray(args1[i]) then
+      for j=0,(args1[i].length or 0)-1 do
+        arr:push(args1[i][j])
+      end
+    else
+      arr:push(args1[i])
+    end
   end
-  return a
+  return arr
 end
 
 arr_proto.sort = function (ths)
