@@ -23,11 +23,11 @@ typedef struct {         // byte offset
 
 const unsigned tar_block = 512;
 
-int vfs_mount_tar(vfs_ent* /*&mut*/ root, char* /* & */ path, uint8_t* /* &'fs */ tar, unsigned size) {
-	vfs_ent* dir;
+int tm_fs_mount_tar(tm_fs_ent* /*&mut*/ root, char* /* & */ path, uint8_t* /* &'fs */ tar, unsigned size) {
+	tm_fs_ent* dir;
 	int r = 0;
 	
-	r = vfs_lookup(root, path, &dir);
+	r = tm_fs_lookup(root, path, &dir);
 	if (r) return r;
 
 	const uint8_t *ptr = tar;
@@ -49,7 +49,7 @@ int vfs_mount_tar(vfs_ent* /*&mut*/ root, char* /* & */ path, uint8_t* /* &'fs *
 		switch (header->typeflag) {
 			case '5': {
 				printf("dir:  %s \n", header->name);
-				r = vfs_mkdir(dir, header->name);
+				r = tm_fs_mkdir(dir, header->name);
 
 				if (r != 0) {
 					return r;
@@ -64,11 +64,11 @@ int vfs_mount_tar(vfs_ent* /*&mut*/ root, char* /* & */ path, uint8_t* /* &'fs *
 				printf("file: %s %u %u\n", header->name, size, mtime);
 				const uint8_t* data = ptr + tar_block;
 
-				vfs_ent* ent = vfs_raw_file_from_buf(data, size, mtime);
-				r = vfs_insert(dir, header->name, ent);
+				tm_fs_ent* ent = tm_fs_raw_file_from_buf(data, size, mtime);
+				r = tm_fs_insert(dir, header->name, ent);
 
 				if (r != 0) {
-					vfs_destroy(ent);
+					tm_fs_destroy(ent);
 					return r;
 				}
 

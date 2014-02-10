@@ -62,54 +62,63 @@ void test_filename() {
 }
 
 void test_lookup() {
-	vfs_ent* dir = vfs_dir_create();
+	tm_fs_ent* dir = tm_fs_dir_create();
 
-	vfs_ent* file_foo = vfs_raw_file_create();
+	tm_fs_ent* file_foo = tm_fs_raw_file_create();
 
 	const char* data = "hello";
-	vfs_ent* file_bar = vfs_raw_file_from_buf((uint8_t*)data, strlen(data), 0);
+	tm_fs_ent* file_bar = tm_fs_raw_file_from_buf((uint8_t*)data, strlen(data), 0);
 
-	vfs_ent* subdir = vfs_dir_create();
+	tm_fs_ent* subdir = tm_fs_dir_create();
 
-	assert(vfs_dir_append(dir, "foo", file_foo) == 0);
-	assert(vfs_dir_append(dir, "subdir", subdir) == 0);
-	assert(vfs_dir_append(subdir, "bar", file_bar) == 0);
+	assert(tm_fs_dir_append(dir, "foo", file_foo) == 0);
+	assert(tm_fs_dir_append(dir, "subdir", subdir) == 0);
+	assert(tm_fs_dir_append(subdir, "bar", file_bar) == 0);
 
-	vfs_ent* t = 0;
+	tm_fs_ent* t = 0;
 
-	assert(vfs_lookup(dir, "/subdir/bar", &t) == 0);
-	assert(t == file_bar);
-
-	assert(vfs_lookup(dir, ".", &t) == 0);
+	assert(tm_fs_lookup(dir, ".", &t) == 0);
 	assert(t == dir);
 
-	assert(vfs_lookup(dir, "..", &t) == -ENOENT);
-	assert(t == NULL);
-
-	assert(vfs_lookup(dir, "asdf", &t) == -ENOENT);
-	assert(t == dir);
-
-	assert(vfs_lookup(dir, "/subdir/asdf", &t) == -ENOENT);
-	assert(t == subdir);
-
-	assert(vfs_lookup(dir, "/subdir/asdf/", &t) == -ENOENT);
-	assert(t == subdir);
-
-	assert(vfs_lookup(dir, "/subir/noexist/asdf", &t) == -ENOENT);
-	assert(t == NULL);
-
-	assert(vfs_lookup(dir, "/subdir/..", &t) == 0);
-	assert(t == dir);
-
-	assert(vfs_lookup(dir, "/subdir/../foo", &t) == 0);
+	assert(tm_fs_lookup(dir, "foo", &t) == 0);
 	assert(t == file_foo);
 
-	vfs_destroy(dir);
+	assert(tm_fs_lookup(dir, "./foo", &t) == 0);
+	assert(t == file_foo);
+
+	assert(tm_fs_lookup(dir, "/subdir/bar", &t) == 0);
+	assert(t == file_bar);
+
+	assert(tm_fs_lookup(dir, ".", &t) == 0);
+	assert(t == dir);
+
+	assert(tm_fs_lookup(dir, "..", &t) == -ENOENT);
+	assert(t == NULL);
+
+	assert(tm_fs_lookup(dir, "asdf", &t) == -ENOENT);
+	assert(t == dir);
+
+	assert(tm_fs_lookup(dir, "/subdir/asdf", &t) == -ENOENT);
+	assert(t == subdir);
+
+	assert(tm_fs_lookup(dir, "/subdir/asdf/", &t) == -ENOENT);
+	assert(t == subdir);
+
+	assert(tm_fs_lookup(dir, "/subir/noexist/asdf", &t) == -ENOENT);
+	assert(t == NULL);
+
+	assert(tm_fs_lookup(dir, "/subdir/..", &t) == 0);
+	assert(t == dir);
+
+	assert(tm_fs_lookup(dir, "/subdir/../foo", &t) == 0);
+	assert(t == file_foo);
+
+	tm_fs_destroy(dir);
 }
 
-vfs_enttype vfs_get_type(vfs_ent* root, const char* path) {
-	vfs_ent* t;
-	if (vfs_lookup(root, path, &t) == 0){
+tm_fs_enttype tm_fs_get_type(tm_fs_ent* root, const char* path) {
+	tm_fs_ent* t;
+	if (tm_fs_lookup(root, path, &t) == 0){
 		return t->type;
 	} else {
 		return VFS_TYPE_INVALID;
@@ -117,74 +126,76 @@ vfs_enttype vfs_get_type(vfs_ent* root, const char* path) {
 }
 
 void test_insert() {
-	vfs_ent* dir = vfs_dir_create();
+	tm_fs_ent* dir = tm_fs_dir_create();
 
-	assert(vfs_mkdir(dir, "/foo") == 0);
-	assert(vfs_get_type(dir, "foo") == VFS_TYPE_DIR);
+	assert(tm_fs_mkdir(dir, "/foo") == 0);
+	assert(tm_fs_get_type(dir, "foo") == VFS_TYPE_DIR);
 
-	assert(vfs_mkdir(dir, "/foo") == 0);
+	assert(tm_fs_mkdir(dir, "/foo") == 0);
 
-	assert(vfs_mkdir(dir, "/bar/") == 0);
-	assert(vfs_get_type(dir, "/bar/") == VFS_TYPE_DIR);
+	assert(tm_fs_mkdir(dir, "/bar/") == 0);
+	assert(tm_fs_get_type(dir, "/bar/") == VFS_TYPE_DIR);
 
-	assert(vfs_get_type(dir, "foo") == VFS_TYPE_DIR);
+	assert(tm_fs_get_type(dir, "foo") == VFS_TYPE_DIR);
 
-	assert(vfs_mkdir(dir, "/a/b") == -ENOENT);
+	assert(tm_fs_mkdir(dir, "/a/b") == -ENOENT);
 
-	assert(vfs_insert(dir, "/bar/test.txt", vfs_raw_file_create()) == 0);
-	assert(vfs_get_type(dir, "/bar/test.txt") == VFS_TYPE_RAW_FILE);
+	assert(tm_fs_insert(dir, "/bar/test.txt", tm_fs_raw_file_create()) == 0);
+	assert(tm_fs_get_type(dir, "/bar/test.txt") == VFS_TYPE_RAW_FILE);
 
-	vfs_ent* f = vfs_raw_file_create();
-	assert(vfs_insert(dir, "/bar/test.txt", f) == -EEXIST);
-	assert(vfs_insert(dir, "/a/test.txt", f) == -ENOENT);
+	tm_fs_ent* f = tm_fs_raw_file_create();
+	assert(tm_fs_insert(dir, "/bar/test.txt", f) == -EEXIST);
+	assert(tm_fs_insert(dir, "/a/test.txt", f) == -ENOENT);
 	free(f);
 
-	vfs_destroy(dir);
+	tm_fs_destroy(dir);
 }
 
 void test_rw() {
-	vfs_ent* dir = vfs_dir_create();
-	vfs_file_handle fd;
+	tm_fs_ent* dir = tm_fs_dir_create();
+	tm_fs_file_handle fd;
 	uint8_t buf[64];
 	size_t nread;
 
-	assert(vfs_open(&fd, dir, "/noexist.txt", 0) == -ENOENT);
+	assert(tm_fs_open(&fd, dir, "/noexist.txt", 0) == -ENOENT);
 
-	assert(vfs_open(&fd, dir, "/test.txt", VFS_O_CREAT) == 0);
-	assert(vfs_write(&fd, (const uint8_t*)"test foo bar\n", 13));
-	assert(vfs_write(&fd, (const uint8_t*)"line 2\n", 7));
-	assert(vfs_length(&fd) == 13+7);
-	assert(memcmp((const char*)vfs_contents(&fd), "test foo bar\nline 2\n", vfs_length(&fd)) == 0);
-	assert(vfs_close(&fd) == 0);
+	assert(tm_fs_open(&fd, dir, "/test.txt", TM_CREAT) == 0);
+	assert(tm_fs_write(&fd, (const uint8_t*)"test foo bar\n", 13));
+	assert(tm_fs_write(&fd, (const uint8_t*)"line 2\n", 7));
+	assert(tm_fs_length(&fd) == 13+7);
+	assert(memcmp((const char*)tm_fs_contents(&fd), "test foo bar\nline 2\n", tm_fs_length(&fd)) == 0);
+	assert(tm_fs_close(&fd) == 0);
 
-	assert(vfs_open(&fd, dir, "/test.txt", 0) == 0);
-	assert(vfs_write(&fd, (const uint8_t*)"overwritten.\n", 13));
-	assert(vfs_read(&fd, buf, 4, &nread) == 0);
+	assert(tm_fs_open(&fd, dir, "/test.txt", (TM_CREAT | TM_EXCL)) == -EEXIST);
+
+	assert(tm_fs_open(&fd, dir, "/test.txt", 0) == 0);
+	assert(tm_fs_write(&fd, (const uint8_t*)"overwritten.\n", 13));
+	assert(tm_fs_read(&fd, buf, 4, &nread) == 0);
 	assert(nread == 4);
 	assert(memcmp((const char*)buf, "line", nread) == 0);
-	assert(vfs_read(&fd, buf, 64, &nread) == 0);
+	assert(tm_fs_read(&fd, buf, 64, &nread) == 0);
 	assert(nread == 3);
 	assert(memcmp((const char*)buf, " 2\n", nread) == 0);
-	assert(vfs_length(&fd) == 13+7);
-	assert(memcmp((const char*)vfs_contents(&fd), "overwritten.\nline 2\n", vfs_length(&fd)) == 0);
-	assert(vfs_close(&fd) == 0);
+	assert(tm_fs_length(&fd) == 13+7);
+	assert(memcmp((const char*)tm_fs_contents(&fd), "overwritten.\nline 2\n", tm_fs_length(&fd)) == 0);
+	assert(tm_fs_close(&fd) == 0);
 
-	assert(vfs_read(&fd, buf, 64, &nread) == -EINVAL);
+	assert(tm_fs_read(&fd, buf, 64, &nread) == -EINVAL);
 
-	assert(vfs_open(&fd, dir, "/test.txt", VFS_O_TRUNC) == 0);
-	assert(vfs_length(&fd) == 0);
-	assert(vfs_close(&fd) == 0);
+	assert(tm_fs_open(&fd, dir, "/test.txt", TM_TRUNC) == 0);
+	assert(tm_fs_length(&fd) == 0);
+	assert(tm_fs_close(&fd) == 0);
 
-	vfs_dir_handle dfd;
+	tm_fs_dir_handle dfd;
 	const char* name;
-	assert(vfs_dir_open(&dfd, dir, ".") == 0);
-	assert(vfs_dir_read(&dfd, &name) == 0);
+	assert(tm_fs_dir_open(&dfd, dir, ".") == 0);
+	assert(tm_fs_dir_read(&dfd, &name) == 0);
 	assert(strcmp(name, "test.txt") == 0);
-	assert(vfs_dir_read(&dfd, &name) == 0);
+	assert(tm_fs_dir_read(&dfd, &name) == 0);
 	assert(name == 0);
-	assert(vfs_dir_close(&dfd) == 0);
+	assert(tm_fs_dir_close(&dfd) == 0);
 
-	vfs_destroy(dir);
+	tm_fs_destroy(dir);
 }
 
 void test_tar() {
@@ -200,22 +211,22 @@ void test_tar() {
 
 	fclose(fp);
 
-	vfs_ent* dir = vfs_dir_create();
-	assert(vfs_mount_tar(dir, ".", buffer, size) == 0);
+	tm_fs_ent* dir = tm_fs_dir_create();
+	assert(tm_fs_mount_tar(dir, ".", buffer, size) == 0);
 
-	vfs_ent* ent;
-	assert(vfs_lookup(dir, "a.txt", &ent) == 0);
+	tm_fs_ent* ent;
+	assert(tm_fs_lookup(dir, "a.txt", &ent) == 0);
 	assert(ent->type == VFS_TYPE_RAW_FILE);
 	assert(ent->file.length == 5);
 	assert(memcmp(ent->file.data, "abcd\n", 5) == 0);
 
-	assert(vfs_lookup(dir, "d", &ent) == 0);
+	assert(tm_fs_lookup(dir, "d", &ent) == 0);
 	assert(ent->type == VFS_TYPE_DIR);
 
-	assert(vfs_lookup(dir, "d/index.js", &ent) == 0);
+	assert(tm_fs_lookup(dir, "d/index.js", &ent) == 0);
 	assert(ent->type == VFS_TYPE_RAW_FILE);
 
-	vfs_destroy(dir);
+	tm_fs_destroy(dir);
 	free(buffer);
 }
 

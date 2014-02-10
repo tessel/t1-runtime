@@ -33,8 +33,8 @@ char* filename(const char* start) {
 	return str_range_copy(start, end);
 }
 
-vfs_ent* /* ~ */ vfs_dir_create() {
-	vfs_ent* ent = malloc(sizeof(vfs_ent));
+tm_fs_ent* /* ~ */ tm_fs_dir_create() {
+	tm_fs_ent* ent = malloc(sizeof(tm_fs_ent));
 	ent->type = VFS_TYPE_DIR;
 	ent->parent = 0;
 	ent->dir.num_entries = 0;
@@ -42,7 +42,7 @@ vfs_ent* /* ~ */ vfs_dir_create() {
 	return ent;
 }
 
-int vfs_dir_append(vfs_ent* dir, const char* name, vfs_ent* ent) {
+int tm_fs_dir_append(tm_fs_ent* dir, const char* name, tm_fs_ent* ent) {
 	if (dir->type != VFS_TYPE_DIR) {
 		return -ENOTDIR;
 	}
@@ -53,8 +53,8 @@ int vfs_dir_append(vfs_ent* dir, const char* name, vfs_ent* ent) {
 	}
 
 	dir->dir.num_entries += 1;
-	dir->dir.entries = realloc(dir->dir.entries, dir->dir.num_entries*sizeof(vfs_direntry));
-	vfs_direntry* entry = &dir->dir.entries[dir->dir.num_entries - 1];
+	dir->dir.entries = realloc(dir->dir.entries, dir->dir.num_entries*sizeof(tm_fs_direntry));
+	tm_fs_direntry* entry = &dir->dir.entries[dir->dir.num_entries - 1];
 	entry->name = fname;
 	entry->ent = ent;
 	ent->parent = dir;
@@ -62,7 +62,7 @@ int vfs_dir_append(vfs_ent* dir, const char* name, vfs_ent* ent) {
 	return 0;
 }
 
-void vfs_destroy(vfs_ent* /* ~ */ ent) {
+void tm_fs_destroy(tm_fs_ent* /* ~ */ ent) {
 	switch (ent->type) {
 		case VFS_TYPE_RAW_FILE:
 			if (ent->file.data_owned) {
@@ -71,9 +71,9 @@ void vfs_destroy(vfs_ent* /* ~ */ ent) {
 			break;
 		case VFS_TYPE_DIR:
 			for (unsigned i=0; i<ent->dir.num_entries; i++) {
-				vfs_direntry* entry = &ent->dir.entries[i];
+				tm_fs_direntry* entry = &ent->dir.entries[i];
 				free((void*) entry->name);
-				vfs_destroy(entry->ent);
+				tm_fs_destroy(entry->ent);
 			}
 			free(ent->dir.entries);
 			break;
@@ -86,8 +86,8 @@ void vfs_destroy(vfs_ent* /* ~ */ ent) {
 	free(ent);
 }
 
-vfs_ent* vfs_raw_file_create() {
-	vfs_ent* ent = malloc(sizeof(vfs_ent));
+tm_fs_ent* tm_fs_raw_file_create() {
+	tm_fs_ent* ent = malloc(sizeof(tm_fs_ent));
 	ent->type = VFS_TYPE_RAW_FILE;
 	ent->parent = NULL;
 	ent->file.length = 0;
@@ -97,8 +97,8 @@ vfs_ent* vfs_raw_file_create() {
 	return ent;
 }
 
-vfs_ent* vfs_raw_file_from_buf(const uint8_t* buf, unsigned length, unsigned mtime) {
-	vfs_ent* ent = malloc(sizeof(vfs_ent));
+tm_fs_ent* tm_fs_raw_file_from_buf(const uint8_t* buf, unsigned length, unsigned mtime) {
+	tm_fs_ent* ent = malloc(sizeof(tm_fs_ent));
 	ent->type = VFS_TYPE_RAW_FILE;
 	ent->parent = NULL;
 	ent->file.length = length;
@@ -108,7 +108,7 @@ vfs_ent* vfs_raw_file_from_buf(const uint8_t* buf, unsigned length, unsigned mti
 	return ent;
 }
 
-void vfs_raw_file_destroy(vfs_raw_file* file) {
+void tm_fs_raw_file_destroy(tm_fs_raw_file* file) {
 	if (file->data_owned) {
 		free(file->data);
 	}
@@ -116,10 +116,10 @@ void vfs_raw_file_destroy(vfs_raw_file* file) {
 }
 
 
-void vfs_raw_file_read(vfs_raw_file* file, unsigned offset, unsigned length);
-void vfs_raw_file_write();
+void tm_fs_raw_file_read(tm_fs_raw_file* file, unsigned offset, unsigned length);
+void tm_fs_raw_file_write();
 
-int vfs_lookup(vfs_ent* /*&mut 'fs*/ dir, const char* /* & */ path, vfs_ent** out) {
+int tm_fs_lookup(tm_fs_ent* /*&mut 'fs*/ dir, const char* /* & */ path, tm_fs_ent** out) {
 	if (path == 0) {
 		if (out) *out = dir;
 		return 0;
@@ -136,18 +136,18 @@ int vfs_lookup(vfs_ent* /*&mut 'fs*/ dir, const char* /* & */ path, vfs_ent** ou
 	char* next = strchr(path, '/');
 
 	if (path[0] == 0 || str_match_range(path, next, ".")) {
-		return vfs_lookup(dir, next, out);
+		return tm_fs_lookup(dir, next, out);
 	} else if (str_match_range(path, next, "..")) {
 		if (dir->parent) {
-			return vfs_lookup(dir->parent, next, out);
+			return tm_fs_lookup(dir->parent, next, out);
 		} else {
 			return -ENOENT;
 		}
 	} else {
 		for (unsigned i=0; i<dir->dir.num_entries; i++) {
-			vfs_direntry* entry = &dir->dir.entries[i];
+			tm_fs_direntry* entry = &dir->dir.entries[i];
 			if (str_match_range(path, next, entry->name)) {
-				return vfs_lookup(entry->ent, next, out);
+				return tm_fs_lookup(entry->ent, next, out);
 			}
 		}
 
@@ -163,14 +163,14 @@ int vfs_lookup(vfs_ent* /*&mut 'fs*/ dir, const char* /* & */ path, vfs_ent** ou
 	}
 }
 
-int vfs_mkdir(vfs_ent* root, const char* path) {
-	vfs_ent* ent = 0;
-	int r = vfs_lookup(root, path, &ent);
+int tm_fs_mkdir(tm_fs_ent* root, const char* path) {
+	tm_fs_ent* ent = 0;
+	int r = tm_fs_lookup(root, path, &ent);
 
 	if (r == -ENOENT && ent != 0) {
 		// Directory doesn't exist, but its parent does
-		vfs_ent* dir = vfs_dir_create();
-		return vfs_dir_append(ent, path, dir);
+		tm_fs_ent* dir = tm_fs_dir_create();
+		return tm_fs_dir_append(ent, path, dir);
 	} else if (r == 0) {
 		if (ent->type == VFS_TYPE_DIR) {  // like mkdir -p, but only for one level
 			return 0;
@@ -181,12 +181,12 @@ int vfs_mkdir(vfs_ent* root, const char* path) {
 	return r;
 }
 
-int vfs_insert(vfs_ent* root, const char* path, vfs_ent* ent) {
-	vfs_ent* parent = 0;
-	int r = vfs_lookup(root, path, &parent);
+int tm_fs_insert(tm_fs_ent* root, const char* path, tm_fs_ent* ent) {
+	tm_fs_ent* parent = 0;
+	int r = tm_fs_lookup(root, path, &parent);
 
 	if (r == -ENOENT && parent != 0) {
-		return vfs_dir_append(parent, path, ent);
+		return tm_fs_dir_append(parent, path, ent);
 	} else if (r == 0) {
 		return -EEXIST;
 	}
@@ -194,24 +194,26 @@ int vfs_insert(vfs_ent* root, const char* path, vfs_ent* ent) {
 	return r;
 }
 
-int vfs_open(vfs_file_handle* /* -> ~<'s> */ out, vfs_ent* /* &'s */ root, char* /* & */ pathname, unsigned flags) {
-	vfs_ent* ent = 0;
-	int r = vfs_lookup(root, pathname, &ent);
-	if ((flags & VFS_O_CREAT) && r == -ENOENT && ent != 0) {
-		vfs_ent* parent = ent;
-		ent = vfs_raw_file_create();
-		r = vfs_dir_append(parent, pathname, ent);
+int tm_fs_open(tm_fs_file_handle* /* -> ~<'s> */ out, tm_fs_ent* /* &'s */ root, const char* /* & */ pathname, unsigned flags) {
+	tm_fs_ent* ent = 0;
+	int r = tm_fs_lookup(root, pathname, &ent);
+	if ((flags & TM_CREAT) && r == -ENOENT && ent != 0) {
+		tm_fs_ent* parent = ent;
+		ent = tm_fs_raw_file_create();
+		r = tm_fs_dir_append(parent, pathname, ent);
 		if (r) {
-			vfs_destroy(ent);
+			tm_fs_destroy(ent);
 			return r;
 		}
 	} else if (r != 0) {
 		return r;
+	} else if (flags & TM_EXCL) {
+		return -EEXIST;
 	}
 
 	switch (ent->type) {
 		case VFS_TYPE_RAW_FILE:
-			if (flags & VFS_O_TRUNC) {
+			if (flags & TM_TRUNC) {
 				free(ent->file.data);
 				ent->file.length = 0;
 				ent->file.data = 0;
@@ -226,12 +228,12 @@ int vfs_open(vfs_file_handle* /* -> ~<'s> */ out, vfs_ent* /* &'s */ root, char*
 	}
 }
 
-int vfs_close(vfs_file_handle* /* move */ handle) {
+int tm_fs_close(tm_fs_file_handle* /* move */ handle) {
 	handle->ent = 0;
 	return 0;
 }
 
-int vfs_read (vfs_file_handle* fd, uint8_t *buf, size_t size, size_t* nread) {
+int tm_fs_read (tm_fs_file_handle* fd, uint8_t *buf, size_t size, size_t* nread) {
 	if (!fd->ent) return -EINVAL;
 	switch (fd->ent->type) {
 		case VFS_TYPE_RAW_FILE:
@@ -247,7 +249,7 @@ int vfs_read (vfs_file_handle* fd, uint8_t *buf, size_t size, size_t* nread) {
 	}
 }
 
-int vfs_write (vfs_file_handle* fd, const uint8_t *buf, size_t size) {
+int tm_fs_write (tm_fs_file_handle* fd, const uint8_t *buf, size_t size) {
 	if (!fd->ent) return -EINVAL;
 	switch (fd->ent->type) {
 		case VFS_TYPE_RAW_FILE:
@@ -265,7 +267,7 @@ int vfs_write (vfs_file_handle* fd, const uint8_t *buf, size_t size) {
 	}
 }
 
-unsigned vfs_length(vfs_file_handle* fd) {
+unsigned tm_fs_length(tm_fs_file_handle* fd) {
 	if (!fd->ent) return 0;
 	switch (fd->ent->type) {
 		case VFS_TYPE_RAW_FILE:
@@ -275,7 +277,7 @@ unsigned vfs_length(vfs_file_handle* fd) {
 	}
 }
 
-const uint8_t* vfs_contents(vfs_file_handle* fd) {
+const uint8_t* tm_fs_contents(tm_fs_file_handle* fd) {
 	if (!fd->ent) return 0;
 	switch (fd->ent->type) {
 		case VFS_TYPE_RAW_FILE:
@@ -285,9 +287,9 @@ const uint8_t* vfs_contents(vfs_file_handle* fd) {
 	}
 }
 
-int vfs_dir_open(vfs_dir_handle* out, vfs_ent* root, char* pathname) {
-	vfs_ent* ent = 0;
-	int r = vfs_lookup(root, pathname, &ent);
+int tm_fs_dir_open(tm_fs_dir_handle* out, tm_fs_ent* root, const char* pathname) {
+	tm_fs_ent* ent = 0;
+	int r = tm_fs_lookup(root, pathname, &ent);
 	if (r != 0) {
 		return r;
 	}
@@ -302,12 +304,12 @@ int vfs_dir_open(vfs_dir_handle* out, vfs_ent* root, char* pathname) {
 	}
 }
 
-int vfs_dir_close(vfs_dir_handle* handle) {
+int tm_fs_dir_close(tm_fs_dir_handle* handle) {
 	handle->ent = 0;
 	return 0;
 }
 
-int vfs_dir_read(vfs_dir_handle* fd, const char** out) {
+int tm_fs_dir_read(tm_fs_dir_handle* fd, const char** out) {
 	*out = NULL;
 	if (!fd->ent) return -EINVAL;
 	switch (fd->ent->type) {
