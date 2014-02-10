@@ -13,48 +13,52 @@
   },
 
   'target_defaults': {
-    'default_configuration': 'ARM',
+    'default_configuration': 'Debug',
     'configurations': {
-      'ARM': {
-        'defines': [
-          'COLONY_EMBED',
-          'CONFIG_PLATFORM_EMBED',
-          'TM_FS_fat',
-        ],
-        'include_dirs': [
-          '<(fatfs_path)/src',
-          '<(axtls_path)/config/'
-        ],
-        'cflags': [
-          '-mcpu=cortex-m3',
-          '-mthumb',
-          '-gdwarf-2',
-          '-mtune=cortex-m3',
-          '-march=armv7-m',
-          '-mlong-calls',
-          '-mfix-cortex-m3-ldrd',
-          '-Ofast',
-          '-Wall',
-          '-mapcs-frame',
-          '-msoft-float',
-          '-mno-sched-prolog',
-          # '-fno-hosted',
-          '-ffunction-sections',
-          '-fdata-sections',
-          # '-fpermissive',
-          '-std=c99'
-        ]
-      },
       'Debug': {
-        'defines': [
-          'COLONY_PC'
+        'conditions': [
+          [ 'OS=="arm"', {
+            'defines': [
+              'COLONY_EMBED',
+              'CONFIG_PLATFORM_EMBED',
+              'TM_FS_fat',
+            ],
+            'include_dirs': [
+              '<(fatfs_path)/src',
+              '<(axtls_path)/config/'
+            ],
+            'cflags': [
+              '-mcpu=cortex-m3',
+              '-mthumb',
+              '-gdwarf-2',
+              '-mtune=cortex-m3',
+              '-march=armv7-m',
+              '-mlong-calls',
+              '-mfix-cortex-m3-ldrd',
+              '-Ofast',
+              '-Wall',
+              '-mapcs-frame',
+              '-msoft-float',
+              '-mno-sched-prolog',
+              # '-fno-hosted',
+              '-ffunction-sections',
+              '-fdata-sections',
+              # '-fpermissive',
+              '-std=c99'
+            ]
+          }],
+          [ 'OS!="arm"', {
+            'defines': [
+              'COLONY_PC'
+            ],
+            'cflags': [ '-Wall', '-Wextra', '-O0', '-g', '-ftrapv' ],
+            'msvs_settings': {
+              'VCCLCompilerTool': {
+                'RuntimeLibrary': 1, # static debug
+              },
+            }
+          }]
         ],
-        'cflags': [ '-Wall', '-Wextra', '-O0', '-g', '-ftrapv' ],
-        'msvs_settings': {
-          'VCCLCompilerTool': {
-            'RuntimeLibrary': 1, # static debug
-          },
-        },
       },
       'Release': {
         'cflags': [ '-Wall', '-Wextra', '-O3' ],
