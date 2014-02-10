@@ -44,9 +44,9 @@
       }],
       [ 'OS!="arm"', {
         'defines': [
-          'COLONY_PC'
+          'COLONY_PC', '_GNU_SOURCE'
         ],
-        'cflags': [ '-Wall', '-Wextra' ],
+        'cflags': [ '-Wall', '-Wextra', '-std=c99'],
       }]
     ],
 
@@ -321,7 +321,16 @@
       'direct_dependent_settings': {
         'include_dirs': [
           "<(c_ares_path)/",
-        ]
+        ],
+        'link_settings': {
+          'conditions': [
+            ['OS=="linux"', {
+              'libraries': [
+                '-lresolv'
+              ]
+            }]
+          ]
+        }
       }
     },
 
@@ -374,7 +383,12 @@
         ],
         'include_dirs': [
           "<(colony_lua_path)/src",
-        ]
+        ],
+        'link_settings': {
+          'libraries': [
+            '-lm'
+          ]
+        }
       }
     },
 

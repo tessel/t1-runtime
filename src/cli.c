@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #include "tm.h"
 #include "colony.h"
