@@ -10,10 +10,12 @@ CONFIG ?= Release
 all:
 
 arm:
-	AR=arm-none-eabi-ar AR_host=arm-none-eabi-ar AR_target=arm-none-eabi-ar CC=arm-none-eabi-gcc gyp runtime.gyp --depth=. -f ninja-arm -R $(TARGET) -D builtin_section=.text --build $(CONFIG)
+	AR=arm-none-eabi-ar AR_host=arm-none-eabi-ar AR_target=arm-none-eabi-ar CC=arm-none-eabi-gcc gyp runtime.gyp --depth=. -f ninja-arm -R $(TARGET) -D builtin_section=.text
+	ninja -C out/$(CONFIG)
 
 pc:
-	gyp runtime.gyp --depth=. -f ninja -R $(TARGET) --build $(CONFIG)
+	gyp runtime.gyp --depth=. -f ninja -R $(TARGET)
+	ninja -C out/$(CONFIG)
 
 clean:
 	ninja -v -C out/Debug -t clean

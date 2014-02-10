@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "./node_modules/.bin/tap -e './out/Release/colony' test/*.js",
-    "tessel-test": "./node_modules/.bin/tap -e 'tessel-node -q' test/*.js"
+    "tessel-test": "./node_modules/.bin/tap -e 'tessel-node -q' test/*.js",
+    "install": "true"
   },
   "dependencies": {
     "async": "~0.2.9",
