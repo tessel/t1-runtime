@@ -406,6 +406,11 @@
       }
     },
 
+
+    ###
+    # TM WRAPPER LIBRARIES
+    ###
+
     {
       "target_name": "tm-ssl",
       "type": "static_library",
@@ -465,6 +470,11 @@
         "colony-lua",
       ]
     },
+
+
+    ###
+    # colony libs
+    ###
 
     {
       'target_name': 'dir_builtin',
@@ -529,14 +539,36 @@
       ]
     },
 
+
+    ###
+    # runtime
+    ###
+
     {
-      "target_name": "runtime-arm-deps",
+      "target_name": "tessel-runtime",
       "type": "static_library",
+      'conditions': [
+        ['OS=="arm"', {
+          "sources": [
+            'src/fs/fat/diskio.c',
+            'src/fs/fat/fs.c',
+            '<(c_ares_path)/inet_addr.c',
+          ],
+          "dependencies": [
+            "fatfs",
+          ]
+        }],
+        ['OS!="arm"', {
+          "sources": [
+            'src/net/posix/net.c',
+
+            'src/uptime/posix/uptime.c',
+            
+            'src/fs/posix/fs.c',
+          ]
+        }]
+      ],
       "sources": [
-        'src/fs/fat/diskio.c',
-        'src/fs/fat/fs.c',
-        '<(c_ares_path)/inet_addr.c',
-        
         '<(SHARED_INTERMEDIATE_DIR)/dir_builtin.c',
         '<(SHARED_INTERMEDIATE_DIR)/dir_runtime_lib.c',
       ],
@@ -548,76 +580,22 @@
         'dir_builtin',
         'dir_runtime_lib',
         'tm',
-        "fatfs",
       ]
-    },
-
-    {
-      'target_name': 'tm-arm',
-      'type': 'none',
-      'actions': [
-        {
-          'action_name': 'tm-arm-action',
-          'inputs': [ 'runtime.gyp' ],
-          'outputs': [ '<(PRODUCT_DIR)/lib<(_target_name).a' ],
-          'action': [ 'tools/dist_static_lib.sh', 'lib<(_target_name).a', '<@(_dependencies)' ],
-        }
-      ],
-      'dependencies': [
-        # what i have to include
-        "libtar",
-        "fatfs",
-        "axtls",
-        "tm-ssl",
-        "tm-tar",
-        "http_parser",
-        "hsregex",
-        "yajl",
-        "c-ares",
-        "colony-lua",
-
-        # what i want to include
-        "tm",
-        "runtime-arm-deps",
-      ]
-    },
-
-    {
-      "target_name": "tm-posix-net",
-      "type": "static_library",
-      "sources": [
-        'src/net/posix/net.c',
-      ],
-      "include_dirs": [
-        'src/',
-        "<(colony_lua_path)/src",
-      ],
     },
 
     {
       "target_name": "colony",
       "product_name": "colony",
       "type": "executable",
-      "defines": [
-      ],
       "sources": [
         'src/cli.c',
-        'src/uptime/posix/uptime.c',
-        
-        'src/fs/posix/fs.c',
-        
-        '<(SHARED_INTERMEDIATE_DIR)/dir_builtin.c',
-        '<(SHARED_INTERMEDIATE_DIR)/dir_runtime_lib.c',
       ],
       "include_dirs": [
         'src/',
         "<(colony_lua_path)/src",
       ],
       "dependencies": [
-        'dir_builtin',
-        'dir_runtime_lib',
-        "tm-posix-net",
-        "tm"
+        'tessel-runtime'
       ]
     }
   ]

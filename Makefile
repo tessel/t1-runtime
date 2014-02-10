@@ -1,6 +1,6 @@
 # Let's shortcut all the things
 
-arm : TARGET ?= tm-arm
+arm : TARGET ?= tessel-runtime
 pc : TARGET ?= colony
 
 CONFIG ?= Release
