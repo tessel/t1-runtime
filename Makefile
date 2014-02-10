@@ -3,7 +3,7 @@
 arm : TARGET ?= tm-arm
 pc : TARGET ?= colony
 
-CONFIG ?= Debug
+CONFIG ?= Release
 
 .PHONY: all
 
@@ -17,6 +17,7 @@ pc:
 
 clean:
 	ninja -v -C out/Debug -t clean
+	ninja -v -C out/Release -t clean
 
 nuke: 
 	rm -rf out

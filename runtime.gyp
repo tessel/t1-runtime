@@ -13,45 +13,59 @@
   },
 
   'target_defaults': {
-    'default_configuration': 'Debug',
+    'conditions': [
+      [ 'OS=="arm"', {
+        'defines': [
+          'COLONY_EMBED',
+          'CONFIG_PLATFORM_EMBED',
+          'TM_FS_fat',
+        ],
+        'include_dirs': [
+          '<(fatfs_path)/src',
+          '<(axtls_path)/config/'
+        ],
+        'cflags': [
+          '-mcpu=cortex-m3',
+          '-mthumb',
+          '-mtune=cortex-m3',
+          '-march=armv7-m',
+          '-mlong-calls',
+          '-mfix-cortex-m3-ldrd',
+          '-Wall',
+          '-mapcs-frame',
+          '-msoft-float',
+          '-mno-sched-prolog',
+          # '-fno-hosted',
+          '-ffunction-sections',
+          '-fdata-sections',
+          # '-fpermissive',
+          '-std=c99'
+        ]
+      }],
+      [ 'OS!="arm"', {
+        'defines': [
+          'COLONY_PC'
+        ],
+        'cflags': [ '-Wall', '-Wextra' ],
+      }]
+    ],
+
+    'default_configuration': 'Release',
     'configurations': {
       'Debug': {
         'conditions': [
           [ 'OS=="arm"', {
-            'defines': [
-              'COLONY_EMBED',
-              'CONFIG_PLATFORM_EMBED',
-              'TM_FS_fat',
-            ],
-            'include_dirs': [
-              '<(fatfs_path)/src',
-              '<(axtls_path)/config/'
-            ],
             'cflags': [
-              '-mcpu=cortex-m3',
-              '-mthumb',
               '-gdwarf-2',
-              '-mtune=cortex-m3',
-              '-march=armv7-m',
-              '-mlong-calls',
-              '-mfix-cortex-m3-ldrd',
               '-Ofast',
-              '-Wall',
-              '-mapcs-frame',
-              '-msoft-float',
-              '-mno-sched-prolog',
-              # '-fno-hosted',
-              '-ffunction-sections',
-              '-fdata-sections',
-              # '-fpermissive',
-              '-std=c99'
             ]
           }],
           [ 'OS!="arm"', {
-            'defines': [
-              'COLONY_PC'
+            'cflags': [
+              '-O0',
+              '-g',
+              '-ftrapv'
             ],
-            'cflags': [ '-Wall', '-Wextra', '-O0', '-g', '-ftrapv' ],
             'msvs_settings': {
               'VCCLCompilerTool': {
                 'RuntimeLibrary': 1, # static debug
@@ -61,14 +75,26 @@
         ],
       },
       'Release': {
-        'cflags': [ '-Wall', '-Wextra', '-O3' ],
-        'msvs_settings': {
-          'VCCLCompilerTool': {
-            'RuntimeLibrary': 0, # static release
-          },
-        },
+        'conditions': [
+          [ 'OS=="arm"', {
+            'cflags': [
+              '-Ofast',
+            ],
+          }],
+          [ 'OS!="arm"', {
+            'cflags': [
+              '-O3'
+            ],
+            'msvs_settings': {
+              'VCCLCompilerTool': {
+                'RuntimeLibrary': 0, # static release
+              },
+            },
+          }]
+        ]
       }
     },
+
     'msvs_settings': {
       'VCCLCompilerTool': {
       },
@@ -78,13 +104,6 @@
         'GenerateDebugInformation': 'true',
       },
     },
-    'conditions': [
-      ['OS == "win"', {
-        'defines': [
-          'WIN32'
-        ],
-      }]
-    ],
   },
 
   "targets": [
