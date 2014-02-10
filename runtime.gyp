@@ -18,10 +18,9 @@
         'defines': [
           'COLONY_EMBED',
           'CONFIG_PLATFORM_EMBED',
-          'TM_FS_fat',
+          'TM_FS_vfs',
         ],
         'include_dirs': [
-          '<(fatfs_path)/src',
           '<(axtls_path)/config/'
         ],
         'cflags': [
@@ -426,23 +425,6 @@
     },
 
     {
-      "target_name": "tm-tar",
-      "type": "static_library",
-      "defines": [
-        'MAXPATHLEN=256',
-      ],
-      "sources": [
-        'src/tar_extract.c',
-      ],
-      "include_dirs": [
-        'src/',
-      ],
-      "dependencies": [
-        "libtar"
-      ]
-    },
-
-    {
       "target_name": "tm",
       "product_name": "tm",
       "type": "static_library",
@@ -462,7 +444,6 @@
       ],
       "dependencies": [
         "tm-ssl",
-        "tm-tar",
         "http_parser",
         "hsregex",
         "yajl",
@@ -550,13 +531,10 @@
       'conditions': [
         ['OS=="arm"', {
           "sources": [
-            'src/fs/fat/diskio.c',
-            'src/fs/fat/fs.c',
             '<(c_ares_path)/inet_addr.c',
+            'src/fs/vfs/vfs.c',
+            'src/fs/vfs/vfs_tar.c',
           ],
-          "dependencies": [
-            "fatfs",
-          ]
         }],
         ['OS!="arm"', {
           "sources": [
