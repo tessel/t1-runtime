@@ -9,6 +9,7 @@
     "colony_lua_path": "./deps/colony-lua",
     "lua_bitop_path": "./deps/luabitop-1.0",
     "fatfs_path": "./deps/fatfs",
+    'builtin_section%': '',
   },
 
   'target_defaults': {
@@ -477,7 +478,7 @@
           'outputs': [
             '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c',
           ],
-          'action': [ 'tools/compile_folder', '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c', '<(_target_name)', '.text', '<@(_inputs)' ],
+          'action': [ 'tools/compile_folder', '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c', '<(_target_name)', '<(builtin_section)', '<@(_inputs)' ],
         },
       ]
     },
@@ -500,7 +501,7 @@
           'outputs': [
             '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c',
           ],
-          'action': [ 'tools/compile_folder', '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c', '<(_target_name)', '.text', '<@(_inputs)' ],
+          'action': [ 'tools/compile_folder', '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c', '<(_target_name)', '<(builtin_section)', '<@(_inputs)' ],
         },
       ]
     },
@@ -582,14 +583,16 @@
         
         'src/fs/posix/fs.c',
         
-        'build/pc/obj/dir_builtin.c',
-        'build/pc/obj/dir_runtime_lib.c',
+        '<(SHARED_INTERMEDIATE_DIR)/dir_builtin.c',
+        '<(SHARED_INTERMEDIATE_DIR)/dir_runtime_lib.c',
       ],
       "include_dirs": [
         'src/',
         "<(colony_lua_path)/src",
       ],
       "dependencies": [
+        'dir_builtin',
+        'dir_runtime_lib',
         "tm-posix-net",
         "tm"
       ]
