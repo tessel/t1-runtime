@@ -90,6 +90,7 @@ int tm_fs_open(tm_fs_file_handle* /* -> ~<'s> */ out, tm_fs_ent* /* &'s */ root,
 int tm_fs_close(tm_fs_file_handle* /* move */ handle);
 int tm_fs_read (tm_fs_file_handle* fd, uint8_t *buf, size_t size, size_t* nread);
 int tm_fs_write (tm_fs_file_handle* fd, const uint8_t *buf, size_t size);
+int tm_fs_readable (tm_fs_file_handle* fd);
 
 int tm_fs_dir_open(tm_fs_file_handle* out, tm_fs_ent* root, const char* pathname);
 int tm_fs_dir_close(tm_fs_file_handle* fd);

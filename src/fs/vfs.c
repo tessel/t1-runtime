@@ -267,6 +267,16 @@ int tm_fs_write (tm_fs_file_handle* fd, const uint8_t *buf, size_t size) {
 	}
 }
 
+int tm_fs_readable (tm_fs_file_handle* fd) {
+	if (!fd->ent) return 0;
+		switch (fd->ent->type) {
+		case VFS_TYPE_RAW_FILE:
+			return fd->position < fd->ent->file.length;
+		default:
+			return 0;
+	}
+}
+
 unsigned tm_fs_length(tm_fs_file_handle* fd) {
 	if (!fd->ent) return 0;
 	switch (fd->ent->type) {
