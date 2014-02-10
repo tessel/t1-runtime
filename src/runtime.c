@@ -150,10 +150,32 @@ static int builtin_loader (lua_State* L)
   return 1;
 }
 
+#include "dlmalloc.h"
+
+ static void *colony_alloc (void *ud, void *ptr, size_t osize, size_t nsize)
+ {
+  printf("alloc: %p %d %d\n", ptr, osize, nsize);
+
+  mspace *mymspace = (mspace *) ud;
+  (void)osize;  /* not used */
+   if (nsize == 0) {
+     mspace_free(mymspace, ptr);
+     return NULL;
+   }
+   else if (ptr == 0) {
+    return mspace_malloc(mymspace, nsize);
+   }
+   else
+     return mspace_realloc(mymspace, ptr, nsize);
+ }
+
+mspace colony_mspace = NULL;
+
 // Function to be called by javascript
 int colony_runtime_open (lua_State** stateptr)
 {
-  lua_State* L = *stateptr = lua_open();
+  colony_mspace = create_mspace(1024*1024*1024, 0);
+  lua_State* L = *stateptr = lua_newstate (colony_alloc, &colony_mspace);
   lua_atpanic(L, &runtime_panic);
   // luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
   // lua_gc(L, LUA_GCSETPAUSE, 90);

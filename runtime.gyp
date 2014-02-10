@@ -66,6 +66,13 @@
               '-g',
               '-ftrapv'
             ],
+            'xcode_settings': {
+              'OTHER_CFLAGS': [
+                '-O0',
+                '-g',
+                '-ftrapv'
+              ]
+            },
             'msvs_settings': {
               'VCCLCompilerTool': {
                 'RuntimeLibrary': 1, # static debug
@@ -85,6 +92,11 @@
             'cflags': [
               '-O3'
             ],
+            'xcode_settings': {
+              'OTHER_CFLAGS': [
+                '-O3',
+              ]
+            },
             'msvs_settings': {
               'VCCLCompilerTool': {
                 'RuntimeLibrary': 0, # static release
@@ -447,6 +459,8 @@
       "product_name": "tm",
       "type": "static_library",
       "defines": [
+        'MSPACES=1',
+        'ONLY_MSPACES=1'
       ],
       "sources": [
         'src/l_cares.c',
@@ -454,6 +468,7 @@
         'src/l_http_parser.c',
         'src/l_tm.c',
         'src/lua_yajl.c',
+        'src/dlmalloc.c',
         'src/runtime.c',
       ],
       "include_dirs": [
