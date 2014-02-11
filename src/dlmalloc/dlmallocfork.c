@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 
 static int _footsize (uint8_t* ptr, int max) {
   return 0;

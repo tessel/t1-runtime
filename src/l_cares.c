@@ -75,7 +75,7 @@ wait_ares(ares_channel channel)
 }
  
 // Bad synchronous gethostbyname demo
-uint32_t tm__sync_gethostbyname (char *domain)
+uint32_t tm__sync_gethostbyname (const char *domain)
 {
     ares_channel channel;
     int status;
@@ -97,7 +97,7 @@ uint32_t tm__sync_gethostbyname (char *domain)
     options.nservers = 1;
     optmask |= ARES_OPT_SERVERS;
     options.sock_state_cb = state_cb;
-    options.sock_state_cb_data;
+    // options.sock_state_cb_data;
     optmask |= ARES_OPT_SOCK_STATE_CB;
  
     status = ares_init_options(&channel, &options, optmask);

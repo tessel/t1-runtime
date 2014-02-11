@@ -220,6 +220,17 @@
         "<(yajl_path)/src",
         "./src"
       ],
+
+      # yajl plays fast with enums
+      'cflags': [
+        '-Wno-enum-conversion',
+      ],
+      'xcode_settings': {
+        'OTHER_CFLAGS': [
+          '-Wno-enum-conversion',
+        ],
+      },
+
       'direct_dependent_settings': {
         'include_dirs': [
         ]
@@ -259,6 +270,18 @@
         "<(axtls_path)/config",
         "<(axtls_path)/config/pc",
       ],
+
+      # scary right? axtls uses printf(const str) without a format
+      'cflags': [
+        '-Wno-format-security',
+      ],
+      'xcode_settings': {
+        'OTHER_CFLAGS': [
+          '-Wno-format-security',
+        ],
+      },
+
+
       'direct_dependent_settings': {
         'include_dirs': [
           "<(axtls_path)/crypto",
@@ -384,6 +407,19 @@
         '<(colony_lua_path)/src/print.c',
         '<(lua_bitop_path)/bit.c'
       ],
+
+      # Lua uses tmpname and has empty bodies
+      'cflags': [
+        '-Wno-deprecated-declarations',
+        '-Wno-empty-body',
+      ],
+      'xcode_settings': {
+        'OTHER_CFLAGS': [
+          '-Wno-deprecated-declarations',
+          '-Wno-empty-body',
+        ],
+      },
+
       "include_dirs": [
         "<(colony_lua_path)/src",
         "<(lua_bitop_path)/",

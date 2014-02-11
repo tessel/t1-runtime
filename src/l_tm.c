@@ -102,7 +102,7 @@ static int l_tm_udp_receive (lua_State *L)
   uint32_t from;
   size_t buf_len = tm_udp_receive(socket, buf, sizeof(buf), &from);
 
-  lua_pushlstring(L, buf, buf_len);
+  lua_pushlstring(L, (const char *) buf, buf_len);
 
   return 1;
 }
@@ -591,7 +591,7 @@ static int l_tm_fs_dir_close (lua_State* L)
 }
 
 
-uint32_t tm__sync_gethostbyname (char *domain);
+uint32_t tm__sync_gethostbyname (const char *domain);
 
 static int l_tm__sync_gethostbyname (lua_State* L)
 {
