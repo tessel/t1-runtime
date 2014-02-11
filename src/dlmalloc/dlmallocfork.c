@@ -17,7 +17,7 @@ static int _footsize (uint8_t* ptr, int max) {
       k = 0;
     }
   }
-  // printf("--> foot size %d\n", max-l);
+  printf("--> foot size %d\n", max-l);
   return max-l;
 }
 
@@ -34,7 +34,7 @@ static int _datasize (uint8_t* ptr, int max) {
       k = 0;
     }
   }
-  // printf("--> data size %d\n", j);
+  printf("--> data size %d\n", j);
   return j;
 }
 

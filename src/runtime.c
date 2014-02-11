@@ -157,7 +157,7 @@ static int builtin_loader (lua_State* L)
 const char preload_lua[] = "require('preload');";
 
 // Function to be called by javascript
-static int _colony_runtime_open (lua_State *L)
+static int _colony_runtime_open (lua_State *L, int preload_on_init)
 {
   lua_atpanic(L, &runtime_panic);
   // luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
@@ -239,14 +239,20 @@ static int _colony_runtime_open (lua_State *L)
   }
   lua_setglobal(L, "_builtin");
 
+  // Load all builtin libraries immediately on init.
+  // This is slow on slow devices but speeds up later access.
+  lua_pushnumber(L, preload_on_init);
+  lua_setglobal(L, "_colony_preload_on_init");
+
   char* argv[] = { 0 };
   return handle_script(L, preload_lua, strlen(preload_lua), argv, 0);
 }
 
+// TODO preload_on_init
 int colony_runtime_open (lua_State** stateptr)
 {
   *stateptr = luaL_newstate ();
-  return _colony_runtime_open(*stateptr);
+  return _colony_runtime_open(*stateptr, 0);
 }
 
 
@@ -264,11 +270,11 @@ static void *colony_alloc (void *ud, void *ptr, size_t osize, size_t nsize)
   }
 }
 
-int colony_runtime_arena_open (lua_State** stateptr, void* arena, size_t arena_size)
+int colony_runtime_arena_open (lua_State** stateptr, void* arena, size_t arena_size, int preload_on_init)
 {
   mspace colony_mspace = create_mspace_with_base(arena, arena_size, 0);
   *stateptr = lua_newstate (colony_alloc, colony_mspace);
-  return _colony_runtime_open(*stateptr);
+  return _colony_runtime_open(*stateptr, preload_on_init);
 }
 
 int colony_runtime_arena_save_size (void* _ptr, int max) {
