@@ -49,10 +49,16 @@ ServerResponse.prototype.writeHead = function (status, headers) {
     this.setHeaders(headers);
   }
   this.socket.write('HTTP/1.1 ' + status + ' OK\r\n');
+  this._usesContentType = false;
   for (var key in this.headers) {
+    if (key.toLowerCase() == 'content-length') {
+      this._usesContentType = true;
+    }
     this.socket.write(key + ': ' + this.headers[key] + '\r\n');
   }
-  this.socket.write('Transfer-Encoding: chunked\r\n');
+  if (!this._usesContentType) {
+    this.socket.write('Transfer-Encoding: chunked\r\n');
+  }
   this.socket.write('\r\n');
   this._header = true;
   // console.log('writing headers', headers);
@@ -63,10 +69,14 @@ ServerResponse.prototype.write = function (data) {
     this.writeHead(200);
   }
 
-  this.socket.write(Number(data.length).toString(16));
-  this.socket.write('\r\n');
-  this.socket.write(data);
-  this.socket.write('\r\n');
+  if (!this._usesContentType) {
+    this.socket.write(Number(data.length).toString(16));
+    this.socket.write('\r\n');
+    this.socket.write(data);
+    this.socket.write('\r\n');
+  } else {
+    this.socket.write(data);
+  }
 }
 
 ServerResponse.prototype.getHeader = function (key) {
@@ -78,12 +88,13 @@ ServerResponse.prototype.end = function (data) {
     this.writeHead(200);
   }
 
-  // TODO
   if (data != null) {
     this.write(data);
   }
   this._closed = true;
-  this.socket.write('0\r\n\r\n');
+  if (!this._usesContentType) {
+    this.socket.write('0\r\n\r\n');
+  }
   this.socket.close();
 };
 

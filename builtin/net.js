@@ -79,7 +79,7 @@ TCPSocket.prototype.write = function (buf, cb) {
   })
 };
 
-TCPSocket.prototype.close = function () {
+TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
   var self = this;
   if (this.__listenid != null) {
     clearInterval(this.__listenid);
