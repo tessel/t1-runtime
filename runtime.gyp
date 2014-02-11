@@ -460,19 +460,24 @@
       "type": "static_library",
       "defines": [
         'MSPACES=1',
-        'ONLY_MSPACES=1'
+        'ONLY_MSPACES=1',
+        'HAVE_MMAP=0',
+        'HAVE_MORECORE=0',
       ],
       "sources": [
+        'src/dlmalloc/dlmalloc.c',
+        'src/dlmalloc/dlmallocfork.c',
+
         'src/l_cares.c',
         'src/l_hsregex.c',
         'src/l_http_parser.c',
         'src/l_tm.c',
         'src/lua_yajl.c',
-        'src/dlmalloc.c',
         'src/runtime.c',
       ],
       "include_dirs": [
         'src/',
+        'src/dlmalloc/',
         "<(colony_lua_path)/src",
       ],
       "dependencies": [
@@ -483,7 +488,13 @@
         "yajl",
         "c-ares",
         "colony-lua",
-      ]
+      ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          'src/',
+          'src/dlmalloc/',
+        ]
+      }
     },
 
 

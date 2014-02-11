@@ -15,7 +15,7 @@ arm:
 
 pc:
 	gyp runtime.gyp --depth=. -f ninja -R $(TARGET)
-	ninja -vC out/$(CONFIG)
+	ninja -C out/$(CONFIG)
 
 clean:
 	ninja -v -C out/Debug -t clean

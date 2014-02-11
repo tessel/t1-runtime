@@ -5,12 +5,16 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 
 #include "tm.h"
 #include "l_http_parser.h"
 #include "l_tm.h"
 #include "l_hsregex.h"
 #include "l_bit.h"
+
+#include "dlmalloc.h"
+#include "dlmallocfork.h"
 
 LUALIB_API int luaopen_yajl(lua_State *L);
 
@@ -150,32 +154,8 @@ static int builtin_loader (lua_State* L)
   return 1;
 }
 
-#include "dlmalloc.h"
-
- static void *colony_alloc (void *ud, void *ptr, size_t osize, size_t nsize)
- {
-  printf("alloc: %p %d %d\n", ptr, osize, nsize);
-
-  mspace *mymspace = (mspace *) ud;
-  (void)osize;  /* not used */
-   if (nsize == 0) {
-     mspace_free(mymspace, ptr);
-     return NULL;
-   }
-   else if (ptr == 0) {
-    return mspace_malloc(mymspace, nsize);
-   }
-   else
-     return mspace_realloc(mymspace, ptr, nsize);
- }
-
-mspace colony_mspace = NULL;
-
-// Function to be called by javascript
-int colony_runtime_open (lua_State** stateptr)
+static int _colony_runtime_open (lua_State *L)
 {
-  colony_mspace = create_mspace(1024*1024*1024, 0);
-  lua_State* L = *stateptr = lua_newstate (colony_alloc, &colony_mspace);
   lua_atpanic(L, &runtime_panic);
   // luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
   // lua_gc(L, LUA_GCSETPAUSE, 90);
@@ -258,6 +238,48 @@ int colony_runtime_open (lua_State** stateptr)
 
   return 0;
 }
+
+int colony_runtime_open (lua_State** stateptr)
+{
+  *stateptr = luaL_newstate ();
+  return _colony_runtime_open(*stateptr);
+}
+
+
+
+static void *colony_alloc (void *ud, void *ptr, size_t osize, size_t nsize)
+{
+  // printf("alloc: %p %d %d\n", ptr, osize, nsize);
+  mspace mymspace = (mspace) ud;
+  (void) osize;  /* not used */
+  if (nsize == 0) {
+    mspace_free(mymspace, ptr);
+    return NULL;
+  } else {
+    return mspace_realloc(mymspace, ptr, nsize);
+  }
+}
+
+int colony_runtime_arena_open (lua_State** stateptr, void* arena, size_t arena_size)
+{
+  mspace colony_mspace = create_mspace_with_base(arena, arena_size, 0);
+  *stateptr = lua_newstate (colony_alloc, colony_mspace);
+  return _colony_runtime_open(*stateptr);
+}
+
+int colony_runtime_arena_save_size (void* _ptr, int max) {
+  return dlmallocfork_save_size(_ptr, max);
+}
+void colony_runtime_arena_save (void* _source, int source_max, void* _target, int target_max) {
+  dlmallocfork_save(_source, source_max, _target, target_max);
+}
+void colony_runtime_arena_restore (void* _source, int source_max, void* _target, int target_max) {
+  dlmallocfork_restore (_source, source_max, _target, target_max);
+}
+
+
+
+
 
 const char runtime_lua[] = "require('cli');";
 

@@ -3,6 +3,7 @@
 #include <lualib.h>
 
 #include "tm.h"
+#include <sys/time.h>
 
 
 /**
