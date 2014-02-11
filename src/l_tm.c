@@ -490,7 +490,13 @@ static int l_tm_fs_open (lua_State* L)
   uint32_t flags = (uint32_t) lua_tonumber(L, 2);
 
   tm_fs_t* fd = (tm_fs_t*) lua_newuserdata(L, sizeof(tm_fs_t));
+
+  #ifdef TM_FS_vfs
+  int ret = tm_fs_open(fd, tm_fs_root, pathname, flags);
+  #else
   int ret = tm_fs_open(fd, pathname, flags);
+  #endif
+
   if (ret > 0) {
     lua_pop(L, 1);
     lua_pushnil(L);
@@ -544,8 +550,14 @@ static int l_tm_fs_dir_open (lua_State* L)
   const char *pathname = (const char *) lua_tostring(L, 1);
 
   tm_fs_dir_t* dir = (tm_fs_dir_t*) lua_newuserdata(L, sizeof(tm_fs_dir_t));
+
+  #ifdef TM_FS_vfs
+  int ret = tm_fs_dir_open(tm_fs_root, dir, pathname);
+  #else
   memset(dir, 0, sizeof(tm_fs_dir_t));
   int ret = tm_fs_dir_open(dir, pathname);
+  #endif
+
   if (ret > 0) {
     lua_pop(L, 1);
     lua_pushnil(L);

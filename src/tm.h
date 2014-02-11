@@ -58,6 +58,14 @@ uint32_t tm_uptime_micro ();
 
 
 // fs
+#ifdef TM_FS_vfs
+#include "fs/vfs/vfs.h"
+
+typedef tm_fs_file_handle tm_fs_t;
+typedef tm_fs_dir_handle tm_fs_dir_t;
+extern tm_fs_ent* tm_fs_root;
+
+#else
 
 #ifdef TM_FS_fat
 
@@ -120,6 +128,8 @@ int tm_fs_dir_create (const char *pathname);
 int tm_fs_dir_open (tm_fs_dir_t* dir, const char *pathname);
 int tm_fs_dir_read (tm_fs_dir_t* dir, const char **strptr);
 int tm_fs_dir_close (tm_fs_dir_t* dir);
+
+#endif
 
 #ifdef __cplusplus
 }
