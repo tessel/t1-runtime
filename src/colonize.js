@@ -412,11 +412,11 @@ function colonize (node) {
 
     case 'ArrayExpression':
       if (!node.elements.length) {
-        node.update("_arr({})");
+        node.update("_arr({},0)");
       } else {
         node.update("_arr({[0]=" + [].concat(node.elements.map(function (el) {
           return el.source();
-        })).join(', ') + "})");
+        })).join(', ') + "}," + Number(node.elements.length) + ")");
       }
       break;
 
