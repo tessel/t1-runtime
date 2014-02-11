@@ -21,7 +21,7 @@ for k, v in pairs(_builtin) do
 end
 for k, v in pairs(_builtin) do
   -- preload all the things
-  colony.run(k)
+  -- colony.run(k)
 end
 collectgarbage()
 
