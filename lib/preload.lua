@@ -26,9 +26,6 @@ end
 collectgarbage()
 
 if _G.COLONY_EMBED then
-  -- This is temporary until we can add files to builtin array easily.
-  colony.precache['tessel'] = _tessel_lib
-
   -- This is temporary until we have tm_pwd() working
   colony._normalize = function (p, path_normalize)
     if string.sub(p, 1, 1) == '.' then

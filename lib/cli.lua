@@ -1,5 +1,9 @@
 local colony = require('colony')
 
+-- This is temporary until we can add files to builtin array easily.
+colony.precache['tessel'] = _tessel_lib
+colony.run('tessel')
+
 -- Command line invocation
 if #arg < 2 then
   print('Usage: colony script.js')

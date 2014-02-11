@@ -65,6 +65,13 @@
               '-g',
               '-ftrapv'
             ],
+            'xcode_settings': {
+              'OTHER_CFLAGS': [
+                '-O0',
+                '-g',
+                '-ftrapv'
+              ]
+            },
             'msvs_settings': {
               'VCCLCompilerTool': {
                 'RuntimeLibrary': 1, # static debug
@@ -84,6 +91,11 @@
             'cflags': [
               '-O3'
             ],
+            'xcode_settings': {
+              'OTHER_CFLAGS': [
+                '-O3',
+              ]
+            },
             'msvs_settings': {
               'VCCLCompilerTool': {
                 'RuntimeLibrary': 0, # static release
@@ -443,8 +455,16 @@
       "product_name": "tm",
       "type": "static_library",
       "defines": [
+        'MSPACES=1',
+        'ONLY_MSPACES=1',
+        'HAVE_MMAP=0',
+        'HAVE_MORECORE=0',
+        'LACKS_UNISTD_H',
       ],
       "sources": [
+        'src/dlmalloc/dlmalloc.c',
+        'src/dlmalloc/dlmallocfork.c',
+
         'src/l_cares.c',
         'src/l_hsregex.c',
         'src/l_http_parser.c',
@@ -454,6 +474,7 @@
       ],
       "include_dirs": [
         'src/',
+        'src/dlmalloc/',
         "<(colony_lua_path)/src",
       ],
       "dependencies": [
@@ -463,7 +484,13 @@
         "yajl",
         "c-ares",
         "colony-lua",
-      ]
+      ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          'src/',
+          'src/dlmalloc/',
+        ]
+      }
     },
 
 
