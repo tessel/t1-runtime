@@ -5,7 +5,7 @@
 #include <stddef.h>
 
 int colony_runtime_open (lua_State** stateptr);
-int colony_runtime_run (lua_State** stateptr, const char *path, char **argv, int argc);
+int colony_runtime_run (lua_State** stateptr, const char *path, const char **argv, int argc);
 int colony_runtime_close (lua_State** stateptr);
 
 int colony_runtime_arena_open (lua_State** stateptr, void* arena, size_t arena_size, int preload_on_init);
