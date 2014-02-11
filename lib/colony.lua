@@ -282,8 +282,10 @@ function array_setter (this, key, val)
   rawset(this, key, val)
 end
 
-function js_arr (arr)
-  local len = #arr
+function js_arr (arr, len)
+  if len == nil then
+    len = #arr
+  end
   if len > 1 or arr[0] ~= nil then
     len = len + 1
   end

@@ -325,11 +325,16 @@ end
 
 arr_proto.push = function (ths, ...)
   local args = table.pack(...)
-  for i, elem in ipairs(args) do
-    if ths.length == 0 then
-      ths[0] = elem
+  local mt = getmetatable(ths)
+  for i=1,args.length do
+    local len = ths.length
+    if len == 0 then
+      ths[0] = args[i]
     else
-      table.insert(ths, ths.length, elem)
+      table.insert(ths, len, args[i])
+    end
+    if mt and mt.length ~= nil then
+      mt.length = len + 1
     end
   end
   return ths.length
