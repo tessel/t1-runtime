@@ -150,6 +150,8 @@ static int builtin_loader (lua_State* L)
   return 1;
 }
 
+const char preload_lua[] = "require('preload');";
+
 // Function to be called by javascript
 int colony_runtime_open (lua_State** stateptr)
 {
@@ -234,7 +236,8 @@ int colony_runtime_open (lua_State** stateptr)
   }
   lua_setglobal(L, "_builtin");
 
-  return 0;
+  char* argv[] = { 0 };
+  return handle_script(L, preload_lua, strlen(preload_lua), argv, 0);
 }
 
 const char runtime_lua[] = "require('cli');";

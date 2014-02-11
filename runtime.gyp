@@ -524,7 +524,8 @@
             'lib/cli.lua',
             'lib/colony.lua',
             'lib/node-tm.lua',
-            'lib/std.lua'
+            'lib/std.lua',
+            'lib/preload.lua',
           ],
           'outputs': [
             '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c',
