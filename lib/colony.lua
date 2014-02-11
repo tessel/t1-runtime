@@ -285,9 +285,9 @@ end
 function js_arr (arr, len)
   if len == nil then
     len = #arr
-  end
-  if len > 1 or arr[0] ~= nil then
-    len = len + 1
+    if len > 1 or arr[0] ~= nil then
+      len = len + 1
+    end
   end
 
   setmetatable(arr, {
