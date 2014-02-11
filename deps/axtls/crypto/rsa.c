@@ -146,7 +146,7 @@ int RSA_decrypt(const RSA_CTX *ctx, const uint8_t *in_data,
     const int byte_size = ctx->num_octets;
     int i, size;
     bigint *decrypted_bi, *dat_bi;
-    uint8_t *block = (uint8_t *)alloca(byte_size);
+    uint8_t *block = (uint8_t *)malloc(byte_size);
 
     memset(out_data, 0, byte_size); /* initialise */
 
@@ -183,6 +183,7 @@ int RSA_decrypt(const RSA_CTX *ctx, const uint8_t *in_data,
     if (size > 0)
         memcpy(out_data, &block[i], size);
     
+    free(block);
     return size ? size : -1;
 }
 
