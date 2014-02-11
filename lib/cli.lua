@@ -1,8 +1,10 @@
 local colony = require('colony')
 
 -- This is temporary until we can add files to builtin array easily.
-colony.precache['tessel'] = _tessel_lib
-colony.run('tessel')
+if _tessel_lib then
+	colony.precache['tessel'] = _tessel_lib
+	colony.run('tessel')
+end
 
 -- Command line invocation
 if #arg < 2 then

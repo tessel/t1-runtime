@@ -152,19 +152,19 @@ int main (int argc, char *argv[])
   tm_fs_dir_close(&dir);
 
   // alloc
-  // colony_runtime_open(&L);
+  colony_runtime_open(&L);
 
   // arena with clone test
-  #define COLONY_MEM_SIZE 1024*1024*4
-  void *colony_ptr = malloc(COLONY_MEM_SIZE);
-  colony_runtime_arena_open(&L, colony_ptr, COLONY_MEM_SIZE);
-  size_t savestate_len = colony_runtime_arena_save_size(colony_ptr, COLONY_MEM_SIZE);
-  void* savestate = malloc(savestate_len);
-  printf("--> STORING STATE IN %zu BYTES\n", savestate_len);
-  colony_runtime_arena_save(colony_ptr, COLONY_MEM_SIZE, savestate, savestate_len);
-  printf("--> RESTORING STATE\n");
-  memset(colony_ptr, 0, COLONY_MEM_SIZE);
-  colony_runtime_arena_restore(colony_ptr, COLONY_MEM_SIZE, savestate, savestate_len);
+  // #define COLONY_MEM_SIZE 1024*1024*4
+  // void *colony_ptr = malloc(COLONY_MEM_SIZE);
+  // colony_runtime_arena_open(&L, colony_ptr, COLONY_MEM_SIZE);
+  // size_t savestate_len = colony_runtime_arena_save_size(colony_ptr, COLONY_MEM_SIZE);
+  // void* savestate = malloc(savestate_len);
+  // printf("--> STORING STATE IN %zu BYTES\n", savestate_len);
+  // colony_runtime_arena_save(colony_ptr, COLONY_MEM_SIZE, savestate, savestate_len);
+  // printf("--> RESTORING STATE\n");
+  // memset(colony_ptr, 0, COLONY_MEM_SIZE);
+  // colony_runtime_arena_restore(colony_ptr, COLONY_MEM_SIZE, savestate, savestate_len);
 
   if (setjmp(place) == 0)
     ret = colony_runtime_run(&L, argv[1], argv, argc);
