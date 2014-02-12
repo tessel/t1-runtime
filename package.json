@@ -2,6 +2,9 @@
   "name": "runtime",
   "version": "0.1.0",
   "private": true,
+  "bin": {
+    "tessel-runtime": "out/Release/colony"
+  },
   "directories": {
     "example": "examples",
     "test": "test"

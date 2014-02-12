@@ -445,6 +445,7 @@
         '-Wno-empty-body',
         '-Wno-unused-but-set-variable',
         '-Wno-unused-value',
+        '-Wno-unknown-warning-option',
       ],
       'xcode_settings': {
         'OTHER_CFLAGS': [
@@ -452,6 +453,7 @@
           '-Wno-empty-body',
           '-Wno-unused-but-set-variable',
           '-Wno-unused-value',
+          '-Wno-unknown-warning-option',
         ],
       },
 
@@ -594,6 +596,7 @@
             'builtin/path.js',
             'builtin/punycode.js',
             'builtin/querystring.js',
+            'builtin/repl.js',
             'builtin/stream.js',
             'builtin/string_decoder.js',
             'builtin/tty.js',

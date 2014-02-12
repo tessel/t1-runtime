@@ -561,7 +561,7 @@ end
 global.Object.prototype = obj_proto
 obj_proto.constructor = global.Object
 
-global.Object.create = function (proto)
+global.Object.create = function (this, proto, props)
   local o = {}
   local mt = {}
   setmetatable(o, mt)
@@ -571,10 +571,16 @@ global.Object.create = function (proto)
     end
     mt.proto = proto
   end
+  if props then
+    global.Object:defineProperties(o, props)
+  end
   return o
 end
 
 global.Object.defineProperty = function (this, obj, prop, config)
+  if type(obj) == 'function' then
+    obj = js_func_proxy(obj)
+  end
   if config.value then
     rawset(obj, prop, config.value)
   end
@@ -589,8 +595,10 @@ global.Object.defineProperty = function (this, obj, prop, config)
 end
 
 global.Object.defineProperties = function (this, obj, props)
-  for k, v in pairs(props) do
-    global.Object:defineProperty(obj, k, v)
+  if props then
+    for k, v in pairs(props) do
+      global.Object:defineProperty(obj, k, v)
+    end
   end
   return obj
 end
