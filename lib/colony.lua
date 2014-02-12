@@ -75,8 +75,12 @@ local function js_setter_index (proto)
   end
 end
 
-local function js_tostring (ths)
-  return ths:toString()
+local function js_tostring (this)
+  return this:toString()
+end
+
+local function js_valueof (this)
+  return this:valueOf()
 end
 
 -- introduce metatables to built-in types using debug library:
@@ -168,6 +172,7 @@ function js_obj (o)
     end
   end
   mt.__tostring = js_tostring
+  mt.__tovalue = js_valueof
   mt.proto = proto
   setmetatable(o, mt)
   return o
@@ -227,6 +232,7 @@ func_mt.__newindex = function (this, key, value)
   proxy[key] = value
 end
 func_mt.__tostring = js_tostring
+func_mt.__tovalue = js_valueof
 -- func_mt.__tostring = function ()
 --   return "[Function]"
 -- end
@@ -299,6 +305,7 @@ function js_arr (arr, len)
     __index = js_getter_index(arr_proto),
     __newindex = array_setter,
     __tostring = js_tostring,
+    __valueof = js_valueof,
     proto = arr_proto
   })
   return arr
@@ -398,6 +405,8 @@ function js_new (f, ...)
         rawset(this, key, value)
       end
     end,
+    __tostring = js_tostring,
+    __tovalue = js_valueof,
     proto = f.prototype
   }
   setmetatable(o, mt)
@@ -490,6 +499,7 @@ colony = {
   js_obj = js_obj,
   js_new = js_new,
   js_tostring = js_tostring,
+  js_valueof = js_valueof,
   js_instanceof = js_instanceof,
   js_void = js_void,
   js_pairs = js_pairs,

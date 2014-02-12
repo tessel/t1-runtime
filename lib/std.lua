@@ -216,6 +216,10 @@ obj_proto.toString = function (this)
   end
 end
 
+obj_proto.valueOf = function (this)
+  return this
+end
+
 obj_proto.hasInstance = function (ths, p)
   return toboolean(rawget(ths, p))
 end
