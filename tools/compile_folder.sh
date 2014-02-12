@@ -72,9 +72,9 @@ var colony = require('colony');
 
 packageFolder(infiles, varname, section, function (file, buf, next) {
   if (file.match(/\.js$/)) {
-    colony.toBytecode(colony.colonize(String(buf)), next);
+    colony.toBytecode(colony.colonize(String(buf)), file, next);
   } else if (file.match(/\.lua$/)) {
-    colony.toBytecode(String(buf), next);
+    colony.toBytecode(String(buf), file, next);
   } else {
     next(null, buf);
   }
