@@ -388,7 +388,7 @@ static int l_tm_buffer_read_float (lua_State *L)
   uint8_t le = (int) lua_tonumber(L, 3);
   
   uint8_t *a = &ud[index];
-  double out = 0;
+  float out = 0;
   char* temp = (char*) &out;
   if (le ^ (O32_HOST_ORDER == O32_BIG_ENDIAN)) {
     temp[0] = a[0]; temp[1] = a[1]; temp[2] = a[2]; temp[3] = a[3];
