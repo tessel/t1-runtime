@@ -6,7 +6,7 @@
 #include "order32.h"
 
 
-static void stackDump (lua_State *L)
+inline static void stackDump (lua_State *L)
 {
   int i;
   int top = lua_gettop(L);
@@ -388,13 +388,14 @@ static int l_tm_buffer_read_float (lua_State *L)
   uint8_t le = (int) lua_tonumber(L, 3);
   
   uint8_t *a = &ud[index];
-  uint8_t temp[4];
+  double out = 0;
+  char* temp = (char*) &out;
   if (le ^ (O32_HOST_ORDER == O32_BIG_ENDIAN)) {
     temp[0] = a[0]; temp[1] = a[1]; temp[2] = a[2]; temp[3] = a[3];
   } else {
     temp[0] = a[3]; temp[1] = a[2]; temp[2] = a[1]; temp[3] = a[0];
   }
-  lua_pushnumber(L, *((float *) &temp));
+  lua_pushnumber(L, out);
   return 1;
 }
 
@@ -405,13 +406,14 @@ static int l_tm_buffer_read_double (lua_State *L)
   uint8_t le = (int) lua_tonumber(L, 3);
   
   uint8_t *a = &ud[index];
-  uint8_t temp[8];
+  double out = 0;
+  char* temp = (char*) &out;
   if (le ^ (O32_HOST_ORDER == O32_BIG_ENDIAN)) {
     temp[0] = a[0]; temp[1] = a[1]; temp[2] = a[2]; temp[3] = a[3]; temp[4] = a[4]; temp[5] = a[5]; temp[6] = a[6]; temp[7] = a[7];
   } else {
     temp[0] = a[7]; temp[1] = a[6]; temp[2] = a[5]; temp[3] = a[4]; temp[4] = a[3]; temp[5] = a[2]; temp[6] = a[1]; temp[7] = a[0];
   }
-  lua_pushnumber(L, *((double *) &temp));
+  lua_pushnumber(L, out);
   return 1;
 }
 
@@ -423,8 +425,7 @@ static int l_tm_buffer_write_float (lua_State *L)
   uint8_t le = (int) lua_tonumber(L, 4);
   
   uint8_t *a = &ud[index];
-  uint8_t temp[4];
-  *((float *) temp) = value;
+  char* temp = (char*) &value;
   if (le ^ (O32_HOST_ORDER == O32_BIG_ENDIAN)) {
     a[0] = temp[0]; a[1] = temp[1]; a[2] = temp[2]; a[3] = temp[3];
   } else {
@@ -441,8 +442,7 @@ static int l_tm_buffer_write_double (lua_State *L)
   uint8_t le = (int) lua_tonumber(L, 4);
   
   uint8_t *a = &ud[index];
-  uint8_t temp[8];
-  *((double *) temp) = value;
+  char* temp = (char*) &value;
   if (le ^ (O32_HOST_ORDER == O32_BIG_ENDIAN)) {
     a[0] = temp[0]; a[1] = temp[1]; a[2] = temp[2]; a[3] = temp[3]; a[4] = temp[4]; a[5] = temp[5]; a[6] = temp[6]; a[7] = temp[7]; 
   } else {
@@ -552,7 +552,7 @@ static int l_tm_fs_dir_open (lua_State* L)
   tm_fs_dir_t* dir = (tm_fs_dir_t*) lua_newuserdata(L, sizeof(tm_fs_dir_t));
 
   #ifdef TM_FS_vfs
-  int ret = tm_fs_dir_open(tm_fs_root, dir, pathname);
+  int ret = tm_fs_dir_open(dir, tm_fs_root, pathname);
   #else
   memset(dir, 0, sizeof(tm_fs_dir_t));
   int ret = tm_fs_dir_open(dir, pathname);

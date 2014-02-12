@@ -54,7 +54,7 @@ void dlmallocfork_save (void* _source, int source_max, void* _target, int target
 
   int TOP_FOOT_SIZE = _footsize(source, source_max);
 
-  int i = 0, j = 0;
+  int i = 0;
   int datalen = _datasize(source, source_max);
   target[0] = (datalen >> 24) & 0xFF;
   target[1] = (datalen >> 16) & 0xFF;

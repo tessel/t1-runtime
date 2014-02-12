@@ -36,7 +36,6 @@ callback(void *arg, int status, int timeouts, struct hostent *host)
     }
  
     // printf("Found address name %s\n", host->h_name);
-    char ip[INET6_ADDRSTRLEN];
     int i = 0;
  
     for (i = 0; host->h_addr_list[i]; ++i) {
@@ -57,10 +56,6 @@ wait_ares(ares_channel channel)
         struct timeval *tvp, tv;
         fd_set read_fds, write_fds;
         int nfds;
-
-        struct timeval max;
-        max.tv_sec = 0;
-        max.tv_usec = 100;
  
         FD_ZERO(&read_fds);
         FD_ZERO(&write_fds);

@@ -141,7 +141,7 @@ extern dir_reg_t dir_builtin[];
 
 static int builtin_loader (lua_State* L)
 {
-  const char* path = lua_tostring(L, 1);
+  // const char* path = lua_tostring(L, 1);
   int i = (int) lua_tonumber(L, 2);
 
   int res = luaL_loadbuffer(L, (const char *) dir_builtin[i].src, dir_builtin[i].len, dir_builtin[i].path);
@@ -313,7 +313,7 @@ int colony_runtime_close (lua_State** stateptr)
   return 0;
 }
 
-static void stackDump (lua_State *L) {
+inline static void stackDump (lua_State *L) {
       int i;
       int top = lua_gettop(L);
       for (i = 1; i <= top; i++) {  /* repeat for each level */

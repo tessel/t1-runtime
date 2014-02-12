@@ -40,7 +40,7 @@ int tm_fs_mount_tar(tm_fs_ent* /*&mut*/ root, char* /* & */ path, uint8_t* /* &'
 		}
 
 		if (memcmp(header->magic, "ustar", 5) != 0) {
-			printf("Invalid header at %lx\n", ptr-tar);
+			printf("Invalid header at %lx\n", (unsigned long) (ptr-tar));
 			return -1;
 		}
 

@@ -155,6 +155,17 @@
       "include_dirs": [
         "<(hsregex_path)/src"
       ],
+
+      # hsregex has some pedantic issues we can ignore
+      'cflags': [
+        '-Wno-unused-variable',
+      ],
+      'xcode_settings': {
+        'OTHER_CFLAGS': [
+          '-Wno-unused-variable',
+        ],
+      },
+
       'direct_dependent_settings': {
         'include_dirs': [
           '<(hsregex_path)/src'
@@ -271,13 +282,16 @@
         "<(axtls_path)/config/pc",
       ],
 
-      # scary right? axtls uses printf(const str) without a format
+      # axtls uses printf(const str) without a format (scary right?)
+      # also warns on unused variables.
       'cflags': [
         '-Wno-format-security',
+        '-Wno-unused-variable',
       ],
       'xcode_settings': {
         'OTHER_CFLAGS': [
           '-Wno-format-security',
+          '-Wno-unused-variable',
         ],
       },
 
@@ -352,6 +366,23 @@
       "include_dirs": [
         "<(c_ares_path)/",
       ],
+
+      # c-ares has some pedantic issues we can ignore
+      'cflags': [
+        '-Wno-unused-value',
+        '-Wno-unused-function',
+        '-Wno-unused-variable',
+        '-std=gnu99',
+      ],
+      'xcode_settings': {
+        'OTHER_CFLAGS': [
+          '-Wno-unused-value',
+          '-Wno-unused-function',
+          '-Wno-unused-variable',
+          '-std=gnu99',
+        ],
+      },
+
       'direct_dependent_settings': {
         'include_dirs': [
           "<(c_ares_path)/",
@@ -408,15 +439,19 @@
         '<(lua_bitop_path)/bit.c'
       ],
 
-      # Lua uses tmpname and has empty bodies
+      # Lua uses tmpname and has empty bodies and doesn't use some vars
       'cflags': [
         '-Wno-deprecated-declarations',
         '-Wno-empty-body',
+        '-Wno-unused-but-set-variable',
+        '-Wno-unused-value',
       ],
       'xcode_settings': {
         'OTHER_CFLAGS': [
           '-Wno-deprecated-declarations',
           '-Wno-empty-body',
+          '-Wno-unused-but-set-variable',
+          '-Wno-unused-value',
         ],
       },
 

@@ -28,7 +28,7 @@ ssize_t tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t buf_len)
 
 int tm_ssl_context_create (tm_ssl_ctx_t* ctx)
 {
-    int res, i = 2;
+    int i = 0;
     // uint16_t port = 4433;
     uint32_t options = SSL_SERVER_VERIFY_LATER|SSL_DISPLAY_CERTS;
     // int client_fd;
@@ -41,7 +41,7 @@ int tm_ssl_context_create (tm_ssl_ctx_t* ctx)
     // SSL *ssl = NULL;
     // int quiet = 0;
     int cert_index = 0, ca_cert_index = 0;
-    int cert_size, ca_cert_size;
+    int cert_size = 0, ca_cert_size = 0;
     char **ca_cert, **cert;
     // uint8_t session_id[SSL_SESSION_ID_SIZE];
     // fd_set read_set;
@@ -113,7 +113,7 @@ int tm_ssl_context_free (tm_ssl_ctx_t *ctx)
 
 int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ctx, tm_socket_t client_fd)
 {
-    int res, i = 2;
+    int res;
     int quiet = 0;
 
 	tm_ssl_ctx_t ssl_ctx = ctx;
