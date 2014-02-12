@@ -492,11 +492,6 @@ global.process.versions = js_obj({
 global.process.EventEmitter = EventEmitter
 global.process.argv = js_arr({})
 global.process.env = js_obj({})
-global.process.stdin = js_obj({
-  resume = function () end,
-  setEncoding = function () end
-})
-global.process.stdout = js_obj({})
 global.process.exit = function (this, code)
   if not global.process._exited then
     global.process._exited = true

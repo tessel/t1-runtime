@@ -48,3 +48,10 @@ if not _G.COLONY_EMBED then
     return output
   end
 end
+
+-- Set up builtin dependencies
+do 
+  local Stream = colony.run('stream').Stream
+  colony.global.process.stdin = colony.js_new(Stream)
+  colony.global.process.stdout = colony.js_new(Stream)
+end

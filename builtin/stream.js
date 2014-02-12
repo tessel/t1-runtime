@@ -15,6 +15,10 @@ Stream.prototype.pipe = function (target) {
   })
   return target;
 }
+Stream.prototype.resume = function () {
+}
+Stream.prototype.setEncoding = function () {
+}
 
 module.exports = Stream;
 Stream.Stream = Stream;
