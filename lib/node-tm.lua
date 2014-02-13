@@ -419,30 +419,43 @@ EventEmitter.prototype.listeners = function (this, type)
   return this._events[type]
 end
 
-EventEmitter.prototype.on = function (this, type, f)
+EventEmitter.prototype.addListener = function (this, type, f)
+  if (f.listener) then this:emit("newListener", type, f.listener);
+  else this:emit("newListener", type, f);
+  end
   if this._maxListeners ~= 0 and this:listeners(type):push(f) > (this._maxListeners or 10) then
     global.console:warn("Possible EventEmitter memory leak detected. " + this._events[type].length + " listeners added. Use emitter.setMaxListeners() to increase limit.")
   end
-  this:emit("newListener", type, f)
   return this
 end
 
-EventEmitter.prototype.addListener = EventEmitter.prototype.on
+EventEmitter.prototype.on = EventEmitter.prototype.addListener
 
 EventEmitter.prototype.once = function (this, type, f)
-  local g = function (this, ...)
+  g = function (this, ...)
+    this:removeListener(type, g);
     f(this, ...)
-    this:removeListener(type, g)
   end
+  g.listener = f;
   this:on(type, g)
 end
 
 EventEmitter.prototype.removeListener = function (this, type, f)
-  local i = this:listeners(type):indexOf(f);
-  if i ~= -1 then
-    this:emit("removeListener", type, f)
-    this.listeners(type):splice(i, 1)
+
+  local i = this:listeners(type):indexOf(f); 
+  local callback = f;
+
+  if (f.listener) then
+    callback = f.listener;
   end
+
+  -- If the listener wasn't found 
+  if i ~= -1 then 
+    -- the index is the index of the callback listener
+    this:emit("removeListener", type, callback);
+    this:listeners(type):splice(i, 1);
+  end
+  
   return this
 end
 
@@ -471,6 +484,7 @@ end
 
 EventEmitter.prototype.setMaxListeners = function (this, maxListeners)
   this._maxListeners = maxListeners;
+  return this;
 end
 
 
