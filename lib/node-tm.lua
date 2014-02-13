@@ -452,20 +452,43 @@ EventEmitter.prototype.removeListener = function (this, type, f)
   -- If the listener wasn't found 
   if i ~= -1 then 
     -- the index is the index of the callback listener
-    this:emit("removeListener", type, callback);
     this:listeners(type):splice(i, 1);
+    if (this:listeners(type)) then
+      this:emit("removeListener", type, callback);
+    end
+    
   end
   
   return this
 end
 
 EventEmitter.prototype.removeAllListeners = function (this, type)
-  for k in js_pairs(this._events) do
-    if not type or type == k then
-      this._events[k]:splice(0, this._events[k].length)
-    end
+  
+  -- If no events, just return
+  if (not this._events) then
+    return;
   end
-  return this
+
+  -- If no args were passed in, delete all possible listeners
+  if (not type or type.length == 0) then
+    for k in js_pairs(this._events) do
+      if (k ~= "removeListener") then
+        this:removeAllListeners(k);
+      end
+    end
+    this:removeAllListeners('removeListener');
+    this._events = js_obj({});
+    return this;
+  end
+
+  -- grab listeners for this event
+  local listeners = this:listeners(type);
+
+  -- Remove each of them
+  for k in pairs(listeners) do
+    this:removeListener(type, listeners[k]);
+  end
+  return this;
 end
 
 EventEmitter.prototype.emit = function (this, type, ...)
