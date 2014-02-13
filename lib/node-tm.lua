@@ -420,10 +420,10 @@ EventEmitter.prototype.listeners = function (this, type)
 end
 
 EventEmitter.prototype.on = function (this, type, f)
+  this:emit("newListener", type, f)
   if this._maxListeners ~= 0 and this:listeners(type):push(f) > (this._maxListeners or 10) then
     global.console:warn("Possible EventEmitter memory leak detected. " + this._events[type].length + " listeners added. Use emitter.setMaxListeners() to increase limit.")
   end
-  this:emit("newListener", type, f)
   return this
 end
 
