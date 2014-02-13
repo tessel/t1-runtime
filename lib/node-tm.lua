@@ -419,29 +419,48 @@ EventEmitter.prototype.listeners = function (this, type)
   return this._events[type]
 end
 
-EventEmitter.prototype.on = function (this, type, f)
-  this:emit("newListener", type, f)
+EventEmitter.prototype.addListener = function (this, type, f)
+  if (this:listeners("newListener")) then 
+    if (f.listener) then this:emit("newListener", type, f.listener);
+    else this:emit("newListener", type, f);
+    end
+  end
   if this._maxListeners ~= 0 and this:listeners(type):push(f) > (this._maxListeners or 10) then
     global.console:warn("Possible EventEmitter memory leak detected. " + this._events[type].length + " listeners added. Use emitter.setMaxListeners() to increase limit.")
   end
   return this
 end
 
-EventEmitter.prototype.addListener = EventEmitter.prototype.on
+EventEmitter.prototype.on = EventEmitter.prototype.addListener
 
 EventEmitter.prototype.once = function (this, type, f)
-  local g = function (this, ...)
+  g = function (this, ...)
+    this:removeListener(type, g);
     f(this, ...)
-    this:removeListener(type, g)
   end
+  g.listener = f;
   this:on(type, g)
 end
 
 EventEmitter.prototype.removeListener = function (this, type, f)
-  local i = this:listeners(type):indexOf(f);
-  if i ~= -1 then
+-- if indexof f is -1 and 
+  local fIndex = -1; 
+  local listenerInd = -1;
+  -- Get index of the passed in listener in listeners
+  fIndex = this:listeners(type):indexOf(f);
+  -- If the listener also has a listener (ie. from calling 'once') grab that index
+  if (f.listener) then 
+    listenerInd = this:listeners(type):indexOf(f.listener); 
+  end
+
+  -- If the listener wasn't found 
+  if listenerInd ~= -1 then 
+    -- the index is the index of the callback listener
+    this:emit("removeListener", type, f.listener);
+    this:listeners(type):splice(listenerInd, 1);
+  elseif fIndex ~= -1 then
     this:emit("removeListener", type, f)
-    this.listeners(type):splice(i, 1)
+    this:listeners(type):splice(fIndex, 1)
   end
   return this
 end
@@ -471,6 +490,7 @@ end
 
 EventEmitter.prototype.setMaxListeners = function (this, maxListeners)
   this._maxListeners = maxListeners;
+  return this;
 end
 
 
