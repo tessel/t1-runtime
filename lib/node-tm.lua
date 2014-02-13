@@ -420,10 +420,8 @@ EventEmitter.prototype.listeners = function (this, type)
 end
 
 EventEmitter.prototype.addListener = function (this, type, f)
-  if (this:listeners("newListener")) then 
-    if (f.listener) then this:emit("newListener", type, f.listener);
-    else this:emit("newListener", type, f);
-    end
+  if (f.listener) then this:emit("newListener", type, f.listener);
+  else this:emit("newListener", type, f);
   end
   if this._maxListeners ~= 0 and this:listeners(type):push(f) > (this._maxListeners or 10) then
     global.console:warn("Possible EventEmitter memory leak detected. " + this._events[type].length + " listeners added. Use emitter.setMaxListeners() to increase limit.")
@@ -443,25 +441,21 @@ EventEmitter.prototype.once = function (this, type, f)
 end
 
 EventEmitter.prototype.removeListener = function (this, type, f)
--- if indexof f is -1 and 
-  local fIndex = -1; 
-  local listenerInd = -1;
-  -- Get index of the passed in listener in listeners
-  fIndex = this:listeners(type):indexOf(f);
-  -- If the listener also has a listener (ie. from calling 'once') grab that index
-  if (f.listener) then 
-    listenerInd = this:listeners(type):indexOf(f.listener); 
+
+  local i = this:listeners(type):indexOf(f); 
+  local callback = f;
+
+  if (f.listener) then
+    callback = f.listener;
   end
 
   -- If the listener wasn't found 
-  if listenerInd ~= -1 then 
+  if i ~= -1 then 
     -- the index is the index of the callback listener
-    this:emit("removeListener", type, f.listener);
-    this:listeners(type):splice(listenerInd, 1);
-  elseif fIndex ~= -1 then
-    this:emit("removeListener", type, f)
-    this:listeners(type):splice(fIndex, 1)
+    this:emit("removeListener", type, callback);
+    this:listeners(type):splice(i, 1);
   end
+  
   return this
 end
 
