@@ -46,6 +46,8 @@ function fannkuch(n) {
    } while (true);
 }
 
-var n = 1*11*1;
+var n = process.argv[2] ? Number(process.argv[2]) : 7;
+console.log('factor of', n);
+
 var pf = fannkuch(n);
 console.log(pf[0] + "\n" + "Pfannkuchen(" + n + ") = " + pf[1]);
