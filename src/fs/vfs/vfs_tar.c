@@ -44,14 +44,23 @@ int tm_fs_mount_tar(tm_fs_ent* /*&mut*/ root, char* /* & */ path, uint8_t* /* &'
 			return -1;
 		}
 
+		char filename[257];
+		filename[0] = 0;
+		if (header->prefix[0] != 0) {
+			strncpy(filename, header->prefix, 115);
+			strncat(filename, "/", 1);
+		}
+		strncat(filename, header->name, 100);
+
 		unsigned size = strtoul(header->size, 0, 8);
 
 		switch (header->typeflag) {
 			case '5': {
-				printf("dir:  %s \n", header->name);
-				r = tm_fs_mkdir(dir, header->name);
+				printf("dir:  %s \n", filename);
+				r = tm_fs_mkdir(dir, filename);
 
 				if (r != 0) {
+					printf("Error creating dir %s: %d\n", filename, r);
 					return r;
 				}
 
@@ -61,13 +70,14 @@ int tm_fs_mount_tar(tm_fs_ent* /*&mut*/ root, char* /* & */ path, uint8_t* /* &'
 			case '0':
 			case '7': {
 				unsigned mtime = strtoul(header->mtime, 0, 8);
-				printf("file: %s %u %u\n", header->name, size, mtime);
+				printf("file: %s %u %u\n", filename, size, mtime);
 				const uint8_t* data = ptr + tar_block;
 
 				tm_fs_ent* ent = tm_fs_raw_file_from_buf(data, size, mtime);
-				r = tm_fs_insert(dir, header->name, ent);
+				r = tm_fs_insert(dir, filename, ent);
 
 				if (r != 0) {
+					printf("Error creating file %s: %d\n", filename, r);
 					tm_fs_destroy(ent);
 					return r;
 				}
@@ -75,7 +85,7 @@ int tm_fs_mount_tar(tm_fs_ent* /*&mut*/ root, char* /* & */ path, uint8_t* /* &'
 				break;
 			}
 			default: {
-				printf("Ignoring unknown type %u\n", header->typeflag);
+				printf("Ignoring unknown type %u: %s\n", header->typeflag, filename);
 				break;
 			}
 		}
