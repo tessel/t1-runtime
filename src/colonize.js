@@ -615,12 +615,12 @@ module.exports = function (src, _wrapmodule) {
     .replace(/^#.*\n/, '')
     + '\n;' // prevent "then end" wrapping to next line
   return String(falafel(src, { tolerant: true }, colonize))
-    // inline lingering comments are converted to lua comments
-    .replace(/^(([^"']|"[^"]*"|'[^']*')*?)\/\//gm, '$1--')
     // replace multiline comments
     .replace(/\/\*([\S\s\n]*?)\*\//g, function (str) {
       return str.replace(/[^\n]+/g, '');
     })
+    // inline lingering comments are converted to lua comments
+    .replace(/^(([^"']|"[^"]*"|'[^']*')*?)\/\//gm, '$1--')
     // Replace trailing and beginning whitespace
     // .replace(/^\s+|\s+$/g, '')
     // Replace successive semicolons or trailing semicolons
