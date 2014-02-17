@@ -1125,7 +1125,7 @@ function _log () {
     } else if (type == 'NewExpression') {
       var ismethod = node.callee.type == 'MemberExpression'
       if (ismethod) {
-        throw new Error('Dont support inline new expressions yet');
+        throw new Error('Dont support methods as new expressions yet');
       }
       return colony_node(node, '_new(' + [node.callee].concat(node.arguments).join(', ') + ')');
 
