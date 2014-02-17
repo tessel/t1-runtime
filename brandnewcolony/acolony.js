@@ -1,5 +1,5 @@
 function _log () {
-  // console.log.apply(console, arguments);
+  // console.error.apply(console, arguments);
 }
 
 // Acorn is a tiny, fast JavaScript parser written in JavaScript.
@@ -1109,7 +1109,7 @@ function _log () {
         if (node.operator in ops) {
           node.right = '_bit.' + ops[operator] + '(' + ensureExpression(node.left) + ', ' + ensureExpression(node.right) + ')'
         } else {
-          node.right = node.left + op + node.right;
+          node.right = node.left + operator + node.right;
         }
       }
       return colony_node(node, node.left + ' = ' + ensureExpression(node.right));
@@ -1261,9 +1261,7 @@ function _log () {
       return colony_node(node, localstr + node.body.join('\n'));
 
     }
-    _log('### NOT HANDLED', type);
-    process.exit(1);
-    return node;
+    throw new Error('Colony cannot yet handle type ' + type);
   }
 
   // Test whether a statement node is the string literal `"use strict"`.

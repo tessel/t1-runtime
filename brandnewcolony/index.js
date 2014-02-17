@@ -12,13 +12,12 @@ var end = process.hrtime(start)[1]/1000000;
 // console.error('--> took ' + end + 'ms');
 
 var keywords = ['and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', 'function', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat', 'return', 'then', 'true', 'until', 'while'];
-var mask = ['string', 'math', 'print', 'type', 'pairs'];
 
 var joiner = '\n', wrapmodule = true;
 
 var source = [
   "return function (_ENV, _module)",
-  'local ' + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
+  // 'local ' + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
   "local exports, module = _module.exports, _module;",
   "",
   res,
