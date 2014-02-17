@@ -24,6 +24,7 @@ end); EventEmitter.prototype.addListener  = _r; return _r; end)();
 EventEmitter.prototype.once = (function (this, type, f)
 if this:on(type, (function (this, ...)
 local arguments = _arguments(...);
+local g = _debug.getinfo(1, 'f').func;
 if f:apply(this, arguments) then end;
 if this:removeListener(type, g) then end;
 end)) then end;
@@ -49,7 +50,7 @@ args = Array.prototype.slice:call(arguments, 1);
 i = 0;  fns = this:listeners(type):slice(); 
 while ((i)<(fns.length))do 
 if fns[i]:apply(this, args) then end;
-(function () local _r = i; i = _r + 1; return _r end)();
+local _r = i; i = _r + 1;
 end;
 if true then return fns.length; end
 end);

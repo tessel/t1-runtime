@@ -1,3 +1,7 @@
+function _log () {
+  // console.log.apply(console, arguments);
+}
+
 // Acorn is a tiny, fast JavaScript parser written in JavaScript.
 //
 // Acorn was written by Marijn Haverbeke and released under an MIT
@@ -1033,17 +1037,21 @@
 
   var colony_locals = [[]]
 
-  function colony_newScope () {
-    colony_locals.unshift([]);
+  function colony_newScope (id) {
+    var scope = [];
+    scope.id = id;
+    scope.usesId = false;
+    colony_locals.unshift(scope);
   }
 
-  function ColonyNode (type, str) { this.type = type; this.str = str; }
+  function ColonyNode (type, start, str) { this.type = type; this.start = start; this.str = str; } //this.str = '--[[' + this.start + ']] ' + str; }
   ColonyNode.prototype = new String();
   ColonyNode.prototype.valueOf = function () { return this.str; }
   ColonyNode.prototype.toString = function () { return this.str; }
 
-  function colony_node (type, str) {
-    return new ColonyNode(type, str)
+  function colony_node (node, str) {
+    _log(node)
+    return new ColonyNode(node.type, node.start, str)
   }
 
   function truthy (str) {
@@ -1057,44 +1065,64 @@
   function ensureExpression (node) {
     if (node.type == 'AssignmentExpression') {
       var _ = node.split(/=\s*/, 2), left = _[0], right = node.substr(left.length + 1);
-      return colony_node(node.type, '(function () local _r = ' + right + '; ' + left + ' = _r; return _r; end)()');
+      return colony_node(node, '(function () local _r = ' + right + '; ' + left + ' = _r; return _r; end)()');
+    } else if (node.type == 'UpdateExpression') {
+      return colony_node(node, '(function () ' + node + '; return _r; end)()')
     }
     return node;
   }
 
   function finishNode(node, type) {
-    console.error('==>', type);
+    _log('==>', type);
+
+    node.type = type;
+    node.end = lastEnd;
+    if (options.locations)
+      node.loc.end = lastEndLoc;
+    if (options.ranges)
+      node.range[1] = lastEnd;
 
     if (type == 'Identifier') {
       if (node.name == 'arguments') {
         colony_locals[0].arguments = true;
       }
-      return colony_node(type, node.name);
+      if (node.name != 'arguments' && node.name == colony_locals[0].id) {
+        // TODO this has to handle depth. potentialIds array then it checks at
+        // scopeClose if it is used, kicks it back up the chain yep.
+        colony_locals[0].usesId = true;
+      }
+      return colony_node(node, node.name);
 
     } else if (type == 'MemberExpression') {
       if (node.computed) {
-        return colony_node(type, node.object + '[' + node.property + ']');
+        return colony_node(node, node.object + '[' + node.property + ']');
       } else {
-        return colony_node(type, node.object + '.' + node.property);
+        return colony_node(node, node.object + '.' + node.property);
       }
       return str;
 
     } else if (type == 'AssignmentExpression') {
       if (node.operator != '=') {
         // TODO reassignment :(
-        node.right = node.left + node.operator.slice(0, -1) + node.right;
+        var operator = node.operator.slice(0, -1);
+        var ops = { '|': 'bor', '&': 'band', '>>': 'rshift', '<<': 'lshift' }
+        if (node.operator in ops) {
+          node.right = '_bit.' + ops[operator] + '(' + ensureExpression(node.left) + ', ' + ensureExpression(node.right) + ')'
+        } else {
+          node.right = node.left + op + node.right;
+        }
       }
-      return colony_node(type, node.left + ' = ' + ensureExpression(node.right));
+      return colony_node(node, node.left + ' = ' + ensureExpression(node.right));
 
     } else if (type == 'Literal') {
-      return colony_node(type, node.raw);
+      return colony_node(node, node.raw);
 
     } else if (type == 'CallExpression') {
       var ismethod = node.callee.type == 'MemberExpression'
       if (ismethod) {
-        // console.error(node);
+        // _log(node);
       }
-      return colony_node(type,
+      return colony_node(node,
         (ismethod ? node.callee.replace(/^(.*)\./, '$1:') : node.callee)
         + '(' + (ismethod ? [] : ['this']).concat(node.arguments.map(ensureExpression)).join(', ') + ')');
 
@@ -1103,53 +1131,61 @@
       if (ismethod) {
         throw new Error('Dont support inline new expressions yet');
       }
-      return colony_node(type, '_new(' + [node.callee].concat(node.arguments).join(', ') + ')');
+      return colony_node(node, '_new(' + [node.callee].concat(node.arguments).join(', ') + ')');
 
     } else if (type == 'ThisExpression') {
-      return colony_node(type, 'this');
+      return colony_node(node, 'this');
 
     } else if (type == 'UpdateExpression') {
       if (node.prefix) {
-        return colony_node(type, '(function () ' + node.argument + ' = ' + node.argument + ' ' + node.operator.substr(0, 1) + ' 1; return ' + node.argument + '; end)()');
-      } else { // OPTIM
-        return colony_node(type, '(function () local _r = ' + node.argument + '; ' + node.argument + ' = _r ' + node.operator.substr(0, 1) + ' 1; return _r end)()');
-        // node.update('local _r = ' + node.argument.source() + '; ' + node.argument.source() + ' = _r ' + node.operator.substr(0, 1) + ' 1;');
+        return colony_node(node, 'local _r = ' + node.argument + ' ' + node.operator.substr(0, 1) + ' 1; ' + node.argument + ' = _r')
+      } else {
+        return colony_node(node, 'local _r = ' + node.argument + '; ' + node.argument + ' = _r ' + node.operator.substr(0, 1) + ' 1')
       }
 
     } else if (type == 'ConditionalExpression') {
       return '(' + truthy(ensureExpression(node.test)) + ' and {' + ensureExpression(node.consequent) + '} or {' + ensureExpression(node.alternate) + '})[1]';
 
     } else if (type == 'UnaryExpression') {
-      var ops = { '|': 'bor', '&': 'band' }
-      if (node.operator in ops) {
-        return colony_node(type, '_bit.' + ops[node.operator] + '(' + ensureExpression(node.argument) + ')')
-      }
-      var repops = { '!': 'not ' }; // TODO finish
-      return colony_node(type, '(' + (repops[node.operator] || node.operator) + '(' + ensureExpression(node.argument) + '))')
+      var ops = { '|': '_bit.bor', '&': '_bit.band', '~': '_bit.bnot', '+': '0+', '!': 'not ', 'typeof': '_typeof' }
+      // TODO "delete" = nil
+      return colony_node(node, '(' + (ops[node.operator] || node.operator) + '(' + ensureExpression(node.argument) + '))')
 
     } else if (type == 'LogicalExpression') {
       var ops = { '&&': 'and', '||': 'or' }
-      return colony_node(type, '((' + ensureExpression(node.left) + ')' + ops[node.operator] + '(' + ensureExpression(node.right) + '))')
+      return colony_node(node, '((' + ensureExpression(node.left) + ')' + ops[node.operator] + '(' + ensureExpression(node.right) + '))')
 
     } else if (type == 'BinaryExpression') {
-      var ops = { '|': '_bit.bor', '&': '_bit.band' }
+      var ops = { '|': '_bit.bor', '&': '_bit.band', '>>': '_bit.rshift', '<<': '_bit.lshift', '>>>': '_bit.rrotate', 'instanceof': '_instanceof', 'in': '_in' }
       if (node.operator in ops) {
-        return colony_node(type, ops[node.operator] + '(' + ensureExpression(node.left) + ',' + ensureExpression(node.right) + ')')
+        return colony_node(node, ops[node.operator] + '(' + ensureExpression(node.left) + ',' + ensureExpression(node.right) + ')')
+      } else {
+        // infix
+        var infixops = { '!==': '~=', '!=': '~=', '===': '==' };
+        return colony_node(node, '((' + ensureExpression(node.left) + ')' + (infixops[node.operator] || node.operator) + '(' + ensureExpression(node.right) + '))')
       }
-      var repops = { '!==': '~=', '!=': '~=', '===': '==' }; // TODO finish
-      return colony_node(type, '((' + ensureExpression(node.left) + ')' + (repops[node.operator] || node.operator) + '(' + ensureExpression(node.right) + '))')
+
+    } else if (type == 'ArrayExpression') {
+      return colony_node(node, '_arr({' + [node.elements.length > 0 ? '[0]=' + node.elements[0] : ''].concat(node.elements.slice(1)).join(', ') + '})')
+
+    } else if (type == 'ObjectExpression') {
+      return colony_node(node, '_obj({\n  '
+        + node.properties.map(function (prop) {
+          return '[' + JSON.stringify(prop.key.toString()) + ']=' + prop.value
+        }).join(',\n  ')
+        + '\n})');
 
     } else if (type == 'IfStatement') {
-      return colony_node(type, [
+      return colony_node(node, [
         "if " + truthy(node.test) + ' then\n',
         // TODO node.consequent should be str
         (node.consequent.body ? node.consequent.body.join('\n') : node.consequent) + '\n',
-        (node.alternate ? 'else\n' + node.alternate + '\n' : ""),
+        (node.alternate ? 'else\n' + (node.alternate.body ? node.alternate.body.join('\n') : node.alternate) + '\n' : ""),
         'end;'
       ].join(''));
 
     } else if (type == 'ForStatement') {
-      return colony_node(type, [
+      return colony_node(node, [
         node.init ? node.init.declarations.join(' ') : '',
         'while ' + (node.test || 'true') + 'do ',
         //   (node.usesContinue ? 'local _c = nil; repeat' : ''),
@@ -1164,7 +1200,7 @@
       ].join('\n'))
 
     } else if (type == 'ReturnStatement') {
-      return colony_node(type, 'if true then return ' + node.argument + '; end');
+      return colony_node(node, 'if true then return ' + node.argument + '; end');
 
     } else if (type == 'ForInStatement') {
       if (node.left.kind == 'var') {
@@ -1172,7 +1208,7 @@
       } else {
         var name = node.left;
       }
-      return colony_node(type, [
+      return colony_node(node, [
         'for ' + name + ' in _pairs(' + node.right + ') do',
         !node.body.body ? node.body : node.body.body.join('\n'),
         'end;'
@@ -1180,77 +1216,53 @@
 
     } else if (type == 'ExpressionStatement') {
       if (['BinaryExpression', 'LogicalExpression', 'Literal', 'CallExpression', 'ConditionalExpression'].indexOf(node.expression.type) > -1) {
-        var ret = colony_node(type, 'if ' + node.expression + ' then end;');
+        var ret = colony_node(node, 'if ' + node.expression + ' then end;');
       } else {
-        var ret = colony_node(type, node.expression + ';');
+        var ret = colony_node(node, node.expression + ';');
       }
       ret.expression = node.expression; // TODO
       return ret;
 
-    } else if (type == 'Program') {
-      var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ';\n' : ''
-      colony_locals.shift()
-      return colony_node(type, localstr + node.body.join('\n'));
-
     } else if (type == 'VariableDeclarator') {
       colony_locals[0].push(node.id);
-      return colony_node(type, node.id + ' = ' + node.init + '; ')
+      return colony_node(node, node.id + ' = ' + node.init + '; ')
 
     } else if (type == 'VariableDeclaration') {
-      return colony_node(type, node.declarations.join(' '));
+      return colony_node(node, node.declarations.join(' '));
 
     } else if (type == 'BlockStatement') {
       return node; // oh
       // return 'do\n' + node.body.join('\n') + 'end\n'
 
-    } else if (type == 'FunctionExpression') {
+    } else if (type == 'FunctionExpression' || type == 'FunctionDeclaration') {
       var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ';\n' : ''
       var usesArguments = !!colony_locals[0].arguments;
+      var usesId = colony_locals[0].usesId;
       colony_locals.shift()
-      return colony_node(type, '(function ('
+      if (type == 'FunctionDeclaration') {
+        colony_locals[0].push(node.id);
+      }
+      return colony_node(node,
+        (type == 'FunctionDeclaration' ? (node.id ? node.id + ' = ' : '') + 'function (' : '(function (')
         + (usesArguments
           ? 'this, ...)\n' + (node.params.length ? 'local ' + node.params.join(', ') + ' = ...;\n' : '') + 'local arguments = _arguments(...);\n'
           : ['this'].concat(node.params).join(', ') + ')\n')
+        + (usesId ? 'local ' + node.id + ' = _debug.getinfo(1, \'f\').func;\n' : '')
         + localstr
-        + node.body.body.join('\n') + '\nend)');
-
-    } else if (type == 'FunctionDeclaration') {
-      var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ';\n' : ''
-      var usesArguments = !!colony_locals[0].arguments;
-      colony_locals.shift()
-      colony_locals[0].push(node.id);
-      return colony_node(type,
-        (node.id ? node.id + ' = ' : '')
-        + 'function ('
-        + (usesArguments
-          ? 'this, ...)\n' + (node.params.length ? 'local ' + node.params.join(', ') + ' = ...;\n' : '') + 'local arguments = _arguments(...);\n'
-          : ['this'].concat(node.params).join(', ') + ')\n')
-        + localstr
-        + node.body.body.join('\n') + '\nend\n');
-
-    } else if (type == 'ArrayExpression') {
-      return colony_node(type, '_arr({' + [node.elements.length > 0 ? '[0]=' + node.elements[0] : ''].concat(node.elements.slice(1)).join(', ') + '})')
-
-    } else if (type == 'ObjectExpression') {
-      return colony_node(type, '_obj({\n  '
-        + node.properties.map(function (prop) {
-          return '[' + JSON.stringify(prop.key) + ']=' + prop.value
-        }).join(',\n  ')
-        + '\n})');
+        + node.body.body.join('\n')
+        + (type == 'FunctionDeclaration' ? '\nend\n' : '\nend)'));
 
     } else if (type == 'EmptyStatement') {
-      return colony_node(type, '');
+      return colony_node(node, '');
+
+    } else if (type == 'Program') {
+      var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ';\n' : ''
+      colony_locals.shift()
+      return colony_node(node, localstr + node.body.join('\n'));
 
     }
-    console.error('### NOT HANDLED', type);
+    _log('### NOT HANDLED', type);
     process.exit(1);
-
-    node.type = type;
-    node.end = lastEnd;
-    if (options.locations)
-      node.loc.end = lastEndLoc;
-    if (options.ranges)
-      node.range[1] = lastEnd;
     return node;
   }
 
@@ -1904,7 +1916,6 @@
   // `isStatement` parameter).
 
   function parseFunction(node, isStatement) {
-    colony_newScope();
     if (tokType === _name) node.id = parseIdent();
     else if (isStatement) unexpected();
     else node.id = null;
@@ -1915,6 +1926,9 @@
       if (!first) expect(_comma); else first = false;
       node.params.push(parseIdent());
     }
+
+    // COLONY
+    colony_newScope(node.id);
 
     // Start a new scope with regard to labels and the `inFunction`
     // flag (restore them to their old value afterwards).

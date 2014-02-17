@@ -9,9 +9,9 @@ if (process.argv.length < 3) {
 var start = process.hrtime();
 var res = acorn.parse(fs.readFileSync(process.argv[2]))
 var end = process.hrtime(start)[1]/1000000;
-console.error('--> took ' + end + 's');
+// console.error('--> took ' + end + 'ms');
 
-var keywords = ['end', 'do', 'nil', 'error', 'until', 'repeat', 'local', 'in'];
+var keywords = ['and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', 'function', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat', 'return', 'then', 'true', 'until', 'while'];
 var mask = ['string', 'math', 'print', 'type', 'pairs'];
 
 var joiner = '\n', wrapmodule = true;
