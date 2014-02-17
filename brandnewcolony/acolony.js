@@ -1071,12 +1071,16 @@ function _log () {
   function finishNode(node, type) {
     _log('==>', type);
 
+    // Correct for acorn not setting lastEnd properly (fixed in later builds)
     node.type = type;
     node.end = lastEnd;
     if (options.locations)
       node.loc.end = lastEndLoc;
     if (options.ranges)
       node.range[1] = lastEnd;
+
+
+    // Basic nodes
 
     if (type == 'Identifier') {
       if (node.name == 'arguments') {
@@ -1088,6 +1092,12 @@ function _log () {
         colony_locals[0].usesId = true;
       }
       return colony_node(node, node.name);
+
+    } else if (type == 'Literal') {
+      return colony_node(node, node.raw);
+
+
+    // Expressions
 
     } else if (type == 'MemberExpression') {
       if (node.computed) {
@@ -1109,9 +1119,6 @@ function _log () {
         }
       }
       return colony_node(node, node.left + ' = ' + ensureExpression(node.right));
-
-    } else if (type == 'Literal') {
-      return colony_node(node, node.raw);
 
     } else if (type == 'CallExpression') {
       var ismethod = node.callee.type == 'MemberExpression'
@@ -1170,6 +1177,9 @@ function _log () {
           return '[' + JSON.stringify(prop.key.toString()) + ']=' + prop.value
         }).join(',\n  ')
         + '\n})');
+
+
+    // Statements
 
     } else if (type == 'IfStatement') {
       return colony_node(node, [
@@ -1230,6 +1240,12 @@ function _log () {
       return node; // oh
       // return 'do\n' + node.body.join('\n') + 'end\n'
 
+    } else if (type == 'EmptyStatement') {
+      return colony_node(node, '');
+
+
+    // Contexts
+
     } else if (type == 'FunctionExpression' || type == 'FunctionDeclaration') {
       var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ';\n' : ''
       var usesArguments = !!colony_locals[0].arguments;
@@ -1247,9 +1263,6 @@ function _log () {
         + localstr
         + node.body.body.join('\n')
         + (type == 'FunctionDeclaration' ? '\nend\n' : '\nend)'));
-
-    } else if (type == 'EmptyStatement') {
-      return colony_node(node, '');
 
     } else if (type == 'Program') {
       var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ';\n' : ''
