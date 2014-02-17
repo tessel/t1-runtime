@@ -1054,10 +1054,6 @@ function _log () {
     return new ColonyNode(node.type, node.start, str)
   }
 
-  function truthy (str) {
-    return str;
-  }
-
   function fixIdentifiers (str) {
     return str;
   }
@@ -1144,7 +1140,7 @@ function _log () {
       }
 
     } else if (type == 'ConditionalExpression') {
-      return '(' + truthy(ensureExpression(node.test)) + ' and {' + ensureExpression(node.consequent) + '} or {' + ensureExpression(node.alternate) + '})[1]';
+      return '(' + ensureExpression(node.test) + ' and {' + ensureExpression(node.consequent) + '} or {' + ensureExpression(node.alternate) + '})[1]';
 
     } else if (type == 'UnaryExpression') {
       var ops = { '|': '_bit.bor', '&': '_bit.band', '~': '_bit.bnot', '+': '0+', '!': 'not ', 'typeof': '_typeof' }
@@ -1177,7 +1173,7 @@ function _log () {
 
     } else if (type == 'IfStatement') {
       return colony_node(node, [
-        "if " + truthy(node.test) + ' then\n',
+        "if " + node.test + ' then\n',
         // TODO node.consequent should be str
         (node.consequent.body ? node.consequent.body.join('\n') : node.consequent) + '\n',
         (node.alternate ? 'else\n' + (node.alternate.body ? node.alternate.body.join('\n') : node.alternate) + '\n' : ""),
