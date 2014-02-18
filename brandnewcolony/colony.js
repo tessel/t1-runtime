@@ -66,13 +66,8 @@ function _log () {
     // trailing commas in array and object literals.
     allowTrailingCommas: true,
     // By default, reserved words are not enforced. Enable
-    // `forbidReserved` to enforce them. When this option has the
-    // value "everywhere", reserved words and keywords can also not be
-    // used as property names.
+    // `forbidReserved` to enforce them.
     forbidReserved: false,
-    // When enabled, a return at the top level is not considered an
-    // error.
-    allowReturnOutsideFunction: false,
     // When `locations` is on, `loc` properties holding objects with
     // `start` and `end` properties in `{line, column}` form (with
     // line being 1-based and column 0-based) will be attached to the
@@ -86,8 +81,7 @@ function _log () {
     // character offsets that denote the start and end of the comment.
     // When the `locations` option is on, two more parameters are
     // passed, the full `{line, column}` locations of the start and
-    // end of the comments. Note that you are not allowed to call the
-    // parser from the callback—that will corrupt its internal state.
+    // end of the comments.
     onComment: null,
     // Nodes have their start and end characters offsets recorded in
     // `start` and `end` properties (directly on the node, rather than
@@ -151,7 +145,6 @@ function _log () {
 
     var t = {};
     function getToken(forceRegexp) {
-      lastEnd = tokEnd;
       readToken(forceRegexp);
       t.start = tokStart; t.end = tokEnd;
       t.startLoc = tokStartLoc; t.endLoc = tokEndLoc;
@@ -778,13 +771,7 @@ function _log () {
     // here (don't ask).
     var mods = readWord1();
     if (mods && !/^[gmsiy]*$/.test(mods)) raise(start, "Invalid regexp flag");
-    try {
-      var value = new RegExp(content, mods);
-    } catch (e) {
-      if (e instanceof SyntaxError) raise(start, e.message);
-      raise(e);
-    }
-    return finishToken(_regexp, value);
+    return finishToken(_regexp, new RegExp(content, mods));
   }
 
   // Read an integer in the given radix. Return null if zero digits
@@ -947,8 +934,13 @@ function _log () {
   function readWord() {
     var word = readWord1();
     var type = _name;
-    if (!containsEsc && isKeyword(word))
-      type = keywordTypes[word];
+    if (!containsEsc) {
+      if (isKeyword(word)) type = keywordTypes[word];
+      else if (options.forbidReserved &&
+               (options.ecmaVersion === 3 ? isReservedWord3 : isReservedWord5)(word) ||
+               strict && isStrictReservedWord(word))
+        raise(tokStart, "The keyword '" + word + "' is reserved");
+    }
     return finishToken(type, word);
   }
 
@@ -988,7 +980,7 @@ function _log () {
 
   function setStrict(strct) {
     strict = strct;
-    tokPos = tokStart;
+    tokPos = lastEnd;
     if (options.locations) {
       while (tokPos < tokLineStart) {
         tokLineStart = input.lastIndexOf("\n", tokLineStart - 2) + 1;
@@ -1607,8 +1599,7 @@ node.finalizer ? node.finalizer : ''
       return finishNode(node, "IfStatement");
 
     case _return:
-      if (!inFunction && !options.allowReturnOutsideFunction)
-        raise(tokStart, "'return' outside of function");
+      if (!inFunction && !options.tolerant) raise(tokStart, "'return' outside of function");
       next();
 
       // In `return` (and `break`/`continue`), the keywords with
@@ -1696,7 +1687,6 @@ node.finalizer ? node.finalizer : ''
       labels.push(loopLabel);
       colony_newFlow('while');
       node.body = parseStatement();
-      labels.pop();
       return finishNode(node, "WhileStatement");
 
     case _with:
@@ -2149,20 +2139,7 @@ node.finalizer ? node.finalizer : ''
 
   function parseIdent(liberal) {
     var node = startNode();
-    if (liberal && options.forbidReserved == "everywhere") liberal = false;
-    if (tokType === _name) {
-      if (!liberal &&
-          (options.forbidReserved &&
-           (options.ecmaVersion === 3 ? isReservedWord3 : isReservedWord5)(tokVal) ||
-           strict && isStrictReservedWord(tokVal)) &&
-          input.slice(tokStart, tokEnd).indexOf("\\") == -1)
-        raise(tokStart, "The keyword '" + tokVal + "' is reserved");
-      node.name = tokVal;
-    } else if (liberal && tokType.keyword) {
-      node.name = tokType.keyword;
-    } else {
-      unexpected();
-    }
+    node.name = tokType === _name ? tokVal : (liberal && !options.forbidReserved && tokType.keyword) || unexpected();
     tokRegexpAllowed = false;
     next();
     return finishNode(node, "Identifier");
