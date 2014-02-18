@@ -1,5 +1,4 @@
 var fs = require('fs')
-  , falafel = require('falafel')
   , colors = require('colors')
   , path = require('path')
   , spawn = require('child_process').spawn;

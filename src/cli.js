@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 var fs = require('fs')
-  , falafel = require('falafel')
   , colors = require('colors')
   , path = require('path')
   , optimist = require('optimist');
