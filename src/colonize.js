@@ -88,6 +88,14 @@ function ensureExpression (node) {
   return node;
 }
 
+function ensureStatement (node) {
+  if (node.type == 'BinaryExpression' || node.type == 'LogicalExpression' || node.type == 'UpdateExpression' || node.type == 'Literal' || node.type == 'CallExpression' || node.type == 'ConditionalExpression') {
+    return colony_node(node, node + ';');
+  } else {
+    return colony_node(node, 'if ' + node.replace(/;?$/, '') + ' then end;');
+  }
+}
+
 var lasttype = null;
 
 function finishNode(node, type) {
@@ -304,11 +312,7 @@ function finishNode(node, type) {
       (flow.usesContinue ? 'local _c = nil; repeat' : ''),
       !node.body.body ? node.body : node.body.body.join('\n'),
       (flow.usesContinue ? 'until true;\nif _c == _break then break end;' : ''),
-      (node.update ? node.update + ';' : ''),
-    //     // TODO this should use ensureStatement()
-    //     ? (node.update.type == 'BinaryExpression' || node.update.type == 'LogicalExpression' || node.update.type == 'UpdateExpression' || node.update.type == 'Literal' || node.update.type == 'CallExpression' || node.update.type == 'ConditionalExpression'
-    //       ? node.update.source()
-    //       : 'if ' + node.update.source().replace(/;?$/, '') + ' then end;')
+      (node.update ? ensureStatement(node.update) : ''),
       'end;'
     ].join('\n'))
 
