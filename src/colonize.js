@@ -90,7 +90,7 @@ function ensureExpression (node) {
 }
 
 function ensureStatement (node) {
-  if (node.type == 'BinaryExpression' || node.type == 'AssignmentExpression' || node.type == 'LogicalExpression' || node.type == 'UpdateExpression' || node.type == 'Literal' || node.type == 'CallExpression' || node.type == 'ConditionalExpression') {
+  if (['BinaryExpression', 'AssignmentExpression', 'LogicalExpression', 'UpdateExpression', 'Literal', 'CallExpression', 'ConditionalExpression'].indexOf(node.type) > -1) {
     return colony_node(node, node + ';');
   } else {
     return colony_node(node, 'if ' + node.replace(/;?$/, '') + ' then end;');
@@ -160,14 +160,14 @@ function finishNode(node, type) {
     var ismethod = node.callee.type == 'MemberExpression'
     return colony_node(node,
       (ismethod ? hygenify(node.callee).replace(/^([\s\S]+)\./, '$1:') : hygenify(node.callee))
-      + '(' + (ismethod ? [] : ['this']).concat(node.arguments.map(ensureExpression)).join(', ') + ')');
+      + '(' + (ismethod ? [] : ['this']).concat(node.arguments.map(hygenify).map(ensureExpression)).join(', ') + ')');
 
   } else if (type == 'NewExpression') {
     var ismethod = node.callee.type == 'MemberExpression'
     if (ismethod) {
       throw new Error('Dont support methods as new expressions yet');
     }
-    return colony_node(node, '_new(' + [node.callee].concat(node.arguments).join(', ') + ')');
+    return colony_node(node, '_new(' + [node.callee].concat(node.arguments.map(hygenify)).join(', ') + ')');
 
   } else if (type == 'ThisExpression') {
     return colony_node(node, 'this');
@@ -225,7 +225,7 @@ function finishNode(node, type) {
 
   } else if (type == 'IfStatement') {
     return colony_node(node, [
-      "if " + node.test + ' then\n',
+      "if " + hygenify(node.test) + ' then\n',
       // TODO node.consequent should be a string, here is body
       (node.consequent.body ? node.consequent.body.join('\n') : node.consequent) + '\n',
       (node.alternate ? 'else\n' + (node.alternate.body ? node.alternate.body.join('\n') : node.alternate) + '\n' : ""),
@@ -248,7 +248,7 @@ function finishNode(node, type) {
     ].join('\n'))
 
   } else if (type == 'ExpressionStatement') {
-    if (['BinaryExpression', 'UnaryExpression', 'LogicalExpression', 'Literal', 'CallExpression', 'ConditionalExpression', 'MemberExpression', 'ConditionalExpression'].indexOf(node.expression.type) > -1) {
+    if (['BinaryExpression', 'UnaryExpression', 'LogicalExpression', 'Literal', 'ConditionalExpression', 'MemberExpression', 'ConditionalExpression'].indexOf(node.expression.type) > -1) {
       var ret = colony_node(node, 'if ' + hygenify(node.expression) + ' then end;');
     } else {
       var ret = colony_node(node, hygenify(node.expression) + ';');
@@ -420,14 +420,14 @@ node.finalizer ? node.finalizer : ''
     var usesId = colony_locals[0].usesId;
     colony_locals.shift()
     if (type == 'FunctionDeclaration') {
-      colony_locals[0].push(node.id);
+      colony_locals[0].push(hygenifystr(node.id));
     }
     return colony_node(node,
       (type == 'FunctionDeclaration' ? (node.id ? hygenifystr(node.id) + ' = ' : '') + 'function (' : '(function (')
       + (usesArguments
-        ? 'this, ...)\n' + (node.params.length ? 'local ' + node.params.join(', ') + ' = ...;\n' : '') + 'local arguments = _arguments(...);\n'
-        : ['this'].concat(node.params).join(', ') + ')\n')
-      + (usesId ? 'local ' + node.id + ' = _debug.getinfo(1, \'f\').func;\n' : '')
+        ? 'this, ...)\n' + (node.params.length ? 'local ' + node.params.map(hygenifystr).join(', ') + ' = ...;\n' : '') + 'local arguments = _arguments(...);\n'
+        : ['this'].concat(node.params.map(hygenifystr)).join(', ') + ')\n')
+      + (usesId ? 'local ' + hygenifystr(node.id) + ' = _debug.getinfo(1, \'f\').func;\n' : '')
       + localstr
       + node.body.body.join('\n')
       + (type == 'FunctionDeclaration' ? '\nend\n' : '\nend)'));
