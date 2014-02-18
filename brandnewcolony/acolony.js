@@ -1,5 +1,5 @@
 function _log () {
-  // console.error.apply(console, arguments);
+//  console.error.apply(console, arguments);
 }
 
 // Acorn is a tiny, fast JavaScript parser written in JavaScript.
@@ -1035,13 +1035,28 @@ function _log () {
 
   // Finish an AST node, adding `type` and `end` properties.
 
-  var colony_locals = [[]]
+  var colony_locals = [[]];
 
+  // Scopes contain ids, locals, etc: [ 0, 1, ..., id, usesId ]
   function colony_newScope (id) {
     var scope = [];
     scope.id = id;
     scope.usesId = false;
+
     colony_locals.unshift(scope);
+  }
+
+  // Flow control for loops, labeled blocks, and try statements.
+  // We create a loop every time we enter, close the loop when we leave.
+  var colony_flow = [];
+
+  function colony_newFlow (type, label) {
+    var flow = [];
+    colony_flow.unshift({
+      type: type,
+      label: label,
+      usesContinue: false
+    })
   }
 
   function ColonyNode (type, start, str) { this.type = type; this.start = start; this.str = str; } //this.str = '--[[' + this.start + ']] ' + str; }
@@ -1237,11 +1252,55 @@ function _log () {
       return colony_node(node, node.declarations.join(' '));
 
     } else if (type == 'BlockStatement') {
-      return node; // oh
+      return node; // oh?
       // return 'do\n' + node.body.join('\n') + 'end\n'
 
     } else if (type == 'EmptyStatement') {
       return colony_node(node, '');
+
+    } else if (type == 'WhileStatement') {
+      // Done with while block.
+      var flow = colony_flow.shift();
+
+      // TODO this should only scale up to a function barrier
+      var ascend = colony_flow.filter(function (l) {
+        return l.type != 'try' && l.label;
+      }).map(function (l) {
+        return l.label;
+      }).reverse();
+
+      return colony_node(node, [
+        'while ' + node.test + ' do ',
+        (flow.usesContinue ? 'local _c' + (flow.label||'') + ' = nil; repeat' : ''),
+        !node.body.body ? node.body : node.body.body.join('\n'),
+        (flow.usesContinue ? 'until true;\nif _c' + flow.label + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end;' : ''),
+        'end;'
+      ].join('\n'));
+      // var name = node.parent.type == 'LabeledStatement' ? node.parent.label.source() :'';
+
+      // var loops = getLoops(node);
+      // var ascend = loops.filter(function (l) {
+      //   return l[0] != 'TryStatement' && l[1] != null;
+      // }).map(function (l) {
+      //   return l[1];
+      // });
+
+      // node.update([
+      //   'while ' + truthy(node.test) + ' do ',
+      //   (node.usesContinue ? 'local _c' + name + ' = nil; repeat' : ''),
+      //   node.body.source(),
+      //   (node.usesContinue ? 'until true;' + joiner + 'if _c' + name + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end;' : ''),
+      //   'end;'
+      // ].join(joiner))
+
+
+    // Nested loop control
+
+    } else if (type == 'BreakStatement') {
+      return colony_node(node, [
+        (colony_flow[0].usesContinue ? "_c" + (node.label||'') + " = _break; " : ''),
+        (colony_flow[0] || {}).type == 'try' ? 'return _break;' : 'break;'
+      ].join(''));
 
 
     // Contexts
@@ -1533,6 +1592,7 @@ function _log () {
       next();
       node.test = parseParenExpression();
       labels.push(loopLabel);
+      colony_newFlow('while', loopLabel);
       node.body = parseStatement();
       labels.pop();
       return finishNode(node, "WhileStatement");
