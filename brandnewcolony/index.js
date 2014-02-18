@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-var acorn = require('./acolony')
+var colony = require('./colony')
 var fs = require('fs')
 
 if (process.argv.length < 3) {
@@ -7,7 +7,7 @@ if (process.argv.length < 3) {
 }
 
 var start = process.hrtime();
-var res = acorn.parse(fs.readFileSync(process.argv[2]), {allowReturnOutsideFunction: true})
+var res = colony.parse(fs.readFileSync(process.argv[2]))
 var end = process.hrtime(start)[1]/1000000;
 // console.error('--> took ' + end + 'ms');
 

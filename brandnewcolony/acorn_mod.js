@@ -105,7 +105,16 @@
     sourceFile: null,
     // This value, if given, is stored in every node, whether
     // `locations` is on or off.
-    directSourceFile: null
+    directSourceFile: null,
+    // Behaviors that change and listen to how acorn operates.
+    behaviors: {
+      openFor: function () { },
+      openTry: function () { },
+      openWhile: function () { },
+      openLabel: function (name) { },
+      openFunction: function (id) { },
+      closeNode: function (node, type) { }
+    }
   };
 
   function setOptions(opts) {
@@ -1046,7 +1055,7 @@
       node.loc.end = lastEndLoc;
     if (options.ranges)
       node.range[1] = lastEnd;
-    return node;
+    return options.behaviors.closeNode(node, type) || node;
   }
 
   // Test whether a statement node is the string literal `"use strict"`.
@@ -1195,6 +1204,7 @@
       // a regular `for` loop.
 
     case _for:
+      options.behaviors.openFor();
       next();
       labels.push(loopLabel);
       expect(_parenL);
@@ -1279,6 +1289,7 @@
       return finishNode(node, "ThrowStatement");
 
     case _try:
+      options.behaviors.openTry();
       next();
       node.block = parseBlock();
       node.handler = null;
@@ -1307,6 +1318,7 @@
       return finishNode(node, "VariableDeclaration");
 
     case _while:
+      options.behaviors.openWhile();
       next();
       node.test = parseParenExpression();
       labels.push(loopLabel);
@@ -1341,6 +1353,7 @@
           if (labels[i].name === maybeName) raise(expr.start, "Label '" + maybeName + "' is already declared");
         var kind = tokType.isLoop ? "loop" : tokType === _switch ? "switch" : null;
         labels.push({name: maybeName, kind: kind});
+        options.behaviors.openLabel(maybeName);
         node.body = parseStatement();
         labels.pop();
         node.label = expr;
@@ -1710,6 +1723,7 @@
       if (!first) expect(_comma); else first = false;
       node.params.push(parseIdent());
     }
+    options.behaviors.openFunction(node.id);
 
     // Start a new scope with regard to labels and the `inFunction`
     // flag (restore them to their old value afterwards).
