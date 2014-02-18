@@ -56,12 +56,23 @@ function colony_node (node, str) {
   return new ColonyNode(node.type, node.start, str)
 }
 
-function hygenify (str) {
-  if (keywords.indexOf(str) > -1) {
-    return '_K_' + str;
-  } else {
-    return str.replace(/_/g, '__').replace(/\$/g, '_S');
+function hygenifystr (str) {
+  if (['undefined', 'arguments'].indexOf(str) == -1) {
+    if (keywords.indexOf(str) > -1) {
+      return '_K_' + str;
+    } else {
+      return str.replace(/_/g, '__').replace(/\$/g, '_S');
+    }
+    // return 'COL_' + str;
   }
+  return str;
+}
+
+function hygenify (node) {
+  if (node.type == 'Identifier') {
+    return colony_node(node, hygenifystr(String(node)));
+  }
+  return node;
 }
 
 function ensureExpression (node) {
@@ -74,12 +85,18 @@ function ensureExpression (node) {
   return node;
 }
 
+var lasttype = null;
+
 function finishNode(node, type) {
   _log('==>', type);
+  if (type != 'Identifier') {
+    lasttype = type;
+  }
 
   // Basic nodes
 
   if (type == 'Identifier') {
+    // console.error('--->', lasttype);
     if (node.name == 'arguments') {
       colony_locals[0].arguments = true;
     }
@@ -105,11 +122,11 @@ function finishNode(node, type) {
 
   } else if (type == 'MemberExpression') {
     if (node.computed) {
-      return colony_node(node, node.object + '[' + node.property + ']');
+      return colony_node(node, hygenify(node.object) + '[' + hygenify(node.property) + ']');
     } else if (keywords.indexOf(String(node.property)) > -1) {
-      return colony_node(node, node.object + '[' + JSON.stringify(String(node.property)) + ']');
+      return colony_node(node, hygenify(node.object) + '[' + JSON.stringify(String(node.property)) + ']');
     } else {
-      return colony_node(node, node.object + '.' + node.property);
+      return colony_node(node, hygenify(node.object) + '.' + node.property);
     }
     return str;
 
@@ -122,10 +139,10 @@ function finishNode(node, type) {
       } else {
         // TODO we run the risk of re-interpreting node.left here
         // need a function that encapsulates that behavior
-        node.right = node.left + operator + node.right;
+        node.right = hygenify(node.left) + operator + hygenify(node.right);
       }
     }
-    return colony_node(node, node.left + ' = ' + ensureExpression(node.right));
+    return colony_node(node, hygenify(node.left) + ' = ' + ensureExpression(hygenify(node.right)));
 
   } else if (type == 'CallExpression') {
     var ismethod = node.callee.type == 'MemberExpression'
@@ -133,7 +150,7 @@ function finishNode(node, type) {
       // _log(node);
     }
     return colony_node(node,
-      (ismethod ? node.callee.replace(/^(.*)\./, '$1:') : node.callee)
+      (ismethod ? hygenify(node.callee).replace(/^(.*)\./, '$1:') : hygenify(node.callee))
       + '(' + (ismethod ? [] : ['this']).concat(node.arguments.map(ensureExpression)).join(', ') + ')');
 
   } else if (type == 'NewExpression') {
@@ -154,7 +171,7 @@ function finishNode(node, type) {
     }
 
   } else if (type == 'ConditionalExpression') {
-    return colony_node(node, '(' + ensureExpression(node.test) + ' and {' + ensureExpression(node.consequent) + '} or {' + ensureExpression(node.alternate) + '})[1]');
+    return colony_node(node, '((' + ensureExpression(hygenify(node.test)) + ') and {' + ensureExpression(hygenify(node.consequent)) + '} or {' + ensureExpression(hygenify(node.alternate)) + '})[1]');
 
   } else if (type == 'UnaryExpression') {
     if (node.operator == 'delete') {
@@ -167,31 +184,31 @@ function finishNode(node, type) {
 
   } else if (type == 'LogicalExpression') {
     var ops = { '&&': 'and', '||': 'or' }
-    return colony_node(node, '((' + ensureExpression(node.left) + ')' + ops[node.operator] + '(' + ensureExpression(node.right) + '))')
+    return colony_node(node, '((' + ensureExpression(hygenify(node.left)) + ')' + ops[node.operator] + '(' + ensureExpression(hygenify(node.right)) + '))')
 
   } else if (type == 'BinaryExpression') {
     var ops = { '|': '_bit.bor', '&': '_bit.band', '>>': '_bit.rshift', '<<': '_bit.lshift', '>>>': '_bit.rrotate', 'instanceof': '_instanceof', 'in': '_in' }
     if (node.operator in ops) {
-      return colony_node(node, ops[node.operator] + '(' + ensureExpression(node.left) + ',' + ensureExpression(node.right) + ')')
+      return colony_node(node, ops[node.operator] + '(' + ensureExpression(hygenify(node.left)) + ',' + ensureExpression(hygenify(node.right)) + ')')
     } else {
       // infix
       var infixops = { '!==': '~=', '!=': '~=', '===': '==' };
-      return colony_node(node, '((' + ensureExpression(node.left) + ')' + (infixops[node.operator] || node.operator) + '(' + ensureExpression(node.right) + '))')
+      return colony_node(node, '((' + ensureExpression(hygenify(node.left)) + ')' + (infixops[node.operator] || node.operator) + '(' + ensureExpression(hygenify(node.right)) + '))')
     }
 
   } else if (type == 'ArrayExpression') {
-    return colony_node(node, '_arr({' + [node.elements.length > 0 ? '[0]=' + node.elements[0] : ''].concat(node.elements.slice(1)).join(', ') + '}, ' + node.elements.length + ')')
+    return colony_node(node, '_arr({' + [node.elements.length > 0 ? '[0]=' + hygenify(node.elements[0]) : ''].concat(node.elements.slice(1).map(hygenify)).join(', ') + '}, ' + node.elements.length + ')')
 
   } else if (type == 'ObjectExpression') {
     return colony_node(node, '_obj({\n  '
       + node.properties.map(function (prop) {
-        return '[' + (prop.key.type == 'Literal' ? prop.key : JSON.stringify(prop.key.toString())) + ']=' + prop.value
+        return '[' + (prop.key.type == 'Literal' ? prop.key : JSON.stringify(prop.key.toString())) + ']=' + hygenify(prop.value)
       }).join(',\n  ')
       + '\n})');
 
   } else if (type == 'SequenceExpression') {
     return colony_node(node, '_seq({' + node.expressions.map(function (d) {
-      return ensureExpression(d);
+      return ensureExpression(hygenify(d));
     }).join(', ') + '})');
 
 
@@ -207,25 +224,25 @@ function finishNode(node, type) {
     ].join(''));
 
   } else if (type == 'ReturnStatement') {
-    return colony_node(node, 'if true then return ' + node.argument + '; end');
+    return colony_node(node, 'if true then return ' + hygenify(node.argument) + '; end');
 
   } else if (type == 'ForInStatement') {
     if (node.left.kind == 'var') {
-      var name = hygenify(node.left.declarations[0].str.replace(/\s*=.*$/, ''));
+      var name = hygenifystr(node.left.declarations[0].str.replace(/\s*=.*$/, ''));
     } else {
-      var name = node.left;
+      var name = hygenifystr(node.left);
     }
     return colony_node(node, [
-      'for ' + name + ' in _pairs(' + node.right + ') do',
+      'for ' + name + ' in _pairs(' + hygenify(node.right) + ') do',
       !node.body.body ? node.body : node.body.body.join('\n'),
       'end;'
     ].join('\n'))
 
   } else if (type == 'ExpressionStatement') {
     if (['BinaryExpression', 'UnaryExpression', 'LogicalExpression', 'Literal', 'CallExpression', 'ConditionalExpression', 'MemberExpression', 'ConditionalExpression'].indexOf(node.expression.type) > -1) {
-      var ret = colony_node(node, 'if ' + node.expression + ' then end;');
+      var ret = colony_node(node, 'if ' + hygenify(node.expression) + ' then end;');
     } else {
-      var ret = colony_node(node, node.expression + ';');
+      var ret = colony_node(node, hygenify(node.expression) + ';');
     }
     ret.expression = node.expression;
     // TODO we shouldn't have to leave ret.expression attached to the node,
@@ -233,8 +250,8 @@ function finishNode(node, type) {
     return ret;
 
   } else if (type == 'VariableDeclarator') {
-    colony_locals[0].push(node.id);
-    return colony_node(node, node.id + ' = ' + (node.init ? ensureExpression(node.init) : 'nil') + '; ')
+    colony_locals[0].push(hygenifystr(node.id));
+    return colony_node(node, hygenifystr(node.id) + ' = ' + (node.init ? ensureExpression(node.init) : 'nil') + '; ')
 
   } else if (type == 'VariableDeclaration') {
     return colony_node(node, node.declarations.join(' '));
@@ -310,7 +327,7 @@ node.block.body ? node.block.body.join('\n') : '',
 ].concat(node.handler ? [
 // catch clause
 'if _s == false then',
-node.handler.param + ' = _e;',
+hygenifystr(node.handler.param) + ' = _e;',
 node.handler.body ? node.handler.body.body.join('\n') : '',
 
 // break clause.
@@ -349,7 +366,7 @@ node.finalizer ? node.finalizer : ''
     ].join(''));
 
   } else if (type == 'ThrowStatement') {
-    return colony_node(node, '_error(' + node.argument + ')');
+    return colony_node(node, '_error(' + hygenify(node.argument) + ')');
 
   } else if (type == 'CatchClause') {
     return node;
@@ -369,7 +386,7 @@ node.finalizer ? node.finalizer : ''
       colony_locals[0].push(node.id);
     }
     return colony_node(node,
-      (type == 'FunctionDeclaration' ? (node.id ? node.id + ' = ' : '') + 'function (' : '(function (')
+      (type == 'FunctionDeclaration' ? (node.id ? hygenifystr(node.id) + ' = ' : '') + 'function (' : '(function (')
       + (usesArguments
         ? 'this, ...)\n' + (node.params.length ? 'local ' + node.params.join(', ') + ' = ...;\n' : '') + 'local arguments = _arguments(...);\n'
         : ['this'].concat(node.params).join(', ') + ')\n')
