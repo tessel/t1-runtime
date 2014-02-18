@@ -1,8 +1,10 @@
-/* test rig */ var t = 1, tmax = 3
+/* test rig */ var t = 1, tmax = 10
 function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + ' -', d); }
 console.log(t + '..' + tmax);
 ok(process.versions.colony, 'running in colony')
 
+_typeof = function () { ok(false, 'typeof overwritten'); }
+typeof 5;
 
 var dlow = 6;
 dlow = 5;
