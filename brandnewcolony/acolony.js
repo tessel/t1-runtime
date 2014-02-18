@@ -1172,7 +1172,7 @@ function _log () {
       }
 
     } else if (type == 'ConditionalExpression') {
-      return '(' + ensureExpression(node.test) + ' and {' + ensureExpression(node.consequent) + '} or {' + ensureExpression(node.alternate) + '})[1]';
+      return colony_node(node, '(' + ensureExpression(node.test) + ' and {' + ensureExpression(node.consequent) + '} or {' + ensureExpression(node.alternate) + '})[1]');
 
     } else if (type == 'UnaryExpression') {
       var ops = { '|': '_bit.bor', '&': '_bit.band', '~': '_bit.bnot', '+': '0+', '!': 'not ', 'typeof': '_typeof' }
@@ -1205,7 +1205,7 @@ function _log () {
 
     } else if (type == 'SequenceExpression') {
       return colony_node(node, '_seq({' + node.expressions.map(function (d) {
-        return String(d);
+        return ensureExpression(d);
       }).join(', ') + '})');
 
 
@@ -1236,7 +1236,7 @@ function _log () {
       ].join('\n'))
 
     } else if (type == 'ExpressionStatement') {
-      if (['BinaryExpression', 'LogicalExpression', 'Literal', 'CallExpression', 'ConditionalExpression'].indexOf(node.expression.type) > -1) {
+      if (['BinaryExpression', 'UnaryExpression', 'LogicalExpression', 'Literal', 'CallExpression', 'ConditionalExpression', 'MemberExpression', 'ConditionalExpression'].indexOf(node.expression.type) > -1) {
         var ret = colony_node(node, 'if ' + node.expression + ' then end;');
       } else {
         var ret = colony_node(node, node.expression + ';');
@@ -1246,7 +1246,7 @@ function _log () {
 
     } else if (type == 'VariableDeclarator') {
       colony_locals[0].push(node.id);
-      return colony_node(node, node.id + ' = ' + node.init + '; ')
+      return colony_node(node, node.id + ' = ' + (node.init ? ensureExpression(node.init) : 'nil') + '; ')
 
     } else if (type == 'VariableDeclaration') {
       return colony_node(node, node.declarations.join(' '));
@@ -1273,7 +1273,7 @@ function _log () {
       }).reverse();
 
       return colony_node(node, [
-        'while ' + node.test + ' do ',
+        'while ' + ensureExpression(node.test) + ' do ',
         (flow.usesContinue ? 'local _c' + (flow.label||'') + ' = nil; repeat' : ''),
         !node.body.body ? node.body : node.body.body.join('\n'),
         (flow.usesContinue ? 'until true;\nif _c' + flow.label + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end;' : ''),
@@ -1286,7 +1286,7 @@ function _log () {
 
       return colony_node(node, [
         node.init ? node.init.declarations.join(' ') : '',
-        'while ' + (node.test || 'true') + 'do ',
+        'while ' + (node.test ? ensureExpression(node.test) : 'true') + ' do ',
         (flow.usesContinue ? 'local _c = nil; repeat' : ''),
         !node.body.body ? node.body : node.body.body.join('\n'),
         (flow.usesContinue ? 'until true;\nif _c == _break then break end;' : ''),
