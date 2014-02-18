@@ -1,0 +1,72 @@
+return function (_ENV, _module)
+local exports, module = _module.exports, _module;
+
+local i, i, out, j, arreq, i, j;
+if console:log('1..3') then end;
+i = 0; 
+while ((i)<(5)) do 
+
+i = ((i)+(1));
+_c = _cont; if true then break; end;
+if console:log('nok') then end;
+
+end;
+if console:log('ok') then end;
+i = 0;  out = _arr({}); 
+while ((i)<(5)) do 
+local _capples = nil; repeat
+if console:log((("# Level ")+(i))) then end;
+local _r = i; i = _r + 1;
+j = 0; 
+while ((j)<(5)) do 
+local _cpears = nil; repeat
+if console:log((("# J: ")+(j))) then end;
+if out:push(((((i)+('/')))+(j))) then end;
+if ((i)==(3)) then
+_capples = _cont; if true then break; end;
+end;
+local _r = j; j = _r + 1;
+until true;
+if _cpears == _break or _capples then break end;
+end;
+until true;
+if _capples == _break then break end;
+end;
+arreq = function (this, a, b)
+local i;
+if ((a.length)~=(b.length)) then
+if true then return false; end
+end;
+i = 0; 
+while ((i)<(a.length))do 
+if ((a[i])~=(b[i])) then
+if true then return false; end
+end;
+local _r = i; i = _r + 1;
+end;
+if true then return true; end
+end
+
+if console:log((arreq(this, out, _arr({[0]='1/0', '1/1', '1/2', '1/3', '1/4', '2/0', '2/1', '2/2', '2/3', '2/4', '3/0', '4/0', '4/1', '4/2', '4/3', '4/4', '5/0', '5/1', '5/2', '5/3', '5/4'})) and {'ok'} or {'nok'})[1], 1) then end;
+if console:log('# Just say hi once then break:') then end;
+i = 0;  j = 0; 
+while ((i)<(5)) do 
+local _ca_1 = nil; repeat
+while ((j)<(5)) do 
+local _cb_1 = nil; repeat
+if ((i)==(1)) then
+_ca_1 = _cont; if true then break; end;
+end;
+_cb_1 = _break; if true then break; end;
+until true;
+if _cb_1 == _break or _ca_1 then break end;
+end;
+if console:log('# hi') then end;
+_ca_1 = _break; if true then break; end;
+until true;
+if _ca_1 == _break then break end;
+end;
+if console:log('ok') then end;
+
+return _module.exports;
+end 

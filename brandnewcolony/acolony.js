@@ -1051,9 +1051,19 @@ function _log () {
   var colony_flow = [];
 
   function colony_newFlow (type, label) {
-    var flow = [];
+    if (colony_flow[0] && colony_flow[0].type == 'label') {
+      colony_flow[0].type = type;
+    } else {
+      colony_flow.unshift({
+        type: type,
+        usesContinue: false
+      })
+    }
+  }
+
+  function colony_newFlowLabel (label) {
     colony_flow.unshift({
-      type: type,
+      type: 'label',
       label: label,
       usesContinue: false
     })
@@ -1205,21 +1215,6 @@ function _log () {
         'end;'
       ].join(''));
 
-    } else if (type == 'ForStatement') {
-      return colony_node(node, [
-        node.init ? node.init.declarations.join(' ') : '',
-        'while ' + (node.test || 'true') + 'do ',
-        //   (node.usesContinue ? 'local _c = nil; repeat' : ''),
-        !node.body.body ? node.body : node.body.body.join('\n'),
-        //   (node.usesContinue ? 'until true;' + joiner + 'if _c == _break then break end;' : ''),
-        (node.update ? node.update + ';' : ''),
-      //     // TODO make this better
-      //     ? (node.update.type == 'BinaryExpression' || node.update.type == 'LogicalExpression' || node.update.type == 'UpdateExpression' || node.update.type == 'Literal' || node.update.type == 'CallExpression' || node.update.type == 'ConditionalExpression'
-      //       ? node.update.source()
-      //       : 'if ' + node.update.source().replace(/;?$/, '') + ' then end;')
-        'end;'
-      ].join('\n'))
-
     } else if (type == 'ReturnStatement') {
       return colony_node(node, 'if true then return ' + node.argument + '; end');
 
@@ -1258,6 +1253,9 @@ function _log () {
     } else if (type == 'EmptyStatement') {
       return colony_node(node, '');
 
+
+    // Flow control
+
     } else if (type == 'WhileStatement') {
       // Done with while block.
       var flow = colony_flow.shift();
@@ -1276,31 +1274,86 @@ function _log () {
         (flow.usesContinue ? 'until true;\nif _c' + flow.label + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end;' : ''),
         'end;'
       ].join('\n'));
-      // var name = node.parent.type == 'LabeledStatement' ? node.parent.label.source() :'';
 
-      // var loops = getLoops(node);
-      // var ascend = loops.filter(function (l) {
-      //   return l[0] != 'TryStatement' && l[1] != null;
-      // }).map(function (l) {
-      //   return l[1];
-      // });
+    } else if (type == 'ForStatement') {
+      // Done with for block.
+      var flow = colony_flow.shift();
 
-      // node.update([
-      //   'while ' + truthy(node.test) + ' do ',
-      //   (node.usesContinue ? 'local _c' + name + ' = nil; repeat' : ''),
-      //   node.body.source(),
-      //   (node.usesContinue ? 'until true;' + joiner + 'if _c' + name + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end;' : ''),
-      //   'end;'
-      // ].join(joiner))
+      return colony_node(node, [
+        node.init ? node.init.declarations.join(' ') : '',
+        'while ' + (node.test || 'true') + 'do ',
+        (flow.usesContinue ? 'local _c = nil; repeat' : ''),
+        !node.body.body ? node.body : node.body.body.join('\n'),
+        (flow.usesContinue ? 'until true;\nif _c == _break then break end;' : ''),
+        (node.update ? node.update + ';' : ''),
+      //     // TODO make this better
+      //     ? (node.update.type == 'BinaryExpression' || node.update.type == 'LogicalExpression' || node.update.type == 'UpdateExpression' || node.update.type == 'Literal' || node.update.type == 'CallExpression' || node.update.type == 'ConditionalExpression'
+      //       ? node.update.source()
+      //       : 'if ' + node.update.source().replace(/;?$/, '') + ' then end;')
+        'end;'
+      ].join('\n'))
 
+    } else if (type == 'TryStatement') {
+      // Done with try block.
+      var flow = colony_flow.shift();
 
-    // Nested loop control
+      return colony_node(node, [
+'local _e = nil',
+'local _s, _r = _xpcall(function ()',
+node.block.body ? node.block.body.join('\n') : '',
+//    #{if tryStat.stats[-1..][0].type != 'ret-stat' then "return _cont" else ""}
+'    end, function (err)',
+'        _e = err',
+'    end);'
+].concat(node.handler ? [
+// catch clause
+'if _s == false then',
+node.handler.param + ' = _e;',
+node.handler.body ? node.handler.body.body.join('\n') : '',
+
+// break clause.
+'end;'
+] : []).concat([
+node.finalizer ? node.finalizer : ''
+]).concat(
+!colony_flow.length ? [] : [
+//break
+'if _r == _break then',
+(colony_flow.length && colony_flow[0].type == 'try' ? 'return _break;' : 'break;'),
+// continue clause.
+'elseif _r == _cont then',
+//'  return _r',
+(colony_flow.length && colony_flow[0].type == 'try' ? 'return _cont;' : 'break;'),
+'end;'
+      ]).join('\n'));
 
     } else if (type == 'BreakStatement') {
       return colony_node(node, [
-        (colony_flow[0].usesContinue ? "_c" + (node.label||'') + " = _break; " : ''),
-        (colony_flow[0] || {}).type == 'try' ? 'return _break;' : 'break;'
+        (colony_flow[0].usesContinue ? "_c" + (node.label||colony_flow[0].label||'') + " = _break; " : ''),
+        'if true then ' + ((colony_flow[0] || {}).type == 'try' ? 'return _break;' : 'break;') + ' end;'
       ].join(''));
+
+    } else if (type == 'ContinueStatement') {
+      colony_flow.some(function (flow) {
+        flow.usesContinue = true;
+        if (String(flow.label) == String(node.label) || !node.label) {
+          return true;
+        }
+      });
+
+      return colony_node(node, [
+        '_c' + (node.label||'') + ' = _cont; ',
+        'if true then ' + (colony_flow[0].type == 'try' ? 'return _cont;' : 'break;') + ' end;'
+      ].join(''));
+
+    } else if (type == 'ThrowStatement') {
+      return colony_node(node, '_error(' + node.argument + ')');
+
+    } else if (type == 'CatchClause') {
+      return node;
+
+    } else if (type == 'LabeledStatement') {
+      return colony_node(node.body, String(node.body));
 
 
     // Contexts
@@ -1480,6 +1533,7 @@ function _log () {
     case _for:
       next();
       labels.push(loopLabel);
+      colony_newFlow('for');
       expect(_parenL);
       if (tokType === _semi) return parseFor(node, null);
       if (tokType === _var) {
@@ -1562,6 +1616,7 @@ function _log () {
 
     case _try:
       next();
+      colony_newFlow('try');
       node.block = parseBlock();
       node.handler = null;
       if (tokType === _catch) {
@@ -1592,9 +1647,8 @@ function _log () {
       next();
       node.test = parseParenExpression();
       labels.push(loopLabel);
-      colony_newFlow('while', loopLabel);
+      colony_newFlow('while');
       node.body = parseStatement();
-      labels.pop();
       return finishNode(node, "WhileStatement");
 
     case _with:
@@ -1624,6 +1678,7 @@ function _log () {
           if (labels[i].name === maybeName) raise(expr.start, "Label '" + maybeName + "' is already declared");
         var kind = tokType.isLoop ? "loop" : tokType === _switch ? "switch" : null;
         labels.push({name: maybeName, kind: kind});
+        colony_newFlowLabel(maybeName);
         node.body = parseStatement();
         labels.pop();
         node.label = expr;
