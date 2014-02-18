@@ -1194,7 +1194,7 @@ function _log () {
       }
 
     } else if (type == 'ArrayExpression') {
-      return colony_node(node, '_arr({' + [node.elements.length > 0 ? '[0]=' + node.elements[0] : ''].concat(node.elements.slice(1)).join(', ') + '})')
+      return colony_node(node, '_arr({' + [node.elements.length > 0 ? '[0]=' + node.elements[0] : ''].concat(node.elements.slice(1)).join(', ') + '}, ' + node.elements.length + ')')
 
     } else if (type == 'ObjectExpression') {
       return colony_node(node, '_obj({\n  '

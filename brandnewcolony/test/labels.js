@@ -60,10 +60,10 @@ candy: while (i < 7) {
 	i++
 	try {
 		if (i == 3) continue candy;
-		console.log("i="+i)
-		if (i == 5) throw "Some error when i == 5"
+		console.log("# i="+i)
+		if (i == 5) throw new Error("ok # Some error when i == 5")
 	} catch (e) {
-		console.log("Error: " + e)
+		console.log(e.message)
 	}
-	console.log("Incrementing...")
+	console.log("# Incrementing...")
 }
