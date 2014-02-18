@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "async": "~0.2.9",
-    "colony": "git+https://tmTestUser:tmTestUser1@github.com/tessel/colony.git",
+    "colony": "git+https://tmTestUser:tmTestUser1@github.com/tessel/colony.git#tcr-brandnewcolony",
     "mkdirp": "~0.3.5"
   },
   "devDependencies": {
