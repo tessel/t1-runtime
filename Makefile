@@ -2,6 +2,7 @@
 
 arm : TARGET ?= tessel-runtime
 pc : TARGET ?= colony
+pc-test : TARGET ?= test-tm
 
 CONFIG ?= Release
 
@@ -16,6 +17,11 @@ arm:
 pc:
 	gyp runtime.gyp --depth=. -f ninja -R $(TARGET)
 	ninja -C out/$(CONFIG)
+
+pc-test:
+	gyp runtime.gyp --depth=. -f ninja -R $(TARGET)
+	ninja -C out/$(CONFIG)
+	./out/Release/test-tm
 
 clean:
 	ninja -v -C out/Debug -t clean
