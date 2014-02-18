@@ -90,7 +90,7 @@ function ensureExpression (node) {
 }
 
 function ensureStatement (node) {
-  if (node.type == 'BinaryExpression' || node.type == 'LogicalExpression' || node.type == 'UpdateExpression' || node.type == 'Literal' || node.type == 'CallExpression' || node.type == 'ConditionalExpression') {
+  if (node.type == 'BinaryExpression' || node.type == 'AssignmentExpression' || node.type == 'LogicalExpression' || node.type == 'UpdateExpression' || node.type == 'Literal' || node.type == 'CallExpression' || node.type == 'ConditionalExpression') {
     return colony_node(node, node + ';');
   } else {
     return colony_node(node, 'if ' + node.replace(/;?$/, '') + ' then end;');
