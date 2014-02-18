@@ -227,7 +227,7 @@ function finishNode(node, type) {
     ].join(''));
 
   } else if (type == 'ReturnStatement') {
-    return colony_node(node, 'if true then return ' + hygenify(node.argument) + '; end');
+    return colony_node(node, 'if true then return ' + (node.argument ? hygenify(node.argument) : '') + '; end');
 
   } else if (type == 'ForInStatement') {
     if (node.left.kind == 'var') {
