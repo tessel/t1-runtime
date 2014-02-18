@@ -1203,6 +1203,11 @@ function _log () {
         }).join(',\n  ')
         + '\n})');
 
+    } else if (type == 'SequenceExpression') {
+      return colony_node(node, '_seq({' + node.expressions.map(function (d) {
+        return String(d);
+      }).join(', ') + '})');
+
 
     // Statements
 
