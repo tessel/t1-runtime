@@ -308,7 +308,8 @@ function finishNode(node, type) {
     var flow = colony_flow.shift();
 
     return colony_node(node, [
-      node.init ? node.init.declarations.join(' ') : '',
+      // TODO need node.init.declarations?
+      node.init ? (node.init.declarations ? node.init.declarations.join(' ') : node.init) : '',
       'while ' + (node.test ? ensureExpression(node.test) : 'true') + ' do ',
       (flow.usesContinue ? 'local _c = nil; repeat' : ''),
       !node.body.body ? node.body : node.body.body.join('\n'),
