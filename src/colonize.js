@@ -97,18 +97,12 @@ function ensureStatement (node) {
   }
 }
 
-var lasttype = null;
-
 function finishNode(node, type) {
   _log('==>', type);
-  if (type != 'Identifier') {
-    lasttype = type;
-  }
 
   // Basic nodes
 
   if (type == 'Identifier') {
-    // console.error('--->', lasttype);
     if (node.name == 'arguments') {
       colony_locals[0].arguments = true;
     }
