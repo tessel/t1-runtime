@@ -6,7 +6,13 @@ function _log () {
 
 var keywords = ['and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', 'function', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat', 'return', 'then', 'true', 'until', 'while'];
 
-var colony_locals = [[]];
+var colony_locals, colony_flow, colony_with;
+
+function resetState () {
+  colony_locals = [[]];
+  colony_flow = [];
+  colony_with = [];
+}
 
 // Scopes contain ids, locals, etc: [ 0, 1, ..., id, usesId ]
 function colony_newScope (id) {
@@ -19,7 +25,6 @@ function colony_newScope (id) {
 
 // Flow control for loops, labeled blocks, and try statements.
 // We create a loop every time we enter, close the loop when we leave.
-var colony_flow = [];
 
 function colony_newFlow (type, label) {
   if (colony_flow[0] && colony_flow[0].type == 'label') {
@@ -39,8 +44,6 @@ function colony_newFlowLabel (label) {
     usesContinue: false
   })
 }
-
-var colony_with = [];
 
 function colony_newWith (block) {
   return colony_with.push(block);
@@ -411,6 +414,7 @@ module.exports = function (script)
 {
   var joiner = '\n', wrapmodule = true;
 
+  resetState();
   var res = acorn.parse(script, {
     allowReturnOutsideFunction: true,
     behaviors: {
