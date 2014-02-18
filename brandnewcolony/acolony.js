@@ -1033,6 +1033,8 @@ function _log () {
     return node;
   }
 
+  var keywords = ['and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', 'function', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat', 'return', 'then', 'true', 'until', 'while'];
+
   // Finish an AST node, adding `type` and `end` properties.
 
   var colony_locals = [[]];
@@ -1086,7 +1088,10 @@ function _log () {
   }
 
   function fixIdentifiers (str) {
-    return str;
+    if (keywords.indexOf(str) > -1) {
+      return '_K_' + str;
+    }
+    return str.replace(/_/g, '__').replace(/\$/g, '_S');
   }
 
   function ensureExpression (node) {
@@ -1137,6 +1142,8 @@ function _log () {
     } else if (type == 'MemberExpression') {
       if (node.computed) {
         return colony_node(node, node.object + '[' + node.property + ']');
+      } else if (keywords.indexOf(String(node.property)) > -1) {
+        return colony_node(node, node.object + '[' + JSON.stringify(String(node.property)) + ']');
       } else {
         return colony_node(node, node.object + '.' + node.property);
       }
@@ -1190,7 +1197,7 @@ function _log () {
         return colony_node(node, '(function () local _r = ' + node.argument + '; ' + node.argument + ' = nil; return _r ~= nil; end)()');
       }
 
-      var ops = { '|': '_bit.bor', '&': '_bit.band', '~': '_bit.bnot', '+': '0+', '!': 'not ', 'typeof': '_typeof' }
+      var ops = { '|': '_bit.bor', '&': '_bit.band', '~': '_bit.bnot', '+': '0+', '!': 'not ', 'typeof': '_typeof', 'void': '_void' }
       return colony_node(node, '(' + (ops[node.operator] || node.operator) + '(' + ensureExpression(node.argument) + '))')
 
     } else if (type == 'LogicalExpression') {
