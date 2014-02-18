@@ -1213,7 +1213,7 @@ function _log () {
     } else if (type == 'ObjectExpression') {
       return colony_node(node, '_obj({\n  '
         + node.properties.map(function (prop) {
-          return '[' + JSON.stringify(prop.key.toString()) + ']=' + prop.value
+          return '[' + (prop.key.type == 'Literal' ? prop.key : JSON.stringify(prop.key.toString())) + ']=' + prop.value
         }).join(',\n  ')
         + '\n})');
 
