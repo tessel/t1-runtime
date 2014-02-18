@@ -1,8 +1,8 @@
 {
   "name": "colony",
-  "version": "0.3.6",
+  "version": "0.4.0",
   "private": "true",
-  "description": "Colony compiles JavaScript to Lua 5.2 source code, using a small runtime library.",
+  "description": "Colony is a small JavaScript runtime.",
   "main": "./src/index.js",
   "directories": {
     "example": "examples"
@@ -11,13 +11,15 @@
     "colony": "./src/cli.js"
   },
   "scripts": {
-    "test": "tap test/*.js"
+    "test": "./node_modules/.bin/tap -e './src/cli.js' test/*.js"
   },
   "dependencies": {
     "colors": "~0.6.1",
-    "optimist": "~0.5.2",
-    "JSONStream": "~0.6.4",
-    "falafel": "~0.3.1"
+    "optimist": "~0.5.2"
+  },
+  "devDependencies": {
+    "tape": "~2.3.2",
+    "tap": "git+https://github.com/tcr/node-tap.git#4f96b1"
   },
   "author": "Tim Cameron Ryan",
   "license": "MIT",
