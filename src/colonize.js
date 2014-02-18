@@ -1,629 +1,422 @@
-#!/usr/bin/env node
+var acorn = require('./acorn_mod');
 
-var fs = require('fs')
-  , falafel = require('falafel')
-  , colors = require('colors')
-  , path = require('path');
-
-
-/** 
- * Colonize
- */
+function _log () {
+//  console.error.apply(console, arguments);
+}
 
 var keywords = ['and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', 'function', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat', 'return', 'then', 'true', 'until', 'while'];
 
-var mask = ['string', 'math', 'print', 'type', 'pairs'];
+var colony_locals = [[]];
 
-var joiner = '\n', wrapmodule = true;
+// Scopes contain ids, locals, etc: [ 0, 1, ..., id, usesId ]
+function colony_newScope (id) {
+  var scope = [];
+  scope.id = id;
+  scope.usesId = false;
 
-function fixIdentifiers (str) {
-  if (keywords.indexOf(str) > -1) {
-    return '_K_' + str;
+  colony_locals.unshift(scope);
+}
+
+// Flow control for loops, labeled blocks, and try statements.
+// We create a loop every time we enter, close the loop when we leave.
+var colony_flow = [];
+
+function colony_newFlow (type, label) {
+  if (colony_flow[0] && colony_flow[0].type == 'label') {
+    colony_flow[0].type = type;
+  } else {
+    colony_flow.unshift({
+      type: type,
+      usesContinue: false
+    })
   }
-  return str.replace(/_/g, '__').replace(/\$/g, '_S');
 }
 
-function uniqueStrings (arr) {
-  var o = {};
-  arr.forEach(function (k) {
-    o[k] = true;
-  });
-  return Object.keys(o);
+function colony_newFlowLabel (label) {
+  colony_flow.unshift({
+    type: 'label',
+    label: label,
+    usesContinue: false
+  })
 }
 
-function attachIdentifierToContext (id, node) {
-  // var name = fixIdentifiers(id.source());
-  var name = id.source();
-  while (node = node.parent) {
-    if (node.type == 'FunctionDeclaration' || node.type == 'Program' || node.type == 'FunctionExpression') {
-      (node.identifiers || (node.identifiers = [])).push(name);
-      node.identifiers = uniqueStrings(node.identifiers);
-      return;
+var colony_with = [];
+
+function colony_newWith (block) {
+  return colony_with.push(block);
+}
+
+function ColonyNode (type, start, str) { this.type = type; this.start = start; this.str = str; } //this.str = '--[[' + this.start + ']] ' + str; }
+ColonyNode.prototype = new String();
+ColonyNode.prototype.valueOf = function () { return this.str; }
+ColonyNode.prototype.toString = function () { return this.str; }
+
+function colony_node (node, str) {
+  _log(node)
+  return new ColonyNode(node.type, node.start, str)
+}
+
+function hygenifystr (str) {
+  if (['undefined', 'arguments'].indexOf(str) == -1) {
+    if (keywords.indexOf(str) > -1) {
+      return '_K_' + str;
+    } else {
+      return str.replace(/_/g, '__').replace(/\$/g, '_S');
     }
+    // return 'COL_' + str;
   }
+  return str;
 }
 
-function declareWithBlock (block, node) {
-  while (node = node.parent) {
-    if (node.type == 'Program') {
-      node.withBlocks || (node.withBlocks = []);
-      return node.withBlocks.push(block.source());
+function hygenify (node) {
+  if (node.type == 'Identifier') {
+    return colony_node(node, hygenifystr(String(node)));
+  }
+  return node;
+}
+
+function ensureExpression (node) {
+  if (node.type == 'AssignmentExpression') {
+    var _ = node.split(/=\s*/, 2), left = _[0], right = node.substr(left.length + 1);
+    return colony_node(node, '(function () local _r = ' + right + '; ' + left + ' = _r; return _r; end)()');
+  } else if (node.type == 'UpdateExpression') {
+    return colony_node(node, '(function () ' + node + '; return _r; end)()')
+  }
+  return node;
+}
+
+var lasttype = null;
+
+function finishNode(node, type) {
+  _log('==>', type);
+  if (type != 'Identifier') {
+    lasttype = type;
+  }
+
+  // Basic nodes
+
+  if (type == 'Identifier') {
+    // console.error('--->', lasttype);
+    if (node.name == 'arguments') {
+      colony_locals[0].arguments = true;
     }
-  }
-}
-
-function truthy (node) {
-  // if (['!', '<', '<=', '>', '>=', '===', '!=', '!==', 'instanceof', 'in'].indexOf(node.operator) == -1) {
-  //   node.update("_truthy(" + node.source() + ")");
-  // }
-  return node.source();
-}
-
-function colonizeContext (ids, node) {
-  if (ids) {
-    ids = ids.filter(function (id) {
-      return id != 'arguments';
-    });
-  }
-  node.update([
-    // Variables
-    ids && ids.length ? 'local ' + ids.join(', ') + ' = ' + ids.join(', ') + ';' : '',
-    // Hoist Functions
-    node.body.filter(function (stat) {
-      return stat.type == 'FunctionDeclaration';
-    }).map(function (stat) {
-      return stat.source();
-    }).join(joiner),
-    // Statements
-    node.body.filter(function (stat) {
-      return stat.type != 'FunctionDeclaration';
-    }).map(function (stat) {
-      return stat.source();
-    }).join(joiner)
-  ].filter(function (n) {
-    return n;
-  }).join(joiner));
-}
-
-function getLoops (node) {
-  var loops = [];
-  var par = node;
-  while (par = par.parent) {
-    if (par.type == 'WhileStatement' || par.type == 'ForStatement' || par.type == 'TryStatement') {
-      var parname = par.parent.type == 'LabeledStatement' ? par.parent.label.source() :'';
-      loops.unshift([par.type, parname, node.usesContinue]);
+    if (node.name != 'arguments' && node.name == colony_locals[0].id) {
+      // TODO We have to discover if a function above the current one is named
+      // by this ID, which we might not know until the entire function is parsed
+      // (local variables could be declared later). We should flag id's as
+      // "potentially used" and then verify by checking variables used in scope,
+      // then propagate to parent scopes.
+      colony_locals[0].usesId = true;
     }
-  }
-  return loops;
-}
+    return colony_node(node, node.name);
 
-var labels = [];
-var loops = [];
+  } else if (type == 'Literal') {
+    if (node.value instanceof RegExp) {
+      return colony_node(node, '_regexp(' + JSON.stringify(node.value.source) + ', ' + JSON.stringify(String(node.value).replace(/^.*\//, '')) + ')');
+    } else {
+      return colony_node(node, '(' + node.raw + ')');
+    }
 
-function colonize (node) {
-  // console.error(process.memoryUsage().heapUsed/1024);
-  // console.error(node.type)
 
-  switch (node.type) {
-    case 'Identifier':
-      if (node.source() == 'arguments' && node.parent.type != 'Property') {
-        attachIdentifierToContext(node, node);
-      }
-      if (node.parent.type != 'MemberExpression' || (node.parent.object == node || (node.parent.computed && node.parent.property == node))) {
-        node.update(fixIdentifiers(node.source()));
-      }
-      break;
+  // Expressions
 
-    case 'AssignmentExpression':
-      // +=, -=, etc.
-      if (node.operator != '=') {
-        if (node.operator == '|=') {
-          node.right.update('_bit.bor(' + node.left.source() + ', ' + node.right.source() + ')');
-        } else if (node.operator == '&=') {
-          node.right.update('_bit.band(' + node.left.source() + ', ' + node.right.source() + ')');
-        } else if (node.operator == '^=') {
-          node.right.update('_bit.bxor(' + node.left.source() + ', ' + node.right.source() + ')');
-        } else if (node.operator == '>>=') {
-          node.right.update('_bit.rshift(' + node.left.source() + ', ' + node.right.source() + ')');
-        } else if (node.operator == '<<=') {
-          node.right.update('_bit.lshift(' + node.left.source() + ', ' + node.right.source() + ')');
-        } else {
-          node.right.update(node.left.source().replace(/^\s+/, '') + ' ' + node.operator.substr(0, 1) + ' ' + node.right.source());
-        }
-        node.operator = '=';
-      }
-      // Used in another expression, assignments must be wrapped by a closure.
-      if (node.parent.type != 'ExpressionStatement') {
-        // OPTIM
-        node.update('(function () local _r = ' + node.right.source() + '; ' + node.left.source() + ' = _r; return _r; end)()');
-        // node.update('local _r = ' + node.right.source() + '; ' + node.left.source() + ' = _r; ');
+  } else if (type == 'MemberExpression') {
+    if (node.computed) {
+      return colony_node(node, hygenify(node.object) + '[' + hygenify(node.property) + ']');
+    } else if (keywords.indexOf(String(node.property)) > -1) {
+      return colony_node(node, hygenify(node.object) + '[' + JSON.stringify(String(node.property)) + ']');
+    } else {
+      return colony_node(node, hygenify(node.object) + '.' + node.property);
+    }
+    return str;
+
+  } else if (type == 'AssignmentExpression') {
+    if (node.operator != '=') {
+      var operator = node.operator.slice(0, -1);
+      var ops = { '|': 'bor', '&': 'band', '>>': 'rshift', '<<': 'lshift' }
+      if (node.operator in ops) {
+        node.right = '_bit.' + ops[operator] + '(' + ensureExpression(node.left) + ', ' + ensureExpression(node.right) + ')'
       } else {
-        // Need to refresh thanks to += updating.
-        node.update(node.left.source() + ' = ' + node.right.source());
+        // TODO we run the risk of re-interpreting node.left here
+        // need a function that encapsulates that behavior
+        node.right = hygenify(node.left) + operator + hygenify(node.right);
       }
-      break;
+    }
+    return colony_node(node, hygenify(node.left) + ' = ' + ensureExpression(hygenify(node.right)));
 
-    case 'EmptyStatement':
-      node.source('');
-      break;
+  } else if (type == 'CallExpression') {
+    var ismethod = node.callee.type == 'MemberExpression'
+    return colony_node(node,
+      (ismethod ? hygenify(node.callee).replace(/^([\s\S]+)\./, '$1:') : hygenify(node.callee))
+      + '(' + (ismethod ? [] : ['this']).concat(node.arguments.map(ensureExpression)).join(', ') + ')');
 
-    case 'ThisExpression':
-      break;  
+  } else if (type == 'NewExpression') {
+    var ismethod = node.callee.type == 'MemberExpression'
+    if (ismethod) {
+      throw new Error('Dont support methods as new expressions yet');
+    }
+    return colony_node(node, '_new(' + [node.callee].concat(node.arguments).join(', ') + ')');
 
-    case 'UnaryExpression':
-      if (node.operator == '~') {
-        node.update('_bit.bnot(' + node.argument.source() + ' or 0)');
-      } else if (node.operator == '+') {
-        node.update('(0+' + node.argument.source() + ')');
-      } else if (node.operator == '!') {
-        node.update('(not (' + node.argument.source() + '))');
-      } else if (node.operator == 'typeof') {
-        node.update('_typeof(' + node.argument.source() + ')');
-      } else if (node.operator == 'delete') {
-        // TODO properly invoke delete operator
-        node.update('(function () local _r = ' + node.argument.source() + '; ' + node.argument.source() + ' = nil; return _r ~= nil; end)()');
-      } else if (node.operator == 'void') {
-        node.update('(_void(' + node.argument.source() + '))');
-      } else {
-        node.update('(' + node.source() + ')');
-      }
-      break;
+  } else if (type == 'ThisExpression') {
+    return colony_node(node, 'this');
 
-    case 'BinaryExpression':
-      if (node.operator == '!==' || node.operator == '!=') {
-        // TODO strict
-        node.update('(' + node.left.source() + ' ~= ' + node.right.source() + ')');
-      } else if (node.operator == '===') {
-        // TODO strict
-        node.update('(' + node.left.source() + ' == ' + node.right.source() + ')');
-      } else if (node.operator == '<<') {
-        node.update('_bit.lshift(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
-      } else if (node.operator == '>>') {
-        node.update('_bit.rshift(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
-      } else if (node.operator == '>>>') {
-        node.update('_bit.ror(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
-      } else if (node.operator == '&') {
-        node.update('_bit.band(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
-      } else if (node.operator == '^') {
-        node.update('_bit.bxor(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
-      } else if (node.operator == '|') {
-        node.update('_bit.bor(' + node.left.source() + ' or 0, ' + node.right.source() + ' or 0)');
-      } else if (node.operator == 'instanceof') {
-        node.update('_instanceof(' + node.left.source() + ', ' + node.right.source() + ')');
-      } else if (node.operator == 'in') {
-        node.update('_in(' + node.left.source() + ', ' + node.right.source() + ')');
-      } else {
-        node.update('(' + node.source() + ')');
-      }
-      break;
+  } else if (type == 'UpdateExpression') {
+    if (node.prefix) {
+      return colony_node(node, 'local _r = ' + node.argument + ' ' + node.operator.substr(0, 1) + ' 1; ' + node.argument + ' = _r')
+    } else {
+      return colony_node(node, 'local _r = ' + node.argument + '; ' + node.argument + ' = _r ' + node.operator.substr(0, 1) + ' 1')
+    }
 
-    case 'LogicalExpression':
-      if (node.operator == '&&') {
-        node.update(node.left.source() + ' and ' + node.right.source());
-      } else if (node.operator == '||') {
-        node.update(node.left.source() + ' or ' + node.right.source());
-      }
-      break;
+  } else if (type == 'ConditionalExpression') {
+    return colony_node(node, '((' + ensureExpression(hygenify(node.test)) + ') and {' + ensureExpression(hygenify(node.consequent)) + '} or {' + ensureExpression(hygenify(node.alternate)) + '})[1]');
 
-    case 'UpdateExpression':
-      // ++ or --
-      if (node.prefix) {
-        node.update('(function () ' + node.argument.source() + ' = ' + node.argument.source() + ' ' + node.operator.substr(0, 1) + ' 1; return ' + node.argument.source() + '; end)()');
-      } else {
-        // OPTIM
-        node.update('(function () local _r = ' + node.argument.source() + '; ' + node.argument.source() + ' = _r ' + node.operator.substr(0, 1) + ' 1; return _r end)()');
-        // node.update('local _r = ' + node.argument.source() + '; ' + node.argument.source() + ' = _r ' + node.operator.substr(0, 1) + ' 1;');
-      }
-      break;
+  } else if (type == 'UnaryExpression') {
+    if (node.operator == 'delete') {
+      // TODO "delete" semantics may change in future VM
+      return colony_node(node, '(function () local _r = ' + node.argument + '; ' + node.argument + ' = nil; return _r ~= nil; end)()');
+    }
 
-    case 'NewExpression':
-      node.update("_new(" +
-        [node.callee.source()].concat(node.arguments.map(function (arg) {
-          return arg.source();
-        })).join(', ') + ")");
-      break;
+    var ops = { '|': '_bit.bor', '&': '_bit.band', '~': '_bit.bnot', '+': '0+', '!': 'not ', 'typeof': '_typeof', 'void': '_void' }
+    return colony_node(node, '(' + (ops[node.operator] || node.operator) + '(' + ensureExpression(node.argument) + '))')
 
-    case 'VariableDeclarator':
-      attachIdentifierToContext(node.id, node);
-      break;
+  } else if (type == 'LogicalExpression') {
+    var ops = { '&&': 'and', '||': 'or' }
+    return colony_node(node, '((' + ensureExpression(hygenify(node.left)) + ')' + ops[node.operator] + '(' + ensureExpression(hygenify(node.right)) + '))')
 
-    case 'VariableDeclaration':
-      node.update(node.declarations.map(function (d) {
-        return d.id.source() + ' = ' + (d.init ? d.init.source() : 'nil') + ';';
-      }).join(joiner));
-      break;
+  } else if (type == 'BinaryExpression') {
+    var ops = { '|': '_bit.bor', '&': '_bit.band', '>>': '_bit.rshift', '<<': '_bit.lshift', '>>>': '_bit.rrotate', 'instanceof': '_instanceof', 'in': '_in' }
+    if (node.operator in ops) {
+      return colony_node(node, ops[node.operator] + '(' + ensureExpression(hygenify(node.left)) + ',' + ensureExpression(hygenify(node.right)) + ')')
+    } else {
+      // infix
+      var infixops = { '!==': '~=', '!=': '~=', '===': '==' };
+      return colony_node(node, '((' + ensureExpression(hygenify(node.left)) + ')' + (infixops[node.operator] || node.operator) + '(' + ensureExpression(hygenify(node.right)) + '))')
+    }
 
-    case 'BreakStatement':
-      //TODO _c down the stack is false until the main one
-      //label = label or (x for x in loops when loops[0] != 'try')[-1..][0]?[1] or ""
+  } else if (type == 'ArrayExpression') {
+    return colony_node(node, '_arr({' + [node.elements.length > 0 ? '[0]=' + hygenify(node.elements[0]) : ''].concat(node.elements.slice(1).map(hygenify)).join(', ') + '}, ' + node.elements.length + ')')
 
-      var label = node.label ? node.label.source() : '';
+  } else if (type == 'ObjectExpression') {
+    return colony_node(node, '_obj({\n  '
+      + node.properties.map(function (prop) {
+        return '[' + (prop.key.type == 'Literal' ? prop.key : JSON.stringify(prop.key.toString())) + ']=' + hygenify(prop.value)
+      }).join(',\n  ')
+      + '\n})');
 
-      node.update("_c" + label + " = _break; " +
-        ((getLoops(node).slice(-1)[0] || [])[0] == "TryStatement" ? "return _break;" : "break;"));
-      break;
-
-    case 'SequenceExpression':
-      node.update('_seq({' + node.expressions.map(function (d) {
-        return d.source();
-      }).join(', ') + '})');
-      break;
-
-    case 'SwitchCase':
-      break;
-    case 'SwitchStatement':
-      node.update([
-        'repeat',
-        node.cases.map(function (c, i) {
-          return 'local _' + i + (c.test ? ' = ' + c.test.source() : '') + ';'
-        }).join(' '),
-        'local _r = ' + node.discriminant.source() + ';',
-        node.cases.map(function (c, i) {
-          if (!c.test) {
-            return c.consequent.map(function (s) {
-              return s.source();
-            }).join(joiner)
-          }
-          return 'if _r == _' + i + ' then' + joiner + c.consequent.map(function (s) {
-            return s.source();
-          }).join(joiner) + joiner + (i < node.cases.length - 1 && (c.consequent.slice(-1)[0] || {}).type != 'BreakStatement' ? '_r = _' + (i + 1) + ';' + joiner : '') + 'end'
-        }).join(joiner),
-        'until true'
-      ].join(joiner))
-// ret = "repeat\n" +
-//   (if cases.length then ("local _#{i}#{if v then ' = ' + colonize(v) else ''}; " for i, [v, _] of cases).join('') else '') +
-//   "local _r = #{colonize(expr)};\n" +
-//   (for i, [_, stats] of cases
-//     if _?
-//       "if _r == _#{i} then\n" + (colonize(x) for x in stats).concat(if cases[Number(i)+1] and (not stats.length or stats[-1..][0].type != "break-stat") then ["_r = _#{Number(i)+1};"] else []).join("\n") + "\nend"
-//     else
-//       (colonize(x) for x in stats).join("\n")
-//   ).join("\n") + "\n" +
-//   "until true"
-// loops.pop()
-      break;
+  } else if (type == 'SequenceExpression') {
+    return colony_node(node, '_seq({' + node.expressions.map(function (d) {
+      return ensureExpression(hygenify(d));
+    }).join(', ') + '})');
 
 
-    case 'ContinueStatement':
-      //TODO _c down the stack is false until the main one
-      //label = label or (x for x in loops when loops[0] != 'try')[-1..][0]?[1] or ""
+  // Statements
 
-      var label = node.label ? node.label.source() : '';
+  } else if (type == 'IfStatement') {
+    return colony_node(node, [
+      "if " + node.test + ' then\n',
+      // TODO node.consequent should be a string, here is body
+      (node.consequent.body ? node.consequent.body.join('\n') : node.consequent) + '\n',
+      (node.alternate ? 'else\n' + (node.alternate.body ? node.alternate.body.join('\n') : node.alternate) + '\n' : ""),
+      'end;'
+    ].join(''));
 
-      var par = node;
-      while (par = par.parent) {
-        if (par.type == 'WhileStatement' || par.type == 'ForStatement') {
-          par.usesContinue = true;
-        }
-      }
-      node.update("_c" + label + " = _cont; " +
-        ((getLoops(node).slice(-1)[0] || [])[0] == "TryStatement" ? "return _cont;" : "break;"));
-      break;
+  } else if (type == 'ReturnStatement') {
+    return colony_node(node, 'if true then return ' + hygenify(node.argument) + '; end');
 
-    case 'DoWhileStatement':
-      var name = node.parent.type == 'LabeledStatement' ? node.parent.label.source() :'';
+  } else if (type == 'ForInStatement') {
+    if (node.left.kind == 'var') {
+      var name = hygenifystr(node.left.declarations[0].str.replace(/\s*=.*$/, ''));
+    } else {
+      var name = hygenifystr(node.left);
+    }
+    return colony_node(node, [
+      'for ' + name + ' in _pairs(' + hygenify(node.right) + ') do',
+      !node.body.body ? node.body : node.body.body.join('\n'),
+      'end;'
+    ].join('\n'))
 
-      var loops = getLoops(node);
-      var ascend = loops.filter(function (l) {
-        return l[0] != 'TryStatement' && l[1] != null;
-      }).map(function (l) {
-        return l[1];
-      });
+  } else if (type == 'ExpressionStatement') {
+    if (['BinaryExpression', 'UnaryExpression', 'LogicalExpression', 'Literal', 'CallExpression', 'ConditionalExpression', 'MemberExpression', 'ConditionalExpression'].indexOf(node.expression.type) > -1) {
+      var ret = colony_node(node, 'if ' + hygenify(node.expression) + ' then end;');
+    } else {
+      var ret = colony_node(node, hygenify(node.expression) + ';');
+    }
+    ret.expression = node.expression;
+    // TODO we shouldn't have to leave ret.expression attached to the node,
+    // but a later step seems to require it being there
+    return ret;
 
-      node.update([
-        'repeat',
-        (node.usesContinue ? 'local _c' + name + ' = nil; repeat' : ''),
-        node.body.source(),
-        (node.usesContinue ? 'until true;' + joiner + 'if _c' + name + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end;' : ''),
-        'until not ' + truthy(node.test) + ';'
-      ].join(joiner))
-      break;
+  } else if (type == 'VariableDeclarator') {
+    colony_locals[0].push(hygenifystr(node.id));
+    return colony_node(node, hygenifystr(node.id) + ' = ' + (node.init ? ensureExpression(node.init) : 'nil') + '; ')
 
-    case 'WhileStatement':
-      var name = node.parent.type == 'LabeledStatement' ? node.parent.label.source() :'';
+  } else if (type == 'VariableDeclaration') {
+    return colony_node(node, node.declarations.join(' '));
 
-      var loops = getLoops(node);
-      var ascend = loops.filter(function (l) {
-        return l[0] != 'TryStatement' && l[1] != null;
-      }).map(function (l) {
-        return l[1];
-      });
+  } else if (type == 'WithStatement') {
+    var i = colony_newWith(node.body.body.join('\n'));
+    return colony_node(node,
+      'local _ret = _with(' + node.object + ', _G._with_fn' + i + ');'
+      + 'if _ret ~= _with then return _ret end; ');
 
-      node.update([
-        'while ' + truthy(node.test) + ' do ',
-        (node.usesContinue ? 'local _c' + name + ' = nil; repeat' : ''),
-        node.body.source(),
-        (node.usesContinue ? 'until true;' + joiner + 'if _c' + name + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end;' : ''),
-        'end;'
-      ].join(joiner))
-      break;
+  } else if (type == 'BlockStatement') {
+    // TODO the block statement should be joined here,
+    // but it seems to break code in acorn_mod
+    return node;
+    // return 'do\n' + node.body.join('\n') + 'end\n'
 
-    case 'ForStatement':
-      node.update([
-        node.init ? node.init.source() : '',
-        'while ' + (node.test ? truthy(node.test) : 'true') + ' do ',
-        (node.usesContinue ? 'local _c = nil; repeat' : ''),
-        node.body.source(),
-        (node.usesContinue ? 'until true;' + joiner + 'if _c == _break then break end;' : ''),
-        (node.update && node.update.source
-          // TODO make this better
-          ? (node.update.type == 'BinaryExpression' || node.update.type == 'LogicalExpression' || node.update.type == 'UpdateExpression' || node.update.type == 'Literal' || node.update.type == 'CallExpression' || node.update.type == 'ConditionalExpression'
-            ? node.update.source()
-            : 'if ' + node.update.source().replace(/;?$/, '') + ' then end;')
-          : ''),
-        'end;'
-      ].join(joiner))
-      break;
+  } else if (type == 'EmptyStatement') {
+    return colony_node(node, '');
 
-    case 'Literal':
-      if (node.value instanceof RegExp) {
-        node.update('_regexp(' + JSON.stringify(node.value.source) + ', ' + JSON.stringify(String(node.value).replace(/^.*\//, '')) + ')');
-      } else if (typeof node.value == 'string') {
-        // TODO update
-        node.update('(' + JSON.stringify(node.value).replace(/\\u00/g, '\\x').replace(/\*/g, '\\*') + ')');
-      } else if (node.parent.type != 'Property') {
-        node.update('(' + JSON.stringify(node.value) + ')');
-      }
-      break;
 
-    case 'CallExpression':
-      if (node.callee.type == 'MemberExpression') {
-        // Method call
-        if (node.callee.property.type == 'Identifier' && fixIdentifiers(node.callee.property.name) != node.callee.property.name && !node.callee.computed) {
-          // Escape keywords awkwardly.
-          node.update("(function () local base, prop = " + node.callee.object.source() + ', '
-            + (node.callee.property.type == 'Identifier' ? JSON.stringify(node.callee.property.source()) : node.callee.property.source())
-            + '; return base[prop]('
-            + ['base'].concat(node.arguments.map(function (arg) {
-              return arg.source()
-            })).join(', ') + '); end)()');
-        } else if (node.callee.property.type != 'Identifier' || node.callee.computed) {
-          // Dynamic properties can't be method calls
-          node.update("(function () local _base, _prop = " + node.callee.object.source() + ', '
-            + node.callee.property.source()
-            + '; local _val = _base[_prop]; console:log(_base, _prop, _val); return _val('
-            + ['_base'].concat(node.arguments.map(function (arg) {
-              return arg.source()
-            })).join(', ') + '); end)()');
-        } else {
-          node.update(node.callee.object.source() + ':'
-            + node.callee.property.source()
-            // + '[' + (node.callee.property.type == 'Identifier' ? JSON.stringify(node.callee.property.source()) : node.callee.property.source()) + ']'
-            + '(' + node.arguments.map(function (arg) {
-            return arg.source()
-          }).join(', ') + ')')
-        }
-      } else {
-        node.update(node.callee.source() + '(' + ['global'].concat(node.arguments.map(function (arg) {
-          return arg.source()
-        })).join(', ') + ')')
-      }
-      break;
+  // Flow control
 
-    case 'ObjectExpression':
-      node.update('_obj({' + joiner + '  ' +
-        node.properties.map(function (prop) {
-          return '[' + JSON.stringify(prop.key.type == 'Identifier' ? prop.key.name : prop.key.value) + ']=' + prop.value.source()
-        }).join(',' + joiner + '  ') +
-        '})');
-      break;
-    case 'Property':
-      break;
+  } else if (type == 'WhileStatement') {
+    // Done with while block.
+    var flow = colony_flow.shift();
 
-    case 'ArrayExpression':
-      if (!node.elements.length) {
-        node.update("_arr({},0)");
-      } else {
-        node.update("_arr({[0]=" + [].concat(node.elements.map(function (el) {
-          return el.source();
-        })).join(', ') + "}," + Number(node.elements.length) + ")");
-      }
-      break;
+    // TODO we should only look up break flags up until
+    // the next function scope, not the entire chain
+    var ascend = colony_flow.filter(function (l) {
+      return l.type != 'try' && l.label;
+    }).map(function (l) {
+      return l.label;
+    }).reverse();
 
-    case 'ConditionalExpression':
-      node.update('((' + truthy(node.test) + ') and {' + node.consequent.source() + '} or {' + node.alternate.source() + '})[1]');
-      break;
+    return colony_node(node, [
+      'while ' + ensureExpression(node.test) + ' do ',
+      (flow.usesContinue ? 'local _c' + (flow.label||'') + ' = nil; repeat' : ''),
+      !node.body.body ? node.body : node.body.body.join('\n'),
+      (flow.usesContinue ? 'until true;\nif _c' + flow.label + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end;' : ''),
+      'end;'
+    ].join('\n'));
 
-    case 'IfStatement':
-      node.update([
-        "if " + truthy(node.test) + " then" + joiner,
-        node.consequent.source() + joiner,
-        (node.alternate ? 'else ' + joiner + node.alternate.source() + joiner : ""),
-        "end;"
-      ].join(''));
-      break;
+  } else if (type == 'ForStatement') {
+    // Done with for block.
+    var flow = colony_flow.shift();
 
-    case 'ReturnStatement':
-      // Wrap in conditional to allow returns to precede statements
-      node.update("if true then return" + (node.argument ? ' ' + node.argument.source() : '') + "; end;");
-      break;
+    return colony_node(node, [
+      node.init ? node.init.declarations.join(' ') : '',
+      'while ' + (node.test ? ensureExpression(node.test) : 'true') + ' do ',
+      (flow.usesContinue ? 'local _c = nil; repeat' : ''),
+      !node.body.body ? node.body : node.body.body.join('\n'),
+      (flow.usesContinue ? 'until true;\nif _c == _break then break end;' : ''),
+      (node.update ? node.update + ';' : ''),
+    //     // TODO this should use ensureStatement()
+    //     ? (node.update.type == 'BinaryExpression' || node.update.type == 'LogicalExpression' || node.update.type == 'UpdateExpression' || node.update.type == 'Literal' || node.update.type == 'CallExpression' || node.update.type == 'ConditionalExpression'
+    //       ? node.update.source()
+    //       : 'if ' + node.update.source().replace(/;?$/, '') + ' then end;')
+      'end;'
+    ].join('\n'))
 
-    case 'BlockStatement':
-      colonizeContext(node.parent.type == 'FunctionDeclaration' || node.parent.type == 'FunctionExpression' ? node.parent.identifiers : [], node);
-      break;
+  } else if (type == 'TryStatement') {
+    // Done with try block.
+    var flow = colony_flow.shift();
 
-    case 'WithStatement':
-      var i = declareWithBlock(node.body, node);
-      node.update("local _ret = _with(" + node.object.source() + ", _G._with_fn" + i + "); if _ret ~= _with then return _ret end");
-      break;
-
-    case 'MemberExpression':
-      if (node.parent.type != 'CallExpression' || node.parent.callee != node) {
-        if (!node.computed && node.property.source().match(/^[\w_]+$/) && keywords.indexOf(node.property.source()) == -1) {
-          node.update("(" + node.object.source() + ")." + node.property.source());
-        } else {
-          node.update("(" + node.object.source() + ")"
-            + '[' + (!node.computed ? JSON.stringify(node.property.source()) : node.property.source()) + ']');
-        }
-      }
-
-      if (node.parent.type == 'ExpressionStatement') {
-        node.update('if ' + node.source() + ' then end;');
-      }
-      break;
-
-    case 'ExpressionStatement':
-      node.update(node.source().replace(/;?$/, ';')); // Enforce trailing semicolons.
-
-      // Can't have and/or be statements.
-      if (node.expression.type == 'UnaryExpression' || node.expression.type == 'BinaryExpression' || node.expression.type == 'LogicalExpression' || node.expression.type == 'Literal' || node.expression.type == 'CallExpression' || node.expression.type == 'ConditionalExpression') {
-        // console.log('>>>', JSON.stringify(node.source()))
-        node.update('if ' + node.source().replace(/;?$/, '') + ' then end; ');
-      }
-      break;
-
-    case 'LabeledStatement':
-      // TODO change stat to do { } while(false) unless of certain type;
-      // this makes this labels array work
-      node.update(node.body.source());
-      break;
-
-    case 'ForInStatement':
-      if (node.left.type == 'VariableDeclaration') {
-        var name = fixIdentifiers(node.left.declarations[0].id.name);
-      } else {
-        var name = node.left.source();
-      }
-      node.update([
-        'for ' + name + ' in _pairs(' + node.right.source() + ') do',
-        node.body.source(),
-        'end;'
-      ].join(joiner))
-      break;
-
-    case 'ThrowStatement':
-      node.update("_error(" + node.argument.source() + ")");
-      break;
-
-    case 'CatchClause':
-      break;
-
-    case 'TryStatement':
-      node.update([
+    return colony_node(node, [
 'local _e = nil',
 'local _s, _r = _xpcall(function ()',
-node.block.source(),
+node.block.body ? node.block.body.join('\n') : '',
 //    #{if tryStat.stats[-1..][0].type != 'ret-stat' then "return _cont" else ""}
 '    end, function (err)',
 '        _e = err',
 '    end);'
-].concat(node.handlers.length ? [
+].concat(node.handler ? [
 // catch clause
 'if _s == false then',
-node.handlers[0].param.source() + ' = _e;' + joiner + node.handlers[0].body.source(),
+hygenifystr(node.handler.param) + ' = _e;',
+node.handler.body ? node.handler.body.body.join('\n') : '',
 
 // break clause.
 'end;'
 ] : []).concat([
-node.finalizer ? node.finalizer.source() : ''
+node.finalizer ? node.finalizer : ''
 ]).concat(
-!getLoops(node).length ? [] : [
+!colony_flow.length ? [] : [
 //break
 'if _r == _break then',
-(getLoops(node).length && getLoops(node).slice(-1)[0][0] == 'TryStatement' ? 'return _break;' : 'break;'),
+(colony_flow.length && colony_flow[0].type == 'try' ? 'return _break;' : 'break;'),
 // continue clause.
 'elseif _r == _cont then',
 //'  return _r',
-(getLoops(node).length && getLoops(node).slice(-1)[0][0] == 'TryStatement' ? 'return _cont;' : 'break;'),
+(colony_flow.length && colony_flow[0].type == 'try' ? 'return _cont;' : 'break;'),
 'end;'
-      ]).join(joiner));
-      break;
+    ]).join('\n'));
 
-    case 'FunctionExpression':
-    case 'FunctionDeclaration':
-      if (node.id && !node.expression) {
-        attachIdentifierToContext(node.id, node);
+  } else if (type == 'BreakStatement') {
+    return colony_node(node, [
+      (colony_flow[0].usesContinue ? "_c" + (node.label||colony_flow[0].label||'') + " = _break; " : ''),
+      'if true then ' + ((colony_flow[0] || {}).type == 'try' ? 'return _break;' : 'break;') + ' end;'
+    ].join(''));
+
+  } else if (type == 'ContinueStatement') {
+    colony_flow.some(function (flow) {
+      flow.usesContinue = true;
+      if (String(flow.label) == String(node.label) || !node.label) {
+        return true;
       }
+    });
 
-      node.identifiers || (node.identifiers = []);
+    return colony_node(node, [
+      '_c' + (node.label||'') + ' = _cont; ',
+      'if true then ' + (colony_flow[0].type == 'try' ? 'return _cont;' : 'break;') + ' end;'
+    ].join(''));
 
-      // fix references
-      var name = node.id && node.id.source();
-      var args = node.params.map(function (arg) {
-        return arg.source();
-      });
+  } else if (type == 'ThrowStatement') {
+    return colony_node(node, '_error(' + hygenify(node.argument) + ')');
 
-      // expression prefix/suffix
-      if (!node.expression && node.parent.type != 'CallExpression' && name) {
-        // TODO among other types of expressions...
-        var prefix = name + ' = ', suffix = ';';
-      } else {
-        var prefix = '', suffix = '';
-      }
+  } else if (type == 'CatchClause') {
+    return node;
 
-      // assign self-named function reference
-      var namestr = "";
-      if (name) {
-        // OPTIM
-        namestr = "local " + name + " = _debug.getinfo(1, 'f').func;\n";
-      }
+  } else if (type == 'LabeledStatement') {
+    return colony_node(node.body, String(node.body));
 
-      var loopsbkp = loops;
-      var loops = [];
-      if (node.identifiers.indexOf('arguments') > -1) {
-        node.update(prefix + "(function (this, ...) " + joiner + namestr +
-          "local arguments = _arguments(...);" + joiner +
-          (args.length ? "local " + args.join(', ') + " = ...;" + joiner : "") +
-          node.body.source() + joiner +
-          "end)" + suffix);
-      } else {
-        node.update(prefix + "(function (" + ['this'].concat(args).join(', ') + ") " + joiner + namestr +
-          node.body.source() + joiner +
-          "end)" + suffix);
-      }
 
-      // Wrap functions with names used in expressions to assign inside closure.
-      if (name && prefix && node.parent.type.match(/Expression$|^VariableDeclarator$|^ReturnStatement$|^Property$/)) {
-        node.update('(function () ' + node.source() + '; return ' + name + '; end)()');
-      }
+  // Contexts
 
-      loops = loopsbkp;
-      break;
+  } else if (type == 'FunctionExpression' || type == 'FunctionDeclaration') {
+    var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ' = ' + colony_locals[0].join(', ') + ';\n' : '';
+    var usesArguments = !!colony_locals[0].arguments;
+    var usesId = colony_locals[0].usesId;
+    colony_locals.shift()
+    if (type == 'FunctionDeclaration') {
+      colony_locals[0].push(node.id);
+    }
+    return colony_node(node,
+      (type == 'FunctionDeclaration' ? (node.id ? hygenifystr(node.id) + ' = ' : '') + 'function (' : '(function (')
+      + (usesArguments
+        ? 'this, ...)\n' + (node.params.length ? 'local ' + node.params.join(', ') + ' = ...;\n' : '') + 'local arguments = _arguments(...);\n'
+        : ['this'].concat(node.params).join(', ') + ')\n')
+      + (usesId ? 'local ' + node.id + ' = _debug.getinfo(1, \'f\').func;\n' : '')
+      + localstr
+      + node.body.body.join('\n')
+      + (type == 'FunctionDeclaration' ? '\nend\n' : '\nend)'));
 
-    case 'Program':
-      colonizeContext(node.identifiers, node);
-      if (wrapmodule) {
-        var w = '';
-        if (node.withBlocks) {
-          node.withBlocks.forEach(function (b, i) {
-            w += 'function _with_fn' + (i + 1) + '(_with)' + joiner + b + joiner + 'return _with;' + joiner + 'end' + joiner;
-          })
-        }
+  } else if (type == 'Program') {
+    var w = '';
+    colony_with.forEach(function (b, i) {
+      var joiner = '\n';
+      w += 'function _with_fn' + (i + 1) + '(_with)' + joiner + b + joiner + 'return _with;' + joiner + 'end' + joiner;
+    });
 
-        node.update([
-          w +
-          joiner + "return function (_ENV, _module)",
-          'local ' + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
-          "local exports, module = _module.exports, _module;",
-          "",
-          node.source(),
-          "",
-          "return _module.exports;",
-          "end "
-        ].join(joiner));
-      }
-      break;
+    var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ' = ' + colony_locals[0].join(', ') + ';\n' : '';
+    colony_locals.shift()
+    return colony_node(node, w + '\n--[[COLONY_MODULE]]\n' + localstr + node.body.join('\n'));
 
-    default:
-      console.log(node.type.red, node);
   }
+  throw new Error('Colony cannot yet handle type ' + type);
 }
 
-module.exports = function (src, _wrapmodule) {
-  wrapmodule = _wrapmodule == null || _wrapmodule ? true : false;
-  src = src
-    .replace(/^#.*\n/, '')
-    + '\n;' // prevent "then end" wrapping to next line
-  return String(falafel(src, { tolerant: true }, colonize))
-    // replace multiline comments
-    .replace(/\/\*([\S\s\n]*?)\*\//g, function (str) {
-      return str.replace(/[^\n]+/g, '');
-    })
-    // inline lingering comments are converted to lua comments
-    .replace(/^(([^"']|"[^"]*"|'[^']*')*?)\/\//gm, '$1--')
-    // Replace trailing and beginning whitespace
-    // .replace(/^\s+|\s+$/g, '')
-    // Replace successive semicolons or trailing semicolons
-    .replace(/;([\s\n]*;)+/g, '$1') // preserve newlines if they exist to push past comments
-    .replace(/do\s*;/g, 'do')
+exports.parse = function (script) {
+  return acorn.parse(script, {
+    allowReturnOutsideFunction: true,
+    behaviors: {
+      openFor: colony_newFlow.bind(null, 'for'),
+      openTry: colony_newFlow.bind(null, 'try'),
+      openWhile: colony_newFlow.bind(null, 'with'),
+      openLabel: colony_newFlowLabel,
+      openFunction: colony_newScope,
+      closeNode: finishNode
+    }
+  })
 };
