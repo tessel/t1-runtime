@@ -5,6 +5,10 @@ function _log () {
 }
 
 var keywords = ['and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', 'function', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat', 'return', 'then', 'true', 'until', 'while'];
+var unaryops = { '|': '_bit.bor', '&': '_bit.band', '~': '_bit.bnot', '+': '0+', '!': 'not ', 'typeof': '_typeof', 'void': '_void' }
+var logicalops = { '&&': 'and', '||': 'or' };
+var binaryops = { '|': '_bit.bor', '&': '_bit.band', '|': '_bit.bor', '>>': '_bit.rshift', '<<': '_bit.lshift', '>>>': '_bit.rrotate', 'instanceof': '_instanceof', 'in': '_in' }
+var infixops = { '!==': '~=', '!=': '~=', '===': '==' };
 
 var colony_locals, colony_flow, colony_with;
 
@@ -139,9 +143,8 @@ function finishNode(node, type) {
   } else if (type == 'AssignmentExpression') {
     if (node.operator != '=') {
       var operator = node.operator.slice(0, -1);
-      var ops = { '|': 'bor', '&': 'band', '>>': 'rshift', '<<': 'lshift' }
-      if (node.operator in ops) {
-        node.right = '_bit.' + ops[operator] + '(' + ensureExpression(node.left) + ', ' + ensureExpression(node.right) + ')'
+      if (operator in binaryops) {
+        node.right = binaryops[operator] + '(' + ensureExpression(node.left) + ', ' + ensureExpression(node.right) + ')'
       } else {
         // TODO we run the risk of re-interpreting node.left here
         // need a function that encapsulates that behavior
@@ -182,20 +185,16 @@ function finishNode(node, type) {
       return colony_node(node, '(function () local _r = ' + node.argument + '; ' + node.argument + ' = nil; return _r ~= nil; end)()');
     }
 
-    var ops = { '|': '_bit.bor', '&': '_bit.band', '~': '_bit.bnot', '+': '0+', '!': 'not ', 'typeof': '_typeof', 'void': '_void' }
-    return colony_node(node, '(' + (ops[node.operator] || node.operator) + '(' + ensureExpression(node.argument) + '))')
+    return colony_node(node, '(' + (unaryops[node.operator] || node.operator) + '(' + ensureExpression(node.argument) + '))')
 
   } else if (type == 'LogicalExpression') {
-    var ops = { '&&': 'and', '||': 'or' }
-    return colony_node(node, '((' + ensureExpression(hygenify(node.left)) + ')' + ops[node.operator] + '(' + ensureExpression(hygenify(node.right)) + '))')
+    return colony_node(node, '((' + ensureExpression(hygenify(node.left)) + ')' + logicalops[node.operator] + '(' + ensureExpression(hygenify(node.right)) + '))')
 
   } else if (type == 'BinaryExpression') {
-    var ops = { '|': '_bit.bor', '&': '_bit.band', '>>': '_bit.rshift', '<<': '_bit.lshift', '>>>': '_bit.rrotate', 'instanceof': '_instanceof', 'in': '_in' }
-    if (node.operator in ops) {
-      return colony_node(node, ops[node.operator] + '(' + ensureExpression(hygenify(node.left)) + ',' + ensureExpression(hygenify(node.right)) + ')')
+    if (node.operator in binaryops) {
+      return colony_node(node, binaryops[node.operator] + '(' + ensureExpression(hygenify(node.left)) + ',' + ensureExpression(hygenify(node.right)) + ')')
     } else {
       // infix
-      var infixops = { '!==': '~=', '!=': '~=', '===': '==' };
       return colony_node(node, '((' + ensureExpression(hygenify(node.left)) + ')' + (infixops[node.operator] || node.operator) + '(' + ensureExpression(hygenify(node.right)) + '))')
     }
 
