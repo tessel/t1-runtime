@@ -407,8 +407,11 @@ node.finalizer ? node.finalizer : ''
   throw new Error('Colony cannot yet handle type ' + type);
 }
 
-exports.parse = function (script) {
-  return acorn.parse(script, {
+module.exports = function (script)
+{
+  var joiner = '\n', wrapmodule = true;
+
+  var res = acorn.parse(script, {
     allowReturnOutsideFunction: true,
     behaviors: {
       openFor: colony_newFlow.bind(null, 'for'),
@@ -418,5 +421,17 @@ exports.parse = function (script) {
       openFunction: colony_newScope,
       closeNode: finishNode
     }
-  })
+  });
+
+  return [
+    res.replace(/--\[\[COLONY_MODULE\]\][\s\S]*$/, ''),
+    "return function (_ENV, _module)",
+    // 'local ' + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
+    "local exports, module = _module.exports, _module;",
+    "",
+    res.replace(/^[\s\S]*--\[\[COLONY_MODULE\]\]/, ''),
+    "",
+    "return _module.exports;",
+    "end "
+  ].join(joiner);
 };
