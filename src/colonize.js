@@ -60,6 +60,7 @@ function colony_node (node, str) {
 }
 
 function hygenifystr (str) {
+  str = String(str);
   if (['undefined', 'arguments'].indexOf(str) == -1) {
     if (keywords.indexOf(str) > -1) {
       return '_K_' + str;
@@ -173,9 +174,9 @@ function finishNode(node, type) {
 
   } else if (type == 'UpdateExpression') {
     if (node.prefix) {
-      return colony_node(node, 'local _r = ' + node.argument + ' ' + node.operator.substr(0, 1) + ' 1; ' + node.argument + ' = _r')
+      return colony_node(node, 'local _r = ' + hygenify(node.argument) + ' ' + node.operator.substr(0, 1) + ' 1; ' + hygenify(node.argument) + ' = _r')
     } else {
-      return colony_node(node, 'local _r = ' + node.argument + '; ' + node.argument + ' = _r ' + node.operator.substr(0, 1) + ' 1')
+      return colony_node(node, 'local _r = ' + hygenify(node.argument) + '; ' + hygenify(node.argument) + ' = _r ' + node.operator.substr(0, 1) + ' 1')
     }
 
   } else if (type == 'ConditionalExpression') {
@@ -258,8 +259,8 @@ function finishNode(node, type) {
     return ret;
 
   } else if (type == 'VariableDeclarator') {
-    colony_locals[0].push(hygenifystr(node.id));
-    return colony_node(node, hygenifystr(node.id) + ' = ' + (node.init ? ensureExpression(node.init) : 'nil') + '; ')
+    colony_locals[0].push(hygenify(node.id));
+    return colony_node(node, hygenify(node.id) + ' = ' + (node.init ? ensureExpression(node.init) : 'nil') + '; ')
 
   } else if (type == 'VariableDeclaration') {
     return colony_node(node, node.declarations.join(' '));
@@ -382,7 +383,7 @@ node.finalizer ? node.finalizer : ''
   // Contexts
 
   } else if (type == 'FunctionExpression' || type == 'FunctionDeclaration') {
-    var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ' = ' + colony_locals[0].join(', ') + ';\n' : '';
+    var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].map(hygenifystr).join(', ') + ' = ' + colony_locals[0].map(hygenifystr).join(', ') + ';\n' : '';
     var usesArguments = !!colony_locals[0].arguments;
     var usesId = colony_locals[0].usesId;
     colony_locals.shift()
