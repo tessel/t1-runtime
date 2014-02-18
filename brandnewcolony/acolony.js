@@ -1384,7 +1384,7 @@ node.finalizer ? node.finalizer : ''
     // Contexts
 
     } else if (type == 'FunctionExpression' || type == 'FunctionDeclaration') {
-      var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ';\n' : ''
+      var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ' = ' + colony_locals[0].join(', ') + ';\n' : '';
       var usesArguments = !!colony_locals[0].arguments;
       var usesId = colony_locals[0].usesId;
       colony_locals.shift()
@@ -1408,7 +1408,7 @@ node.finalizer ? node.finalizer : ''
         w += 'function _with_fn' + (i + 1) + '(_with)' + joiner + b + joiner + 'return _with;' + joiner + 'end' + joiner;
       });
 
-      var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ';\n' : ''
+      var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ' = ' + colony_locals[0].join(', ') + ';\n' : '';
       colony_locals.shift()
       return colony_node(node, w + '\n--[[COLONY_MODULE]]\n' + localstr + node.body.join('\n'));
 
