@@ -16,11 +16,12 @@ var keywords = ['and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', '
 var joiner = '\n', wrapmodule = true;
 
 var source = [
+  res.replace(/--\[\[COLONY_MODULE\]\][\s\S]*$/, ''),
   "return function (_ENV, _module)",
   // 'local ' + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
   "local exports, module = _module.exports, _module;",
   "",
-  res,
+  res.replace(/^[\s\S]*--\[\[COLONY_MODULE\]\]/, ''),
   "",
   "return _module.exports;",
   "end "

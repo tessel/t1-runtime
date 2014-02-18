@@ -1069,6 +1069,12 @@ function _log () {
     })
   }
 
+  var colony_with = [];
+
+  function colony_newWith (block) {
+    return colony_with.push(block);
+  }
+
   function ColonyNode (type, start, str) { this.type = type; this.start = start; this.str = str; } //this.str = '--[[' + this.start + ']] ' + str; }
   ColonyNode.prototype = new String();
   ColonyNode.prototype.valueOf = function () { return this.str; }
@@ -1255,6 +1261,12 @@ function _log () {
     } else if (type == 'VariableDeclaration') {
       return colony_node(node, node.declarations.join(' '));
 
+    } else if (type == 'WithStatement') {
+      var i = colony_newWith(node.body.body.join('\n'));
+      return colony_node(node,
+        'local _ret = _with(' + node.object + ', _G._with_fn' + i + ');'
+        + 'if _ret ~= _with then return _ret end; ');
+
     } else if (type == 'BlockStatement') {
       return node; // oh?
       // return 'do\n' + node.body.join('\n') + 'end\n'
@@ -1386,9 +1398,15 @@ node.finalizer ? node.finalizer : ''
         + (type == 'FunctionDeclaration' ? '\nend\n' : '\nend)'));
 
     } else if (type == 'Program') {
+      var w = '';
+      colony_with.forEach(function (b, i) {
+        var joiner = '\n';
+        w += 'function _with_fn' + (i + 1) + '(_with)' + joiner + b + joiner + 'return _with;' + joiner + 'end' + joiner;
+      });
+
       var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ';\n' : ''
       colony_locals.shift()
-      return colony_node(node, localstr + node.body.join('\n'));
+      return colony_node(node, w + '\n--[[COLONY_MODULE]]\n' + localstr + node.body.join('\n'));
 
     }
     throw new Error('Colony cannot yet handle type ' + type);
