@@ -1592,7 +1592,7 @@ node.finalizer ? node.finalizer : ''
       return finishNode(node, "IfStatement");
 
     case _return:
-      if (!inFunction) raise(tokStart, "'return' outside of function");
+      if (!inFunction && !options.tolerant) raise(tokStart, "'return' outside of function");
       next();
 
       // In `return` (and `break`/`continue`), the keywords with
