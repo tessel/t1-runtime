@@ -134,7 +134,7 @@ function finishNode(node, type) {
 
   } else if (type == 'MemberExpression') {
     if (node.computed) {
-      return colony_node(node, hygenify(node.object) + '[' + hygenify(node.property) + ']');
+      return colony_node(node, hygenify(node.object) + '[' + ensureExpression(hygenify(node.property)) + ']');
     } else if (keywords.indexOf(String(node.property)) > -1) {
       return colony_node(node, hygenify(node.object) + '[' + JSON.stringify(String(node.property)) + ']');
     } else {
@@ -270,6 +270,37 @@ function finishNode(node, type) {
     return colony_node(node,
       'local _ret = _with(' + node.object + ', _G._with_fn' + i + ');'
       + 'if _ret ~= _with then return _ret end; ');
+
+  } else if (type == 'SwitchCase') {
+    return node;
+
+  } else if (type == 'SwitchStatement') {
+    var joiner = '\n';
+    return colony_node(node, [
+      'repeat',
+      node.cases.map(function (c, i) {
+        return 'local _' + i + (c.test ? ' = ' + c.test : '') + ';'
+      }).join(' '),
+      'local _r = ' + node.discriminant + ';',
+      node.cases.map(function (c, i) {
+        if (!c.test) {
+          return c.consequent.join(joiner)
+        }
+        return 'if _r == _' + i + ' then' + joiner + c.consequent.join(joiner) + joiner + (i < node.cases.length - 1 && (c.consequent.slice(-1)[0] || {}).type != 'BreakStatement' ? '_r = _' + (i + 1) + ';' + joiner : '') + 'end'
+      }).join(joiner),
+      'until true'
+    ].join(joiner))
+// ret = "repeat\n" +
+//   (if cases.length then ("local _#{i}#{if v then ' = ' + colonize(v) else ''}; " for i, [v, _] of cases).join('') else '') +
+//   "local _r = #{colonize(expr)};\n" +
+//   (for i, [_, stats] of cases
+//     if _?
+//       "if _r == _#{i} then\n" + (colonize(x) for x in stats).concat(if cases[Number(i)+1] and (not stats.length or stats[-1..][0].type != "break-stat") then ["_r = _#{Number(i)+1};"] else []).join("\n") + "\nend"
+//     else
+//       (colonize(x) for x in stats).join("\n")
+//   ).join("\n") + "\n" +
+//   "until true"
+// loops.pop()
 
   } else if (type == 'BlockStatement') {
     // TODO the block statement should be joined here,
