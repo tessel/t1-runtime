@@ -56,11 +56,12 @@ function colony_node (node, str) {
   return new ColonyNode(node.type, node.start, str)
 }
 
-function fixIdentifiers (str) {
+function hygenify (str) {
   if (keywords.indexOf(str) > -1) {
     return '_K_' + str;
+  } else {
+    return str.replace(/_/g, '__').replace(/\$/g, '_S');
   }
-  return str.replace(/_/g, '__').replace(/\$/g, '_S');
 }
 
 function ensureExpression (node) {
@@ -83,8 +84,11 @@ function finishNode(node, type) {
       colony_locals[0].arguments = true;
     }
     if (node.name != 'arguments' && node.name == colony_locals[0].id) {
-      // TODO this has to handle depth. potentialIds array then it checks at
-      // scopeClose if it is used, kicks it back up the chain yep.
+      // TODO We have to discover if a function above the current one is named
+      // by this ID, which we might not know until the entire function is parsed
+      // (local variables could be declared later). We should flag id's as
+      // "potentially used" and then verify by checking variables used in scope,
+      // then propagate to parent scopes.
       colony_locals[0].usesId = true;
     }
     return colony_node(node, node.name);
@@ -111,12 +115,13 @@ function finishNode(node, type) {
 
   } else if (type == 'AssignmentExpression') {
     if (node.operator != '=') {
-      // TODO reassignment :(
       var operator = node.operator.slice(0, -1);
       var ops = { '|': 'bor', '&': 'band', '>>': 'rshift', '<<': 'lshift' }
       if (node.operator in ops) {
         node.right = '_bit.' + ops[operator] + '(' + ensureExpression(node.left) + ', ' + ensureExpression(node.right) + ')'
       } else {
+        // TODO we run the risk of re-interpreting node.left here
+        // need a function that encapsulates that behavior
         node.right = node.left + operator + node.right;
       }
     }
@@ -153,7 +158,7 @@ function finishNode(node, type) {
 
   } else if (type == 'UnaryExpression') {
     if (node.operator == 'delete') {
-      // TODO "delete" = nil
+      // TODO "delete" semantics may change in future VM
       return colony_node(node, '(function () local _r = ' + node.argument + '; ' + node.argument + ' = nil; return _r ~= nil; end)()');
     }
 
@@ -195,7 +200,7 @@ function finishNode(node, type) {
   } else if (type == 'IfStatement') {
     return colony_node(node, [
       "if " + node.test + ' then\n',
-      // TODO node.consequent should be str
+      // TODO node.consequent should be a string, here is body
       (node.consequent.body ? node.consequent.body.join('\n') : node.consequent) + '\n',
       (node.alternate ? 'else\n' + (node.alternate.body ? node.alternate.body.join('\n') : node.alternate) + '\n' : ""),
       'end;'
@@ -206,7 +211,7 @@ function finishNode(node, type) {
 
   } else if (type == 'ForInStatement') {
     if (node.left.kind == 'var') {
-      var name = fixIdentifiers(node.left.declarations[0].str.replace(/\s*=.*$/, ''));
+      var name = hygenify(node.left.declarations[0].str.replace(/\s*=.*$/, ''));
     } else {
       var name = node.left;
     }
@@ -222,7 +227,9 @@ function finishNode(node, type) {
     } else {
       var ret = colony_node(node, node.expression + ';');
     }
-    ret.expression = node.expression; // TODO
+    ret.expression = node.expression;
+    // TODO we shouldn't have to leave ret.expression attached to the node,
+    // but a later step seems to require it being there
     return ret;
 
   } else if (type == 'VariableDeclarator') {
@@ -239,7 +246,9 @@ function finishNode(node, type) {
       + 'if _ret ~= _with then return _ret end; ');
 
   } else if (type == 'BlockStatement') {
-    return node; // oh?
+    // TODO the block statement should be joined here,
+    // but it seems to break code in acorn_mod
+    return node;
     // return 'do\n' + node.body.join('\n') + 'end\n'
 
   } else if (type == 'EmptyStatement') {
@@ -252,7 +261,8 @@ function finishNode(node, type) {
     // Done with while block.
     var flow = colony_flow.shift();
 
-    // TODO this should only scale up to a function barrier
+    // TODO we should only look up break flags up until
+    // the next function scope, not the entire chain
     var ascend = colony_flow.filter(function (l) {
       return l.type != 'try' && l.label;
     }).map(function (l) {
@@ -278,7 +288,7 @@ function finishNode(node, type) {
       !node.body.body ? node.body : node.body.body.join('\n'),
       (flow.usesContinue ? 'until true;\nif _c == _break then break end;' : ''),
       (node.update ? node.update + ';' : ''),
-    //     // TODO make this better
+    //     // TODO this should use ensureStatement()
     //     ? (node.update.type == 'BinaryExpression' || node.update.type == 'LogicalExpression' || node.update.type == 'UpdateExpression' || node.update.type == 'Literal' || node.update.type == 'CallExpression' || node.update.type == 'ConditionalExpression'
     //       ? node.update.source()
     //       : 'if ' + node.update.source().replace(/;?$/, '') + ' then end;')
