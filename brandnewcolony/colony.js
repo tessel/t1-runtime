@@ -146,11 +146,8 @@ function finishNode(node, type) {
 
   } else if (type == 'CallExpression') {
     var ismethod = node.callee.type == 'MemberExpression'
-    if (ismethod) {
-      // _log(node);
-    }
     return colony_node(node,
-      (ismethod ? hygenify(node.callee).replace(/^(.*)\./, '$1:') : hygenify(node.callee))
+      (ismethod ? hygenify(node.callee).replace(/^([\s\S]+)\./, '$1:') : hygenify(node.callee))
       + '(' + (ismethod ? [] : ['this']).concat(node.arguments.map(ensureExpression)).join(', ') + ')');
 
   } else if (type == 'NewExpression') {
