@@ -415,7 +415,7 @@ node.finalizer ? node.finalizer : ''
   // Contexts
 
   } else if (type == 'FunctionExpression' || type == 'FunctionDeclaration') {
-    var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].map(hygenifystr).join(', ') + ' = ' + colony_locals[0].map(hygenifystr).join(', ') + ';\n' : '';
+    var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ' = ' + colony_locals[0].join(', ') + ';\n' : '';
     var usesArguments = !!colony_locals[0].arguments;
     var usesId = colony_locals[0].usesId;
     colony_locals.shift()
