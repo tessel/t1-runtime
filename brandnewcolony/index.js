@@ -11,8 +11,6 @@ var res = colony.parse(fs.readFileSync(process.argv[2]))
 var end = process.hrtime(start)[1]/1000000;
 // console.error('--> took ' + end + 'ms');
 
-var keywords = ['and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', 'function', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat', 'return', 'then', 'true', 'until', 'while'];
-
 var joiner = '\n', wrapmodule = true;
 
 var source = [
