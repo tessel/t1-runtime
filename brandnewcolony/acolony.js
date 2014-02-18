@@ -1185,8 +1185,12 @@ function _log () {
       return colony_node(node, '(' + ensureExpression(node.test) + ' and {' + ensureExpression(node.consequent) + '} or {' + ensureExpression(node.alternate) + '})[1]');
 
     } else if (type == 'UnaryExpression') {
+      if (node.operator == 'delete') {
+        // TODO "delete" = nil
+        return colony_node(node, '(function () local _r = ' + node.argument + '; ' + node.argument + ' = nil; return _r ~= nil; end)()');
+      }
+
       var ops = { '|': '_bit.bor', '&': '_bit.band', '~': '_bit.bnot', '+': '0+', '!': 'not ', 'typeof': '_typeof' }
-      // TODO "delete" = nil
       return colony_node(node, '(' + (ops[node.operator] || node.operator) + '(' + ensureExpression(node.argument) + '))')
 
     } else if (type == 'LogicalExpression') {
