@@ -1119,7 +1119,11 @@ function _log () {
       return colony_node(node, node.name);
 
     } else if (type == 'Literal') {
-      return colony_node(node, node.raw);
+      if (node.value instanceof RegExp) {
+        return colony_node(node, '_regexp(' + JSON.stringify(node.value.source) + ', ' + JSON.stringify(String(node.value).replace(/^.*\//, '')) + ')');
+      } else {
+        return colony_node(node, '(' + node.raw + ')');
+      }
 
 
     // Expressions
