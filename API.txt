@@ -49,3 +49,32 @@ accept new incoming connection
 
 uint32_t tm_hostname_lookup (const uint8_t *hostname)
 lookup host
+
+# Regular Expressions
+
+Regexes
+
+typedef struct {
+    size_t re_nsub;
+    long re_info;
+    int re_csize;
+} regex_t;
+Regex created by `re_comp`. `re_nsub` is the number of subcapture groups. `re_info` is a bitmask of information about the regex. `re_csize` is the length of a character in the regex.
+
+typedef struct {
+    long rm_so;
+    long rm_eo;
+} regmatch_t;
+A matched subgroup. `rm_so` is the start offset in the string, `rm_eo` is the ending offset.
+
+int re_comp(regex_t* regex, const wchar_t* pattern, size_t pattern_len, int flags);
+Compiles a regex `pattern` with `flags` in the memory allocated at `regex`. Use `regfree` to close this object.
+
+void regfree(regex_t* regex);
+Frees the internals of a `regex_t` object.
+
+int re_exec(regex_t* regex, const wchar_t* input, size_t input_len, rm_detail_t* details, size_t matches_len, regmatch_t matches[], int flags);
+Executes a `regex` on the given string `input`. Can match up to `matches_len` subgroups in the array `matches`.
+
+size_t regerror(int error, const regex_t* regex, char* buf, size_t buf_len);
+Returns the meaning of a given regex error.
