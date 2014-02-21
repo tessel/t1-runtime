@@ -445,7 +445,7 @@
         '-Wno-empty-body',
         '-Wno-unused-but-set-variable',
         '-Wno-unused-value',
-        '-Wmo-unused-variable',
+        '-Wno-unused-variable',
         '-Wno-unknown-warning-option',
       ],
       'xcode_settings': {
