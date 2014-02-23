@@ -7,7 +7,7 @@ var path = require('path');
 function packageFolder (files, varname, section, filter, next)
 {
   var dirname = varname;
-  section = section ? '__attribute__ ((section ("' + section + '")))' : '';
+  section = section ? '__attribute__ ((section ("' + section + '\\n\\t#")))' : '';
 
   var _out = [];
   function write (arg) {
