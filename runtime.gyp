@@ -30,7 +30,6 @@
           '-march=armv7-m',
           '-mlong-calls',
           '-mfix-cortex-m3-ldrd',
-          '-Wall',
           '-mapcs-frame',
           '-msoft-float',
           '-mno-sched-prolog',
@@ -38,14 +37,24 @@
           '-ffunction-sections',
           '-fdata-sections',
           # '-fpermissive',
-          '-std=c99'
+          '-std=c99',
+
+          '-Wall',
+          #'-Wextra',
+          '-Werror',
         ]
       }],
       [ 'OS!="arm"', {
         'defines': [
           'COLONY_PC', '_GNU_SOURCE'
         ],
-        'cflags': [ '-Wall', '-Wextra', '-std=c99'],
+        'cflags': [
+          '-std=c99',
+
+          '-Wall',
+          #'-Wextra',
+          '-Werror',
+        ]
       }]
     ],
 
