@@ -13,9 +13,11 @@ var infixops = { '!==': '~=', '!=': '~=', '===': '==' };
 var colony_locals, colony_flow, colony_with;
 
 function resetState () {
-  colony_locals = [[]];
+  colony_locals = [];
   colony_flow = [];
   colony_with = [];
+
+  colony_newScope(null);
 }
 
 // Scopes contain ids, locals, etc: [ 0, 1, ..., id, usesId ]
@@ -23,6 +25,7 @@ function colony_newScope (id) {
   var scope = [];
   scope.id = id;
   scope.usesId = false;
+  scope.hoist = [];
 
   colony_locals.unshift(scope);
 }
@@ -411,19 +414,28 @@ node.finalizer ? node.finalizer : ''
     var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ' = ' + colony_locals[0].join(', ') + ';\n' : '';
     var usesArguments = !!colony_locals[0].arguments;
     var usesId = colony_locals[0].usesId;
+    var hoistsr = colony_locals[0].hoist.join('\n');
     colony_locals.shift()
     if (type == 'FunctionDeclaration') {
       colony_locals[0].push(hygenifystr(node.id));
     }
-    return colony_node(node,
+    var fnnode = colony_node(node,
       (type == 'FunctionDeclaration' ? (node.id ? hygenifystr(node.id) + ' = ' : '') + 'function (' : '(function (')
       + (usesArguments
         ? 'this, ...)\n' + (node.params.length ? 'local ' + node.params.map(hygenifystr).join(', ') + ' = ...;\n' : '') + 'local arguments = _arguments(...);\n'
         : ['this'].concat(node.params.map(hygenifystr)).join(', ') + ')\n')
       + (usesId ? 'local ' + hygenifystr(node.id) + ' = _debug.getinfo(1, \'f\').func;\n' : '')
       + localstr
+      + hoistsr
       + node.body.body.join('\n')
       + (type == 'FunctionDeclaration' ? '\nend\n' : '\nend)'));
+
+    if (type == 'FunctionDeclaration') {
+      colony_locals[0].hoist.push(fnnode);
+      return colony_node(node, '');
+    } else {
+      return fnnode;
+    }
 
   } else if (type == 'Program') {
     var w = '';
@@ -433,8 +445,9 @@ node.finalizer ? node.finalizer : ''
     });
 
     var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ' = ' + colony_locals[0].join(', ') + ';\n' : '';
+    var hoistsr = colony_locals[0].hoist.join('\n');
     colony_locals.shift()
-    return colony_node(node, w + '\n--[[COLONY_MODULE]]\n' + localstr + node.body.join('\n'));
+    return colony_node(node, w + '\n--[[COLONY_MODULE]]\n' + localstr + hoistsr + node.body.join('\n'));
 
   }
   throw new Error('Colony cannot yet handle type ' + type);
