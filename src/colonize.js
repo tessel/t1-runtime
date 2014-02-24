@@ -163,10 +163,10 @@ function finishNode(node, type) {
       + '(' + (ismethod ? [] : ['this']).concat(node.arguments.map(hygenify).map(ensureExpression)).join(', ') + ')');
 
   } else if (type == 'NewExpression') {
-    var ismethod = node.callee.type == 'MemberExpression'
-    if (ismethod) {
-      throw new Error('Dont support methods as new expressions yet');
-    }
+    // var ismethod = node.callee.type == 'MemberExpression'
+    // if (ismethod) {
+    //   throw new Error('Dont support methods as new expressions yet');
+    // }
     return colony_node(node, '_new(' + [node.callee].concat(node.arguments.map(hygenify)).join(', ') + ')');
 
   } else if (type == 'ThisExpression') {
