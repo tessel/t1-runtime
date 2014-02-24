@@ -514,6 +514,37 @@
       }
     },
 
+    {
+      "target_name": "dlmalloc",
+      "product_name": "dlmalloc",
+      "type": "static_library",
+      "defines": [
+        'MSPACES=1',
+        'ONLY_MSPACES=1',
+        'HAVE_MMAP=0',
+        'HAVE_MORECORE=0',
+      ],
+      "sources": [
+        'src/dlmalloc/dlmalloc.c',
+        'src/dlmalloc/dlmallocfork.c',
+      ],
+      "include_dirs": [
+        "src/dlmalloc/",
+      ],
+
+      'direct_dependent_settings': {
+        'include_dirs': [
+          "src/dlmalloc/",
+        ],
+        "defines": [
+          'MSPACES=1',
+          'ONLY_MSPACES=1',
+          'HAVE_MMAP=0',
+          'HAVE_MORECORE=0',
+        ],
+      }
+    },
+
 
     ###
     # TM WRAPPER LIBRARIES
@@ -540,16 +571,9 @@
       "type": "static_library",
       'cflags': [ '-Wall', '-Wextra', '-Werror' ],
       "defines": [
-        'MSPACES=1',
-        'ONLY_MSPACES=1',
-        'HAVE_MMAP=0',
-        'HAVE_MORECORE=0',
         'LACKS_UNISTD_H',
       ],
       "sources": [
-        'src/dlmalloc/dlmalloc.c',
-        'src/dlmalloc/dlmallocfork.c',
-
         'src/l_cares.c',
         'src/l_hsregex.c',
         'src/l_http_parser.c',
@@ -569,6 +593,7 @@
         "yajl",
         "c-ares",
         "colony-lua",
+        "dlmalloc",
       ],
       'direct_dependent_settings': {
         'include_dirs': [
