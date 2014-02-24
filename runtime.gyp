@@ -522,6 +522,7 @@
     {
       "target_name": "tm-ssl",
       "type": "static_library",
+      'cflags': [ '-Wall', '-Wextra', '-Werror' ],
       "sources": [
         'src/tm_ssl.c',
       ],
@@ -537,6 +538,7 @@
       "target_name": "tm",
       "product_name": "tm",
       "type": "static_library",
+      'cflags': [ '-Wall', '-Wextra', '-Werror' ],
       "defines": [
         'MSPACES=1',
         'ONLY_MSPACES=1',
@@ -654,6 +656,7 @@
     {
       "target_name": "tessel-runtime",
       "type": "static_library",
+      'cflags': [ '-Wall', '-Wextra', '-Werror' ],
       'conditions': [
         ['OS=="arm"', {
           "sources": [
@@ -691,6 +694,7 @@
       "target_name": "colony",
       "product_name": "colony",
       "type": "executable",
+      'cflags': [ '-Wall', '-Wextra', '-Werror' ],
       "sources": [
         'src/cli.c',
       ],
