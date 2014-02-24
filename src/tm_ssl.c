@@ -15,6 +15,7 @@ ssize_t tm_ssl_write (tm_ssl_session_t ssl, uint8_t *buf, size_t buf_len)
 // TODO less than 1024
 ssize_t tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t buf_len)
 {
+    (void) buf_len;
 	uint8_t *read_buf;
     ssize_t ret = ssl_read(ssl, &read_buf);
     if (ret >= 0) {

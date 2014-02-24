@@ -216,6 +216,7 @@ static int to_value_end(void* ctx) {
 
 /* See STRATEGY section below */
 static int noop(lua_State* L) {
+    (void) L;
     return 0;
 }
 

@@ -22,6 +22,10 @@ uint8_t ipaddr[4] = { 0 };
 static void
 state_cb(void *data, int s, int read, int write)
 {
+    (void) data;
+    (void) s;
+    (void) read;
+    (void) write;
     // printf("Change state fd %d read:%d write:%d\n", s, read, write);
 }
  
@@ -29,7 +33,9 @@ state_cb(void *data, int s, int read, int write)
 static void
 callback(void *arg, int status, int timeouts, struct hostent *host)
 {
- 
+    (void) arg;
+    (void) timeouts;
+
     if(!host || status != ARES_SUCCESS){
         printf("Failed to lookup %s\n", ares_strerror(status));
         return;

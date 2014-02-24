@@ -295,6 +295,8 @@ const char runtime_lua[] = "require('cli');";
 
 int colony_runtime_run (lua_State** stateptr, const char *path, char **argv, int argc)
 {
+  (void) path;
+  
   lua_State* L = *stateptr;
 
   // Run script.

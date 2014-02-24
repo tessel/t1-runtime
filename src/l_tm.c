@@ -290,6 +290,7 @@ static int l_tm_ssl_read (lua_State* L)
 
 static int l_tm_uptime_init (lua_State* L)
 {
+  (void) L;
   tm_uptime_init();
   return 0;
 }
