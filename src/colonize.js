@@ -218,7 +218,7 @@ function finishNode(node, type) {
 
   } else if (type == 'IfStatement') {
     return colony_node(node, [
-      "if " + hygenify(node.test) + ' then\n',
+      "if " + ensureExpression(hygenify(node.test)) + ' then\n',
       // TODO node.consequent should be a string, here is body
       (node.consequent.body ? node.consequent.body.join('\n') : node.consequent) + '\n',
       (node.alternate ? 'else\n' + (node.alternate.body ? node.alternate.body.join('\n') : node.alternate) + '\n' : ""),
