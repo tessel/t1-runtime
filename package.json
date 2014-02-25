@@ -12,6 +12,8 @@
   "scripts": {
     "test": "./node_modules/.bin/tap -e './out/Release/colony' test/suite/*.js",
     "test-net": "./node_modules/.bin/tap -e './out/Release/colony' test/net/*.js",
+    "test-suite": "./node_modules/.bin/tap -e './out/Release/colony' test/suite/*.js",
+    "test-all": "./node_modules/.bin/tap -e './out/Release/colony' test/suite/*.js test/net/*.js",
     "tessel-test": "./node_modules/.bin/tap -e 'tessel-node -qs' test/suite/*.js",
     "install": "true"
   },
