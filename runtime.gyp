@@ -9,6 +9,7 @@
     "colony_lua_path": "./deps/colony-lua",
     "lua_bitop_path": "./deps/luabitop-1.0",
     "fatfs_path": "./deps/fatfs",
+    "dlmalloc_path": "./deps/dlmalloc",
     'builtin_section%': '',
   },
 
@@ -525,16 +526,15 @@
         'HAVE_MORECORE=0',
       ],
       "sources": [
-        'src/dlmalloc/dlmalloc.c',
-        'src/dlmalloc/dlmallocfork.c',
+        '<(dlmalloc_path)/dlmalloc.c',
       ],
       "include_dirs": [
-        "src/dlmalloc/",
+        '<(dlmalloc_path)/',
       ],
 
       'direct_dependent_settings': {
         'include_dirs': [
-          "src/dlmalloc/",
+          '<(dlmalloc_path)/',
         ],
         "defines": [
           'MSPACES=1',
@@ -579,11 +579,11 @@
         'src/l_http_parser.c',
         'src/l_tm.c',
         'src/lua_yajl.c',
+        'src/dlmallocfork.c',
         'src/runtime.c',
       ],
       "include_dirs": [
         'src/',
-        'src/dlmalloc/',
         "<(colony_lua_path)/src",
       ],
       "dependencies": [
@@ -598,7 +598,6 @@
       'direct_dependent_settings': {
         'include_dirs': [
           'src/',
-          'src/dlmalloc/',
         ]
       }
     },

@@ -3,6 +3,9 @@
 #include <string.h>
 
 static int _footsize (uint8_t* ptr, int max) {
+  // TODO
+  (void) ptr;
+  (void) max;
   return 0;
   // int j = 0, ma = 0, k = 0, l = 0, i = 0;
   // for (i = 0; i < max; i++) {
@@ -24,6 +27,9 @@ static int _footsize (uint8_t* ptr, int max) {
 }
 
 static int _datasize (uint8_t* ptr, int max) {
+  // TODO
+  (void) ptr;
+  (void) max;
   return max;
   // int j = 0, ma = 0, k = 1, l = 0, i = 0;
   // int footsize = _footsize(ptr, max);
