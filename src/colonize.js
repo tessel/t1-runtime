@@ -202,12 +202,12 @@ function finishNode(node, type) {
     }
 
   } else if (type == 'ArrayExpression') {
-    return colony_node(node, '_arr({' + [node.elements.length > 0 ? '[0]=' + hygenify(node.elements[0]) : ''].concat(node.elements.slice(1).map(hygenify)).join(', ') + '}, ' + node.elements.length + ')')
+    return colony_node(node, '_arr({' + [node.elements.length > 0 ? '[0]=' + hygenify(node.elements[0]) : ''].concat(node.elements.slice(1).map(hygenify).map(ensureExpression)).join(', ') + '}, ' + node.elements.length + ')')
 
   } else if (type == 'ObjectExpression') {
     return colony_node(node, '_obj({\n  '
       + node.properties.map(function (prop) {
-        return '[' + (prop.key.type == 'Literal' ? prop.key : JSON.stringify(prop.key.toString())) + ']=' + hygenify(prop.value)
+        return '[' + (prop.key.type == 'Literal' ? prop.key : JSON.stringify(prop.key.toString())) + ']=' + ensureExpression(hygenify(prop.value))
       }).join(',\n  ')
       + '\n})');
 
@@ -229,7 +229,7 @@ function finishNode(node, type) {
     ].join(''));
 
   } else if (type == 'ReturnStatement') {
-    return colony_node(node, 'if true then return ' + (node.argument ? hygenify(node.argument) : '') + '; end');
+    return colony_node(node, 'if true then return ' + (node.argument ? ensureExpression(hygenify(node.argument)) : '') + '; end');
 
   } else if (type == 'ForInStatement') {
     if (node.left.kind == 'var') {
@@ -238,7 +238,7 @@ function finishNode(node, type) {
       var name = hygenifystr(node.left);
     }
     return colony_node(node, [
-      'for ' + name + ' in _pairs(' + hygenify(node.right) + ') do',
+      'for ' + name + ' in _pairs(' + ensureExpression(hygenify(node.right)) + ') do',
       !node.body.body ? node.body : node.body.body.join('\n'),
       'end;'
     ].join('\n'))
