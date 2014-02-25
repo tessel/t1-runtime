@@ -5,3 +5,9 @@
 
 // console.log("undefined null true 5 hi { hey: 'there' }")
 // console.log(undefined, null, true, 5, "hi", {hey: 'there'})
+
+console.error('1..4');
+console.info('ok');
+console.warn('ok');
+console.error('ok');
+console.log('ok');

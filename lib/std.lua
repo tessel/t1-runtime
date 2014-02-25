@@ -838,6 +838,12 @@ global.console = js_obj({
   log = function (self, ...)
     logger(io.stdout, ...)
   end,
+  info = function (self, ...)
+    logger(io.stderr, ...)
+  end,
+  warn = function (self, ...)
+    logger(io.stderr, ...)
+  end,
   error = function (self, ...)
     logger(io.stderr, ...)
   end
