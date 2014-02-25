@@ -432,6 +432,7 @@ end
 EventEmitter.prototype.on = EventEmitter.prototype.addListener
 
 EventEmitter.prototype.once = function (this, type, f)
+  local g = nil
   g = function (this, ...)
     this:removeListener(type, g);
     f(this, ...)
