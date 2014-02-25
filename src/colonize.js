@@ -135,11 +135,11 @@ function finishNode(node, type) {
 
   } else if (type == 'MemberExpression') {
     if (node.computed) {
-      return colony_node(node, hygenify(node.object) + '[' + ensureExpression(hygenify(node.property)) + ']');
+      return colony_node(node, ensureExpression(hygenify(node.object)) + '[' + ensureExpression(hygenify(node.property)) + ']');
     } else if (keywords.indexOf(String(node.property)) > -1) {
-      return colony_node(node, hygenify(node.object) + '[' + JSON.stringify(String(node.property)) + ']');
+      return colony_node(node, ensureExpression(hygenify(node.object)) + '[' + JSON.stringify(String(node.property)) + ']');
     } else {
-      return colony_node(node, hygenify(node.object) + '.' + node.property);
+      return colony_node(node, ensureExpression(hygenify(node.object)) + '.' + node.property);
     }
     return str;
 
