@@ -1,8 +1,18 @@
+# Colony
+
+Colony has support for augmenting the Lua API to handle JavaScript primitives. These are included via `colony.h`.
+
+void colony_createarray (lua_State* L, int size)
+Creates a new JavaScript array of length `size`. This sets the object prototype as well as the initial length of the array.
+
+void colony_createobj (lua_State* L, int size, int proto)
+Creates a new JavaScript object with an expected (but not required) allocation of `size` keys. This sets the object prototype as well. If `proto` is not zero (an invalid stack pointer), it points to an object on the stack to be used as the prototype for the newly created object.
+
 # Net
 
 Networking
 
-typedef int tm_socket_t
+typedef tm_socket_t
 socket type
 
 tm_socket_t tm_udp_open ()

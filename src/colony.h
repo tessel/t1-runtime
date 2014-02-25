@@ -13,5 +13,7 @@ int colony_runtime_arena_save_size (void* _ptr, int max);
 void colony_runtime_arena_save (void* _source, int source_max, void* _target, int target_max);
 void colony_runtime_arena_restore (void* _source, int source_max, void* _target, int target_max);
 
-void colony_newarray (lua_State* L, int size);
-void colony_newobj (lua_State* L, int size);
+// JavaScript primitives
+
+void colony_createarray (lua_State* L, int size);
+void colony_createobj (lua_State* L, int size, int proto);

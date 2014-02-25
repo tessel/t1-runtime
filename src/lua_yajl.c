@@ -172,7 +172,7 @@ static int to_value_start_map(void* ctx) {
     }
 
     // lua_newtable(L);
-    colony_newobj(L, 0);
+    colony_createobj(L, 0, 0);
     lua_pushnil(L); /* Store future key here. */
     lua_pushcfunction(L, got_map_key);
 
@@ -196,7 +196,7 @@ static int to_value_start_array(void* ctx) {
     }
 
     // lua_newtable(L);
-    colony_newarray(L, 0);
+    colony_createarray(L, 0);
     lua_pushinteger(L, 0);
     lua_pushcfunction(L, got_array_value);
 

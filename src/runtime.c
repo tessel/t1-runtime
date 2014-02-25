@@ -345,7 +345,7 @@ inline static void stackDump (lua_State *L) {
     }
 
 
-void colony_newarray (lua_State* L, int size)
+void colony_createarray (lua_State* L, int size)
 {
   lua_getglobal(L, "_colony");
   lua_getfield(L, -1, "global");
@@ -354,12 +354,14 @@ void colony_newarray (lua_State* L, int size)
   lua_gettable(L, -2);
   lua_remove(L, -2);
   lua_createtable(L, size > 0 ? size - 1 : size, size > 0 ? 1 : 0);
-  lua_call(L,1,1);
+  lua_pushnumber(L, size);
+  lua_call(L,2,1);
 }
 
-void colony_newobj (lua_State* L, int size)
+void colony_createobj (lua_State* L, int size, int proto)
 {
-  // stackDump(L);
+  (void) proto;
+
   lua_getglobal(L, "_colony");
   lua_getfield(L, -1, "global");
   lua_remove(L, -2);
@@ -368,5 +370,4 @@ void colony_newobj (lua_State* L, int size)
   lua_remove(L, -2);
   lua_createtable(L, 0, size);
   lua_call(L,1,1);
-  // stackDump(L);
 }
