@@ -1,0 +1,4 @@
+BasedOnStyle: WebKit
+UseTab: ForIndentation
+IndentWidth: 8
+MaxEmptyLinesToKeep: 2
