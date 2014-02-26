@@ -4,6 +4,8 @@ function _log () {
 //  console.error.apply(console, arguments);
 }
 
+var repl = false;
+
 var keywords = ['and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', 'function', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat', 'return', 'then', 'true', 'until', 'while'];
 var unaryops = { '|': '_bit.bor', '&': '_bit.band', '~': '_bit.bnot', '+': '0+', '!': 'not ', 'typeof': '_typeof', 'void': '_void' }
 var logicalops = { '&&': 'and', '||': 'or' };
@@ -447,15 +449,22 @@ node.finalizer ? node.finalizer : ''
     var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ' = ' + colony_locals[0].join(', ') + ';\n' : '';
     var hoistsr = colony_locals[0].hoist.join('\n');
     colony_locals.shift()
-    return colony_node(node, w + '\n--[[COLONY_MODULE]]\n' + localstr + hoistsr + node.body.join('\n'));
+
+    var laststr = '';
+    if (repl && node.body.length && node.body[node.body.length - 1].expression) {
+      laststr = '\nif true then return ' + node.body.pop().expression + '; end';
+    }
+    return colony_node(node, w + '\n--[[COLONY_MODULE]]\n' + localstr + hoistsr + node.body.join('\n') + laststr);
 
   }
   throw new Error('Colony cannot yet handle type ' + type);
 }
 
-module.exports = function (script)
+module.exports = function (script, opts)
 {
   var joiner = '\n', wrapmodule = true;
+
+  repl = (opts || {}).returnLastStatement;
 
   resetState();
   var res = acorn.parse(script, {
