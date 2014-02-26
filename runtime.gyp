@@ -615,7 +615,7 @@
         'src/',
       ],
       "dependencies": [
-        "tm",
+        "tessel-runtime",
       ]
     },
 
