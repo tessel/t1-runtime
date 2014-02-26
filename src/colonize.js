@@ -462,9 +462,10 @@ node.finalizer ? node.finalizer : ''
 
 module.exports = function (script, opts)
 {
-  var joiner = '\n', wrapmodule = true;
+  var joiner = '\n';
 
   repl = (opts || {}).returnLastStatement;
+  var wrap = (opts || {}).wrap !== false;
 
   resetState();
   var res = acorn.parse(script, {
@@ -479,15 +480,21 @@ module.exports = function (script, opts)
     }
   });
 
+  var prelude = res.replace(/--\[\[COLONY_MODULE\]\][\s\S]*$/, '');
+  var body = res.replace(/^[\s\S]*--\[\[COLONY_MODULE\]\]/, '');
+
+  if (!wrap) {
+    return prelude + '\n' + body;
+  }
+
   return [
-    res.replace(/--\[\[COLONY_MODULE\]\][\s\S]*$/, ''),
-    "return function (_ENV, _module)",
-    // 'local ' + mask.join(', ') + ' = ' + mask.map(function () { return 'nil'; }).join(', ') + ';',
-    "local exports, module = _module.exports, _module;",
-    "",
-    res.replace(/^[\s\S]*--\[\[COLONY_MODULE\]\]/, ''),
-    "",
-    "return _module.exports;",
-    "end "
+    prelude,
+    'return function (_ENV, _module)',
+    'local exports, module = _module.exports, _module;',
+    '',
+    body,
+    '',
+    'return _module.exports;',
+    'end '
   ].join(joiner);
 };
