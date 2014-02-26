@@ -9,6 +9,12 @@ inline void print_buffer (uint8_t* buf, size_t len) {
 	printf("\n");
 }
 
+
+/**
+ * tm test
+ */
+
+
 TEST floats()
 {
 	uint8_t buf[16] = { 0 };
@@ -23,6 +29,7 @@ TEST floats()
 
 	PASS();
 }
+
 
 TEST doubles()
 {
@@ -39,18 +46,69 @@ TEST doubles()
 	PASS();
 }
 
+
 SUITE(tm_buf)
 {
 	RUN_TEST(floats);
 	RUN_TEST(doubles);
 }
 
-/* Add definitions that need to be in the test runner's main file. */
+
+/**
+ * runtime test
+ */
+
+#include "colony.h"
+
+
+TEST colony(lua_State *L)
+{
+	int stacksize = 0;
+	size_t buf_len = 0;
+	const uint8_t* buf = NULL;
+
+	// test string -> buffer
+	const char* str = "this is a cool string";
+	lua_pushstring(L, str);
+	buf_len = 0;
+	stacksize = lua_gettop(L);
+	buf = colony_tobuffer(L, -1, &buf_len);
+	ASSERT_EQ(buf_len, strlen(str));
+	ASSERT_EQ(strncmp((const char*) buf, str, buf_len), 0);
+	ASSERT_EQm("colony_tobuffer doesn't grow or shrink stack", stacksize, lua_gettop(L));
+
+	// test buffer -> buffer
+	const uint8_t* newbuf = colony_createbuffer(L, 256);
+	buf_len = 0;
+	stacksize = lua_gettop(L);
+	buf = colony_tobuffer(L, -1, &buf_len);
+	ASSERT_EQ(buf_len, 256);
+	ASSERT_EQ(strncmp((const char*) buf, (const char*) newbuf, buf_len), 0);
+	ASSERT_EQm("colony_tobuffer doesn't grow or shrink stack", stacksize, lua_gettop(L));
+
+	PASS();
+}
+
+
+SUITE(runtime)
+{
+	lua_State *L = NULL;
+	colony_runtime_open(&L);
+	RUN_TESTp(colony, L);
+	colony_runtime_close(&L);
+}
+
+
+/**
+ * entry
+ */
+
 GREATEST_MAIN_DEFS();
 
 int main(int argc, char **argv)
 {
 	GREATEST_MAIN_BEGIN();      /* command-line arguments, initialization. */
 	RUN_SUITE(tm_buf);
+	RUN_SUITE(runtime);
 	GREATEST_MAIN_END();        /* display results */
 }
