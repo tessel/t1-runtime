@@ -580,6 +580,8 @@
         'src/l_tm.c',
         'src/lua_yajl.c',
         'src/dlmallocfork.c',
+
+        'src/tm_buffer.c',
         'src/runtime.c',
       ],
       "include_dirs": [
@@ -600,6 +602,21 @@
           'src/',
         ]
       }
+    },
+
+    {
+      "target_name": "test-tm",
+      "product_name": "test-tm",
+      "type": "executable",
+      "sources": [
+        'test/tm/test.c'
+      ],
+      "include_dirs": [
+        'src/',
+      ],
+      "dependencies": [
+        "tm",
+      ]
     },
 
 
