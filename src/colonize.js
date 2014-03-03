@@ -332,6 +332,26 @@ function finishNode(node, type) {
       'end;'
     ].join('\n'));
 
+  } else if (type == 'DoWhileStatement') {
+    // Done with while block.
+    var flow = colony_flow.shift();
+
+    // TODO we should only look up break flags up until
+    // the next function scope, not the entire chain
+    var ascend = colony_flow.filter(function (l) {
+      return l.type != 'try' && l.label;
+    }).map(function (l) {
+      return l.label;
+    }).reverse();
+
+    return colony_node(node, [
+      'repeat ',
+      (flow.usesContinue ? 'local _c' + (flow.label||'') + ' = nil; repeat' : ''),
+      !node.body.body ? node.body : node.body.body.join('\n'),
+      (flow.usesContinue ? 'until true;\nif _c' + flow.label + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end;' : ''),
+      'until ' + ensureExpression(node.test) + '; ',
+    ].join('\n'));
+
   } else if (type == 'ForStatement') {
     // Done with for block.
     var flow = colony_flow.shift();

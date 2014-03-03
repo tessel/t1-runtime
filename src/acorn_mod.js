@@ -1186,6 +1186,7 @@
       return finishNode(node, "DebuggerStatement");
 
     case _do:
+      options.behaviors.openWhile();
       next();
       labels.push(loopLabel);
       node.body = parseStatement();
