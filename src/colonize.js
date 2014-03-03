@@ -149,7 +149,7 @@ function finishNode(node, type) {
     if (node.operator != '=') {
       var operator = node.operator.slice(0, -1);
       if (operator in binaryops) {
-        node.right = binaryops[operator] + '(' + ensureExpression(node.left) + ', ' + ensureExpression(node.right) + ')'
+        node.right = binaryops[operator] + '((' + ensureExpression(node.left) + ') or 0, (' + ensureExpression(node.right) + ') or 0)'
       } else {
         // TODO we run the risk of re-interpreting node.left here
         // need a function that encapsulates that behavior
@@ -197,7 +197,7 @@ function finishNode(node, type) {
 
   } else if (type == 'BinaryExpression') {
     if (node.operator in binaryops) {
-      return colony_node(node, binaryops[node.operator] + '(' + ensureExpression(hygenify(node.left)) + ',' + ensureExpression(hygenify(node.right)) + ')')
+      return colony_node(node, binaryops[node.operator] + '((' + ensureExpression(hygenify(node.left)) + ') or 0,(' + ensureExpression(hygenify(node.right)) + ') or 0)')
     } else {
       // infix
       return colony_node(node, '((' + ensureExpression(hygenify(node.left)) + ')' + (infixops[node.operator] || node.operator) + '(' + ensureExpression(hygenify(node.right)) + '))')
