@@ -349,7 +349,7 @@ function finishNode(node, type) {
       (flow.usesContinue ? 'local _c' + (flow.label||'') + ' = nil; repeat' : ''),
       !node.body.body ? node.body : node.body.body.join('\n'),
       (flow.usesContinue ? 'until true;\nif _c' + flow.label + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end;' : ''),
-      'until ' + ensureExpression(node.test) + '; ',
+      'until not (' + ensureExpression(node.test) + '); ',
     ].join('\n'));
 
   } else if (type == 'ForStatement') {
