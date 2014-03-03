@@ -372,9 +372,9 @@ void colony_createobj (lua_State* L, int size, int proto)
   lua_call(L,1,1);
 }
 
-static const uint8_t* colony_getbufferptr (lua_State *L, int index, size_t* buf_len)
+static uint8_t* colony_getbufferptr (lua_State *L, int index, size_t* buf_len)
 {
-  const uint8_t* buf = NULL;
+  uint8_t* buf = NULL;
   if (lua_getmetatable(L, index)) {
     lua_getfield(L, -1, "buffer");
     if (!lua_isnil(L, -1)) {
@@ -391,7 +391,7 @@ static const uint8_t* colony_getbufferptr (lua_State *L, int index, size_t* buf_
   return buf;
 }
 
-const uint8_t* colony_createbuffer (lua_State* L, int size)
+uint8_t* colony_createbuffer (lua_State* L, int size)
 {
   lua_getglobal(L, "_colony");
   lua_getfield(L, -1, "global");
@@ -408,7 +408,7 @@ const uint8_t* colony_createbuffer (lua_State* L, int size)
 const uint8_t* colony_tobuffer (lua_State* L, int index, size_t* buf_len)
 {
   const uint8_t* buf = NULL;
-  buf = colony_getbufferptr(L, index, buf_len);
+  buf = (const uint8_t *) colony_getbufferptr(L, index, buf_len);
   if (buf == NULL) {
     buf = (const uint8_t *) lua_tolstring(L, index, buf_len);
   }
