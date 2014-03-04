@@ -30,3 +30,16 @@ ok(JSON.stringify({"hi": 5}) == "{\"hi\":5}", 'stringify obj');
 
 ok(JSON.stringify(Object()) == '{}', 'empty obj')
 ok(JSON.stringify([]) == '[]', 'empty array #TODO')
+
+ok(JSON.stringify({hi : 5}, null, '  ') == '{\n  "hi": 5\n}\n', 'indentation formatting');
+
+// function censor(key, value) {
+// 	console.log('CENSORING', key, value);
+//   if (typeof(value) == "string") {
+//     return undefined;
+//   }
+//   return value;
+// }
+// var foo = {foundation: "Mozilla", model: "box", week: 45, transport: "car", month: 7};
+// var jsonString = JSON.stringify(foo, censor);
+// console.log(jsonString);
