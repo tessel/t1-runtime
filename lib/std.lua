@@ -73,12 +73,15 @@ Standard Library
 
 -- number prototype
 
-num_proto.toString = function (num, n)
-  if n == 16 then
-    return string.format("%x", num)
-  else
-    return tostring(num)
+num_proto.toString = function (this, radix)
+  if radix == nil then
+    radix = 10
   end
+  if not (type(radix) == 'number' and radix >= 2 and radix <= 36) then
+    -- TODO: real rangeerror
+    error("RangeError: toString() radix argument must be between 2 and 36")
+  end
+  return itoa(this, radix)
 end
 
 num_proto.toFixed = function (num, n)

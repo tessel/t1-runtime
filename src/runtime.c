@@ -101,6 +101,69 @@ static int runtime_panic (lua_State *L)
   return 0;  /* return to Lua to abort */
 }
 
+
+
+
+/**
+ * colony lua methods
+ */
+
+// https://groups.google.com/forum/#!topic/comp.lang.c/IyWWejPrgts
+
+#define itoa_numorchar(A) (A > 9 ? 'a' + (A - 10) : '0' + A)
+
+static char *colony_itoa(int i, char *s, unsigned int radix)
+{
+  char *p = s;
+  char *q = s;
+
+  if (i >= 0) {
+    do {
+      *q++ = itoa_numorchar(i % radix);
+    }
+    while (i /= radix);
+  } else if (-1 % 2 < 0) {
+    *q++ = '-';
+    p++;
+
+    do {
+      *q++ = itoa_numorchar(-(i % radix));
+    } while (i /= radix);
+  } else {
+    *q++ = '-';
+    p++;
+
+    do {
+      int d = i % radix;
+      i = i / radix;
+      if (d) { i++; d = radix - d; }
+      *q++ = itoa_numorchar(d);
+    } while (i);
+  }
+
+  for (*q = 0; p < --q; p++) {
+    char c = *p;
+    *p = *q;
+    *q = c;
+  }
+
+  return s;
+}
+
+static int l_colony_itoa (lua_State* L)
+{
+  long value = (long) lua_tonumber(L, 1);
+  unsigned int radix = (unsigned int) lua_tonumber(L, 2);
+
+  // TODO ensure colony_itoa can never go over 255 bytes
+  char buf[256] = { 0 };
+  colony_itoa(value, buf, radix == 0 ? 10 : radix);
+  buf[255] = 0;
+  
+  lua_pushstring(L, buf);
+  return 1;
+}
+
 // static int base64_write(lua_State* L, unsigned char* str, size_t len, 
 //         struct luaL_Buffer *buf)
 // {
@@ -180,6 +243,9 @@ static int _colony_runtime_open (lua_State *L, int preload_on_init)
   lua_pushboolean(L, 0);
 #endif
   lua_setglobal(L, "COLONY_EMBED");
+
+  lua_pushcfunction(L, l_colony_itoa);
+  lua_setglobal(L, "itoa");
 
   // Get preload table.
   lua_getglobal(L, "package");
