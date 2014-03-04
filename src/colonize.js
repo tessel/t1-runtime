@@ -187,10 +187,10 @@ function finishNode(node, type) {
   } else if (type == 'UnaryExpression') {
     if (node.operator == 'delete') {
       // TODO "delete" semantics may change in future VM
-      return colony_node(node, '(function () local _r = ' + node.argument + '; ' + node.argument + ' = nil; return _r ~= nil; end)()');
+      return colony_node(node, '(function () local _r = ' + hygenify(node.argument) + '; ' + hygenify(node.argument) + ' = nil; return _r ~= nil; end)()');
     }
 
-    return colony_node(node, '(' + (unaryops[node.operator] || node.operator) + '(' + ensureExpression(node.argument) + '))')
+    return colony_node(node, '(' + (unaryops[node.operator] || node.operator) + '(' + ensureExpression(hygenify(node.argument)) + '))')
 
   } else if (type == 'LogicalExpression') {
     return colony_node(node, '((' + ensureExpression(hygenify(node.left)) + ')' + logicalops[node.operator] + '(' + ensureExpression(hygenify(node.right)) + '))')
