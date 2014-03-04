@@ -388,7 +388,11 @@ node.handler.body ? node.handler.body.body.join('\n') : '',
 // break clause.
 'end;'
 ] : []).concat([
-node.finalizer ? node.finalizer : ''
+node.finalizer ? node.finalizer.body.join('\n') : '',
+]).concat(node.handler ? [] : [
+'if _s == false then',
+'_error(_e)',
+'end'
 ]).concat(
 !colony_flow.length ? [] : [
 //break
