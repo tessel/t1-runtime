@@ -126,3 +126,11 @@ var abc = Buffer.concat([a, b, c]);
 ok(abc.length == a.length + b.length + c.length, 'buffer concat length');
 ok(arreq(abc, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 'buffer concat works');
 ok(arreq(abc.toJSON(), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 'buffer toJSON works');
+
+var b = Buffer([255,255,255,255]);
+ok(b.readUInt8(0) == 0xFF, 'readUInt8(0xff)');
+ok(b.readInt8(0) == -1, 'readInt8(0xff)');
+ok(b.readUInt16LE(0) == 0xFFFF, 'readUInt32LE(0xffff)');
+ok(b.readUInt16BE(0) == 0xFFFF, 'readUInt32BE(0xffff)');
+ok(b.readUInt32LE(0) == 0xFFFFFFFF, 'readUInt32LE(0xffffffff)');
+ok(b.readUInt32BE(0) == 0xFFFFFFFF, 'readUInt32BE(0xffffffff)');

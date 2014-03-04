@@ -360,22 +360,22 @@ static int l_tm_buffer_get (lua_State *L)
 #define WRITE_16(V, a, b) a = (V >> 8) & 0xFF; b = V & 0xFF;
 #define WRITE_32(V, a, b, c, d) a = (V >> 24) & 0xFF; b = (V >> 16) & 0xFF; c = (V >> 8) & 0xFF; d = V & 0xFF;
 
-READ_BUFFER(l_tm_buffer_read_uint8, a[0]);
-READ_BUFFER(l_tm_buffer_read_uint16le, TO_16(a[1], a[0]));
-READ_BUFFER(l_tm_buffer_read_uint16be, TO_16(a[0], a[1]));
-READ_BUFFER(l_tm_buffer_read_uint32le, TO_32(a[3], a[2], a[1], a[0]));
-READ_BUFFER(l_tm_buffer_read_uint32be, TO_32(a[0], a[1], a[2], a[3]));
+READ_BUFFER(l_tm_buffer_read_uint8, (uint8_t) a[0]);
+READ_BUFFER(l_tm_buffer_read_uint16le, (uint16_t) TO_16(a[1], a[0]));
+READ_BUFFER(l_tm_buffer_read_uint16be, (uint16_t) TO_16(a[0], a[1]));
+READ_BUFFER(l_tm_buffer_read_uint32le, (uint32_t) TO_32(a[3], a[2], a[1], a[0]));
+READ_BUFFER(l_tm_buffer_read_uint32be, (uint32_t) TO_32(a[0], a[1], a[2], a[3]));
 READ_BUFFER(l_tm_buffer_read_int8, (int8_t) a[0]);
 READ_BUFFER(l_tm_buffer_read_int16le, (int16_t) TO_16(a[1], a[0]));
 READ_BUFFER(l_tm_buffer_read_int16be, (int16_t) TO_16(a[0], a[1]));
 READ_BUFFER(l_tm_buffer_read_int32le, (int32_t) TO_32(a[3], a[2], a[1], a[0]));
 READ_BUFFER(l_tm_buffer_read_int32be, (int32_t) TO_32(a[0], a[1], a[2], a[3]));
 
-WRITE_BUFFER(l_tm_buffer_write_uint8, WRITE_8(value, a[0]));
-WRITE_BUFFER(l_tm_buffer_write_uint16le, WRITE_16(value, a[1], a[0]));
-WRITE_BUFFER(l_tm_buffer_write_uint16be, WRITE_16(value, a[0], a[1]));
-WRITE_BUFFER(l_tm_buffer_write_uint32le, WRITE_32(value, a[3], a[2], a[1], a[0]));
-WRITE_BUFFER(l_tm_buffer_write_uint32be, WRITE_32(value, a[0], a[1], a[2], a[3]));
+WRITE_BUFFER(l_tm_buffer_write_uint8, WRITE_8((uint8_t) value, a[0]));
+WRITE_BUFFER(l_tm_buffer_write_uint16le, WRITE_16((uint16_t) value, a[1], a[0]));
+WRITE_BUFFER(l_tm_buffer_write_uint16be, WRITE_16((uint16_t) value, a[0], a[1]));
+WRITE_BUFFER(l_tm_buffer_write_uint32le, WRITE_32((uint32_t) value, a[3], a[2], a[1], a[0]));
+WRITE_BUFFER(l_tm_buffer_write_uint32be, WRITE_32((uint32_t) value, a[0], a[1], a[2], a[3]));
 WRITE_BUFFER(l_tm_buffer_write_int8, WRITE_8((int8_t) value, a[0]));
 WRITE_BUFFER(l_tm_buffer_write_int16le, WRITE_16((int16_t) value, a[1], a[0]));
 WRITE_BUFFER(l_tm_buffer_write_int16be, WRITE_16((int16_t) value, a[0], a[1]));
