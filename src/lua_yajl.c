@@ -838,8 +838,29 @@ static int js_generator_value(lua_State *L) {
                     lua_pushvalue(L, -5);
                     lua_call(L, 1, 1);
                 }
-                lua_call(L, 2, 0);
 
+                /* support replacer */
+                lua_getfenv(L, 1);
+                lua_getfield(L, -1, "replacer");
+                lua_remove(L, -2);
+                if (!lua_isnil(L, -1)) {
+                    lua_pushvalue(L, 2);
+                    lua_pushvalue(L, -7);
+                    lua_pushvalue(L, -7);
+                    lua_call(L, 3, 1);
+                    if (lua_isnil(L, -1)) {
+                        lua_remove(L, -1);
+                        continue;
+                    } else {
+                        lua_replace(L, -5);
+                    }
+                } else {
+                    lua_remove(L, -1);
+                }
+
+
+                /* push key */
+                lua_call(L, 2, 0);
 
                 /* RECURSIVE CALL:
                    gen, obj, ?, key, val, func, gen, val */
@@ -940,6 +961,14 @@ static int js_generator(lua_State *L) {
 
     if ( print ) {
         yajl_gen_config(*handle, yajl_gen_print_callback, print, ctx);
+    }
+
+    /* Get the replacer and save so it isn't gc'ed: */
+    lua_getfield(L, 1, "replacer");
+    if ( ! lua_isnil(L, -1) ) {
+        lua_setfield(L, -3, "replacer");
+    } else {
+        lua_pop(L, 1);
     }
 
     /* Get the indent and save so it isn't gc'ed: */

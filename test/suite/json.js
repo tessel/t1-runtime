@@ -33,13 +33,14 @@ ok(JSON.stringify([]) == '[]', 'empty array #TODO')
 
 ok(JSON.stringify({hi : 5}, null, '  ') == '{\n  "hi": 5\n}\n', 'indentation formatting');
 
-// function censor(key, value) {
-// 	console.log('CENSORING', key, value);
-//   if (typeof(value) == "string") {
-//     return undefined;
-//   }
-//   return value;
-// }
-// var foo = {foundation: "Mozilla", model: "box", week: 45, transport: "car", month: 7};
-// var jsonString = JSON.stringify(foo, censor);
-// console.log(jsonString);
+function censor(key, value) {
+	ok(this[key] == value, '"this" value correct in replacer');
+  if (typeof(value) == "string") {
+    return undefined;
+  }
+  return value;
+}
+var foo = {foundation: "Mozilla", model: "box", week: 45, transport: "car", month: 7};
+var jsonString = JSON.stringify(foo, censor);
+ok(jsonString == '{"week":45,"month":7}', 'json replacer works')
+console.log('#', jsonString);
