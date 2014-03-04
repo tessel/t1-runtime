@@ -414,6 +414,7 @@
       "product_name": "colony-lua",
       "type": "static_library",
       "defines": [
+        'LUA_USELONGLONG',
       ],
       "sources": [
         '<(colony_lua_path)/src/lapi.c',
@@ -474,7 +475,8 @@
       ],
       'direct_dependent_settings': {
         'defines': [
-          'COLONY_LUA'
+          'COLONY_LUA',
+          'LUA_USELONGLONG',
         ],
         'include_dirs': [
           "<(colony_lua_path)/src",
