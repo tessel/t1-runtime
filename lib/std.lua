@@ -859,11 +859,17 @@ global.isNaN = function (this, arg)
 end
 
 global.parseFloat = function (ths, str)
-  return tonumber(tostring(str)) or 0
+  return tonumber(tostring(str), 10) or 0
 end
 
-global.parseInt = function (ths, str)
-  return math.floor(tonumber(str) or 0)
+global.parseInt = function (ths, str, radix)
+  if not radix then
+    radix = 10
+  end
+  if not (type(radix) == 'number' and radix >= 2 and radix <= 36) then
+   return 0/0
+  end
+  return math.floor(tonumber(str, radix) or 0)
 end
 
 -- Date
