@@ -416,16 +416,15 @@ end
 -- arguments objects
 
 function js_arguments (...)
-  local arguments = global._arr((function (...)
-    local a = {}
-    for i=1,select('#', ...) do
-      local val, _ = select(i, ...)
-      table.insert(a, val)
-    end
-    return a
-  end)(...))
-  arguments:shift()
-  return arguments
+  local a, len = {}, select('#', ...)
+  for i=1,len do
+    local val, _ = select(i, ...)
+    table.insert(a, i-1, val)
+  end
+
+  local obj = global._obj(a);
+  obj.length = len
+  return obj
 end
 
 
