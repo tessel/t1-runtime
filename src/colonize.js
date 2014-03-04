@@ -425,7 +425,7 @@ node.finalizer ? node.finalizer.body.join('\n') : '',
     ].join(''));
 
   } else if (type == 'ThrowStatement') {
-    return colony_node(node, '_error(' + hygenify(node.argument) + ')');
+    return colony_node(node, '_error(' + hygenify(node.argument) + ' or {})');
 
   } else if (type == 'CatchClause') {
     return node;
