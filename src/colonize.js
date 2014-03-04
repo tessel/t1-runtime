@@ -9,7 +9,7 @@ var repl = false;
 var keywords = ['and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', 'function', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat', 'return', 'then', 'true', 'until', 'while'];
 var unaryops = { '|': '_bit.bor', '&': '_bit.band', '~': '_bit.bnot', '+': '0+', '!': 'not ', 'typeof': '_typeof', 'void': '_void' }
 var logicalops = { '&&': 'and', '||': 'or' };
-var binaryops = { '|': '_bit.bor', '&': '_bit.band', '|': '_bit.bor', '>>': '_bit.rshift', '<<': '_bit.lshift', '>>>': '_bit.rrotate', 'instanceof': '_instanceof', 'in': '_in' }
+var binaryops = { '|': '_bit.bor', '&': '_bit.band', '|': '_bit.bor', '>>': '_bit.arshift', '<<': '_bit.lshift', '>>>': '_bit.rshift', 'instanceof': '_instanceof', 'in': '_in' }
 var infixops = { '!==': '~=', '!=': '~=', '===': '==' };
 
 var colony_locals, colony_flow, colony_with;
