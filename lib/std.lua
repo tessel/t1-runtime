@@ -1135,8 +1135,11 @@ global.JSON = js_obj({
   parse = function (ths, arg)
     return yajl.to_value(arg)
   end,
-  stringify = function (ths, arg)
-    return yajl.to_string(arg)
+  stringify = function (ths, arg, replacer, space)
+    return yajl.to_string(arg, {
+      replacer = replacer or nil,
+      indent = space or nil
+    })
   end,
 })
 
