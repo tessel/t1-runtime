@@ -110,9 +110,9 @@ static int runtime_panic (lua_State *L)
 
 // https://groups.google.com/forum/#!topic/comp.lang.c/IyWWejPrgts
 
-#define itoa_numorchar(A) (A > 9 ? 'a' + (A - 10) : '0' + A)
+#define itoa_numorchar(A) ((A) > 9 ? 'a' + ((A) - 10) : '0' + (A))
 
-static char *colony_itoa(int i, char *s, unsigned int radix)
+static char *colony_itoa(long long i, char *s, unsigned int radix)
 {
   char *p = s;
   char *q = s;
@@ -127,7 +127,7 @@ static char *colony_itoa(int i, char *s, unsigned int radix)
     p++;
 
     do {
-      *q++ = itoa_numorchar(-(i % radix));
+      *q++ = itoa_numorchar(i % radix);
     } while (i /= radix);
   } else {
     *q++ = '-';
@@ -152,7 +152,7 @@ static char *colony_itoa(int i, char *s, unsigned int radix)
 
 static int l_colony_itoa (lua_State* L)
 {
-  long value = (long) lua_tonumber(L, 1);
+  long long value = (long long) lua_tonumber(L, 1);
   unsigned int radix = (unsigned int) lua_tonumber(L, 2);
 
   // TODO ensure colony_itoa can never go over 255 bytes
