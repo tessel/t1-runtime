@@ -159,6 +159,24 @@ function finishNode(node, type) {
     return colony_node(node, hygenify(node.left) + ' = ' + ensureExpression(hygenify(node.right)));
 
   } else if (type == 'CallExpression') {
+    // For dynamic expressions, evaluate temporary member to properly call "this"
+    if (node.callee.type == 'MemberExpression' && String(node.callee).match(/\]$/)) {
+      // Find last square bracketed group. (wow such CS)
+      var start = 0, str = String(node.callee), count = 0; 
+      for (var i = 0; i < str.length; i++) {
+        if (str[i] == '[') {
+          if (count == 0) start = i;
+          count++;
+        } else if (str[i] == ']') {
+          count--;
+        }
+      }
+      var base = str.substr(0, start), member = str.slice(start+1, -1);
+      return colony_node(node,
+        '(function () local _b = ' + base + '; local _f = _b[' + member + ']; return _f(' + ['_b'].concat(node.arguments.map(hygenify).map(ensureExpression)).join(', ') + '); end)()');
+    }
+
+    // For member expressions, change last occurance of '.' to ':'
     var ismethod = node.callee.type == 'MemberExpression'
     return colony_node(node,
       (ismethod ? hygenify(node.callee).replace(/^([\s\S]+)\./, '$1:') : hygenify(node.callee))
