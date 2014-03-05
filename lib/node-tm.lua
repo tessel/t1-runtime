@@ -158,6 +158,91 @@ global.clearImmediate = global.clearTimeout
 --|| Buffer
 --]]
 
+--------------BASE64
+-- some unoptimized base64 functions
+-- Sourced from http://en.wikipedia.org/wiki/Base64
+-- https://raw.github.com/toastdriven/lua-base64/master/base64.lua
+
+local index_table = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+
+function to_binary(integer)
+    local remaining = tonumber(integer)
+    local bin_bits = ''
+
+    for i = 7, 0, -1 do
+        local current_power = math.pow(2, i)
+
+        if remaining >= current_power then
+            bin_bits = bin_bits .. '1'
+            remaining = remaining - current_power
+        else
+            bin_bits = bin_bits .. '0'
+        end
+    end
+
+    return bin_bits
+end
+
+function from_binary(bin_bits)
+    return tonumber(bin_bits, 2)
+end
+
+function to_base64(to_encode)
+    local bit_pattern = ''
+    local encoded = ''
+    local trailing = ''
+
+    for i = 1, string.len(to_encode) do
+        bit_pattern = bit_pattern .. to_binary(string.byte(string.sub(to_encode, i, i)))
+    end
+
+    -- Check the number of bytes. If it's not evenly divisible by three,
+    -- zero-pad the ending & append on the correct number of ``=``s.
+    if math.mod(string.len(bit_pattern), 3) == 2 then
+        trailing = '=='
+        bit_pattern = bit_pattern .. '0000000000000000'
+    elseif math.mod(string.len(bit_pattern), 3) == 1 then
+        trailing = '='
+        bit_pattern = bit_pattern .. '00000000'
+    end
+
+    for i = 1, string.len(bit_pattern), 6 do
+        local byte = string.sub(bit_pattern, i, i+5)
+        local offset = tonumber(from_binary(byte))
+        encoded = encoded .. string.sub(index_table, offset+1, offset+1)
+    end
+
+    return string.sub(encoded, 1, -1 - string.len(trailing)) .. trailing
+end
+
+function from_base64(to_decode)
+  local padded = string.gsub(to_decode, "%s", "")
+  local unpadded = string.gsub(padded, "=", "")
+  local bit_pattern = ''
+  local decoded = ''
+
+  for i = 1, string.len(unpadded) do
+    local char = string.sub(to_decode, i, i)
+    local offset, _ = string.find(index_table, char)
+    if offset == nil then
+      error("Invalid character '" .. char .. "' found.")
+    end
+
+    bit_pattern = bit_pattern .. string.sub(to_binary(offset-1), 3)
+  end
+
+  -- trim off unused bits
+  bit_pattern = string.sub(bit_pattern, 1, string.len(bit_pattern) - ((string.len(bit_pattern) % (4*8)) - ((string.len(unpadded) % 4) * 8)))
+
+  for i = 1, string.len(bit_pattern), 8 do
+    local byte = string.sub(bit_pattern, i, i+7)
+    decoded = decoded .. string.char(from_binary(byte))
+  end
+
+  return decoded
+end
+-------------/BASE64
+
 local buffer_proto = js_obj({
   fill = function (this, value, offset, endoffset)
     local sourceBuffer = getmetatable(this).buffer
@@ -216,14 +301,23 @@ local buffer_proto = js_obj({
     end
     tm.buffer_copy(sourceBuffer, targetBuffer, targetStart, sourceStart, sourceEnd)
   end,
-  toString = function (this, strtype)
+  toString = function (this, encoding)
     local sourceBuffer = getmetatable(this).buffer
     local sourceBufferLength = getmetatable(this).bufferlen
-    
+
     local str = ''
     for i=0,sourceBufferLength-1 do
       str = str .. string.char(this[i])
     end
+
+    if encoding == 'base64' then
+      str = to_base64(str)
+    elseif encoding == 'hex' then
+      str = string.gsub(str, '(.)', function (c)
+        return string.format('%02x', string.byte(c))
+      end)
+    end
+    
     return str
   end,
   toJSON = function (this)
@@ -297,7 +391,8 @@ buffer_proto.writeFloatBE = function (this, value, pos, opts) return write_buf(t
 buffer_proto.writeDoubleLE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 8, tm.buffer_write_double, 1); end
 buffer_proto.writeDoubleBE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 8, tm.buffer_write_double, 0); end
 
-local function Buffer (this, length)
+
+local function Buffer (this, length, encoding)
   -- args
   local str = ''
   if type(length) == 'number' then
@@ -305,6 +400,19 @@ local function Buffer (this, length)
   else
     str = length
     length = str.length
+  end
+
+  -- encoding first check
+  if type(str) == 'string' and encoding == 'base64' then
+    -- "base64" string
+    str = from_base64(str)
+    length = string.len(str)
+  elseif type(str) == 'string' and encoding == 'hex' then
+    if string.len(str) % 2 ~= 0 or string.gsub(str, '[a-fA-F0-9]', '') ~= '' then
+      error('Invalid hex string.')
+    end
+    str = string.lower(str)
+    length = string.len(str) / 2
   end
 
   this = {}
@@ -357,12 +465,22 @@ local function Buffer (this, length)
     proto = buffer_proto
   })
 
-  for i = 1, str.length do
-    if type(str) == 'string' then
-      -- string
+  -- Lua internally uses a "binary" encoding, that is,
+  -- operates on (1-indexable) 8-bit values.
+
+  if type(str) == 'string' and encoding == 'hex' then
+    -- "hex" string
+    for i = 1, str.length, 2 do
+      this[(i - 1)/2] = tonumber(string.sub(str, i, i+1), 16)
+    end
+  elseif type(str) == 'string' then
+    -- "binary" string
+    for i = 1, str.length do
       this[i - 1] = string.byte(str, i)
-    else
-      -- array
+    end
+  else
+    -- array
+    for i = 1, str.length do
       this[i - 1] = str[i - 1]
     end
   end

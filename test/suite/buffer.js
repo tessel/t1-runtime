@@ -134,3 +134,28 @@ ok(b.readUInt16LE(0) == 0xFFFF, 'readUInt32LE(0xffff)');
 ok(b.readUInt16BE(0) == 0xFFFF, 'readUInt32BE(0xffff)');
 ok(b.readUInt32LE(0) == 0xFFFFFFFF, 'readUInt32LE(0xffffffff)');
 ok(b.readUInt32BE(0) == 0xFFFFFFFF, 'readUInt32BE(0xffffffff)');
+
+
+// encodings
+console.log('\n# hex')
+var b = new Buffer('deadbeefcafebabe', 'hex');
+ok(b.readUInt32BE(0) == 0xdeadbeef, 'hex encoding');
+ok(b.readUInt32BE(4) == 0xcafebabe, 'hex encoding');
+console.log('#', '0x' + b.readUInt32BE(0).toString(16), '0x' + b.readUInt32BE(4).toString(16))
+try { new Buffer('gggg', 'hex'); ok(false); } catch (e) { ok(true, 'invalid hex digits'); }
+try { new Buffer('0', 'hex'); ok(false); } catch (e) { ok(true, 'invalid hex length'); }
+
+console.log('\n# base64')
+var b = new Buffer('aGVsbG8gd29ybGQ=', 'base64');
+ok(b.toString() == 'hello world', 'base64 encoding (padded)');
+var b = new Buffer('aGVsbG8gd29ybGQ', 'base64');
+ok(b.toString() == 'hello world', 'base64 encoding (not padded)');
+console.log('#', JSON.stringify(b.toString()));
+
+console.log('\n# encoding')
+ok(new Buffer(new Buffer('hello world').toString('base64'), 'base64').toString() == 'hello world', 'str -> base64 -> str')
+console.log('#', new Buffer('hello world').toString('base64'))
+console.log('#', new Buffer(new Buffer('hello world').toString('base64'), 'base64'))
+ok(new Buffer(new Buffer('hello world').toString('hex'), 'hex').toString() == 'hello world', 'str -> hex -> str')
+console.log('#', new Buffer('hello world').toString('hex'))
+console.log('#', new Buffer(new Buffer('hello world').toString('hex'), 'hex'))
