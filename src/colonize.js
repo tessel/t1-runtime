@@ -22,11 +22,10 @@ function resetState () {
   colony_newScope(null);
 }
 
-// Scopes contain ids, locals, etc: [ 0, 1, ..., id, usesId ]
+// Scopes contain ids, locals, etc: [ 0, 1, ..., id ]
 function colony_newScope (id) {
   var scope = [];
   scope.id = id;
-  scope.usesId = false;
   scope.hoist = [];
 
   colony_locals.unshift(scope);
@@ -114,14 +113,6 @@ function finishNode(node, type) {
   if (type == 'Identifier') {
     if (node.name == 'arguments') {
       colony_locals[0].arguments = true;
-    }
-    if (node.name != 'arguments' && node.name == colony_locals[0].id) {
-      // TODO We have to discover if a function above the current one is named
-      // by this ID, which we might not know until the entire function is parsed
-      // (local variables could be declared later). We should flag id's as
-      // "potentially used" and then verify by checking variables used in scope,
-      // then propagate to parent scopes.
-      colony_locals[0].usesId = true;
     }
     return colony_node(node, node.name);
 
@@ -457,22 +448,24 @@ node.finalizer ? node.finalizer.body.join('\n') : '',
   } else if (type == 'FunctionExpression' || type == 'FunctionDeclaration') {
     var localstr = colony_locals[0].length ? 'local ' + colony_locals[0].join(', ') + ' = ' + colony_locals[0].join(', ') + ';\n' : '';
     var usesArguments = !!colony_locals[0].arguments;
-    var usesId = colony_locals[0].usesId;
     var hoistsr = colony_locals[0].hoist.join('\n');
     colony_locals.shift()
     if (type == 'FunctionDeclaration') {
       colony_locals[0].push(hygenifystr(node.id));
     }
     var fnnode = colony_node(node,
-      (type == 'FunctionDeclaration' ? (node.id ? hygenifystr(node.id) + ' = ' : '') + 'function (' : '(function (')
+      (type == 'FunctionDeclaration' ? (node.id ? hygenifystr(node.id) + ' = ' : '') + '' : '(')
+      + (node.id ? '(function () local ' + hygenifystr(node.id) + ' = ' : '')
+      + 'function ('
       + (usesArguments
         ? 'this, ...)\n' + (node.params.length ? 'local ' + node.params.map(hygenifystr).join(', ') + ' = ...;\n' : '') + 'local arguments = _arguments(...);\n'
         : ['this'].concat(node.params.map(hygenifystr)).join(', ') + ')\n')
-      + (usesId ? 'local ' + hygenifystr(node.id) + ' = _debug.getinfo(1, \'f\').func;\n' : '')
       + localstr
       + hoistsr
       + node.body.body.join('\n')
-      + (type == 'FunctionDeclaration' ? '\nend\n' : '\nend)'));
+      + '\nend'
+      + (node.id ? '; ' + hygenifystr(node.id) + '.name = ' + JSON.stringify(hygenifystr(node.id)) + '; return ' + hygenifystr(node.id) + '; end)()' : '')
+      + (type == 'FunctionDeclaration' ? '\n' : ')'));
 
     if (type == 'FunctionDeclaration') {
       colony_locals[0].hoist.push(fnnode);
