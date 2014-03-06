@@ -119,6 +119,12 @@ function finishNode(node, type) {
   } else if (type == 'Literal') {
     if (node.value instanceof RegExp) {
       return colony_node(node, '_regexp(' + JSON.stringify(node.value.source) + ', ' + JSON.stringify(String(node.value).replace(/^.*\//, '')) + ')');
+    } else if (typeof node.value == 'string') {
+      return colony_node(node, '(' + JSON.stringify(node.value).replace(/[\u007F-\uFFFF]/g, function (c) {
+        return [].slice.apply(new Buffer(c)).map(function (a) {
+          return '\\' + ('000' + a).substr(-3);
+        }).join('');
+      }) + ')');
     } else {
       return colony_node(node, '(' + node.raw + ')');
     }
