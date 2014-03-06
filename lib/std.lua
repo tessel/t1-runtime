@@ -782,12 +782,12 @@ local function objtostring (obj, sset)
   end
 
   local vals = {}
-  sset[obj] = true
+  rawset(sset, obj, true)
   for k in js_pairs(obj) do
     local v = obj[k]
-    if sset[v] ~= true then
+    if rawget(sset, v) ~= true then
       if type(v) == 'table' then
-        sset[v] = true
+        rawset(sset, v, true)
       end
       if type(v) == 'string' then
         v = '\'' + v + '\''
@@ -805,7 +805,7 @@ local function objtostring (obj, sset)
     end
     if global.Array:isArray(obj) then
       table.insert(vals, v)
-    else 
+    else
       table.insert(vals, k + ": " + v)
     end
   end
