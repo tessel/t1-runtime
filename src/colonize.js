@@ -249,7 +249,8 @@ function finishNode(node, type) {
       var name = hygenifystr(node.left);
     }
     return colony_node(node, [
-      'for ' + name + ' in _pairs(' + ensureExpression(hygenify(node.right)) + ') do',
+      'for ' + name + ' in _pairs(' + ensureExpression(hygenify(node.right)) + ') do ',
+      name + ' = ""+' + name + '; ',
       !node.body.body ? node.body : node.body.body.join('\n'),
       'end;'
     ].join('\n'))
