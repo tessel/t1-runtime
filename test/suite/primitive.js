@@ -32,6 +32,9 @@ ok(parseFloat instanceof Object)
 ok(!(parseFloat instanceof Array))
 ok(parseFloat instanceof Function)
 
+// operators
+ok(('null' << 'null') == 0)
+
 // ternary
 var initial = true;
 ok((initial || initial != 'low' ? 'a' : 'a') == 'a', 'ternary works with boolean operators');
