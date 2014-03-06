@@ -10,6 +10,7 @@
     "lua_bitop_path": "./deps/luabitop-1.0",
     "fatfs_path": "./deps/fatfs",
     "dlmalloc_path": "./deps/dlmalloc",
+    "utf8proc_path": "./deps/utf8proc",
     'builtin_section%': '',
   },
 
@@ -547,6 +548,25 @@
       }
     },
 
+    {
+      "target_name": "utf8proc",
+      "product_name": "utf8proc",
+      "type": "static_library",
+      "sources": [
+        "<(utf8proc_path)/utf8proc.c",
+        "<(utf8proc_path)/utf8proc_data.c",
+      ],
+      "include_dirs": [
+        "<(utf8proc_path)/"
+      ],
+
+      "direct_dependent_settings": {
+        "include_dirs": [
+          "<(utf8proc_path)/"
+        ],
+      },
+    },
+
 
     ###
     # TM WRAPPER LIBRARIES
@@ -598,6 +618,7 @@
         "c-ares",
         "colony-lua",
         "dlmalloc",
+        "utf8proc",
       ],
       'direct_dependent_settings': {
         'include_dirs': [
