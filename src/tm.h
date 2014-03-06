@@ -13,12 +13,6 @@ extern "C" {
 #include <errno.h>  
 #include <time.h>
 
-// debug
-
-#define TM_COMMAND(command, str, ...) printf("#&%c" str "\n", command, ##__VA_ARGS__)
-#define TM_DEBUG(str, ...) TM_COMMAND('d', str, ##__VA_ARGS__)
-
-
 // net
 
 typedef int tm_socket_t;
