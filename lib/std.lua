@@ -316,8 +316,8 @@ func_proto.apply = function (func, ths, args)
   return func(ths, unpack(luargs, 1, args.length or 0))
 end
 
-func_proto.toString = function ()
-  return "function () { ... }"
+func_proto.toString = function (this)
+  return 'function ' .. (this.name or '') .. '() { }'
 end
 
 -- array prototype
