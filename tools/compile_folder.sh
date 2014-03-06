@@ -72,7 +72,11 @@ var colony = require('colony');
 
 packageFolder(infiles, varname, section, function (file, buf, next) {
   if (file.match(/\.js$/)) {
-    colony.toBytecode(colony.colonize(String(buf)), '[T]:' + file, next);
+    try {
+      colony.toBytecode(colony.colonize(String(buf)), '[T]:' + file, next);
+    } catch (e) {
+      throw new Error('Bytecode compilation of ' + file + ' failed.');
+    }
   } else if (file.match(/\.lua$/)) {
     colony.toBytecode(String(buf), '[T]: ' + file, next);
   } else {
