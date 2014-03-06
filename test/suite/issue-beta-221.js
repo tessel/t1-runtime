@@ -1,7 +1,13 @@
-console.log('1..1')
+/* test rig */ var t = 1, tmax = 3
+function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + ' -', d); }
+console.log(t + '..' + tmax);
+ok(process.versions.colony, 'running in colony')
+
 try {
 	throw Error("Test");
-	console.log('not ok')
+	ok(false)
 } catch (e) {
-	console.log('ok')
+	ok(true)
 }
+
+ok(Error("Test").message)

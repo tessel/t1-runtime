@@ -743,17 +743,38 @@ global.Math = js_obj({
 
 -- Error
 
-global.Error = function (self, str)
-  getmetatable(self).__tostring = function (self)
-    return self.message
+local function error_class (name)
+  local constructor = nil
+
+  constructor = function (this, str)
+    if not js_instanceof(this, constructor) then
+      return js_new(constructor, str)
+    end
+
+    getmetatable(this).__tostring = function (this)
+      return this.message
+    end
+    this.type = name
+    this.message = str
+    this.stack = tostring(debug.traceback())
   end
-  self.message = str
-  self.stack = tostring(debug.traceback())
+
+  constructor.prototype.name = name
+
+  constructor.captureStackTrace = function ()
+    return {}
+  end
+
+  return constructor
 end
 
-global.Error.captureStackTrace = function ()
-  return {}
-end
+global.Error = error_class('Error')
+global.EvalError = error_class('EvalError')
+global.RangeError = error_class('RangeError')
+global.ReferenceError = error_class('ReferenceError')
+global.SyntaxError = error_class('SyntaxError')
+global.TypeError = error_class('TypeError')
+global.URIError = error_class('URIError')
 
 -- Console
 
