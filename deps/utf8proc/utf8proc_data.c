@@ -41,6 +41,7 @@
  *  authorization of the copyright holder.
  */
 
+#include "utf8proc.h"
 
 const int32_t utf8proc_sequences[] = {
   97, -1, 98, -1, 99, -1, 100, 
