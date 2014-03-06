@@ -81,6 +81,7 @@ local function unqueue_event (fn)
   end
 end
 
+-- an array { type, value } IPC communications
 _G._colony_ipc = {}
 
 colony.runEventLoop = function ()
@@ -100,11 +101,18 @@ colony.runEventLoop = function ()
     local ipc = _G._colony_ipc
     _G._colony_ipc = {}
     for i=1,#ipc do
-      local jsondata = nil
-      if pcall(function ()
-        jsondata = colony.global.JSON:parse(ipc[i][2])
-      end) then
-        colony.global.process:emit(ipc[i][1], jsondata);
+      -- support buffers or JSON-encoded strings.
+      if string.sub(ipc[i][1], 1, string.len('raw-')) == 'raw-' then
+        colony.global.process:emit(ipc[i][1], global:Buffer(ipc[i][2]));
+      else 
+        local jsondata = nil
+        if pcall(function ()
+          jsondata = colony.global.JSON:parse(ipc[i][2])
+        end) then
+          colony.global.process:emit(ipc[i][1], jsondata);
+        else
+          colony.global.process:emit('invalid-' .. ipc[i][1], ipc[i][2]);
+        end
       end
     end
   end
