@@ -49,7 +49,7 @@ funcproxies = {}
 
 local function js_proto_get (self, proto, key)
   if key == '__proto__' then return proto; end
-  proto = funcproxies[proto] or proto
+  proto = rawget(funcproxies, proto) or proto
   return rawget(proto, key) or (getmetatable(proto) and getmetatable(proto).__index and getmetatable(proto).__index(self, key, proto)) or nil
 end
 
@@ -198,7 +198,7 @@ js_obj(arr_proto)
 setmetatable(funcproxies, {__mode = 'k'})
 
 function js_func_proxy (fn)
-  local proxy = funcproxies[fn]
+  local proxy = rawget(funcproxies, fn)
   if not proxy then
     proxy = {}
     setmetatable(proxy, {
@@ -207,7 +207,7 @@ function js_func_proxy (fn)
       end,
       proto = func_proto
     })
-    funcproxies[fn] = proxy
+    rawset(funcproxies, fn, proxy)
   end
   return proxy
 end
@@ -221,7 +221,7 @@ func_mt.__index = function (self, key)
     return proxy.prototype
   end
 
-  local proxy = funcproxies[self]
+  local proxy = rawget(funcproxies, self)
   if proxy then
     return js_proto_get(self, proxy, key)
   end
@@ -330,7 +330,7 @@ local function js_void () end
 
 local function js_next (a, b, c)
   local mt = getmetatable(a)
-  if b == nil and mt and mt.length ~= nil and mt.length > 0 then
+  if b == nil and mt and ((mt.length ~= nil and mt.length > 0) or rawget(a, 0)) then
     return 0
   end
   if type(b) == 'number' and mt and mt.length ~= nil then
@@ -342,7 +342,7 @@ local function js_next (a, b, c)
   local k = b
   repeat
     k = next(a, k)
-  until type(k) ~= 'number'
+  until mt.length == nil or type(k) ~= 'number'
   return k
 end
 

@@ -17,12 +17,9 @@ for (var i in arr) {
 	if (i == 0) {
 		had0 = true;
 	}
-	if (arr[i] == null) {
-		ok(false, 'array string index was null #TODO');
-	} else if (typeof arr[i] != 'string') {
-		ok(false, 'for..in index was not string #TODO');
-	}
-	// console.log(JSON.stringify(i))
+	
+	ok(typeof i == 'string', 'for..in index is string');
+	ok(arr[i] != null, 'array string index is not null');
 }
 
 // console.log('ok')
