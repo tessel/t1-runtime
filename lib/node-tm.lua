@@ -120,33 +120,37 @@ end
 
 -- Weakly GC'd values
 local timeouttable = {}
+local timeoutid = 0
 setmetatable(timeouttable, {
   __mode = "v"
 })
 
 global.setTimeout = function (this, fn, timeout, ...)
   local ret = queue_event(fn, timeout, false, table.pack(...))
-  table.insert(timeouttable, ret)
-  return #timeouttable
+  timeoutid = timeoutid + 1
+  rawset(timeouttable, timeoutid, ret)
+  return timeoutid
 end
 
 global.setInterval = function (this, fn, timeout, ...)
   local ret = queue_event(fn, timeout, true, table.pack(...))
-  table.insert(timeouttable, ret)
-  return #timeouttable
+  timeoutid = timeoutid + 1
+  rawset(timeouttable, timeoutid, ret)
+  return timeoutid
 end
 
 global.setImmediate = function (this, fn, ...)
   local ret = queue_event(fn, 0, false, table.pack(...))
-  table.insert(timeouttable, ret)
-  return #timeouttable
+  timeoutid = timeoutid + 1
+  rawset(timeouttable, timeoutid, ret)
+  return timeoutid
 end
 
 global.clearTimeout = function (this, id)
   -- if value isn't null, timeout token hasn't been GC'd
-  if timeouttable[id] ~= nil then
-    unqueue_event(timeouttable[id])
-    timeouttable[id] = nil
+  if rawget(timeouttable, id) ~= nil then
+    unqueue_event(rawget(timeouttable, id))
+    rawset(timeouttable, id, nil)
   end
 end
 
