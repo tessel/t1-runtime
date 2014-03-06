@@ -7,8 +7,8 @@ exports.readFileSync = function (pathname) {
   }
   var res = [];
   while (true) {
-    if (tm.fs_readable(fd) == 0) {
-      var len = 100;
+    if (tm.fs_readable(fd) != 0) {
+      var len = 16*1024;
       var buf = tm.fs_read(fd, len);
       if (buf && buf.length > 0) {
         res.push(buf);
@@ -19,7 +19,7 @@ exports.readFileSync = function (pathname) {
     }
   }
   tm.fs_close(fd);
-  return res.join('');
+  return Buffer.concat(res);
 };
 
 exports.readdirSync = function (pathname) {

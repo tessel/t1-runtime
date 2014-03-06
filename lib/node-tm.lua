@@ -309,10 +309,7 @@ local buffer_proto = js_obj({
     local sourceBuffer = getmetatable(this).buffer
     local sourceBufferLength = getmetatable(this).bufferlen
 
-    local str = ''
-    for i=0,sourceBufferLength-1 do
-      str = str .. string.char(this[i])
-    end
+    local str = tm.buffer_tostring(sourceBuffer, sourceBufferLength)
 
     if encoding == 'base64' then
       str = to_base64(str)
@@ -721,11 +718,11 @@ function fs_readfile (name)
   assert(fd and err == 0)
   local s = ''
   while true do
-    local chunk = tm.fs_read(fd, 1024)
+    local chunk = tm.fs_read(fd, 16*1024)
     if chunk ~= nil then
-      s = s .. chunk
+      s = s .. tostring(chunk)
     end
-    if chunk == nil or #chunk < 1024 then
+    if chunk == nil then
       break
     end
   end
