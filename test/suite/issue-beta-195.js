@@ -18,7 +18,7 @@ table[5] = true;
 ok(table["5"] == true)
 
 var table = {};
-table[function () { }] = true
+table[function hi() { }] = true
 table[5] = true;
 table["hi"] = true;
 console.log(table);
