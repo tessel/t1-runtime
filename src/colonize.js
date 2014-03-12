@@ -462,7 +462,7 @@ node.finalizer ? node.finalizer.body.join('\n') : '',
     }
     var fnnode = colony_node(node,
       (type == 'FunctionDeclaration' ? (node.id ? hygenifystr(node.id) + ' = ' : '') + '' : '(')
-      + (node.id ? '(function () local ' + hygenifystr(node.id) + ' = ' : '')
+      + (node.id ? '(function () local ' + hygenifystr(node.id) + ' = nil; ' + hygenifystr(node.id) + ' = ' : '')
       + 'function ('
       + (usesArguments
         ? 'this, ...)\n' + (node.params.length ? 'local ' + node.params.map(hygenifystr).join(', ') + ' = ...;\n' : '') + 'local arguments = _arguments(...);\n'
