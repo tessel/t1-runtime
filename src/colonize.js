@@ -98,7 +98,7 @@ function ensureExpression (node) {
 }
 
 function ensureStatement (node) {
-  if (['BinaryExpression', 'AssignmentExpression', 'LogicalExpression', 'UpdateExpression', 'Literal', 'CallExpression', 'ConditionalExpression'].indexOf(node.type) > -1) {
+  if (['AssignmentExpression', 'UpdateExpression', 'CallExpression'].indexOf(node.type) > -1) {
     return colony_node(node, node + ';');
   } else {
     return colony_node(node, 'if ' + node.replace(/;?$/, '') + ' then end;');
@@ -262,11 +262,7 @@ function finishNode(node, type) {
     ].join('\n'))
 
   } else if (type == 'ExpressionStatement') {
-    if (['BinaryExpression', 'UnaryExpression', 'LogicalExpression', 'Literal', 'ConditionalExpression', 'MemberExpression', 'ConditionalExpression'].indexOf(node.expression.type) > -1) {
-      var ret = colony_node(node, 'if ' + hygenify(node.expression) + ' then end;');
-    } else {
-      var ret = colony_node(node, hygenify(node.expression) + ';');
-    }
+    var ret = ensureStatement(node.expression);
     ret.expression = node.expression;
     // TODO we shouldn't have to leave ret.expression attached to the node,
     // but a later step seems to require it being there
