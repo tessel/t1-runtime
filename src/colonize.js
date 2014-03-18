@@ -505,6 +505,9 @@ module.exports = function (script, opts)
   repl = (opts || {}).returnLastStatement;
   var wrap = (opts || {}).wrap !== false;
 
+  // Replace leading /usr/bin/env lines.
+  script = script.replace(/^\#\!/, '//#!');
+
   resetState();
   var res = acorn.parse(script, {
     allowReturnOutsideFunction: true,
