@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <colony.h>
 
@@ -25,6 +26,15 @@ static void js_parser_assert(lua_State* L,
                              int line);
 static int got_map_key(lua_State* L);
 static int got_map_value(lua_State* L);
+
+
+static int is_numeric (const char * s, lua_Number* ret) {
+  if (s == NULL || *s == '\0' || isspace((unsigned char) *s))
+    return 0;
+  char * p;
+  *ret = strtod (s, &p);
+  return *p == '\0';
+}
 
 
 static double todouble(lua_State* L, const char* val, size_t len) {
@@ -138,6 +148,11 @@ static int got_map_value(lua_State* L) {
 
 /* See STRATEGY section below */
 static int got_map_key(lua_State* L) {
+    lua_Number num = 0;
+    if (is_numeric(lua_tostring(L, -1), &num)) {
+        lua_pushnumber(L, num);
+        lua_remove(L, -2);
+    }
     lua_replace(L, -3);
     lua_pop(L, 1);
     lua_pushcfunction(L, got_map_value);
