@@ -302,7 +302,8 @@ HTTPOutgoingRequest.prototype.end = function () {
  */
 
 exports.request = function (opts, onresponse) {
-  var req = new HTTPOutgoingRequest(opts.port || (this._secure ? 443 : 80), opts.hostname, opts.path || '', opts.method || 'GET', opts.headers || {}, this._secure);
+  var host = opts.hostname || opts.host || 'localhost';
+  var req = new HTTPOutgoingRequest(opts.port || (this._secure ? 443 : 80), host, opts.path || '', opts.method || 'GET', opts.headers || {}, this._secure);
   onresponse && req.on('response', onresponse);
   return req;
 };
