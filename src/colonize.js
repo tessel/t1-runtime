@@ -221,7 +221,10 @@ function finishNode(node, type) {
     }
 
   } else if (type == 'ArrayExpression') {
-    return colony_node(node, '_arr({' + [node.elements.length > 0 ? '[0]=' + hygenify(node.elements[0]) : ''].concat(node.elements.slice(1).map(hygenify).map(ensureExpression)).join(', ') + '}, ' + node.elements.length + ')')
+    function opt (a) {
+      return a || colony_node({type: 'Literal', value: null, raw: 'null'}, 'nil')
+    }
+    return colony_node(node, '_arr({' + [node.elements.length > 0 ? '[0]=' + hygenify(opt(node.elements[0])) : ''].concat(node.elements.slice(1).map(opt).map(hygenify).map(ensureExpression)).join(', ') + '}, ' + node.elements.length + ')')
 
   } else if (type == 'ObjectExpression') {
     return colony_node(node, '_obj({\n  '
