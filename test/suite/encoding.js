@@ -15,5 +15,7 @@ var poo = '💩';
 console.log('#', poo, 'is', poo.length, 'bytes');
 ok(0xd83d == poo[0]);
 ok(0xdca9 == poo[1]);
+ok(0xd83d == poo.charCodeAt(0), poo.charCodeAt(0));
+ok(0xdca9 == poo.charCodeAt(1), poo.charCodeAt(1));
 ok(poo == '\ud83d\udca9');
 ok(poo != '\xd8\x3d\xdc\xa9');

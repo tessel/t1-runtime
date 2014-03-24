@@ -120,12 +120,12 @@ end
 
 -- string prototype
 
-str_proto.charCodeAt = function (str, i, a)
-  return string.byte(str, i+1)
+str_proto.charCodeAt = function (this, i)
+  return tm.ucs2_str_charat(this, i)
 end
 
 str_proto.charAt = function (str, i)
-  return string.sub(str, i+1, i+1)
+  return tostring(tm.utf8_char_encode(tm.ucs2_str_charat(this, i)))
 end
 
 str_proto.substr = function (str, i, len)
