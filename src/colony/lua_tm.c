@@ -822,6 +822,46 @@ static int l_tm_fs_dir_close (lua_State* L)
 }
 
 
+static int l_tm_utf8_char_encode (lua_State* L)
+{
+  uint32_t c = (uint32_t) lua_tonumber(L, 1);
+
+  uint8_t buf[4] = { 0 };
+  ssize_t len = tm_utf8_char_encode(c, (uint8_t*) &buf);
+  if (len < 0) {
+    lua_pushnil(L);
+  } else {
+    uint8_t* buffer = colony_createbuffer(L, len);
+    memcpy(buffer, (uint8_t*) buf, len);
+  };
+  return 1;
+}
+
+
+static int l_tm_utf8_char_toupper (lua_State* L)
+{
+  return 0;
+}
+
+
+static int l_tm_utf8_str_toupper (lua_State* L)
+{
+  return 0;
+}
+
+
+static int l_tm_ucs2_str_length (lua_State* L)
+{
+  return 0;
+}
+
+
+static int l_tm_ucs2_str_charat (lua_State* L)
+{
+  return 0;
+}
+
+
 uint32_t tm__sync_gethostbyname (const char *domain);
 
 static int l_tm__sync_gethostbyname (lua_State* L)
@@ -1004,16 +1044,12 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "fs_dir_read", l_tm_fs_dir_read },
     { "fs_dir_close", l_tm_fs_dir_close },
 
-    // random
-    { "random_bytes", l_tm_random_bytes },
-    { "hmac_sha1", l_tm_hmac_sha1 },
-
-    // timestamp
-    { "timestamp", l_tm_timestamp },
-    { "timestamp_update", l_tm_timestamp_update },
-
-    // itoa
-    { "itoa", l_tm_itoa },
+    // unicode
+    { "utf8_char_encode", l_tm_utf8_char_encode },
+    { "utf8_str_tolower", l_tm_utf8_char_toupper },
+    { "utf8_str_toupper", l_tm_utf8_str_toupper },
+    { "ucs2_str_length", l_tm_ucs2_str_length },
+    { "ucs2_str_charat", l_tm_ucs2_str_charat },
 
     { "_sync_gethostbyname", l_tm__sync_gethostbyname },
 

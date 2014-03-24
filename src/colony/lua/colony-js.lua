@@ -742,7 +742,7 @@ end
 global.String.prototype = str_proto
 str_proto.constructor = global.String
 global.String.fromCharCode = function (ths, ord)
-  return string.char(ord or 0)
+  return tostring(tm.utf8_char_encode(ord or 0))
 end
 
 -- Math
