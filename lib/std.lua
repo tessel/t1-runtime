@@ -711,11 +711,7 @@ end
 global.String.prototype = str_proto
 str_proto.constructor = global.String
 global.String.fromCharCode = function (ths, ord)
-  if ord == nil then return nil end
-  if ord < 32 then return string.format('\\x%02x', ord) end
-  if ord < 126 then return string.char(ord) end
-  if ord < 65539 then return string.format("\\u%04x", ord) end
-  if ord < 1114111 then return string.format("\\u%08x", ord) end
+  return string.char(ord or 0)
 end
 
 -- Math
