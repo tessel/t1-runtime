@@ -119,15 +119,15 @@ const uint8_t* moreutf = (uint8_t*) "lets 𝌆 test!";
 
 TEST unicode_ucs2 ()
 {
-	ASSERT_EQm("ucs2 length", tm_ucs2_length(pileofpoo, -1), 23);
-	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(pileofpoo, -1, 0), 'I');
-	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(pileofpoo, -1, 21), 0xd83d);
-	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(pileofpoo, -1, 22), 0xdca9);
+	ASSERT_EQm("ucs2 length", tm_ucs2_str_length(pileofpoo, -1), 23);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(pileofpoo, -1, 0), 'I');
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(pileofpoo, -1, 21), 0xd83d);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(pileofpoo, -1, 22), 0xdca9);
 
-	ASSERT_EQm("ucs2 length", tm_ucs2_length(moreutf, -1), 13);
-	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(moreutf, -1, 12), '!');
-	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(moreutf, -1, 5), 0xD834);
-	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(moreutf, -1, 6), 0xDF06);
+	ASSERT_EQm("ucs2 length", tm_ucs2_str_length(moreutf, -1), 13);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(moreutf, -1, 12), '!');
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(moreutf, -1, 5), 0xD834);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(moreutf, -1, 6), 0xDF06);
 
 	PASS();
 }
@@ -143,13 +143,13 @@ TEST unicode_case ()
 
 	uint8_t* pileofuppercasepoo_cmp = NULL;
 	tm_utf8_str_toupper(pileofpoo, -1, &pileofuppercasepoo_cmp);
-	ASSERT_EQm("ucs2 length", tm_ucs2_length(pileofuppercasepoo_cmp, -1), 23);
-	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(pileofuppercasepoo_cmp, -1, 2), 'T');
+	ASSERT_EQm("ucs2 length", tm_ucs2_str_length(pileofuppercasepoo_cmp, -1), 23);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(pileofuppercasepoo_cmp, -1, 2), 'T');
 	for (int i = 0; i < strlen((char*) pileofuppercasepoo); i++) {
 		ASSERT_EQm("ucs2 equal", pileofuppercasepoo[i], pileofuppercasepoo_cmp[i]);
 	}
-	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(pileofuppercasepoo_cmp, -1, 21), 0xd83d);
-	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(pileofuppercasepoo_cmp, -1, 22), 0xdca9);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(pileofuppercasepoo_cmp, -1, 21), 0xd83d);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(pileofuppercasepoo_cmp, -1, 22), 0xdca9);
 
 	PASS();
 }

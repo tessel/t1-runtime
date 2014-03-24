@@ -2,7 +2,7 @@
 
 #include "tm.h"
 
-size_t tm_ucs2_length (const uint8_t* buf, ssize_t buf_len)
+size_t tm_ucs2_str_length (const uint8_t* buf, ssize_t buf_len)
 {
 	// This is silly, don't do this.
 	if (buf_len < 0) {
@@ -24,7 +24,7 @@ size_t tm_ucs2_length (const uint8_t* buf, ssize_t buf_len)
 	return truelen;
 }
 
-int32_t tm_ucs2_charat (const uint8_t* buf, ssize_t buf_len, ssize_t index)
+int32_t tm_ucs2_str_charat (const uint8_t* buf, ssize_t buf_len, ssize_t index)
 {
 	// This is silly, don't do this.
 	if (buf_len < 0) {
