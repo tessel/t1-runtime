@@ -886,13 +886,33 @@ static int l_tm_utf8_char_encode (lua_State* L)
 
 static int l_tm_utf8_str_tolower (lua_State* L)
 {
-  return 0;
+  size_t buf_len = 0;
+  const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
+
+  uint8_t* str_case = NULL;
+  ssize_t len = tm_utf8_str_tolower(buf, buf_len, &str_case);
+  if (len < 0) {
+    lua_pushnil(L);
+  } else {
+    lua_pushlstring(L, (const char*) str_case, buf_len);
+  }
+  return 1;
 }
 
 
 static int l_tm_utf8_str_toupper (lua_State* L)
 {
-  return 0;
+  size_t buf_len = 0;
+  const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
+
+  uint8_t* str_case = NULL;
+  ssize_t len = tm_utf8_str_toupper(buf, buf_len, &str_case);
+  if (len < 0) {
+    lua_pushnil(L);
+  } else {
+    lua_pushlstring(L, (const char*) str_case, buf_len);
+  }
+  return 1;
 }
 
 
