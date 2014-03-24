@@ -604,6 +604,8 @@
         'src/dlmallocfork.c',
 
         'src/tm_buffer.c',
+        'src/tm_ucs2.c',
+        'src/tm_utf8.c',
         'src/runtime.c',
       ],
       "include_dirs": [

@@ -103,32 +103,37 @@ SUITE(runtime)
  * strings
  */
 
-#include <utf8proc.h>
-
-size_t tm_ucs2_length (uint8_t* buf, ssize_t buf_len)
-{
-	if (buf_len < 0) {
-		buf_len = strlen((char*) buf);
-	}
-
-	uint8_t* ptr = buf;
-	uint8_t truelen = 0;
-	for (;;) {
-		int32_t dst = 0;
-		ssize_t bytes_read = utf8proc_iterate(ptr, buf_len, &dst);
-		if (dst == -1) {
-			break;
-		}
-		ptr += bytes_read;
-		buf_len -= bytes_read;
-		truelen += dst & 0x10000 ? 2 : 1;
-	}
-	return truelen;
-}
+const uint8_t* pileofpoo = (uint8_t*) "Iñtërnâtiônàlizætiøn☃💩";
+const uint8_t* pileofuppercasepoo = (uint8_t*) "IÑTËRNÂTIÔNÀLIZÆTIØN☃💩";
+const uint8_t* moreutf = (uint8_t*) "lets 𝌆 test!";
 
 TEST unicode_ucs2 ()
 {
-	ASSERT_EQm("ucs2 length", tm_ucs2_length((uint8_t*) "Iñtërnâtiônàlizætiøn☃💩", -1), 23);
+	ASSERT_EQm("ucs2 length", tm_ucs2_length(pileofpoo, -1), 23);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(pileofpoo, -1, 0), 'I');
+	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(pileofpoo, -1, 21), 0xd83d);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(pileofpoo, -1, 22), 0xdca9);
+
+	ASSERT_EQm("ucs2 length", tm_ucs2_length(moreutf, -1), 13);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(moreutf, -1, 12), '!');
+	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(moreutf, -1, 5), 0xD834);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(moreutf, -1, 6), 0xDF06);
+
+	PASS();
+}
+
+TEST unicode_case ()
+{	
+	uint8_t* pileofuppercasepoo_cmp = NULL;
+	tm_utf8_toupper(pileofpoo, -1, &pileofuppercasepoo_cmp);
+	ASSERT_EQm("ucs2 length", tm_ucs2_length(pileofuppercasepoo_cmp, -1), 23);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(pileofuppercasepoo_cmp, -1, 2), 'T');
+	for (int i = 0; i < strlen((char*) pileofuppercasepoo); i++) {
+		ASSERT_EQm("ucs2 equal", pileofuppercasepoo[i], pileofuppercasepoo_cmp[i]);
+	}
+	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(pileofuppercasepoo_cmp, -1, 21), 0xd83d);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(pileofuppercasepoo_cmp, -1, 22), 0xdca9);
+
 	PASS();
 }
 
@@ -136,6 +141,7 @@ TEST unicode_ucs2 ()
 SUITE(unicode)
 {
 	RUN_TEST(unicode_ucs2);
+	RUN_TEST(unicode_case);
 }
 
 /**
