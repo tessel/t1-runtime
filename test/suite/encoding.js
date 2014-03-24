@@ -19,3 +19,5 @@ ok(0xd83d == poo.charCodeAt(0), poo.charCodeAt(0));
 ok(0xdca9 == poo.charCodeAt(1), poo.charCodeAt(1));
 ok(poo == '\ud83d\udca9');
 ok(poo != '\xd8\x3d\xdc\xa9');
+
+ok(String.fromCharCode(0x2603) == String.fromCharCode(0x12603), 'fromCharCode truncates UCS-2 values');
