@@ -122,7 +122,7 @@ function finishNode(node, type) {
     } else if (typeof node.value == 'string') {
       return colony_node(node, '("' + (node.value
         .replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '")')
-        .replace(/[\u0000-\u001f\u007F-\uFFFF]/g, function (c) {
+        .replace(/[\0-\u001f\u007F-\uD7FF\uDC00-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF]/g, function (c) {
           return [].slice.apply(new Buffer(c)).map(function (a) {
             return '\\' + ('000' + a).substr(-3);
           }).join('');
