@@ -267,7 +267,7 @@ str_mt.__index = function (self, key)
   return js_proto_get(self, str_proto, key)
 end
 str_mt.__add = function (op1, op2)
-  return op1 .. tostring(op2)
+  return tostring(op1) .. tostring(op2)
 end
 str_mt.proto = str_proto
 
