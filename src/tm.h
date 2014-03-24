@@ -211,8 +211,8 @@ int32_t tm_utf8_char_toupper (const uint32_t c);
 ssize_t tm_utf8_str_tolower (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr);
 ssize_t tm_utf8_str_toupper (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr);
 
-size_t tm_ucs2_length (const uint8_t* buf, ssize_t buf_len);
-int32_t tm_ucs2_charat (const uint8_t* buf, ssize_t buf_len, ssize_t index);
+size_t tm_ucs2_str_length (const uint8_t* buf, ssize_t buf_len);
+int32_t tm_ucs2_str_charat (const uint8_t* buf, ssize_t buf_len, ssize_t index);
 
 // fs
 
