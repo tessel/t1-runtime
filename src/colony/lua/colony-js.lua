@@ -1072,19 +1072,8 @@ global.String = function (ths, str)
 end
 global.String.prototype = str_proto
 str_proto.constructor = global.String
-global.String.fromCharCode = function (this, ...)
-  -- http://es5.github.io/x15.5.html#x15.5.3.2
-  local args = table.pack(...)
-  local str = ''
-  for i=1,args.n do
-    local uint16 = math.floor(math.abs(tonumbervalue(args[i]))) % (2^16)
-    -- TODO not this
-    if uint16 > 255 then
-      uint16 = 255
-    end
-    str = str .. string.char(uint16)
-  end
-  return str
+global.String.fromCharCode = function (ths, ord)
+  return tostring(tm.utf8_char_encode(ord or 0))
 end
 
 -- Math
