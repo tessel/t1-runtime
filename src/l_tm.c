@@ -620,7 +620,7 @@ static int l_tm_utf8_char_encode (lua_State* L)
 }
 
 
-static int l_tm_utf8_char_toupper (lua_State* L)
+static int l_tm_utf8_str_tolower (lua_State* L)
 {
   return 0;
 }
@@ -640,7 +640,12 @@ static int l_tm_ucs2_str_length (lua_State* L)
 
 static int l_tm_ucs2_str_charat (lua_State* L)
 {
-  return 0;
+  size_t buf_len = 0;
+  const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
+  uint32_t idx = (uint32_t) lua_tonumber(L, 2);
+
+  lua_pushnumber(L, tm_ucs2_str_charat(buf, buf_len, idx));
+  return 1;
 }
 
 
@@ -740,7 +745,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
 
     // unicode
     { "utf8_char_encode", l_tm_utf8_char_encode },
-    { "utf8_str_tolower", l_tm_utf8_char_toupper },
+    { "utf8_str_tolower", l_tm_utf8_str_tolower },
     { "utf8_str_toupper", l_tm_utf8_str_toupper },
     { "ucs2_str_length", l_tm_ucs2_str_length },
     { "ucs2_str_charat", l_tm_ucs2_str_charat },
