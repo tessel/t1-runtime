@@ -174,9 +174,13 @@ typedef enum {
 void tm_buffer_float_write (uint8_t* buf, size_t index, float value, tm_endian_t endianness);
 void tm_buffer_double_write (uint8_t* buf, size_t index, double value, tm_endian_t endianness);
 
-// ITOA
+// UNICODE
 
-char* tm_itoa (long long i, char *s, unsigned int radix);
+ssize_t tm_utf8_tolower (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr);
+ssize_t tm_utf8_toupper (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr);
+
+size_t tm_ucs2_length (const uint8_t* buf, ssize_t buf_len);
+int32_t tm_ucs2_charat (const uint8_t* buf, ssize_t buf_len, ssize_t index);
 
 // fs
 
