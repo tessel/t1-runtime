@@ -3,7 +3,18 @@
 
 #include "tm.h"
 
-ssize_t tm_utf8_toupper (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr)
+ssize_t tm_utf8_char_encode (const uint32_t c, uint8_t* buf)
+{
+	return utf8proc_encode_char(c, buf);
+}
+
+inline int32_t tm_utf8_char_toupper (const uint32_t c)
+{
+	int32_t c_case = utf8proc_get_property(c)->uppercase_mapping;
+	return c_case == -1 ? c : c_case;
+}
+
+ssize_t tm_utf8_str_toupper (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr)
 {
 	// This is silly, don't do this.
 	if (buf_len < 0) {
@@ -22,8 +33,7 @@ ssize_t tm_utf8_toupper (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr)
 		ptr += bytes_read;
 		buf_len -= bytes_read;
 
-		int32_t c_case = utf8proc_get_property(c)->uppercase_mapping;
-		ssize_t bytes_written = utf8proc_encode_char(c_case == -1 ? c : c_case, dest_ptr);
+		ssize_t bytes_written = utf8proc_encode_char(tm_utf8_char_toupper(c), dest_ptr);
 		assert(bytes_written == bytes_read);
 		dest_ptr += bytes_written;
 	}
@@ -31,7 +41,13 @@ ssize_t tm_utf8_toupper (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr)
 	return 0;
 }
 
-ssize_t tm_utf8_tolower (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr)
+inline int32_t tm_utf8_char_tolower (const uint32_t c)
+{
+	int32_t c_case = utf8proc_get_property(c)->lowercase_mapping;
+	return c_case == -1 ? c : c_case;
+}
+
+ssize_t tm_utf8_str_tolower (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr)
 {
 	// This is silly, don't do this.
 	if (buf_len < 0) {
@@ -50,8 +66,7 @@ ssize_t tm_utf8_tolower (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr)
 		ptr += bytes_read;
 		buf_len -= bytes_read;
 
-		int32_t c_case = utf8proc_get_property(c)->lowercase_mapping;
-		ssize_t bytes_written = utf8proc_encode_char(c_case == -1 ? c : c_case, dest_ptr);
+		ssize_t bytes_written = utf8proc_encode_char(tm_utf8_char_tolower(c), dest_ptr);
 		assert(bytes_written == bytes_read);
 		dest_ptr += bytes_written;
 	}
