@@ -207,8 +207,15 @@ TEST unicode_ucs2 ()
 
 TEST unicode_case ()
 {	
+	uint8_t utf8char[4] = {0};
+	ssize_t utf8char_len = tm_utf8_char_encode(0x1F4A9, (uint8_t*) &utf8char);
+	ASSERT_EQm("utf8 encode", utf8char[0], 0xf0);
+	ASSERT_EQm("utf8 encode", utf8char[1], 0x9f);
+	ASSERT_EQm("utf8 encode", utf8char[2], 0x92);
+	ASSERT_EQm("utf8 encode", utf8char[3], 0xa9);
+
 	uint8_t* pileofuppercasepoo_cmp = NULL;
-	tm_utf8_toupper(pileofpoo, -1, &pileofuppercasepoo_cmp);
+	tm_utf8_str_toupper(pileofpoo, -1, &pileofuppercasepoo_cmp);
 	ASSERT_EQm("ucs2 length", tm_ucs2_length(pileofuppercasepoo_cmp, -1), 23);
 	ASSERT_EQm("ucs2 charat", tm_ucs2_charat(pileofuppercasepoo_cmp, -1, 2), 'T');
 	for (int i = 0; i < strlen((char*) pileofuppercasepoo); i++) {

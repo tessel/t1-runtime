@@ -205,8 +205,11 @@ void tm_buffer_double_write (uint8_t* buf, size_t index, double value, tm_endian
 
 // UNICODE
 
-ssize_t tm_utf8_tolower (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr);
-ssize_t tm_utf8_toupper (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr);
+ssize_t tm_utf8_char_encode (const uint32_t c, uint8_t* buf);
+int32_t tm_utf8_char_tolower (const uint32_t c);
+int32_t tm_utf8_char_toupper (const uint32_t c);
+ssize_t tm_utf8_str_tolower (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr);
+ssize_t tm_utf8_str_toupper (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr);
 
 size_t tm_ucs2_length (const uint8_t* buf, ssize_t buf_len);
 int32_t tm_ucs2_charat (const uint8_t* buf, ssize_t buf_len, ssize_t index);
