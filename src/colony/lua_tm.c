@@ -898,7 +898,11 @@ static int l_tm_utf8_str_toupper (lua_State* L)
 
 static int l_tm_ucs2_str_length (lua_State* L)
 {
-  return 0;
+  size_t buf_len = 0;
+  const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
+
+  lua_pushnumber(L, tm_ucs2_str_length(buf, buf_len));
+  return 1;
 }
 
 
