@@ -140,12 +140,12 @@ str_proto.slice = function (str, i, len)
   return string.sub(str, i+1, len or -1)
 end
 
-str_proto.toLowerCase = function (str)
-  return string.lower(str)
+str_proto.toLowerCase = function (this)
+  return tm.utf8_str_tolower(this)
 end
 
-str_proto.toUpperCase = function (str)
-  return string.upper(str)
+str_proto.toUpperCase = function (this)
+  return tm.utf8_str_toupper(this)
 end
 
 str_proto.indexOf = function (str, needle)

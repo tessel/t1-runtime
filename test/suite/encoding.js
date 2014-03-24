@@ -22,3 +22,8 @@ ok(poo != '\xd8\x3d\xdc\xa9');
 
 ok(String.fromCharCode(0x2603) == String.fromCharCode(0x12603), 'fromCharCode truncates UCS-2 values');
 ok(poo.length == 2, 'length is reported as ucs-2, 2 == ' + poo.length);
+
+var lower = "iñtërnâtiônàlizætiøn☃💩";
+var upper = "IÑTËRNÂTIÔNÀLIZÆTIØN☃💩";
+ok(lower.toUpperCase() == upper, 'toUpperCase works: ' + lower.toUpperCase())
+ok(upper.toLowerCase() == lower, 'toLowerCase works: ' + upper.toLowerCase())
