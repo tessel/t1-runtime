@@ -636,6 +636,7 @@
       ],
       "include_dirs": [
         'src/',
+        'deps/utf8proc/',
       ],
       "dependencies": [
         "tessel-runtime",

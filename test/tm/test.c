@@ -100,6 +100,45 @@ SUITE(runtime)
 
 
 /**
+ * strings
+ */
+
+#include <utf8proc.h>
+
+size_t tm_ucs2_length (uint8_t* buf, ssize_t buf_len)
+{
+	if (buf_len < 0) {
+		buf_len = strlen((char*) buf);
+	}
+
+	uint8_t* ptr = buf;
+	uint8_t truelen = 0;
+	for (;;) {
+		int32_t dst = 0;
+		ssize_t bytes_read = utf8proc_iterate(ptr, buf_len, &dst);
+		if (dst == -1) {
+			break;
+		}
+		ptr += bytes_read;
+		buf_len -= bytes_read;
+		truelen += dst & 0x10000 ? 2 : 1;
+	}
+	return truelen;
+}
+
+TEST unicode_ucs2 ()
+{
+	ASSERT_EQm("ucs2 length", tm_ucs2_length((uint8_t*) "Iñtërnâtiônàlizætiøn☃💩", -1), 23);
+	PASS();
+}
+
+
+SUITE(unicode)
+{
+	RUN_TEST(unicode_ucs2);
+}
+
+/**
  * entry
  */
 
@@ -108,7 +147,8 @@ GREATEST_MAIN_DEFS();
 int main(int argc, char **argv)
 {
 	GREATEST_MAIN_BEGIN();      /* command-line arguments, initialization. */
-	RUN_SUITE(tm_buf);
-	RUN_SUITE(runtime);
+	// RUN_SUITE(tm_buf);
+	// RUN_SUITE(runtime);
+	RUN_SUITE(unicode);
 	GREATEST_MAIN_END();        /* display results */
 }
