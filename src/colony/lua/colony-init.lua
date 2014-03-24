@@ -250,8 +250,8 @@ func_mt.proto = func_proto
 --]]
 
 str_mt.getters = {
-  length = function (ths)
-    return string.len(ths)
+  length = function (this)
+    return tm.ucs2_str_length(this)
   end
 }
 str_mt.__index = function (self, key)
