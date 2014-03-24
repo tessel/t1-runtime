@@ -16,6 +16,7 @@
 -- $ luarocks install bit32
 
 local bit = require('bit32')
+local tm = require('tm')
 
 -- lua methods
 
@@ -265,7 +266,7 @@ str_mt.__index = function (self, key)
     if key >= self.length then
       return null
     else
-      return string.sub(self, key+1, key+1)
+      return tm.ucs2_str_charat(self, key)
     end
   end
   return js_proto_get(self, str_proto, key)
