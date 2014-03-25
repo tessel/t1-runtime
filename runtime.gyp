@@ -21,6 +21,7 @@
           'COLONY_EMBED',
           'CONFIG_PLATFORM_EMBED',
           'TM_FS_vfs',
+          'HAVE_CLOSESOCKET',
         ],
         'include_dirs': [
           '<(axtls_path)/config/'
