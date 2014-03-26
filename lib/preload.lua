@@ -46,7 +46,7 @@ if not _G.COLONY_EMBED then
   -- This is temporary until we have proper compilation in C.
   colony._load = function (file)
     -- Compile JS script before running.
-    os.execute('colony ' .. file .. ' > /tmp/colonyunique')
+    os.execute('colony -m ' .. file .. ' > /tmp/colonyunique')
     local file = io.open('/tmp/colonyunique', 'r')
     local output = file:read('*all')
     file:close()
