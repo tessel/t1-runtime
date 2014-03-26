@@ -128,9 +128,9 @@ static int builtin_loader (lua_State* L)
 
 const char preload_lua[] = "require('preload');";
 
-// Function to be called by javascript
-static int _colony_runtime_open (lua_State *L, int preload_on_init)
+int colony_runtime_open (lua_State** stateptr)
 {
+  lua_State* L = *stateptr = luaL_newstate ();
   lua_atpanic(L, &runtime_panic);
   // luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
   // lua_gc(L, LUA_GCSETPAUSE, 90);
@@ -138,12 +138,6 @@ static int _colony_runtime_open (lua_State *L, int preload_on_init)
 
   // Open libraries.
   luaL_openlibs(L);
-
-    // dump_function(L);
-  // int res = luaL_loadbuffer(L, thebytes, sizeof(thebytes), "=stdin");
-  // lua_pcall(L, 0, LUA_MULTRET, 0);
-  // lua_pcall(L, 0, LUA_MULTRET, 0);
-
 
   // Type of build.
 #ifdef COLONY_EMBED
@@ -153,11 +147,10 @@ static int _colony_runtime_open (lua_State *L, int preload_on_init)
 #endif
   lua_setglobal(L, "COLONY_EMBED");
 
-  // Get preload table.
+  // Preload Lua modules.
   lua_getglobal(L, "package");
   lua_getfield(L, -1, "preload");
   lua_remove(L, -2);
-
   // bit32
   lua_pushcfunction(L, luaopen_bit);
   lua_setfield(L, -2, "bit32");
@@ -173,9 +166,8 @@ static int _colony_runtime_open (lua_State *L, int preload_on_init)
   // yajl
   lua_pushcfunction(L, luaopen_yajl);
   lua_setfield(L, -2, "yajl");
-
+  // Load lib/*.lua files into memory.
   for (int i = 0; dir_runtime_lib[i].path != NULL; i++) {
-    // printf("lib -> %s\n", dir_runtime_lib[i].path);
     lua_pushlstring(L, dir_runtime_lib[i].path, strchr(dir_runtime_lib[i].path, '.') - dir_runtime_lib[i].path);
     int res = luaL_loadbuffer(L, (const char *) dir_runtime_lib[i].src, dir_runtime_lib[i].len, dir_runtime_lib[i].path);
     if (res != 0) {
@@ -185,46 +177,34 @@ static int _colony_runtime_open (lua_State *L, int preload_on_init)
     }
     lua_settable(L, -3);
   }
-
   // Done with preload
   lua_pop(L, 1);
 
-
+  // Given the index of a builtin file to load, this function loads it.
   lua_pushcfunction(L, builtin_loader);
   lua_setglobal(L, "_builtin_load");
 
-  
+  // Adds builtin files to an array _builtin.
   lua_newtable(L);
   for (int i = 0; dir_builtin[i].path != NULL; i++) {
-    // printf("builtin -> %s\n", dir_builtin[i].path);
-    // lua_pushlightuserdata(L, &dir_index_builtin[i]);
-    // lua_pushstring(L, dir_index_builtin[i].path);
     lua_pushlstring(L, dir_builtin[i].path, strchr(dir_builtin[i].path, '.') - dir_builtin[i].path);
     lua_pushnumber(L, i);
-    // int res = luaL_loadbuffer(L, (const char *) dir_index_builtin[i].src, dir_index_builtin[i].len, dir_index_builtin[i].path);
-    // if (res != 0) {
-    //   printf("Error in %s: %d\n", dir_index_builtin[i].path, res);
-    //   report(L, res);
-    //   exit(1);
-    // }
     lua_settable(L, -3);
   }
   lua_setglobal(L, "_builtin");
 
   // Load all builtin libraries immediately on init.
-  // This is slow on slow devices but speeds up later access.
-  lua_pushnumber(L, preload_on_init);
+  // This can trade loss of sped for later access.
+#ifdef COLONY_PRELOAD
+  lua_pushnumber(L, 1);
+#else
+  lua_pushnumber(L, 0);
+#endif
   lua_setglobal(L, "_colony_preload_on_init");
 
+  // Launch our preload.lua script.
   char* argv[] = { 0 };
   return handle_script(L, preload_lua, strlen(preload_lua), argv, 0);
-}
-
-// TODO preload_on_init
-int colony_runtime_open (lua_State** stateptr)
-{
-  *stateptr = luaL_newstate ();
-  return _colony_runtime_open(*stateptr, 0);
 }
 
 
@@ -236,8 +216,7 @@ int colony_runtime_run (lua_State** stateptr, const char *path, char **argv, int
   
   lua_State* L = *stateptr;
 
-  // Run script.
-  // const char *runtime_lua = "local colony = require('lib/colony'); collectgarbage(); colony.run('./' .. arg[1]); colony.runEventLoop();";
+  // Launch our cli.lua script.
   return handle_script(L, runtime_lua, strlen(runtime_lua), argv, argc);
 }
 
