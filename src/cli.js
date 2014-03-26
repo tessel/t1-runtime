@@ -39,7 +39,7 @@ function cli () {
       process.stdout.write(bin);
     })
   } else {
-    console.log(luacode);
+    console.log(luacode.source);
   }
 }
 
