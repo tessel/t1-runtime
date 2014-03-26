@@ -78,7 +78,11 @@ packageFolder(infiles, varname, section, function (file, buf, next) {
       throw new Error('Bytecode compilation of ' + file + ' failed.');
     }
   } else if (file.match(/\.lua$/)) {
-    colony.toBytecode({ source: String(buf) }, '[T]: ' + file, next);
+    try {
+      colony.toBytecode({ source: String(buf) }, '[T]: ' + file, next);
+    } catch (e) {
+      throw new Error('Bytecode compilation of ' + file + ' failed.');
+    }
   } else {
     next(null, buf);
   }
