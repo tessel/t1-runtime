@@ -844,32 +844,31 @@ local function objtostring (obj, sset)
   end
 end
 
-local function logger (out, ...)
+local function logger (level, ...)
+  local parts = {}
   for i=1,select('#',...) do
     local x = select(i,...)
     if js_typeof(x) == 'object' and x ~= nil then 
-      out:write(objtostring(x, {}))
+      parts[#parts+1] = objtostring(x, {})
     else
-      out:write(tostring(x))
-      --out:write(global.JSON:stringify(x))
+      parts[#parts+1] = tostring(x)
     end
-    out:write(' ')
   end
-  out:write('\n')
+  tm.log(level, table.concat(parts, ' '))
 end
 
 global.console = js_obj({
   log = function (self, ...)
-    logger(io.stdout, ...)
+    logger(10, ...)
   end,
   info = function (self, ...)
-    logger(io.stderr, ...)
+    logger(11, ...)
   end,
   warn = function (self, ...)
-    logger(io.stderr, ...)
+    logger(12, ...)
   end,
   error = function (self, ...)
-    logger(io.stderr, ...)
+    logger(13, ...)
   end
 });
 

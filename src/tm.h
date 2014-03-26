@@ -13,6 +13,18 @@ extern "C" {
 #include <errno.h>  
 #include <time.h>
 
+// logging
+void tm_log(char level, const char* string, unsigned length);
+void tm_logf(char level, const char* format, ...);
+
+#define SYS_DBG 1
+#define SYS_LOG 20
+#define SYS_ERR 22
+
+#define TM_DEBUG(str, ...) tm_logf(SYS_DBG, str, ##__VA_ARGS__)
+#define TM_LOG(str, ...) tm_logf(SYS_LOG, str, ##__VA_ARGS__)
+#define TM_ERR(str, ...) tm_logf(SYS_ERR, str, ##__VA_ARGS__)
+
 // net
 
 typedef int tm_socket_t;

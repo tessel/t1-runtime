@@ -38,6 +38,15 @@ inline static void stackDump (lua_State *L)
 }
 
 
+static int l_tm_log(lua_State* L)
+{
+  const char level = lua_tonumber(L, 1);
+  size_t buf_len = 0;
+  const char* buf = (const char*) colony_tobuffer(L, 2, &buf_len);
+  tm_log(level, buf, buf_len);
+  return 0;
+}
+
 /**
  * Net
  */
@@ -639,6 +648,8 @@ LUALIB_API int luaopen_tm (lua_State *L)
 {
   lua_newtable (L);
   luaL_register(L, NULL, (luaL_reg[]) {
+    // log
+    { "log", l_tm_log },
 
     // host
     { "hostname_lookup", l_tm_hostname_lookup },
