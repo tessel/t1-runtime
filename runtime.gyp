@@ -597,10 +597,10 @@
         'LACKS_UNISTD_H',
       ],
       "sources": [
-        'src/l_cares.c',
-        'src/l_hsregex.c',
-        'src/l_http_parser.c',
-        'src/l_tm.c',
+        'src/lua_cares.c',
+        'src/lua_hsregex.c',
+        'src/lua_http_parser.c',
+        'src/lua_tm.c',
         'src/lua_yajl.c',
         'src/dlmallocfork.c',
 

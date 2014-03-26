@@ -8,10 +8,10 @@
 #include <stddef.h>
 
 #include "tm.h"
-#include "l_http_parser.h"
-#include "l_tm.h"
-#include "l_hsregex.h"
-#include "l_bit.h"
+#include "lua_http_parser.h"
+#include "lua_tm.h"
+#include "lua_hsregex.h"
+#include "lua_bit.h"
 
 #include "dlmalloc.h"
 #include "dlmallocfork.h"
