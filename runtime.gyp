@@ -568,18 +568,19 @@
         'LACKS_UNISTD_H',
       ],
       "sources": [
-        'src/lua_cares.c',
-        'src/lua_hsregex.c',
-        'src/lua_http_parser.c',
-        'src/lua_tm.c',
-        'src/lua_yajl.c',
-        'src/dlmallocfork.c',
+        'src/bindings/lua_cares.c',
+        'src/bindings/lua_hsregex.c',
+        'src/bindings/lua_http_parser.c',
+        'src/bindings/lua_tm.c',
+        'src/bindings/lua_yajl.c',
 
+        'src/dlmallocfork.c',
         'src/tm_buffer.c',
         'src/runtime.c',
       ],
       "include_dirs": [
         'src/',
+        'src/bindings',
         "<(colony_lua_path)/src",
       ],
       "dependencies": [
