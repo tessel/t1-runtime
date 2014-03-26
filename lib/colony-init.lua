@@ -343,7 +343,7 @@ local function js_next (a, b, c)
   local k = b
   repeat
     k = next(a, k)
-  until mt.length == nil or type(k) ~= 'number'
+  until mt == nil or mt.length == nil or type(k) ~= 'number'
   return k
 end
 
