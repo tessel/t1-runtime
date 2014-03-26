@@ -3,6 +3,7 @@
 #include <lualib.h>
 
 #include <stddef.h>
+#include <stdint.h>
 
 int colony_runtime_open (lua_State** stateptr);
 int colony_runtime_run (lua_State** stateptr, const char *path, const char **argv, int argc);

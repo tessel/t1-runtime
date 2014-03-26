@@ -299,6 +299,7 @@
       'cflags': [
         '-Wno-format-security',
         '-Wno-unused-variable',
+        '-Wno-unused-result',
       ],
       'xcode_settings': {
         'OTHER_CFLAGS': [
