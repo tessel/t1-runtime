@@ -15,7 +15,7 @@ static int base64_write(lua_State* L, unsigned char* str, size_t len, struct lua
     unsigned int idx;
     for (idx=0; idx<len; idx++){
 EM_ASM_INT({
-    OKAY($0);
+    COLONY_OUTPUT($0);
 }, str[idx]);
         // putchar(str[idx]);
         // printf("%02x", (unsigned int) str[idx]);
@@ -24,6 +24,12 @@ EM_ASM_INT({
     }
     //printf("\n");
     return 0;
+}
+
+int _lua_sourcemap (int i) {
+return EM_ASM_INT({
+    return COLONY_SOURCEMAP($0);
+}, i);
 }
 
 int go_for_it (char *content, size_t contentSize, char* name)

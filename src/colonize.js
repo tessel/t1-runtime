@@ -105,6 +105,12 @@ function ensureStatement (node) {
   }
 }
 
+function bodyjoin (arr) {
+  return arr.map(function (node) {
+    return '--[[' + node.start + ']] ' + node;
+  }).join('\n');
+}
+
 function finishNode(node, type) {
   _log('==>', type);
 
@@ -245,8 +251,8 @@ function finishNode(node, type) {
     return colony_node(node, [
       "if " + ensureExpression(hygenify(node.test)) + ' then\n',
       // TODO node.consequent should be a string, here is body
-      (node.consequent.body ? node.consequent.body.join('\n') : node.consequent) + '\n',
-      (node.alternate ? 'else\n' + (node.alternate.body ? node.alternate.body.join('\n') : node.alternate) + '\n' : ""),
+      (node.consequent.body ? bodyjoin(node.consequent.body) : node.consequent) + '\n',
+      (node.alternate ? 'else\n' + (node.alternate.body ? bodyjoin(node.alternate.body) : node.alternate) + '\n' : ""),
       'end;'
     ].join(''));
 
@@ -262,7 +268,7 @@ function finishNode(node, type) {
     return colony_node(node, [
       'for ' + name + ' in _pairs(' + ensureExpression(hygenify(node.right)) + ') do ',
       name + ' = ""+' + name + '; ',
-      !node.body.body ? node.body : node.body.body.join('\n'),
+      !node.body.body ? node.body : bodyjoin(node.body.body),
       'end;'
     ].join('\n'))
 
@@ -281,7 +287,7 @@ function finishNode(node, type) {
     return colony_node(node, node.declarations.join(' '));
 
   } else if (type == 'WithStatement') {
-    var i = colony_newWith(node.body.body.join('\n'));
+    var i = colony_newWith(bodyjoin(node.body.body));
     return colony_node(node,
       'local _ret = _with(' + node.object + ', _G._with_fn' + i + ');'
       + 'if _ret ~= _with then return _ret end; ');
@@ -344,7 +350,7 @@ function finishNode(node, type) {
     return colony_node(node, [
       'while ' + ensureExpression(node.test) + ' do ',
       (flow.usesContinue ? 'local _c' + (flow.label||'') + ' = nil; repeat' : ''),
-      !node.body.body ? node.body : node.body.body.join('\n'),
+      !node.body.body ? node.body : bodyjoin(node.body.body),
       (flow.usesContinue ? 'until true;\nif _c' + flow.label + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end;' : ''),
       'end;'
     ].join('\n'));
@@ -364,7 +370,7 @@ function finishNode(node, type) {
     return colony_node(node, [
       'repeat ',
       (flow.usesContinue ? 'local _c' + (flow.label||'') + ' = nil; repeat' : ''),
-      !node.body.body ? node.body : node.body.body.join('\n'),
+      !node.body.body ? node.body : bodyjoin(node.body.body),
       (flow.usesContinue ? 'until true;\nif _c' + flow.label + ' == _break' + [''].concat(ascend).join(' or _c') + ' then break end;' : ''),
       'until not (' + ensureExpression(node.test) + '); ',
     ].join('\n'));
@@ -378,7 +384,7 @@ function finishNode(node, type) {
       node.init ? (node.init.declarations ? node.init.declarations.join(' ') : node.init) : '',
       'while ' + (node.test ? ensureExpression(node.test) : 'true') + ' do ',
       (flow.usesContinue ? 'local _c = nil; repeat' : ''),
-      !node.body.body ? node.body : node.body.body.join('\n'),
+      !node.body.body ? node.body : bodyjoin(node.body.body),
       (flow.usesContinue ? 'until true;\nif _c == _break then break end;' : ''),
       (node.update ? ensureStatement(node.update) : ''),
       'end;'
@@ -391,7 +397,7 @@ function finishNode(node, type) {
     return colony_node(node, [
 'local _e = nil',
 'local _s, _r = _xpcall(function ()',
-node.block.body ? node.block.body.join('\n') : '',
+node.block.body ? bodyjoin(node.block.body) : '',
 //    #{if tryStat.stats[-1..][0].type != 'ret-stat' then "return _cont" else ""}
 '    end, function (err)',
 '        _e = err',
@@ -400,12 +406,12 @@ node.block.body ? node.block.body.join('\n') : '',
 // catch clause
 'if _s == false then',
 hygenifystr(node.handler.param) + ' = _e;',
-node.handler.body ? node.handler.body.body.join('\n') : '',
+node.handler.body ? bodyjoin(node.handler.body.body) : '',
 
 // break clause.
 'end;'
 ] : []).concat([
-node.finalizer ? node.finalizer.body.join('\n') : '',
+node.finalizer ? bodyjoin(node.finalizer.body) : '',
 ]).concat(node.handler ? [] : [
 'if _s == false then',
 '_error(_e)',
@@ -470,7 +476,7 @@ node.finalizer ? node.finalizer.body.join('\n') : '',
         : ['this'].concat(node.params.map(hygenifystr)).join(', ') + ')\n')
       + localstr
       + hoistsr
-      + node.body.body.join('\n')
+      + bodyjoin(node.body.body)
       + '\nend'
       + (node.id ? '; ' + hygenifystr(node.id) + '.name = ' + JSON.stringify(hygenifystr(node.id)) + '; return ' + hygenifystr(node.id) + '; end)()' : '')
       + (type == 'FunctionDeclaration' ? '\n' : ')'));
@@ -497,7 +503,7 @@ node.finalizer ? node.finalizer.body.join('\n') : '',
     if (repl && node.body.length && node.body[node.body.length - 1].expression) {
       laststr = '\nif true then return ' + node.body.pop().expression + '; end';
     }
-    return colony_node(node, w + '\n--[[COLONY_MODULE]]\n' + localstr + hoistsr + node.body.join('\n') + laststr);
+    return colony_node(node, w + '\n--[[COLONY_MODULE]]\n' + localstr + hoistsr + bodyjoin(node.body) + laststr);
 
   }
   throw new Error('Colony cannot yet handle type ' + type);
@@ -533,7 +539,7 @@ module.exports = function (script, opts)
     return prelude + '\n' + body;
   }
 
-  return [
+  var mapped = [
     prelude,
     'return function (_ENV, _module)',
     'local exports, module = _module.exports, _module;',
@@ -542,5 +548,19 @@ module.exports = function (script, opts)
     '',
     'return _module.exports;',
     'end '
-  ].join(joiner);
+  ].join(joiner)
+
+  var last = 0;
+  function linefromchar (c) {
+    return last = script.substr(0, c).split(/\n/).length;
+  }
+
+  var sourcemap = mapped.split(/\n/).map(function (line) {
+    return linefromchar(Number((line.match(/--\[\[(.*?)\]\]/) || [0, last])[1]));
+  });
+
+  return {
+    source: mapped,
+    sourcemap: sourcemap
+  };
 };
