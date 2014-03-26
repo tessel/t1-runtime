@@ -573,7 +573,7 @@
         'src/bindings/lua_http_parser.c',
         'src/bindings/lua_tm.c',
         'src/bindings/lua_yajl.c',
-
+        'src/bindings/colony.c',
         'src/dlmallocfork.c',
         'src/tm_buffer.c',
         'src/runtime.c',
