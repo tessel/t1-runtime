@@ -228,41 +228,6 @@ int colony_runtime_open (lua_State** stateptr)
 }
 
 
-
-static void *colony_alloc (void *ud, void *ptr, size_t osize, size_t nsize)
-{
-  // printf("alloc: %p %d %d\n", ptr, osize, nsize);
-  mspace mymspace = (mspace) ud;
-  (void) osize;  /* not used */
-  if (nsize == 0) {
-    mspace_free(mymspace, ptr);
-    return NULL;
-  } else {
-    return mspace_realloc(mymspace, ptr, nsize);
-  }
-}
-
-int colony_runtime_arena_open (lua_State** stateptr, void* arena, size_t arena_size, int preload_on_init)
-{
-  mspace colony_mspace = create_mspace_with_base(arena, arena_size, 0);
-  *stateptr = lua_newstate (colony_alloc, colony_mspace);
-  return _colony_runtime_open(*stateptr, preload_on_init);
-}
-
-int colony_runtime_arena_save_size (void* _ptr, int max) {
-  return dlmallocfork_save_size(_ptr, max);
-}
-void colony_runtime_arena_save (void* _source, int source_max, void* _target, int target_max) {
-  dlmallocfork_save(_source, source_max, _target, target_max);
-}
-void colony_runtime_arena_restore (void* _source, int source_max, void* _target, int target_max) {
-  dlmallocfork_restore (_source, source_max, _target, target_max);
-}
-
-
-
-
-
 const char runtime_lua[] = "require('cli');";
 
 int colony_runtime_run (lua_State** stateptr, const char *path, char **argv, int argc)
