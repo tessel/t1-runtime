@@ -4,6 +4,7 @@
     "hsregex_path": "./deps/hsregex",
     "libtar_path": "./deps/libtar",
     "yajl_path": "./deps/yajl",
+    "yajl_inc_path": "./deps/yajl-inc",
     "axtls_path": "./deps/axtls",
     "c_ares_path": "./deps/c-ares",
     "colony_lua_path": "./deps/colony-lua",
@@ -240,7 +241,7 @@
       ],
       "include_dirs": [
         "<(yajl_path)/src",
-        "./src"
+        "<(yajl_inc_path)"
       ],
 
       # yajl plays fast with enums
@@ -568,20 +569,22 @@
         'LACKS_UNISTD_H',
       ],
       "sources": [
-        'src/bindings/lua_cares.c',
-        'src/bindings/lua_hsregex.c',
-        'src/bindings/lua_http_parser.c',
-        'src/bindings/lua_tm.c',
-        'src/bindings/lua_yajl.c',
-        'src/bindings/colony.c',
+        'src/colony/lua_cares.c',
+        'src/colony/lua_hsregex.c',
+        'src/colony/lua_http_parser.c',
+        'src/colony/lua_tm.c',
+        'src/colony/lua_yajl.c',
+        'src/colony/colony.c',
+        'src/colony/colony_runtime.c',
+
         'src/dlmallocfork.c',
         'src/tm_buffer.c',
         'src/tm_itoa.c',
-        'src/runtime.c',
       ],
       "include_dirs": [
         'src/',
-        'src/bindings',
+        'src/colony',
+        '<(yajl_inc_path)',
         "<(colony_lua_path)/src",
       ],
       "dependencies": [
@@ -700,17 +703,15 @@
         ['OS=="arm"', {
           "sources": [
             '<(c_ares_path)/inet_addr.c',
-            'src/fs/vfs/vfs.c',
-            'src/fs/vfs/vfs_tar.c',
+            'src/vfs/vfs.c',
+            'src/vfs/vfs_tar.c',
           ],
         }],
         ['OS!="arm"', {
           "sources": [
-            'src/net/posix/net.c',
-
-            'src/uptime/posix/uptime.c',
-            
-            'src/fs/posix/fs.c',
+            'src/posix/tm_net.c',
+            'src/posix/tm_uptime.c',
+            'src/posix/tm_fs.c',
           ]
         }]
       ],
@@ -735,10 +736,11 @@
       "type": "executable",
       'cflags': [ '-Wall', '-Wextra', '-Werror' ],
       "sources": [
-        'src/cli.c',
+        'src/colony/cli.c',
       ],
       "include_dirs": [
         'src/',
+        'src/colony/',
         "<(colony_lua_path)/src",
       ],
       "dependencies": [
