@@ -700,9 +700,10 @@
           'action_name': '<(_target_name)_compile',
           'inputs': [
             'lib/cli.lua',
+            'lib/colony-init.lua',
+            'lib/colony-js.lua',
+            'lib/colony-node.lua',
             'lib/colony.lua',
-            'lib/node-tm.lua',
-            'lib/std.lua',
             'lib/preload.lua',
           ],
           'outputs': [

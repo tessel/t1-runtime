@@ -1,3 +1,8 @@
+--
+-- preload.lua
+-- Called to initialize colony in a new runtime environment.
+--
+
 local colony = require('colony')
 -- This is temporary until we can do global._arr in C extension methods
 _G._colony = colony

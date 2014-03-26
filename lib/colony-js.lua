@@ -1,4 +1,7 @@
-return function (colony)
+--
+-- colony-js.lua
+-- Initializes JavaScript's globals and API for built-in types.
+--
 
 local bit = require('bit32')
 local yajl = require('yajl')
@@ -1266,5 +1269,3 @@ global.eval = function () end
 -- colony API
 
 colony.global = global
-
-end

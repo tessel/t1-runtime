@@ -1,4 +1,7 @@
-return function (colony)
+--
+-- colony-node.lua
+-- Initializes Node-specific global APIs, and the event loop.
+--
 
 local bit = require('bit32')
 local tm = require('tm')
@@ -912,7 +915,4 @@ colony.run = function (name, root, parent)
   colony.cache[p] = js_obj({exports=js_obj({}),parent=parent}) --dummy
   res(colony.global, colony.cache[p])
   return colony.cache[p].exports
-end
-
--- node-tm
 end
