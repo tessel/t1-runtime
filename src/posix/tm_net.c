@@ -71,7 +71,7 @@ int tm_udp_receive (int sock, uint8_t *buf, unsigned long buf_len, uint32_t *ip)
   struct sockaddr from;
   socklen_t from_len;
   signed long ret = recvfrom(sock, buf, buf_len, 0, &from, &from_len);
-  *ip = *((uint32_t *) &(from.sa_data[2]));
+  memcpy(ip, &(from.sa_data[2]), sizeof(unsigned));
   return ret;
 }
 

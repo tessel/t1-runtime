@@ -57,6 +57,7 @@
           '-Wall',
           #'-Wextra',
           '-Werror',
+          '-Wno-unused-parameter'
         ]
       }]
     ],

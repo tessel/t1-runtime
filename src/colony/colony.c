@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
+#include "colony.h"
 
 void colony_createarray (lua_State* L, int size)
 {
