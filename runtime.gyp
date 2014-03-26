@@ -8,7 +8,6 @@
     "c_ares_path": "./deps/c-ares",
     "colony_lua_path": "./deps/colony-lua",
     "lua_bitop_path": "./deps/luabitop-1.0",
-    "fatfs_path": "./deps/fatfs",
     "dlmalloc_path": "./deps/dlmalloc",
     "utf8proc_path": "./deps/utf8proc",
     'builtin_section%': '',
@@ -488,34 +487,6 @@
             '-lm'
           ]
         }
-      }
-    },
-
-    {
-      "target_name": "fatfs",
-      "product_name": "fatfs",
-      "type": "static_library",
-      "defines": [
-        'COLONY_FATFS',
-        'TM_FS_fat',
-      ],
-      "sources": [
-        '<(fatfs_path)/src/ff.c',
-        '<(fatfs_path)/src/ff_convert.c',
-      ],
-      "include_dirs": [
-        '<(fatfs_path)/src',
-        '<(axtls_path)/config/'
-      ],
-      "direct_dependent_settings": {
-        "defines": [
-          'COLONY_FATFS',
-          'TM_FS_fat',
-        ],
-        "include_dirs": [
-          '<(fatfs_path)/src',
-          '<(axtls_path)/config/'
-        ],
       }
     },
 
