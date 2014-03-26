@@ -69,6 +69,10 @@ typedef enum {
 void tm_buffer_float_write (uint8_t* buf, size_t index, float value, tm_endian_t endianness);
 void tm_buffer_double_write (uint8_t* buf, size_t index, double value, tm_endian_t endianness);
 
+// ITOA
+
+char* tm_itoa (long long i, char *s, unsigned int radix);
+
 
 // fs
 #ifdef TM_FS_vfs

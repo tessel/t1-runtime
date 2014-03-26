@@ -614,6 +614,20 @@ static int l_tm__sync_gethostbyname (lua_State* L)
   return 1;
 }
 
+static int l_tm_itoa (lua_State* L)
+{
+  long long value = (long long) lua_tonumber(L, 1);
+  unsigned int radix = (unsigned int) lua_tonumber(L, 2);
+
+  // TODO ensure colony_itoa can never go over 255 bytes
+  char buf[256] = { 0 };
+  tm_itoa(value, buf, radix == 0 ? 10 : radix);
+  buf[255] = 0;
+  
+  lua_pushstring(L, buf);
+  return 1;
+}
+
 
 /**
  * Load Colony.
@@ -697,6 +711,9 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "fs_dir_open", l_tm_fs_dir_open },
     { "fs_dir_read", l_tm_fs_dir_read },
     { "fs_dir_close", l_tm_fs_dir_close },
+
+    // itoa
+    { "itoa", l_tm_itoa },
 
     { "_sync_gethostbyname", l_tm__sync_gethostbyname },
 

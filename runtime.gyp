@@ -576,6 +576,7 @@
         'src/bindings/colony.c',
         'src/dlmallocfork.c',
         'src/tm_buffer.c',
+        'src/tm_itoa.c',
         'src/runtime.c',
       ],
       "include_dirs": [

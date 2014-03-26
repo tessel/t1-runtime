@@ -6,6 +6,7 @@
 local bit = require('bit32')
 local yajl = require('yajl')
 local _, hs = pcall(require, 'hsregex')
+local tm = require('tm')
 
 -- locals
 
@@ -84,7 +85,7 @@ num_proto.toString = function (this, radix)
     -- TODO: real rangeerror
     error("RangeError: toString() radix argument must be between 2 and 36")
   end
-  return itoa(this, radix)
+  return tm.itoa(this, radix)
 end
 
 num_proto.toFixed = function (num, n)
