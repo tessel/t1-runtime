@@ -76,38 +76,11 @@ char* tm_itoa (long long i, char *s, unsigned int radix);
 
 // fs
 #ifdef TM_FS_vfs
-#include "fs/vfs/vfs.h"
+#include "vfs/vfs.h"
 
 typedef tm_fs_file_handle tm_fs_t;
 typedef tm_fs_dir_handle tm_fs_dir_t;
 extern tm_fs_ent* tm_fs_root;
-
-#else
-
-#ifdef TM_FS_fat
-
-#include <ff.h>
-#include <diskio.h>
-
-enum {
-  TM_RDONLY = FA_READ,
-  TM_WRONLY = FA_WRITE,
-  TM_RDWR = FA_READ | FA_WRITE,
-  TM_OPEN_EXISTING = FA_OPEN_EXISTING,
-  TM_OPEN_ALWAYS = FA_OPEN_ALWAYS,
-  TM_CREATE_NEW = FA_CREATE_NEW,
-  TM_CREATE_ALWAYS = FA_CREATE_ALWAYS,
-
-  TM_EXIST = FR_EXIST
-};
-
-typedef FIL tm_fs_t;
-
-typedef struct {
-  DIR dir;
-  FILINFO info;
-  char lfname[256];
-} tm_fs_dir_t;
 
 #else
 
@@ -130,8 +103,6 @@ enum {
 
 typedef int tm_fs_t;
 typedef DIR* tm_fs_dir_t;
-
-#endif 
 
 void tm_fs_init ();
 
