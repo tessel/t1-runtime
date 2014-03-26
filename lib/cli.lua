@@ -1,3 +1,8 @@
+--
+-- cli.lua
+-- A colony script to act as a command-line invocation tool.
+--
+
 local colony = require('colony')
 
 -- This is temporary until we can add files to builtin array easily.

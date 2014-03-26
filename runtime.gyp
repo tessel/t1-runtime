@@ -4,11 +4,11 @@
     "hsregex_path": "./deps/hsregex",
     "libtar_path": "./deps/libtar",
     "yajl_path": "./deps/yajl",
+    "yajl_inc_path": "./deps/yajl-inc",
     "axtls_path": "./deps/axtls",
     "c_ares_path": "./deps/c-ares",
     "colony_lua_path": "./deps/colony-lua",
     "lua_bitop_path": "./deps/luabitop-1.0",
-    "fatfs_path": "./deps/fatfs",
     "dlmalloc_path": "./deps/dlmalloc",
     "utf8proc_path": "./deps/utf8proc",
     'builtin_section%': '',
@@ -241,7 +241,7 @@
       ],
       "include_dirs": [
         "<(yajl_path)/src",
-        "./src"
+        "<(yajl_inc_path)"
       ],
 
       # yajl plays fast with enums
@@ -492,34 +492,6 @@
     },
 
     {
-      "target_name": "fatfs",
-      "product_name": "fatfs",
-      "type": "static_library",
-      "defines": [
-        'COLONY_FATFS',
-        'TM_FS_fat',
-      ],
-      "sources": [
-        '<(fatfs_path)/src/ff.c',
-        '<(fatfs_path)/src/ff_convert.c',
-      ],
-      "include_dirs": [
-        '<(fatfs_path)/src',
-        '<(axtls_path)/config/'
-      ],
-      "direct_dependent_settings": {
-        "defines": [
-          'COLONY_FATFS',
-          'TM_FS_fat',
-        ],
-        "include_dirs": [
-          '<(fatfs_path)/src',
-          '<(axtls_path)/config/'
-        ],
-      }
-    },
-
-    {
       "target_name": "dlmalloc",
       "product_name": "dlmalloc",
       "type": "static_library",
@@ -597,18 +569,22 @@
         'LACKS_UNISTD_H',
       ],
       "sources": [
-        'src/l_cares.c',
-        'src/l_hsregex.c',
-        'src/l_http_parser.c',
-        'src/l_tm.c',
-        'src/lua_yajl.c',
-        'src/dlmallocfork.c',
+        'src/colony/lua_cares.c',
+        'src/colony/lua_hsregex.c',
+        'src/colony/lua_http_parser.c',
+        'src/colony/lua_tm.c',
+        'src/colony/lua_yajl.c',
+        'src/colony/colony.c',
+        'src/colony/colony_runtime.c',
 
+        'src/dlmallocfork.c',
         'src/tm_buffer.c',
-        'src/runtime.c',
+        'src/tm_itoa.c',
       ],
       "include_dirs": [
         'src/',
+        'src/colony',
+        '<(yajl_inc_path)',
         "<(colony_lua_path)/src",
       ],
       "dependencies": [
@@ -700,9 +676,10 @@
           'action_name': '<(_target_name)_compile',
           'inputs': [
             'lib/cli.lua',
+            'lib/colony-init.lua',
+            'lib/colony-js.lua',
+            'lib/colony-node.lua',
             'lib/colony.lua',
-            'lib/node-tm.lua',
-            'lib/std.lua',
             'lib/preload.lua',
           ],
           'outputs': [
@@ -726,17 +703,15 @@
         ['OS=="arm"', {
           "sources": [
             '<(c_ares_path)/inet_addr.c',
-            'src/fs/vfs/vfs.c',
-            'src/fs/vfs/vfs_tar.c',
+            'src/vfs/vfs.c',
+            'src/vfs/vfs_tar.c',
           ],
         }],
         ['OS!="arm"', {
           "sources": [
-            'src/net/posix/net.c',
-
-            'src/uptime/posix/uptime.c',
-            
-            'src/fs/posix/fs.c',
+            'src/posix/tm_net.c',
+            'src/posix/tm_uptime.c',
+            'src/posix/tm_fs.c',
           ]
         }]
       ],
@@ -752,7 +727,13 @@
         'dir_builtin',
         'dir_runtime_lib',
         'tm',
-      ]
+      ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          'src/',
+          'src/colony/',
+        ]
+      }
     },
 
     {
@@ -761,10 +742,11 @@
       "type": "executable",
       'cflags': [ '-Wall', '-Wextra', '-Werror' ],
       "sources": [
-        'src/cli.c',
+        'src/colony/cli.c',
       ],
       "include_dirs": [
         'src/',
+        'src/colony/',
         "<(colony_lua_path)/src",
       ],
       "dependencies": [

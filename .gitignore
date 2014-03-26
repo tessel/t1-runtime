@@ -1,11 +1,9 @@
 *.colony
 *.o
-etc/*
 builtin/*.c
 lib/*.c
 *.dSYM
 
-colony
 libcolony.a
 node_modules
 build/*
