@@ -1,6 +1,5 @@
 *.colony
 *.o
-etc/*
 builtin/*.c
 lib/*.c
 *.dSYM
