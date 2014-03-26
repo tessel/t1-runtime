@@ -83,7 +83,7 @@ static int handle_script(lua_State *L, const char* script, size_t scriptlen, cha
   // if (strcmp(argv[0], "-") == 0 && strcmp(argv[n-1], "--") != 0)
   //   fname = NULL;  /* stdin */
   lua_pushcfunction(L, traceback);
-  status = luaL_loadbuffer(L,script, scriptlen, "runtime");
+  status = luaL_loadbuffer(L,script, scriptlen, "@[T]: runtime");
   if (status == 0) {
     // status = docall(L, 1, 0);
     status = lua_pcall(L, 0, 0, lua_gettop(L) - 1);
