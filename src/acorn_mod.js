@@ -111,6 +111,7 @@
       openFor: function () { },
       openTry: function () { },
       openWhile: function () { },
+      openSwitch: function () { },
       openLabel: function (name) { },
       openFunction: function (id) { },
       closeNode: function (node, type) { }
@@ -1248,6 +1249,7 @@
       return finishNode(node, "ReturnStatement");
 
     case _switch:
+    options.behaviors.openSwitch();
       next();
       node.discriminant = parseParenExpression();
       node.cases = [];

@@ -260,6 +260,9 @@ function finishNode(node, type) {
     return colony_node(node, 'if true then return ' + (node.argument ? ensureExpression(hygenify(node.argument)) : '') + '; end');
 
   } else if (type == 'ForInStatement') {
+    // Done with for/in block.
+    var flow = colony_flow.shift();
+
     if (node.left.kind == 'var') {
       var name = hygenifystr(node.left.declarations[0].str.replace(/\s*=.*$/, ''));
     } else {
@@ -296,6 +299,9 @@ function finishNode(node, type) {
     return node;
 
   } else if (type == 'SwitchStatement') {
+    // Done with switch block.
+    var flow = colony_flow.shift();
+
     var joiner = '\n';
     return colony_node(node, [
       'repeat',
@@ -525,7 +531,8 @@ module.exports = function (script, opts)
     behaviors: {
       openFor: colony_newFlow.bind(null, 'for'),
       openTry: colony_newFlow.bind(null, 'try'),
-      openWhile: colony_newFlow.bind(null, 'with'),
+      openWhile: colony_newFlow.bind(null, 'while'),
+      openSwitch: colony_newFlow.bind(null, 'switch'),
       openLabel: colony_newFlowLabel,
       openFunction: colony_newScope,
       closeNode: finishNode
