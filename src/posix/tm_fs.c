@@ -56,9 +56,9 @@ int tm_fs_readable (tm_fs_t* fd)
   ufds[0].fd = *fd;
   ufds[0].events = POLLIN;
   if (poll(ufds, 1, 0) > 0) {
-    return ufds[0].revents & POLLIN ? 0 : 1;
+    return ufds[0].revents & POLLIN ? 1 : 0;
   }
-  return 1;
+  return 0;
 }
 
 int tm_fs_dir_create (const char *pathname)
