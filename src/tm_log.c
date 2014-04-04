@@ -5,7 +5,9 @@
 #ifdef COLONY_PC
 #include <unistd.h>
 void tm_log(char level, const char* string, unsigned length) {
+	char linebreak = '\n';
 	int r = write(0, string, length);
+	r = write(0, &linebreak, 1);
 	(void) r;
 }
 #endif
