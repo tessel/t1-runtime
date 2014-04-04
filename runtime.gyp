@@ -45,6 +45,7 @@
           '-Wall',
           #'-Wextra',
           '-Werror',
+          '-Wno-error=unused-parameter',
         ]
       }],
       [ 'OS!="arm"', {
@@ -582,6 +583,8 @@
         'src/dlmallocfork.c',
         'src/tm_buffer.c',
         'src/tm_itoa.c',
+        'src/tm_log.c',
+
       ],
       "include_dirs": [
         'src/',
