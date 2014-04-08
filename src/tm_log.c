@@ -12,11 +12,14 @@ void tm_log(char level, const char* string, unsigned length) {
 }
 #endif
 
+#define BUF_SIZE 256
+
 void tm_logf(char level, const char* format, ...) {
 	va_list args;
 	va_start(args, format);
-	char buf[256];
+	char buf[BUF_SIZE];
 	int len = vsnprintf(buf, sizeof(buf), format, args);
+	if (len > BUF_SIZE) len = BUF_SIZE;
 	va_end (args);
 	tm_log(level, buf, len);
 }

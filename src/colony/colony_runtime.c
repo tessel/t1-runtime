@@ -57,19 +57,16 @@ static int getargs(lua_State *L, char **argv, int argc)
   return argc;
 }
 
-static void l_message(const char *pname, const char *msg)
-{
-  if (pname) fprintf(stderr, "%s: ", pname);
-  fprintf(stderr, "%s\n", msg);
-  fflush(stderr);
-}
-
 static int report(lua_State *L, int status)
 {
   if (status && !lua_isnil(L, -1)) {
-    const char *msg = lua_tostring(L, -1);
-    if (msg == NULL) msg = "(error object is not a string)";
-    l_message("runtime", msg);
+    unsigned len = 0;
+    const char *msg = lua_tolstring(L, -1, &len);
+    if (msg != NULL) {
+      tm_log(SYS_ERR, msg, len);
+    } else {
+      tm_logf(SYS_ERR, "(error object is not a string)");
+    }
     lua_pop(L, 1);
   }
   return status;
@@ -96,7 +93,7 @@ static int handle_script(lua_State *L, const char* script, size_t scriptlen, cha
 
 static int runtime_panic (lua_State *L)
 {
-  printf("PANIC: unprotected error in call to Lua API (%s)\n", lua_tostring(L, -1));
+  tm_logf(SYS_ERR, "PANIC: unprotected error in call to Lua API (%s)\n", lua_tostring(L, -1));
   return 0;  /* return to Lua to abort */
 }
 
