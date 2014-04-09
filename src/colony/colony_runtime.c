@@ -60,7 +60,7 @@ static int getargs(lua_State *L, char **argv, int argc)
 static int report(lua_State *L, int status)
 {
   if (status && !lua_isnil(L, -1)) {
-    unsigned len = 0;
+    size_t len = 0;
     const char *msg = lua_tolstring(L, -1, &len);
     if (msg != NULL) {
       tm_log(SYS_ERR, msg, len);
