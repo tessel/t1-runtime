@@ -15,7 +15,6 @@
  * Run
  */
 
-static lua_State* L = NULL;
 static int keeprunning = 1;
 static jmp_buf place;
 
@@ -45,8 +44,8 @@ static void lua_interrupt_hook(lua_State* L, lua_Debug *ar)
 
 static void intHandler (int dummy)
 {
-  if (L != NULL && keeprunning > 0) {
-    lua_sethook(L, lua_interrupt_hook, LUA_MASKCOUNT, 10);
+  if (tm_lua_state != NULL && keeprunning > 0) {
+    lua_sethook(tm_lua_state, lua_interrupt_hook, LUA_MASKCOUNT, 10);
   } else {
     exit(1);
   }
@@ -60,10 +59,10 @@ int main (int argc, const char *argv[])
 
   tm_fs_init();
 
-  colony_runtime_open(&L);
+  colony_runtime_open();
 
   if (setjmp(place) == 0)
-    ret = colony_runtime_run(&L, argv[1], argv, argc);
-  colony_runtime_close(&L);
+    ret = colony_runtime_run(argv[1], argv, argc);
+  colony_runtime_close();
   return ret;
 }

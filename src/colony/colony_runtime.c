@@ -17,6 +17,7 @@
 #include "dlmalloc.h"
 #include "dlmallocfork.h"
 
+lua_State* tm_lua_state = NULL;
 
 /**
  * Runtime.
@@ -125,9 +126,9 @@ static int builtin_loader (lua_State* L)
 
 const char preload_lua[] = "require('preload');";
 
-int colony_runtime_open (lua_State** stateptr)
+int colony_runtime_open ()
 {
-  lua_State* L = *stateptr = luaL_newstate ();
+  lua_State* L = tm_lua_state = luaL_newstate ();
   lua_atpanic(L, &runtime_panic);
   // luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
   // lua_gc(L, LUA_GCSETPAUSE, 90);
@@ -207,23 +208,23 @@ int colony_runtime_open (lua_State** stateptr)
 
 const char runtime_lua[] = "require('cli');";
 
-int colony_runtime_run (lua_State** stateptr, const char *path, char **argv, int argc)
+int colony_runtime_run (const char *path, char **argv, int argc)
 {
   (void) path;
   
-  lua_State* L = *stateptr;
+  lua_State* L = tm_lua_state;
 
   // Launch our cli.lua script.
   return handle_script(L, runtime_lua, strlen(runtime_lua), argv, argc);
 }
 
 
-int colony_runtime_close (lua_State** stateptr)
+int colony_runtime_close ()
 {
-  lua_State* L = *stateptr;
+  lua_State* L = tm_lua_state;
 
   // Close runtime.
   lua_close(L);
-  *stateptr = NULL;
+  tm_lua_state = NULL;
   return 0;
 }
