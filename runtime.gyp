@@ -46,6 +46,7 @@
           #'-Wextra',
           '-Werror',
           '-Wno-error=unused-parameter',
+          '-ggdb',
         ]
       }],
       [ 'OS!="arm"', {
@@ -54,6 +55,7 @@
         ],
         'cflags': [
           '-std=c99',
+          '-ggdb',
 
           '-Wall',
           #'-Wextra',
