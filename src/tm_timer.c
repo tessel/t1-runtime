@@ -6,12 +6,7 @@
 void timer_cb(tm_event* event);
 
 /// The event triggered by the timer callback
-tm_event tm_timer_event = {
-	.pending = false,
-	.ref = false,
-	.next = 0,
-	.callback = timer_cb,
-};
+tm_event tm_timer_event = TM_EVENT_INIT(timer_cb);
 
 /// The timer count at which the timer callback last ran.
 /// It should be safe if this wraps at UINT_MAX as long as all delays are shorter than a timer period.

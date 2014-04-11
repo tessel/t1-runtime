@@ -38,6 +38,8 @@ typedef struct tm_event {
   tm_event_callback callback;
 } tm_event;
 
+#define TM_EVENT_INIT(cb) { .pending = false, .ref = false, .next = 0, .callback = cb }
+
 // Mark an event as keeping the event loop alive
 bool tm_event_ref(tm_event* event);
 
