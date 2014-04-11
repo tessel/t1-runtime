@@ -37,6 +37,25 @@ local regex_proto = colony.regex_proto
 local global = colony.global
 
 --[[
+--|| Events
+--]]
+
+_G._colony_emit = function (type, data)
+  if string.sub(type, 1, string.len('raw-')) == 'raw-' then
+    colony.global.process:emit(type, global:Buffer(data));
+  else
+    local jsondata = nil
+    if pcall(function ()
+      jsondata = colony.global.JSON:parse(data)
+    end) then
+      colony.global.process:emit(type, jsondata);
+    else
+      colony.global.process:emit('invalid-' .. type, data);
+    end
+  end
+end
+
+--[[
 --|| Lua Timers
 --]]
 
