@@ -16,7 +16,6 @@
  */
 
 static int keeprunning = 1;
-static jmp_buf place;
 
 static int traceback (lua_State *L)
 {
@@ -39,7 +38,7 @@ static void lua_interrupt_hook(lua_State* L, lua_Debug *ar)
 {
   traceback(L);
   printf("SIGINT %s\n", lua_tostring(L, -1));
-  longjmp(place, 1);
+  exit(0);
 }
 
 static void intHandler (int dummy)
@@ -51,6 +50,8 @@ static void intHandler (int dummy)
   }
 }
 
+void hw_wait_for_event();
+
 int main (int argc, const char *argv[])
 {
   int ret = 0;
@@ -60,9 +61,13 @@ int main (int argc, const char *argv[])
   tm_fs_init();
 
   colony_runtime_open();
+  colony_runtime_run(argv[1], argv, argc);
 
-  if (setjmp(place) == 0)
-    ret = colony_runtime_run(argv[1], argv, argc);
+  while (tm_events_active()) {
+    hw_wait_for_event();
+    tm_event_process();
+  }
+
   colony_runtime_close();
   return ret;
 }

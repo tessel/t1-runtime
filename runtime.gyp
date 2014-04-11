@@ -586,6 +586,8 @@
         'src/tm_buffer.c',
         'src/tm_itoa.c',
         'src/tm_log.c',
+        'src/tm_event.c',
+        'src/tm_timer.c',
 
       ],
       "include_dirs": [
