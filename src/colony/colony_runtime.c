@@ -74,17 +74,28 @@ static int report(lua_State *L, int status)
   return status;
 }
 
+int tm_checked_call(lua_State *L, int nargs)
+{
+  int err_func = lua_gettop(L) - nargs;
+  lua_pushcfunction(L, traceback);
+  lua_insert(L, err_func);
+  int r = lua_pcall(L, nargs, 0, err_func);
+  report(L, r);
+  // TODO: exit program if exception was thrown
+  lua_remove(L, err_func);
+  return r;
+}
+
 int tm_eval_lua(lua_State *L, const char* script)
 {
   lua_pushcfunction(L, traceback);
   int status = luaL_loadbuffer(L, script, strlen(script), "@[T]: runtime");
-  if (status == 0) {
-    status = lua_pcall(L, 0, 0, lua_gettop(L) - 1);
-  } else {
+  if (status != 0) {
+    report(L, status);
     lua_pop(L, 1);
+    return status;
   }
-
-  return report(L, status);
+  return tm_checked_call(L, 0);
 }
 
 static int runtime_panic (lua_State *L)

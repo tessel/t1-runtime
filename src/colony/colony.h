@@ -12,6 +12,7 @@ int colony_runtime_run(const char *path, const char **argv, int argc);
 int colony_runtime_close();
 
 int tm_eval_lua(lua_State *L, const char* script);
+int tm_checked_call(lua_State *L, int nargs);
 
 int colony_runtime_arena_open (lua_State** stateptr, void* arena, size_t arena_size, int preload_on_init);
 int colony_runtime_arena_save_size (void* _ptr, int max);
