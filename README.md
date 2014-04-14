@@ -1,6 +1,9 @@
 # tessel runtime
 
-**PC and ARM Status:** [![Build Status](https://magnum.travis-ci.com/tessel/runtime.svg?token=QsFQ9CsYegvj7x78qiit&branch=master)](https://magnum.travis-ci.com/tessel/runtime)
+the same
+
+**PC status:** [![Build Status](https://magnum.travis-ci.com/tessel/runtime.svg?token=QsFQ9CsYegvj7x78qiit&branch=master)](https://magnum.travis-ci.com/tessel/runtime)
+**ARM Status:** [![Build Status](https://magnum.travis-ci.com/tessel/runtime.svg?token=QsFQ9CsYegvj7x78qiit&branch=master)](https://magnum.travis-ci.com/tessel/runtime)
 
 This is the runtime and JavaScript engine that runs on Tessel, it's kinda crazy and doesn't have a stable API
 
