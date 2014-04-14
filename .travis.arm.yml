@@ -1,3 +1,6 @@
+description: ARM Cortex-M
+badge_token: QsFQ9CsYegvj7x78qiit
+
 language: objective-c
 before_install:
   - brew update
@@ -9,7 +12,6 @@ install:
   - git submodule update --init
   - npm install
 script:
-  - make pc
   - make arm
 
 git:
