@@ -901,50 +901,50 @@ global.Date = function (this, time)
   if type(time) == 'number' then
     getmetatable(this).date = time
   else
-    getmetatable(this).date = os.time()
+    getmetatable(this).date = tm.uptime_micro()
   end
   return this
 end
 
 global.Date.prototype.toString = function (this)
   -- e.g. Mon Sep 28 1998 14:36:22 GMT-0700 (Pacific Daylight Time)
-  return os.date('!%a %h %d %Y %H:%M:%S GMT%z (%Z)', getmetatable(this).date)
+  return os.date('!%a %h %d %Y %H:%M:%S GMT%z (%Z)', getmetatable(this).date/1e6)
 end
 
 global.Date.prototype.getDate = function (this)
-  return os.date('*t', getmetatable(this).date).day
+  return os.date('*t', getmetatable(this).date/1e6).day
 end
 
 global.Date.prototype.getDay = function (this)
-  return os.date('*t', getmetatable(this).date).wday - 1
+  return os.date('*t', getmetatable(this).date/1e6).wday - 1
 end
 
 global.Date.prototype.getFullYear = function (this)
-  return os.date('*t', getmetatable(this).date).year
+  return os.date('*t', getmetatable(this).date/1e6).year
 end
 
 global.Date.prototype.getHours = function (this)
-  return os.date('*t', getmetatable(this).date).hour
+  return os.date('*t', getmetatable(this).date/1e6).hour
 end
 
 global.Date.prototype.getMilliseconds = function (this)
-  return 0 -- TODO
+  return math.floor((getmetatable(this).date/1e3)%1e3)
 end
 
 global.Date.prototype.getMinutes = function (this)
-  return os.date('*t', getmetatable(this).date).min
+  return os.date('*t', getmetatable(this).date/1e6).min
 end
 
 global.Date.prototype.getMonth = function (this)
-  return os.date('*t', getmetatable(this).date).month - 1
+  return os.date('*t', getmetatable(this).date/1e6).month - 1
 end
 
 global.Date.prototype.getSeconds = function (this)
-  return os.date('*t', getmetatable(this).date).sec
+  return os.date('*t', getmetatable(this).date/1e6).sec
 end
 
 global.Date.prototype.getTime = function (this)
-  return tonumber(getmetatable(this).date) or 0
+  return tonumber(getmetatable(this).date/1e6) or 0
 end
 
 global.Date.prototype.getTimezoneOffset = function ()
@@ -960,12 +960,12 @@ global.Date.prototype.getUTCMinutes = global.Date.prototype.getMinutes
 global.Date.prototype.getUTCSeconds = global.Date.prototype.getSeconds
 
 global.Date.prototype.getYear = function (this)
-  return os.date('*t', getmetatable(this).date).year - 1900
+  return os.date('*t', getmetatable(this).date/1e6).year - 1900
 end
 
 global.Date.prototype.toISOString = function (this)
   -- TODO don't hardcode microseconds
-  return os.date('!%Y-%m-%dT%H:%M:%S.000Z', getmetatable(this).date)
+  return os.date('!%Y-%m-%dT%H:%M:%S.000Z', getmetatable(this).date/1e6)
 end
 global.Date.prototype.toJSON = global.Date.prototype.toISOString
 global.Date.prototype.valueOf = global.Date.prototype.getTime
@@ -996,15 +996,15 @@ global.Date.prototype.toTimeString = function () return ''; end
 global.Date.prototype.toUTCString = function () return ''; end
 
 global.Date.now = function ()
-  return tonumber(os.time()) or 0
+  return tonumber(tm.uptime_micro()/1e3) or 0
 end
 
 global.Date.parse = function ()
-  return tonumber(os.time()) or 0
+  return tonumber(tm.uptime_micro()/1e3) or 0
 end
 
 global.Date.UTC = function ()
-  return tonumber(os.time()) or 0
+  return tonumber(tm.uptime_micro()/1e3) or 0
 end
 
 -- regexp library
