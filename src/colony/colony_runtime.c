@@ -80,8 +80,12 @@ int tm_checked_call(lua_State *L, int nargs)
   lua_pushcfunction(L, traceback);
   lua_insert(L, err_func);
   int r = lua_pcall(L, nargs, 0, err_func);
-  report(L, r);
-  // TODO: exit program if exception was thrown
+
+  if (r != 0) {
+    // TODO: process.emit('uncaughtException')
+    report(L, r);
+  }
+
   lua_remove(L, err_func);
   return r;
 }

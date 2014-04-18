@@ -584,13 +584,7 @@ global.process.EventEmitter = EventEmitter
 global.process.argv = js_arr({})
 global.process.env = js_obj({})
 global.process.exit = function (this, code)
-  if not global.process._exited then
-    global.process._exited = true
-    global.process:emit('exit', code)
-  end
-
-  local exitfn = _G._exit or os.exit
-  exitfn(tonumber(code))
+  tm.exit(code)
 end
 global.process.cwd = function ()
   -- TODO

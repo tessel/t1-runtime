@@ -61,13 +61,8 @@ int main (int argc, const char *argv[])
   tm_fs_init();
 
   colony_runtime_open();
-  colony_runtime_run(argv[1], argv, argc);
-
-  while (tm_events_active()) {
-    hw_wait_for_event();
-    tm_event_process();
-  }
-
+  ret = tm_runtime_run(argv[1], argv, argc);
   colony_runtime_close();
+
   return ret;
 }

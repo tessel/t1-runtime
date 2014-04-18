@@ -1,4 +1,5 @@
 #include "tm.h"
+#include "colony.h"
 
 unsigned tm_event_count = 0;
 
@@ -23,8 +24,10 @@ bool tm_event_unref(tm_event* event) {
 }
 
 bool tm_events_active() {
-	return tm_event_count != 0;
+	return (tm_event_count != 0);
 }
+
+
 
 tm_event* event_queue_head = 0;
 tm_event* event_queue_tail = 0;
@@ -63,4 +66,57 @@ void tm_event_process() {
 	}
 }
 
+jmp_buf exit_event_loop;
+volatile bool event_loop_running = false;
+volatile bool event_loop_keep_running = false;
+int event_loop_retval = 0;
+
+int tm_runtime_run(const char* script, const char** argv, int argc)
+{
+	event_loop_running = true;
+	event_loop_keep_running = true;
+	volatile bool have_called_exit = false;
+	if (setjmp(exit_event_loop) == 0) {
+		event_loop_retval = colony_runtime_run(script, argv, argc);
+
+		if (event_loop_retval == 0) {
+			while (event_loop_keep_running && tm_events_active()) {
+				hw_wait_for_event();
+				tm_event_process();
+			}
+		}
+	}
+	lua_sethook(tm_lua_state, 0, 0, 0);
+	if (!have_called_exit) {
+		have_called_exit = true;
+		// TODO: call process.emit('exit')
+	}
+
+	event_loop_running = false;
+	return event_loop_retval;
+}
+
+void tm_runtime_exit_longjmp(int code)
+{
+	if (event_loop_running) {
+		event_loop_retval = code;
+		longjmp(exit_event_loop, 1);
+	}
+}
+
+void exit_hook(lua_State* L, lua_Debug *ar)
+{
+	(void) L;
+	(void) ar;
+	return tm_runtime_exit_longjmp(event_loop_retval);
+}
+
+void tm_runtime_schedule_exit(int code)
+{
+	if (event_loop_running) {
+		event_loop_retval = code;
+		event_loop_keep_running = false;
+		lua_sethook(tm_lua_state, exit_hook, LUA_MASKCOUNT, 1);
+	}
+}
 

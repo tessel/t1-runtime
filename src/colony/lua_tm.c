@@ -38,6 +38,13 @@ inline static void stackDump (lua_State *L)
 }
 
 
+static int l_tm_exit(lua_State* L)
+{
+  const char code = lua_tonumber(L, 1);
+  tm_runtime_exit_longjmp(code);
+  return 0;
+}
+
 static int l_tm_log(lua_State* L)
 {
   const char level = lua_tonumber(L, 1);
@@ -668,6 +675,8 @@ LUALIB_API int luaopen_tm (lua_State *L)
 {
   lua_newtable (L);
   luaL_register(L, NULL, (luaL_reg[]) {
+    { "exit", l_tm_exit },
+
     // log
     { "log", l_tm_log },
 

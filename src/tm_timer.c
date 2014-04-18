@@ -150,22 +150,22 @@ void timer_cb(tm_event* event) {
 		elapsed -= t->time;
 		timers_head = t->next;
 
-		// Re-queue before calling callback so that it can clearInterval itself
-		// Extract the repeat field beforehand as clearInterval frees the struct
-		bool repeat = (t->repeat != 0);
-		if (repeat) {
+		lua_rawgeti(tm_lua_state, LUA_REGISTRYINDEX, t->lua_cb);
+
+		if (t->repeat != 0) {
+			// It's back in the queue, so clearInterval within the callback can cancel it
 			enqueue_timer(t->repeat, t);
+		} else {
+			// Clean up before calling lua, as it can setjmp. The callback is safely rooted on the lua stack above.
+			destroy_timer(t);
+			t = NULL;
 		}
 
-		lua_rawgeti(tm_lua_state, LUA_REGISTRYINDEX, t->lua_cb);
 		lua_getfield(tm_lua_state, LUA_GLOBALSINDEX, "global");
 		tm_checked_call(tm_lua_state, 1);
-
-		if (!repeat) {
-			destroy_timer(t);
-		}
 	}
 
+	// If lua setjmps, these will be cleaned up when the timer state is reset
 	last_time = new_time;
 	configure_timer_interrupt();
 }

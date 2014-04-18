@@ -62,6 +62,18 @@ bool tm_events_pending();
 void tm_events_lock();
 void tm_events_unlock();
 
+// Run the script and then process events. Returns the exit code
+int tm_runtime_run(const char* script, const char** argv, int argc);
+
+// Causes tm_runtime_run to exit immediately with code. Does not return.
+void tm_runtime_exit_longjmp(int code);
+
+// Schedules the event loop to exit at its earliest convenience. Safe to call from ISR.
+void tm_runtime_schedule_exit(int code);
+
+// Called at each iteration of the event loop
+void hw_wait_for_event();
+
 // Timers
 
 // The event triggered by the timer interrupt
