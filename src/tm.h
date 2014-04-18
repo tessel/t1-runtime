@@ -91,6 +91,9 @@ bool tm_timer_waiting();
 // Get the time field of the first timer in the queue
 unsigned tm_timer_head_time();
 
+// Get the absolute time of the next scheduled timer
+unsigned tm_timer_next_time();
+
 // Clean up the timer queue
 void tm_timer_cleanup();
 
