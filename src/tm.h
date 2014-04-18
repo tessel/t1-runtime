@@ -91,6 +91,9 @@ bool tm_timer_waiting();
 // Get the time field of the first timer in the queue
 unsigned tm_timer_head_time();
 
+// Clean up the timer queue
+void tm_timer_cleanup();
+
 // net
 
 typedef int tm_socket_t;

@@ -92,6 +92,8 @@ int tm_runtime_run(const char* script, const char** argv, int argc)
 		// TODO: call process.emit('exit')
 	}
 
+	tm_timer_cleanup();
+
 	event_loop_running = false;
 	return event_loop_retval;
 }

@@ -169,3 +169,11 @@ void timer_cb(tm_event* event) {
 	last_time = new_time;
 	configure_timer_interrupt();
 }
+
+void tm_timer_cleanup() {
+	while (timers_head) {
+		tm_timer* t = timers_head;
+		timers_head = t->next;
+		destroy_timer(t);
+	}
+}
