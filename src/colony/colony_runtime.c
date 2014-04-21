@@ -17,6 +17,7 @@
 #include "dlmalloc.h"
 #include "dlmallocfork.h"
 
+lua_State* tm_lua_state = NULL;
 
 /**
  * Runtime.
@@ -54,6 +55,7 @@ static int getargs(lua_State *L, char **argv, int argc)
     lua_pushstring(L, argv[i]);
     lua_rawseti(L, -2, i + 1);
   }
+  lua_setglobal(L, "arg");
   return argc;
 }
 
@@ -72,23 +74,32 @@ static int report(lua_State *L, int status)
   return status;
 }
 
-static int handle_script(lua_State *L, const char* script, size_t scriptlen, char **argv, int argc)
+int tm_checked_call(lua_State *L, int nargs)
 {
-  int status;
-  int narg = getargs(L, argv, argc);  /* collect arguments */
-  lua_setglobal(L, "arg");
-  // if (strcmp(argv[0], "-") == 0 && strcmp(argv[n-1], "--") != 0)
-  //   fname = NULL;  /* stdin */
+  int err_func = lua_gettop(L) - nargs;
   lua_pushcfunction(L, traceback);
-  status = luaL_loadbuffer(L,script, scriptlen, "@[T]: runtime");
-  if (status == 0) {
-    // status = docall(L, 1, 0);
-    status = lua_pcall(L, 0, 0, lua_gettop(L) - 1);
-  } else {
-    lua_pop(L, narg);
+  lua_insert(L, err_func);
+  int r = lua_pcall(L, nargs, 0, err_func);
+
+  if (r != 0) {
+    // TODO: process.emit('uncaughtException')
+    report(L, r);
   }
 
-  return report(L, status);
+  lua_remove(L, err_func);
+  return r;
+}
+
+int tm_eval_lua(lua_State *L, const char* script)
+{
+  lua_pushcfunction(L, traceback);
+  int status = luaL_loadbuffer(L, script, strlen(script), "@[T]: runtime");
+  if (status != 0) {
+    report(L, status);
+    lua_pop(L, 1);
+    return status;
+  }
+  return tm_checked_call(L, 0);
 }
 
 static int runtime_panic (lua_State *L)
@@ -123,11 +134,9 @@ static int builtin_loader (lua_State* L)
   return 1;
 }
 
-const char preload_lua[] = "require('preload');";
-
-int colony_runtime_open (lua_State** stateptr)
+int colony_runtime_open ()
 {
-  lua_State* L = *stateptr = luaL_newstate ();
+  lua_State* L = tm_lua_state = luaL_newstate ();
   lua_atpanic(L, &runtime_panic);
   // luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
   // lua_gc(L, LUA_GCSETPAUSE, 90);
@@ -199,31 +208,26 @@ int colony_runtime_open (lua_State** stateptr)
 #endif
   lua_setglobal(L, "_colony_preload_on_init");
 
-  // Launch our preload.lua script.
-  char* argv[] = { 0 };
-  return handle_script(L, preload_lua, strlen(preload_lua), argv, 0);
+  return tm_eval_lua(L, "require('preload');");
 }
 
-
-const char runtime_lua[] = "require('cli');";
-
-int colony_runtime_run (lua_State** stateptr, const char *path, char **argv, int argc)
+int colony_runtime_run (const char *path, char **argv, int argc)
 {
   (void) path;
-  
-  lua_State* L = *stateptr;
+  lua_State* L = tm_lua_state;
 
-  // Launch our cli.lua script.
-  return handle_script(L, runtime_lua, strlen(runtime_lua), argv, argc);
+  getargs(L, argv, argc);  /* collect arguments */
+
+  return tm_eval_lua(L, "require('cli');");
 }
 
 
-int colony_runtime_close (lua_State** stateptr)
+int colony_runtime_close ()
 {
-  lua_State* L = *stateptr;
+  lua_State* L = tm_lua_state;
 
   // Close runtime.
   lua_close(L);
-  *stateptr = NULL;
+  tm_lua_state = NULL;
   return 0;
 }

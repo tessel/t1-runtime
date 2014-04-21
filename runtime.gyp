@@ -46,6 +46,7 @@
           #'-Wextra',
           '-Werror',
           '-Wno-error=unused-parameter',
+          '-ggdb',
         ]
       }],
       [ 'OS!="arm"', {
@@ -54,6 +55,7 @@
         ],
         'cflags': [
           '-std=c99',
+          '-ggdb',
 
           '-Wall',
           #'-Wextra',
@@ -584,6 +586,8 @@
         'src/tm_buffer.c',
         'src/tm_itoa.c',
         'src/tm_log.c',
+        'src/tm_event.c',
+        'src/tm_timer.c',
 
       ],
       "include_dirs": [

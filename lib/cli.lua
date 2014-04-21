@@ -21,6 +21,4 @@ if string.sub(p, 1, 1) ~= '.' then
   p = './' .. p
 end
 
--- Run event Loop
 colony.run(p)
-colony.runEventLoop();

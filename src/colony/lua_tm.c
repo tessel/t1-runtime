@@ -38,6 +38,13 @@ inline static void stackDump (lua_State *L)
 }
 
 
+static int l_tm_exit(lua_State* L)
+{
+  const char code = lua_tonumber(L, 1);
+  tm_runtime_exit_longjmp(code);
+  return 0;
+}
+
 static int l_tm_log(lua_State* L)
 {
   const char level = lua_tonumber(L, 1);
@@ -310,6 +317,26 @@ static int l_tm_uptime_micro (lua_State* L)
 {
   lua_pushnumber(L, tm_uptime_micro());
   return 1;
+}
+
+
+/**
+ * Timers
+ */
+
+static int l_tm_set_raw_timeout (lua_State* L) {
+  unsigned timeout = (unsigned) (lua_tonumber(L, 1) * 1000.0);
+  int repeat = lua_toboolean(L, 2);
+  int callback_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+  unsigned id = tm_settimeout(timeout, repeat, callback_ref);
+  lua_pushnumber(L, id);
+  return 1;
+}
+
+static int l_tm_clear_raw_timeout (lua_State* L) {
+  unsigned id = (unsigned) lua_tonumber(L, 1);
+  tm_cleartimeout(id);
+  return 0;
 }
 
 
@@ -648,6 +675,8 @@ LUALIB_API int luaopen_tm (lua_State *L)
 {
   lua_newtable (L);
   luaL_register(L, NULL, (luaL_reg[]) {
+    { "exit", l_tm_exit },
+
     // log
     { "log", l_tm_log },
 
@@ -681,6 +710,10 @@ LUALIB_API int luaopen_tm (lua_State *L)
     // uptime
     { "uptime_init", l_tm_uptime_init },
     { "uptime_micro", l_tm_uptime_micro },
+
+    // timer
+    { "set_raw_timeout", l_tm_set_raw_timeout },
+    { "clear_raw_timeout", l_tm_clear_raw_timeout },
 
     // buffer
     { "buffer_create", l_tm_buffer_create },

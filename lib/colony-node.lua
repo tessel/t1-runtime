@@ -36,133 +36,59 @@ local regex_proto = colony.regex_proto
 
 local global = colony.global
 
-
 --[[
---|| Lua Event Loop
+--|| Events
 --]]
 
--- event queue, and temporary (processing) queue
-local _eventQueue, _processEventQueue = {}, {}
-
--- Add function to global event queue
--- timeout: millis before starting (or restarting)
--- dorepeat: boolean if function should repeat
--- returns a unique token for unqueue_event
-local function queue_event (fn, timeout, dorepeat, args)
-  timeout = timeout or 0 
-  local start = tm.uptime_micro()
-  local timefn = function ()
-    local now = tm.uptime_micro()
-    if now - start < (timeout*1000) then
-      return 1
-    end
-    fn(global, unpack(args))
-    if not dorepeat then
-      return 0
-    end
-    start = tm.uptime_micro() -- fixed time delay *between* calls
-    return 1
-  end
-  table.insert(_eventQueue, timefn)
-  return timefn
-end
-
--- takes a unique token returned by queue_event
--- to remove it from the event loop
-local function unqueue_event (fn)
-  -- This does not replace, but invalidates functions
-  -- to not disrupt indexing of runEventLoop
-  for i=1,#_eventQueue do
-    if _eventQueue[i] == fn then
-      _eventQueue[i] = function () return 0 end
-    end
-  end
-  for i=1,#_processEventQueue do
-    if _processEventQueue[i] == fn then
-      _processEventQueue[i] = function () return 0 end
+_G._colony_emit = function (type, data)
+  if string.sub(type, 1, string.len('raw-')) == 'raw-' then
+    colony.global.process:emit(type, global:Buffer(data));
+  else
+    local jsondata = nil
+    if pcall(function ()
+      jsondata = colony.global.JSON:parse(data)
+    end) then
+      colony.global.process:emit(type, jsondata);
+    else
+      colony.global.process:emit('invalid-' .. type, data);
     end
   end
 end
-
--- an array { type, value } IPC communications
-_G._colony_ipc = {}
-
-colony.runEventLoop = function ()
-  while #_eventQueue > 0 or #_colony_ipc > 0 do
-    _processEventQueue = _eventQueue
-    _eventQueue = {}
-    for i=1,#_processEventQueue do
-      local val = _processEventQueue[i]()
-      if val ~= 0 then
-        -- make sure to reference _processEventQueue[i] here so 
-        -- clear____ can clear from inside callback
-        table.insert(_eventQueue, _processEventQueue[i])
-      end
-    end
-
-    -- Handle messages from the _colony_ipc global array
-    local ipc = _G._colony_ipc
-    _G._colony_ipc = {}
-    for i=1,#ipc do
-      -- support buffers or JSON-encoded strings.
-      if string.sub(ipc[i][1], 1, string.len('raw-')) == 'raw-' then
-        colony.global.process:emit(ipc[i][1], global:Buffer(ipc[i][2]));
-      else 
-        local jsondata = nil
-        if pcall(function ()
-          jsondata = colony.global.JSON:parse(ipc[i][2])
-        end) then
-          colony.global.process:emit(ipc[i][1], jsondata);
-        else
-          colony.global.process:emit('invalid-' .. ipc[i][1], ipc[i][2]);
-        end
-      end
-    end
-  end
-
-  -- Terminate process
-  colony.global.process:exit(0)
-end
-
 
 --[[
 --|| Lua Timers
 --]]
 
--- Weakly GC'd values
-local timeouttable = {}
-local timeoutid = 0
-setmetatable(timeouttable, {
-  __mode = "v"
-})
+function wrap_timer_cb(fn, ...)
+  -- If extra args were passed, encapsulate them in a closure
+  if select("#", ...) then
+    local orig_fn = fn
+    local args = table.pack(...)
+    fn = function()
+      orig_fn(global, unpack(args))
+    end
+  end
+  return fn
+end
 
 global.setTimeout = function (this, fn, timeout, ...)
-  local ret = queue_event(fn, timeout, false, table.pack(...))
-  timeoutid = timeoutid + 1
-  rawset(timeouttable, timeoutid, ret)
-  return timeoutid
+  return tm.set_raw_timeout(timeout, false, wrap_timer_cb(fn, ...))
 end
 
 global.setInterval = function (this, fn, timeout, ...)
-  local ret = queue_event(fn, timeout, true, table.pack(...))
-  timeoutid = timeoutid + 1
-  rawset(timeouttable, timeoutid, ret)
-  return timeoutid
+  if timeout < 1 then
+    -- Clamp minimum repeat interval, as the C repeat field cannot be 0
+    timeout = 1
+  end
+  return tm.set_raw_timeout(timeout, true, wrap_timer_cb(fn, ...))
 end
 
 global.setImmediate = function (this, fn, ...)
-  local ret = queue_event(fn, 0, false, table.pack(...))
-  timeoutid = timeoutid + 1
-  rawset(timeouttable, timeoutid, ret)
-  return timeoutid
+  return tm.set_raw_timeout(1, false, wrap_timer_cb(fn, ...))
 end
 
 global.clearTimeout = function (this, id)
-  -- if value isn't null, timeout token hasn't been GC'd
-  if rawget(timeouttable, id) ~= nil then
-    unqueue_event(rawget(timeouttable, id))
-    rawset(timeouttable, id, nil)
-  end
+  tm.clear_raw_timeout(id)
 end
 
 global.clearInterval = global.clearTimeout
@@ -658,13 +584,7 @@ global.process.EventEmitter = EventEmitter
 global.process.argv = js_arr({})
 global.process.env = js_obj({})
 global.process.exit = function (this, code)
-  if not global.process._exited then
-    global.process._exited = true
-    global.process:emit('exit', code)
-  end
-
-  local exitfn = _G._exit or os.exit
-  exitfn(tonumber(code))
+  tm.exit(code)
 end
 global.process.cwd = function ()
   -- TODO

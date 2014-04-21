@@ -12,6 +12,7 @@ extern "C" {
 #include <string.h>
 #include <errno.h>  
 #include <time.h>
+#include <stdbool.h>
 
 // logging
 void tm_log(char level, const char* string, unsigned length);
@@ -24,6 +25,77 @@ void tm_logf(char level, const char* format, ...);
 #define TM_DEBUG(str, ...) tm_logf(SYS_DBG, str, ##__VA_ARGS__)
 #define TM_LOG(str, ...) tm_logf(SYS_LOG, str, ##__VA_ARGS__)
 #define TM_ERR(str, ...) tm_logf(SYS_ERR, str, ##__VA_ARGS__)
+
+// Events
+
+struct tm_event;
+typedef void (*tm_event_callback)(struct tm_event* data);
+
+typedef struct tm_event {
+  bool pending;
+  bool ref;
+  struct tm_event* next;
+  tm_event_callback callback;
+} tm_event;
+
+#define TM_EVENT_INIT(cb) { .pending = false, .ref = false, .next = 0, .callback = cb }
+
+// Mark an event as keeping the event loop alive
+bool tm_event_ref(tm_event* event);
+
+// Mark an event as not keeping the event loop alive
+bool tm_event_unref(tm_event* event);
+
+// Returns true if any events are outstanding
+bool tm_events_active();
+
+// Queue an event
+void tm_event_trigger(tm_event* event);
+
+// Process an event
+void tm_event_process();
+
+// Returns true if an event is ready to be handled
+bool tm_events_pending();
+
+// Hardware functions to acquire/release the lock on the event datastructures (e.g. disable/enable interrupts)
+void tm_events_lock();
+void tm_events_unlock();
+
+// Run the script and then process events. Returns the exit code
+int tm_runtime_run(const char* script, const char** argv, int argc);
+
+// Causes tm_runtime_run to exit immediately with code. Does not return.
+void tm_runtime_exit_longjmp(int code);
+
+// Schedules the event loop to exit at its earliest convenience. Safe to call from ISR.
+void tm_runtime_schedule_exit(int code);
+
+// Called at each iteration of the event loop
+void hw_wait_for_event();
+
+// Timers
+
+// The event triggered by the timer interrupt
+extern tm_event tm_timer_event;
+
+unsigned tm_settimeout(unsigned time, bool repeat, int lua_cb);
+void tm_cleartimeout(unsigned id);
+
+// Called by the runtime to tell the hardware to reconfigure the timer
+void hw_timer_update_interrupt();
+
+// Returns true if any timer event is queued
+bool tm_timer_waiting();
+
+// Get the time field of the first timer in the queue
+unsigned tm_timer_head_time();
+
+// Get the absolute time of the next scheduled timer
+unsigned tm_timer_next_time();
+
+// Clean up the timer queue
+void tm_timer_cleanup();
 
 // net
 
