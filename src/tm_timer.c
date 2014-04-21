@@ -133,8 +133,8 @@ unsigned tm_timer_head_time() {
 	}
 }
 
-unsigned tm_timer_next_time() {
-	return last_time + tm_timer_head_time();
+unsigned tm_timer_base_time() {
+	return last_time;
 }
 
 /// Callback enqueued by the timer ISR. It is safe for this to be called more
