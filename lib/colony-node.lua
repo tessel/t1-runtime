@@ -581,6 +581,21 @@ global.process.cwd = function ()
   return '/app'
 end
 
+-- simple process.ref() and process.unref() options
+
+global.process.ref = function ()
+  if global.process.refid == nil then
+    global.process.refid = global:setInterval(function () end, 1e8)
+  end
+end
+
+global.process.unref = function ()
+  if global.process.refid ~= nil then
+    global:clearInterval(global.process.refid)
+    global.process.refid = nil
+  end
+end
+
 
 --[[
 --|| global variables
