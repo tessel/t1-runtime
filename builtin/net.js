@@ -47,8 +47,8 @@ TCPSocket.prototype.connect = function (port, ip, cb) {
 TCPSocket.prototype.__listen = function () {
   var self = this;
   this.__listenid = setInterval(function () {
-    var buf = '';
-    while (self.socket != null && tm.tcp_readable(self.socket) > 0) {
+    var buf = '', flag = 0;
+    while (self.socket != null && (flag = tm.tcp_readable(self.socket)) > 0) {
       if (self._ssl) {
         var data = tm.ssl_read(self._ssl);
       } else {
@@ -59,6 +59,15 @@ TCPSocket.prototype.__listen = function () {
       }
       buf += data;
     }
+
+    // Check error condition.
+    if (flag < 0) {
+      console.log('NOT READABLE');
+      self.emit('error', new Error('Socket closed.'));
+      self.destroy();
+      return;
+    }
+
     if (buf.length) {
       self.emit('data', buf);
     }
