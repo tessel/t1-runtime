@@ -60,17 +60,24 @@ wait_ares(ares_channel channel)
 {
     for(;;){
         struct timeval *tvp, tv;
-        fd_set read_fds, write_fds;
+        fd_set read_fds, write_fds, err_fds;
         int nfds;
  
         FD_ZERO(&read_fds);
         FD_ZERO(&write_fds);
+        FD_ZERO(&err_fds);
         nfds = ares_fds(channel, &read_fds, &write_fds);
-        if(nfds == 0){
-            break;
+        if (nfds == 0){
+            return;
         }
+        memcpy(&err_fds, &read_fds, sizeof(read_fds));
         tvp = ares_timeout(channel, NULL, &tv);
-        select(nfds, &read_fds, &write_fds, NULL, tvp);
+        select(nfds, &read_fds, &write_fds, &err_fds, tvp);
+        for (int i = 0; i < nfds; i++) {
+            if (FD_ISSET(i, &err_fds)) {
+                return;
+            }
+        }
         ares_process(channel, &read_fds, &write_fds);
     }
 }

@@ -5,6 +5,7 @@ var url = require('url');
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var net = require('net');
+var dns = require('dns');
 
 
 /**
@@ -194,88 +195,98 @@ HTTPIncomingResponse.prototype.setEncoding = function () {
  * HTTPOutgoingRequest
  */
 
+function isIP (host) {
+  return host.match(/^[0-9.]+$/);
+}
+
 function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
-  if (!host.match(/^[0-9.]+$/)) {
-    var ipl = tm._sync_gethostbyname(host);
-    if (ipl == 0) {
-      throw 'ENOENT: Could not lookup hostname.';
-    }
-    var ip = [(ipl >> 24) & 0xFF, (ipl >> 16) & 0xFF, (ipl >> 8) & 0xFF, (ipl >> 0) & 0xFF].join('.');
-  } else {
-    var ip = host;
-  }
-
-  if (path[0] != '/') {
-    path = '/' + path;
-  }
-
   var self = this;
-  this._connected = false;
-  this._contentLength = 0;
-  this.socket = net.connect(port, ip, function () {
-    this._connected = true;
-    var header = '';
-    if (method != 'GET') {
-      header = 'Content-Length: ' + self._contentLength + '\r\n';
-    }
-    var usedHost = false, usedUserAgent;
-    for (var key in headers) {
-      if (key.toLowerCase() == 'host') {
-        usedHost = true;
-      } else if (key.toLowerCase() == 'user-agent') {
-        usedUserAgent = true;
-      }
-      header = header + key + ': ' + headers[key] + '\r\n';
-    }
-    if (!usedHost) {
-      header = header + 'Host: ' + host + '\r\n'
-    }
-    if (!usedUserAgent) {
-      header = header + 'User-Agent: tessel\r\n';
-    }
-    self.socket.write(method + ' ' + path + ' HTTP/1.1\r\n' + header + '\r\n');
-    // self.emit('connect');
-  }, _secure)
 
-  function js_wrap_function (fn) {
-    return function () {
-      return fn.apply(null, [this].concat(arguments));
-    }
+  if (!isIP(host)) {
+    dns.resolve(host, onhost);
+  } else {
+    onhost(null, [host]);
   }
 
-  var response, lastheader;
-  var parser = http_parser.new('response', {
-    onMessageBegin: js_wrap_function(function () {
-      response = new HTTPIncomingResponse();
-    }),
-    onUrl: js_wrap_function(function (url) {
-      // nop
-    }),
-    onHeaderField: js_wrap_function(function (field) {
-      lastheader = field;
-    }),
-    onHeaderValue: js_wrap_function(function (value) {
-      response.headers[lastheader.toLowerCase()] = value;
-    }),
-    onHeadersComplete: js_wrap_function(function (obj) {
-      response.statusCode = obj.status_code
-      self.emit('response', response);
-    }),
-    onBody: js_wrap_function(function (body) {
-      response.emit('data', body);
-    }),
-    onMessageComplete: js_wrap_function(function () {
-      response.emit('close');
-      // TODO close
-      self.socket.close();
-    })
-  })
-  this.socket.on('data', function (data) {
-    var nparsed = parser.execute(data, 0, data.length);
-    if (nparsed != data.length) {
-      this.socket.emit('error', 'Could not parse tokens at character #' + String(nparsed));
+  function onhost (err, ips) {
+    if (err) throw err;
+    var ip = ips[0];
+
+    if (path[0] != '/') {
+      path = '/' + path;
     }
-  })
+
+    self._connected = false;
+    self._contentLength = 0;
+    self.socket = net.connect(port, ip, function () {
+      self._connected = true;
+      var header = '';
+      if (method != 'GET') {
+        header = 'Content-Length: ' + self._contentLength + '\r\n';
+      }
+      var usedHost = false, usedUserAgent;
+      for (var key in headers) {
+        if (key.toLowerCase() == 'host') {
+          usedHost = true;
+        } else if (key.toLowerCase() == 'user-agent') {
+          usedUserAgent = true;
+        }
+        header = header + key + ': ' + headers[key] + '\r\n';
+      }
+      if (!usedHost) {
+        header = header + 'Host: ' + host + '\r\n'
+      }
+      if (!usedUserAgent) {
+        header = header + 'User-Agent: tessel\r\n';
+      }
+      self.socket.write(method + ' ' + path + ' HTTP/1.1\r\n' + header + '\r\n');
+      // self.emit('connect');
+    }, _secure)
+
+    self.socket.on('error', function (err) {
+      self.emit('error', err);
+    })
+
+    function js_wrap_function (fn) {
+      return function () {
+        return fn.apply(null, [this].concat(arguments));
+      }
+    }
+
+    var response, lastheader;
+    var parser = http_parser.new('response', {
+      onMessageBegin: js_wrap_function(function () {
+        response = new HTTPIncomingResponse();
+      }),
+      onUrl: js_wrap_function(function (url) {
+        // nop
+      }),
+      onHeaderField: js_wrap_function(function (field) {
+        lastheader = field;
+      }),
+      onHeaderValue: js_wrap_function(function (value) {
+        response.headers[lastheader.toLowerCase()] = value;
+      }),
+      onHeadersComplete: js_wrap_function(function (obj) {
+        response.statusCode = obj.status_code
+        self.emit('response', response);
+      }),
+      onBody: js_wrap_function(function (body) {
+        response.emit('data', body);
+      }),
+      onMessageComplete: js_wrap_function(function () {
+        response.emit('close');
+        // TODO close
+        self.socket.close();
+      })
+    })
+    self.socket.on('data', function (data) {
+      var nparsed = parser.execute(data, 0, data.length);
+      if (nparsed != data.length) {
+        self.socket.emit('error', 'Could not parse tokens at character #' + String(nparsed));
+      }
+    })
+  };
 }
 
 util.inherits(HTTPOutgoingRequest, EventEmitter);
