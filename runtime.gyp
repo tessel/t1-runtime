@@ -27,14 +27,14 @@
           '<(axtls_path)/config/'
         ],
         'cflags': [
-          '-mcpu=cortex-m3',
+          '-mcpu=cortex-m4',
           '-mthumb',
-          '-mtune=cortex-m3',
-          '-march=armv7-m',
+          '-mtune=cortex-m4',
+          '-mfloat-abi=hard',
+          '-mfpu=fpv4-sp-d16',
           '-mlong-calls',
           '-mfix-cortex-m3-ldrd',
           '-mapcs-frame',
-          '-msoft-float',
           '-mno-sched-prolog',
           # '-fno-hosted',
           '-ffunction-sections',
