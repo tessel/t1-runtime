@@ -41,18 +41,8 @@ local global = colony.global
 --]]
 
 _G._colony_emit = function (type, data)
-  if string.sub(type, 1, string.len('raw-')) == 'raw-' then
-    colony.global.process:emit(type, global:Buffer(data));
-  else
-    local jsondata = nil
-    if pcall(function ()
-      jsondata = colony.global.JSON:parse(data)
-    end) then
-      colony.global.process:emit(type, jsondata);
-    else
-      colony.global.process:emit('invalid-' .. type, data);
-    end
-  end
+  -- TODO remove "type" variable, is useless
+  colony.global.process:emit('raw-message', global:Buffer(data))
 end
 
 --[[

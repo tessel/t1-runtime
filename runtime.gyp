@@ -643,6 +643,7 @@
         {
           'action_name': '<(_target_name)_compile',
           'inputs': [
+            'builtin/_structured_clone.js',
             'builtin/assert.js',
             'builtin/buffer.js',
             'builtin/child_process.js',
