@@ -84,7 +84,7 @@ global.setInterval = function (this, fn, timeout, ...)
 end
 
 global.setImmediate = function (this, fn, ...)
-  return tm.set_raw_timeout(0, false, wrap_timer_cb(fn, ...))
+  return tm.set_raw_timeout(1, false, wrap_timer_cb(fn, ...))
 end
 
 global.clearTimeout = function (this, id)
