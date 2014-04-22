@@ -25,9 +25,8 @@ lua_State* tm_lua_state = NULL;
 
 static int traceback (lua_State *L)
 {
-  // TODO why is the error at index "0" here?
   if (!lua_isstring(L, 1)) {  /* 'message' not a string? */
-    lua_pushstring(L, lua_tostring(L, 0));
+    lua_pushstring(L, "(error object is not a string)"); //TODO: coerce to string
     lua_replace(L, 1);
   }
   lua_getfield(L, LUA_GLOBALSINDEX, "debug");
@@ -61,13 +60,13 @@ static int getargs(lua_State *L, char **argv, int argc)
 
 static int report(lua_State *L, int status)
 {
-  if (status && !lua_isnil(L, -1)) {
+  if (status != 0) {
     size_t len = 0;
     const char *msg = lua_tolstring(L, -1, &len);
     if (msg != NULL) {
       tm_log(SYS_ERR, msg, len);
     } else {
-      tm_logf(SYS_ERR, "(error object is not a string)");
+      tm_logf(SYS_ERR, "(error traceback is not a string)");
     }
     lua_pop(L, 1);
   }
