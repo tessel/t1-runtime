@@ -944,7 +944,7 @@ global.Date.prototype.getSeconds = function (this)
 end
 
 global.Date.prototype.getTime = function (this)
-  return tonumber(getmetatable(this).date/1e6) or 0
+  return tonumber(getmetatable(this).date/1e3) or 0
 end
 
 global.Date.prototype.getTimezoneOffset = function ()
