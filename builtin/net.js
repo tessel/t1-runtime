@@ -71,7 +71,7 @@ TCPSocket.prototype.__listen = function () {
     if (buf.length) {
       self.emit('data', buf);
     }
-  }, 0);
+  }, 10);
 };
 
 TCPSocket.prototype.write = function (buf, cb) {
