@@ -40,8 +40,8 @@ local global = colony.global
 --|| Events
 --]]
 
-_G._colony_emit = function (type, data)
-  colony.global.process:emit(type, data)
+_G._colony_emit = function (type, ...)
+  colony.global.process:emit(type, ...)
 end
 
 --[[
