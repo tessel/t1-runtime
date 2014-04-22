@@ -41,8 +41,7 @@ local global = colony.global
 --]]
 
 _G._colony_emit = function (type, data)
-  -- TODO remove "type" variable, is useless
-  colony.global.process:emit('raw-message', global:Buffer(data))
+  colony.global.process:emit(type, data)
 end
 
 --[[
