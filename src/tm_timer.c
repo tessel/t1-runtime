@@ -140,8 +140,9 @@ unsigned tm_timer_base_time() {
 /// Callback enqueued by the timer ISR. It is safe for this to be called more
 /// often than necessary
 void timer_cb(tm_event* event) {
-	unsigned new_time = tm_uptime_micro();
-	unsigned elapsed = new_time - last_time;
+	unsigned prev_time = last_time;
+	last_time = tm_uptime_micro();
+	unsigned elapsed = last_time - prev_time;
 
 	while (timers_head) {
 		tm_timer* t = timers_head;
@@ -170,7 +171,6 @@ void timer_cb(tm_event* event) {
 	}
 
 	// If lua setjmps, these will be cleaned up when the timer state is reset
-	last_time = new_time;
 	configure_timer_interrupt();
 }
 
