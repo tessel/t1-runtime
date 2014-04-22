@@ -295,7 +295,29 @@
         "<(axtls_path)/crypto",
         "<(axtls_path)/ssl",
         "<(axtls_path)/config",
-        "<(axtls_path)/config/pc",
+      ],
+
+      'conditions': [
+        [ 'OS=="arm"', {
+          'include_dirs': [
+            "<(axtls_path)/config/embed",
+          ],
+          'direct_dependent_settings': {
+            'include_dirs': [
+            "<(axtls_path)/config/embed",
+            ]
+          }
+        }],
+        [ 'OS!="arm"', {
+          'include_dirs': [
+            "<(axtls_path)/config/pc",
+          ],
+          'direct_dependent_settings': {
+            'include_dirs': [
+            "<(axtls_path)/config/pc",
+            ]
+          }
+        }]
       ],
 
       # axtls uses printf(const str) without a format (scary right?)
@@ -317,7 +339,6 @@
         'include_dirs': [
           "<(axtls_path)/crypto",
           "<(axtls_path)/config",
-          "<(axtls_path)/config/pc",
           "<(axtls_path)/ssl"
         ]
       }
