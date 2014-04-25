@@ -89,7 +89,10 @@ int tm_runtime_run(const char* script, const char** argv, int argc)
 	lua_sethook(tm_lua_state, 0, 0, 0);
 	if (!have_called_exit) {
 		have_called_exit = true;
-		// TODO: call process.emit('exit')
+		lua_State* L = tm_lua_state;
+		lua_getglobal(L, "_colony_emit");
+		lua_pushstring(L, "exit");
+		tm_checked_call(L, 1);
 	}
 
 	tm_timer_cleanup();
