@@ -45,6 +45,19 @@ _G._colony_emit = function (type, ...)
 end
 
 --[[
+--|| Exceptions
+--]]
+
+_G._colony_unhandled_exception = function (e)
+  tm.log(22, e:toString())
+  if e.stack then
+    tm.log(22, e.stack)
+  end
+
+  global.process.exit(8)
+end
+
+--[[
 --|| Lua Timers
 --]]
 
