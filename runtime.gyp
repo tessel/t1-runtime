@@ -2,7 +2,6 @@
   "variables": {
     "http_parser_path": "./deps/http-parser",
     "hsregex_path": "./deps/hsregex",
-    "libtar_path": "./deps/libtar",
     "yajl_path": "./deps/yajl",
     "yajl_inc_path": "./deps/yajl-inc",
     "axtls_path": "./deps/axtls",
@@ -188,40 +187,6 @@
         ],
         'defines': [
           'REGEX_WCHAR'
-        ]
-      }
-    },
-
-    {
-      "target_name": "libtar",
-      "product_name": "libtar",
-      "type": "static_library",
-      "defines": [
-        'MAXPATHLEN=256'
-      ],
-      "sources": [
-        "<(libtar_path)/lib/append.c",
-        "<(libtar_path)/lib/block.c",
-        "<(libtar_path)/lib/decode.c",
-        "<(libtar_path)/lib/encode.c",
-        "<(libtar_path)/lib/handle.c",
-        "<(libtar_path)/lib/output.c",
-        "<(libtar_path)/lib/util.c",
-        "<(libtar_path)/listhash/libtar_hash.c",
-        "<(libtar_path)/listhash/libtar_list.c"
-      ],
-      "include_dirs": [
-        "<(libtar_path)",
-        "<(libtar_path)/lib",
-        "<(libtar_path)/compat",
-        "<(libtar_path)/listhash"
-      ],
-      'direct_dependent_settings': {
-        'include_dirs': [
-          "<(libtar_path)/",
-          "<(libtar_path)/lib",
-          "<(libtar_path)/compat",
-          "<(libtar_path)/listhash",
         ]
       }
     },
