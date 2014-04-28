@@ -10,6 +10,9 @@ var Stream = require('stream').Stream;
 var ssl_ctx = null;
 
 function ensureSSLCtx () {
+  if (!tm.ssl_context_create) {
+    throw new Error("SSL/TLS is not supported in this version.");
+  }
   if (ssl_ctx == null) {
     ssl_ctx = tm.ssl_context_create();
   }
