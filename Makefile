@@ -1,6 +1,6 @@
 # Let's shortcut all the things
 
-arm : TARGET ?= libruntime
+arm : TARGET ?= libtm
 pc-test : TARGET ?= test-tm
 
 CONFIG ?= Release

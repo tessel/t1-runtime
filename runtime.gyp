@@ -470,12 +470,28 @@
     },
 
     {
-      "target_name": "tm",
+      "target_name": "libtm",
       "product_name": "tm",
       "type": "static_library",
       'cflags': [ '-Wall', '-Wextra', '-Werror' ],
       "defines": [
         'LACKS_UNISTD_H',
+      ],
+      'conditions': [
+        ['OS=="arm"', {
+          "sources": [
+            '<(c_ares_path)/inet_addr.c',
+            'src/vfs/vfs.c',
+            'src/vfs/vfs_tar.c',
+          ],
+        }],
+        ['OS!="arm"', {
+          "sources": [
+            'src/posix/tm_net.c',
+            'src/posix/tm_uptime.c',
+            'src/posix/tm_fs.c',
+          ]
+        }]
       ],
       "sources": [
 
@@ -518,48 +534,8 @@
         'src/',
       ],
       "dependencies": [
-        "libruntime",
+        "libtm",
       ]
-    },
-
-
-    ###
-    # runtime
-    ###
-
-    {
-      "target_name": "libruntime",
-      "product_name": "runtime",
-      "type": "static_library",
-      'cflags': [ '-Wall', '-Wextra', '-Werror' ],
-      'conditions': [
-        ['OS=="arm"', {
-          "sources": [
-            '<(c_ares_path)/inet_addr.c',
-            'src/vfs/vfs.c',
-            'src/vfs/vfs_tar.c',
-          ],
-        }],
-        ['OS!="arm"', {
-          "sources": [
-            'src/posix/tm_net.c',
-            'src/posix/tm_uptime.c',
-            'src/posix/tm_fs.c',
-          ]
-        }]
-      ],
-      "include_dirs": [
-        'src/',
-      ],
-      'dependencies': [
-        'tm',
-      ],
-      'direct_dependent_settings': {
-        'include_dirs': [
-          'src/',
-          'src/colony/',
-        ]
-      }
     },
   ]
 }
