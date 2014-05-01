@@ -218,6 +218,7 @@ static int l_tm_tcp_accept (lua_State* L)
   return 2;
 }
 
+#ifdef ENABLE_TLS
 
 static int l_tm_ssl_context_create (lua_State* L)
 {
@@ -299,6 +300,7 @@ static int l_tm_ssl_read (lua_State* L)
   return 1;
 }
 
+#endif
 
 /**
  * Uptime
@@ -700,12 +702,14 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "tcp_listen", l_tm_tcp_listen },
     { "tcp_accept", l_tm_tcp_accept },
 
+#ifdef ENABLE_TLS
     { "ssl_context_create", l_tm_ssl_context_create },
     { "ssl_context_free", l_tm_ssl_context_free },
     { "ssl_session_create", l_tm_ssl_session_create },
     { "ssl_session_free", l_tm_ssl_session_free },
     { "ssl_write", l_tm_ssl_write },
     { "ssl_read", l_tm_ssl_read },
+#endif
 
     // uptime
     { "uptime_init", l_tm_uptime_init },

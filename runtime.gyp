@@ -11,6 +11,7 @@
     "dlmalloc_path": "./deps/dlmalloc",
     "utf8proc_path": "./deps/utf8proc",
     'builtin_section%': '',
+    'enable_ssl%': 0,
   },
 
   'target_defaults': {
@@ -548,7 +549,7 @@
       ],
       "dependencies": [
         "axtls"
-      ]
+      ],
     },
 
     {
@@ -583,7 +584,6 @@
         "<(colony_lua_path)/src",
       ],
       "dependencies": [
-        "tm-ssl",
         "http_parser",
         "hsregex",
         "yajl",
@@ -591,6 +591,16 @@
         "colony-lua",
         "dlmalloc",
         "utf8proc",
+      ],
+      'conditions': [
+        ['enable_ssl==1', {
+          'dependencies': [
+            "tm-ssl",
+          ],
+          'defines': [
+            "ENABLE_TLS",
+          ],
+        }],
       ],
       'direct_dependent_settings': {
         'include_dirs': [
