@@ -23,27 +23,6 @@ lua_State* tm_lua_state = NULL;
  * Runtime.
  */
 
-static int traceback (lua_State *L)
-{
-  if (!lua_isstring(L, 1)) {  /* 'message' not a string? */
-    lua_pushstring(L, "(error object is not a string)"); //TODO: coerce to string
-    lua_replace(L, 1);
-  }
-  lua_getfield(L, LUA_GLOBALSINDEX, "debug");
-  if (!lua_istable(L, -1)) {
-    lua_pop(L, 1);
-    return 1;
-  }
-  lua_getfield(L, -1, "traceback");
-  if (!lua_isfunction(L, -1)) {
-    lua_pop(L, 2);
-    return 1;
-  }
-  lua_pushvalue(L, 1);  /* pass error message */
-  lua_pushinteger(L, 2);  /* skip this function and traceback */
-  lua_call(L, 2, 1);  /* call debug.traceback */
-  return 1;
-}
 
 static int getargs(lua_State *L, char **argv, int argc)
 {
@@ -76,22 +55,15 @@ static int report(lua_State *L, int status)
 int tm_checked_call(lua_State *L, int nargs)
 {
   int err_func = lua_gettop(L) - nargs;
-  lua_pushcfunction(L, traceback);
+  lua_getglobal(L, "_colony_unhandled_exception");
   lua_insert(L, err_func);
   int r = lua_pcall(L, nargs, 0, err_func);
-
-  if (r != 0) {
-    // TODO: process.emit('uncaughtException')
-    report(L, r);
-  }
-
   lua_remove(L, err_func);
   return r;
 }
 
 int tm_eval_lua(lua_State *L, const char* script)
 {
-  lua_pushcfunction(L, traceback);
   int status = luaL_loadbuffer(L, script, strlen(script), "@[T]: runtime");
   if (status != 0) {
     report(L, status);

@@ -765,6 +765,10 @@ local function error_class (name)
     return {}
   end
 
+  constructor.prototype.toString = function (self)
+    return name .. ": " .. self.message
+  end
+
   return constructor
 end
 
