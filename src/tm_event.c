@@ -73,6 +73,7 @@ int event_loop_retval = 0;
 
 int tm_runtime_run(const char* script, const char** argv, int argc)
 {
+	tm_event_count = 0;
 	event_loop_running = true;
 	event_loop_keep_running = true;
 	volatile bool have_called_exit = false;
