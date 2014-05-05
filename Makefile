@@ -34,4 +34,4 @@ libtm-test:
 	$(call compile, libtm-test.gyp)
 
 libtm:
-	$(call compile, runtime.gyp)
+	$(call compile, libtm.gyp)

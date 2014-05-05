@@ -19,6 +19,7 @@
       ],
       "dependencies": [
         'libcolony.gyp:libcolony',
+        'libtm.gyp:libtm',
       ]
     }
   ]

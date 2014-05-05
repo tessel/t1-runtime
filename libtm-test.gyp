@@ -15,7 +15,7 @@
         'src/',
       ],
       "dependencies": [
-        "runtime.gyp:tessel-runtime",
+        "libtm.gyp:libtm",
       ]
     }
   ]

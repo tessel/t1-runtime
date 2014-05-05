@@ -177,12 +177,12 @@
       ],
       "dependencies": [
         'colony-lua',
-        'runtime.gyp:c-ares',
-        'runtime.gyp:http_parser',
-        'runtime.gyp:hsregex',
-        'runtime.gyp:dlmalloc',
-        'runtime.gyp:yajl',
-        'runtime.gyp:tessel-runtime'
+        'libtm.gyp:c-ares',
+        'libtm.gyp:http_parser',
+        'libtm.gyp:hsregex',
+        'libtm.gyp:dlmalloc',
+        'libtm.gyp:yajl',
+        'libtm.gyp:libtm'
       ]
     }
   ]

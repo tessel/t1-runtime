@@ -388,7 +388,7 @@
     },
 
     {
-      "target_name": "tessel-runtime",
+      "target_name": "libtm",
       "type": "static_library",
       'cflags': [ '-Wall', '-Wextra', '-Werror' ],
       'conditions': [

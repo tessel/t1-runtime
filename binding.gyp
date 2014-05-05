@@ -6,7 +6,7 @@
     	  "bin/dummy.cc",
     	],
     	"dependencies": [
-    		"runtime.gyp:colony"
+    		"colony.gyp:colony"
     	]
     }
     ]
