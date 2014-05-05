@@ -1,140 +1,9 @@
 {
-  "variables": {
-    "http_parser_path": "./deps/http-parser",
-    "hsregex_path": "./deps/hsregex",
-    "yajl_path": "./deps/yajl",
-    "yajl_inc_path": "./deps/yajl-inc",
-    "axtls_path": "./deps/axtls",
-    "c_ares_path": "./deps/c-ares",
-    "colony_lua_path": "./deps/colony-lua",
-    "lua_bitop_path": "./deps/luabitop-1.0",
-    "dlmalloc_path": "./deps/dlmalloc",
-    "utf8proc_path": "./deps/utf8proc",
-    'builtin_section%': '',
-    'enable_ssl%': 0,
-  },
-
-  'target_defaults': {
-    'conditions': [
-      [ 'OS=="arm"', {
-        'defines': [
-          'COLONY_EMBED',
-          'CONFIG_PLATFORM_EMBED',
-          'TM_FS_vfs',
-          'HAVE_CLOSESOCKET',
-        ],
-        'include_dirs': [
-          '<(axtls_path)/config/'
-        ],
-        'cflags': [
-          '-mcpu=cortex-m3',
-          '-mthumb',
-          '-mtune=cortex-m3',
-          '-march=armv7-m',
-          '-mlong-calls',
-          '-mfix-cortex-m3-ldrd',
-          '-mapcs-frame',
-          '-msoft-float',
-          '-mno-sched-prolog',
-          # '-fno-hosted',
-          '-ffunction-sections',
-          '-fdata-sections',
-          # '-fpermissive',
-          '-std=c99',
-
-          '-Wall',
-          #'-Wextra',
-          '-Werror',
-          '-Wno-error=unused-parameter',
-          '-ggdb',
-        ]
-      }],
-      [ 'OS!="arm"', {
-        'defines': [
-          'COLONY_PC', '_GNU_SOURCE'
-        ],
-        'cflags': [
-          '-std=c99',
-          '-ggdb',
-
-          '-Wall',
-          #'-Wextra',
-          '-Werror',
-          '-Wno-unused-parameter'
-        ]
-      }]
-    ],
-
-    'default_configuration': 'Release',
-    'configurations': {
-      'Debug': {
-        'conditions': [
-          [ 'OS=="arm"', {
-            'cflags': [
-              '-gdwarf-2',
-              '-Ofast',
-            ]
-          }],
-          [ 'OS!="arm"', {
-            'cflags': [
-              '-O0',
-              '-g',
-              '-ftrapv'
-            ],
-            'xcode_settings': {
-              'OTHER_CFLAGS': [
-                '-O0',
-                '-g',
-                '-ftrapv'
-              ]
-            },
-            'msvs_settings': {
-              'VCCLCompilerTool': {
-                'RuntimeLibrary': 1, # static debug
-              },
-            }
-          }]
-        ],
-      },
-      'Release': {
-        'conditions': [
-          [ 'OS=="arm"', {
-            'cflags': [
-              '-Ofast',
-            ],
-          }],
-          [ 'OS!="arm"', {
-            'cflags': [
-              '-O3'
-            ],
-            'xcode_settings': {
-              'OTHER_CFLAGS': [
-                '-O3',
-              ]
-            },
-            'msvs_settings': {
-              'VCCLCompilerTool': {
-                'RuntimeLibrary': 0, # static release
-              },
-            },
-          }]
-        ]
-      }
-    },
-
-    'msvs_settings': {
-      'VCCLCompilerTool': {
-      },
-      'VCLibrarianTool': {
-      },
-      'VCLinkerTool': {
-        'GenerateDebugInformation': 'true',
-      },
-    },
-  },
+  "includes": [
+    "common.gypi",
+  ],
 
   "targets": [
-
     {
       "target_name": "http_parser",
       "product_name": "http_parser",
@@ -226,6 +95,8 @@
 
       'direct_dependent_settings': {
         'include_dirs': [
+          "<(yajl_path)/src",
+          "<(yajl_inc_path)"
         ]
       }
     },
@@ -404,86 +275,6 @@
     },
 
     {
-      "target_name": "colony-lua",
-      "product_name": "colony-lua",
-      "type": "static_library",
-      "defines": [
-        'LUA_USELONGLONG',
-      ],
-      "sources": [
-        '<(colony_lua_path)/src/lapi.c',
-        '<(colony_lua_path)/src/lauxlib.c',
-        '<(colony_lua_path)/src/lbaselib.c',
-        '<(colony_lua_path)/src/lcode.c',
-        '<(colony_lua_path)/src/ldblib.c',
-        '<(colony_lua_path)/src/ldebug.c',
-        '<(colony_lua_path)/src/ldo.c',
-        '<(colony_lua_path)/src/ldump.c',
-        '<(colony_lua_path)/src/lfunc.c',
-        '<(colony_lua_path)/src/lgc.c',
-        '<(colony_lua_path)/src/linit.c',
-        '<(colony_lua_path)/src/liolib.c',
-        '<(colony_lua_path)/src/llex.c',
-        '<(colony_lua_path)/src/lmathlib.c',
-        '<(colony_lua_path)/src/lmem.c',
-        '<(colony_lua_path)/src/loadlib.c',
-        '<(colony_lua_path)/src/lobject.c',
-        '<(colony_lua_path)/src/lopcodes.c',
-        '<(colony_lua_path)/src/loslib.c',
-        '<(colony_lua_path)/src/lparser.c',
-        '<(colony_lua_path)/src/lstate.c',
-        '<(colony_lua_path)/src/lstring.c',
-        '<(colony_lua_path)/src/lstrlib.c',
-        '<(colony_lua_path)/src/ltable.c',
-        '<(colony_lua_path)/src/ltablib.c',
-        '<(colony_lua_path)/src/ltm.c',
-        '<(colony_lua_path)/src/lundump.c',
-        '<(colony_lua_path)/src/lvm.c',
-        '<(colony_lua_path)/src/lzio.c',
-        '<(colony_lua_path)/src/print.c',
-        '<(lua_bitop_path)/bit.c'
-      ],
-
-      # Lua uses tmpname and has empty bodies and doesn't use some vars
-      'cflags': [
-        '-Wno-deprecated-declarations',
-        '-Wno-empty-body',
-        '-Wno-unused-but-set-variable',
-        '-Wno-unused-value',
-        '-Wno-unused-variable',
-        '-Wno-unknown-warning-option',
-      ],
-      'xcode_settings': {
-        'OTHER_CFLAGS': [
-          '-Wno-deprecated-declarations',
-          '-Wno-empty-body',
-          '-Wno-unused-but-set-variable',
-          '-Wno-unused-value',
-          '-Wno-unknown-warning-option',
-        ],
-      },
-
-      "include_dirs": [
-        "<(colony_lua_path)/src",
-        "<(lua_bitop_path)/",
-      ],
-      'direct_dependent_settings': {
-        'defines': [
-          'COLONY_LUA',
-          'LUA_USELONGLONG',
-        ],
-        'include_dirs': [
-          "<(colony_lua_path)/src",
-        ],
-        'link_settings': {
-          'libraries': [
-            '-lm'
-          ]
-        }
-      }
-    },
-
-    {
       "target_name": "dlmalloc",
       "product_name": "dlmalloc",
       "type": "static_library",
@@ -561,34 +352,21 @@
         'LACKS_UNISTD_H',
       ],
       "sources": [
-        'src/colony/lua_cares.c',
-        'src/colony/lua_hsregex.c',
-        'src/colony/lua_http_parser.c',
-        'src/colony/lua_tm.c',
-        'src/colony/lua_yajl.c',
-        'src/colony/colony.c',
-        'src/colony/colony_runtime.c',
-
         'src/dlmallocfork.c',
         'src/tm_buffer.c',
         'src/tm_itoa.c',
         'src/tm_log.c',
-        'src/tm_event.c',
-        'src/tm_timer.c',
 
       ],
       "include_dirs": [
         'src/',
-        'src/colony',
         '<(yajl_inc_path)',
-        "<(colony_lua_path)/src",
       ],
       "dependencies": [
         "http_parser",
         "hsregex",
         "yajl",
         "c-ares",
-        "colony-lua",
         "dlmalloc",
         "utf8proc",
       ],
@@ -610,98 +388,6 @@
     },
 
     {
-      "target_name": "test-tm",
-      "product_name": "test-tm",
-      "type": "executable",
-      "sources": [
-        'test/tm/test.c'
-      ],
-      "include_dirs": [
-        'src/',
-      ],
-      "dependencies": [
-        "tessel-runtime",
-      ]
-    },
-
-
-    ###
-    # colony libs
-    ###
-
-    {
-      'target_name': 'dir_builtin',
-      'type': 'none',
-      'sources': [
-        '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c'
-      ],
-      'actions': [
-        {
-          'action_name': '<(_target_name)_compile',
-          'inputs': [
-            'src/colony/modules/_structured_clone.js',
-            'src/colony/modules/assert.js',
-            'src/colony/modules/buffer.js',
-            'src/colony/modules/child_process.js',
-            'src/colony/modules/crypto.js',
-            'src/colony/modules/dgram.js',
-            'src/colony/modules/dns.js',
-            'src/colony/modules/events.js',
-            'src/colony/modules/fs.js',
-            'src/colony/modules/http.js',
-            'src/colony/modules/https.js',
-            'src/colony/modules/net.js',
-            'src/colony/modules/os.js',
-            'src/colony/modules/path.js',
-            'src/colony/modules/punycode.js',
-            'src/colony/modules/querystring.js',
-            'src/colony/modules/repl.js',
-            'src/colony/modules/stream.js',
-            'src/colony/modules/string_decoder.js',
-            'src/colony/modules/tty.js',
-            'src/colony/modules/url.js',
-            'src/colony/modules/util.js',
-            'src/colony/modules/zlib.js',
-          ],
-          'outputs': [
-            '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c',
-          ],
-          'action': [ 'tools/compile_folder.sh', '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c', '<(_target_name)', '<(builtin_section)', '<@(_inputs)' ],
-        },
-      ]
-    },
-
-    {
-      'target_name': 'dir_runtime_lib',
-      'type': 'none',
-      'sources': [
-        '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c'
-      ],
-      'actions': [
-        {
-          'action_name': '<(_target_name)_compile',
-          'inputs': [
-            'src/colony/lua/cli.lua',
-            'src/colony/lua/colony-init.lua',
-            'src/colony/lua/colony-js.lua',
-            'src/colony/lua/colony-node.lua',
-            'src/colony/lua/colony.lua',
-            'src/colony/lua/preload.lua',
-          ],
-          'outputs': [
-            '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c',
-          ],
-          'action': [ 'tools/compile_folder.sh', '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c', '<(_target_name)', '<(builtin_section)', '<@(_inputs)' ],
-        },
-      ]
-    },
-
-
-    ###
-    # runtime
-    ###
-
-    {
       "target_name": "tessel-runtime",
       "type": "static_library",
       'cflags': [ '-Wall', '-Wextra', '-Werror' ],
@@ -721,43 +407,18 @@
           ]
         }]
       ],
-      "sources": [
-        '<(SHARED_INTERMEDIATE_DIR)/dir_builtin.c',
-        '<(SHARED_INTERMEDIATE_DIR)/dir_runtime_lib.c',
-      ],
       "include_dirs": [
         'src/',
         "<(colony_lua_path)/src",
       ],
       'dependencies': [
-        'dir_builtin',
-        'dir_runtime_lib',
         'tm',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
           'src/',
-          'src/colony/',
         ]
       }
     },
-
-    {
-      "target_name": "colony",
-      "product_name": "colony",
-      "type": "executable",
-      'cflags': [ '-Wall', '-Wextra', '-Werror' ],
-      "sources": [
-        'src/colony/cli.c',
-      ],
-      "include_dirs": [
-        'src/',
-        'src/colony/',
-        "<(colony_lua_path)/src",
-      ],
-      "dependencies": [
-        'tessel-runtime'
-      ]
-    }
   ]
 }
