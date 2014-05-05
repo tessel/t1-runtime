@@ -66,20 +66,20 @@ var section = process.argv[4];
 var infiles = process.argv.slice(5);
 
 
-var colony = require('colony');
+var colonyCompiler = require('colony-compiler');
 
 // console.log('>>>', process.argv);
 
 packageFolder(infiles, varname, section, function (file, buf, next) {
   if (file.match(/\.js$/)) {
     try {
-      colony.toBytecode(colony.colonize(String(buf)), '[T]:' + file, next);
+      colonyCompiler.toBytecode(colonyCompiler.colonize(String(buf)), '[T]:' + file, next);
     } catch (e) {
       throw new Error('Bytecode compilation of ' + file + ' failed.');
     }
   } else if (file.match(/\.lua$/)) {
     try {
-      colony.toBytecode({ source: String(buf) }, '[T]: ' + file, next);
+      colonyCompiler.toBytecode({ source: String(buf) }, '[T]: ' + file, next);
     } catch (e) {
       throw new Error('Bytecode compilation of ' + file + ' failed.');
     }
