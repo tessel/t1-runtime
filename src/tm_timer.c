@@ -180,4 +180,5 @@ void tm_timer_cleanup() {
 		timers_head = t->next;
 		destroy_timer(t);
 	}
+	tm_event_unref(&tm_timer_event);
 }
