@@ -2,6 +2,9 @@
   "name": "runtime",
   "version": "0.2.0",
   "private": true,
+  "bin": {
+    "colony": "./out/Release/colony"
+  },
   "directories": {
     "example": "examples",
     "test": "test"

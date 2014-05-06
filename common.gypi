@@ -11,7 +11,7 @@
     "dlmalloc_path": "./deps/dlmalloc",
     "utf8proc_path": "./deps/utf8proc",
     'builtin_section%': '',
-    'enable_ssl%': 0,
+    'enable_ssl%': 1,
   },
 
   'target_defaults': {
@@ -63,7 +63,12 @@
           '-Werror',
           '-Wno-unused-parameter'
         ]
-      }]
+      }],
+      ['enable_ssl==1', {
+        'defines': [
+          "ENABLE_TLS",
+        ],
+      }],
     ],
 
     'default_configuration': 'Release',
