@@ -1,8 +1,5 @@
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-
 #include "tm.h"
+
 #include <sys/time.h>
 #include <poll.h>
 
