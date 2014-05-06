@@ -166,7 +166,6 @@
         'src/colony/lua_yajl.c',
         'src/colony/colony.c',
         'src/colony/colony_runtime.c',
-        'src/colony/cli.c',
         '<(SHARED_INTERMEDIATE_DIR)/dir_builtin.c',
         '<(SHARED_INTERMEDIATE_DIR)/dir_runtime_lib.c',
       ],

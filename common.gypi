@@ -51,7 +51,8 @@
       }],
       [ 'OS!="arm"', {
         'defines': [
-          'COLONY_PC', '_GNU_SOURCE'
+          'COLONY_PC',
+          '_GNU_SOURCE',
         ],
         'cflags': [
           '-std=c99',

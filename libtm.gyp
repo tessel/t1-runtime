@@ -344,53 +344,13 @@
     },
 
     {
-      "target_name": "tm",
+      "target_name": "libtm",
       "product_name": "tm",
       "type": "static_library",
       'cflags': [ '-Wall', '-Wextra', '-Werror' ],
       "defines": [
         'LACKS_UNISTD_H',
       ],
-      "sources": [
-        'src/dlmallocfork.c',
-        'src/tm_buffer.c',
-        'src/tm_itoa.c',
-        'src/tm_log.c',
-
-      ],
-      "include_dirs": [
-        'src/',
-        '<(yajl_inc_path)',
-      ],
-      "dependencies": [
-        "http_parser",
-        "hsregex",
-        "yajl",
-        "c-ares",
-        "dlmalloc",
-        "utf8proc",
-      ],
-      'conditions': [
-        ['enable_ssl==1', {
-          'dependencies': [
-            "tm-ssl",
-          ],
-          'defines': [
-            "ENABLE_TLS",
-          ],
-        }],
-      ],
-      'direct_dependent_settings': {
-        'include_dirs': [
-          'src/',
-        ]
-      }
-    },
-
-    {
-      "target_name": "libtm",
-      "type": "static_library",
-      'cflags': [ '-Wall', '-Wextra', '-Werror' ],
       'conditions': [
         ['OS=="arm"', {
           "sources": [
@@ -405,14 +365,33 @@
             'src/posix/tm_uptime.c',
             'src/posix/tm_fs.c',
           ]
-        }]
+        }],
+        ['enable_ssl==1', {
+          'dependencies': [
+            "tm-ssl",
+          ],
+          'defines': [
+            "ENABLE_TLS",
+          ],
+        }],
+      ],
+      'sources': [
+        'src/dlmallocfork.c',
+        'src/tm_buffer.c',
+        'src/tm_itoa.c',
+        'src/tm_log.c',
       ],
       "include_dirs": [
         'src/',
-        "<(colony_lua_path)/src",
+        '<(yajl_inc_path)',
       ],
       'dependencies': [
-        'tm',
+        "http_parser",
+        "hsregex",
+        "yajl",
+        "c-ares",
+        "dlmalloc",
+        "utf8proc",
       ],
       'direct_dependent_settings': {
         'include_dirs': [
