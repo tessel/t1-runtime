@@ -11,7 +11,7 @@
     "dlmalloc_path": "./deps/dlmalloc",
     "utf8proc_path": "./deps/utf8proc",
     'builtin_section%': '',
-    'enable_ssl%': 1,
+    'enable_ssl%': 0,
   },
 
   'target_defaults': {
