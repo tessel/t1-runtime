@@ -322,6 +322,9 @@ exports.request = function (opts, onresponse) {
 exports.get = function (opts, onresponse) {
   if (typeof opts == 'string') {
     opts = url.parse(opts);
+    if (opts.query) {
+      opts.path += '?' + opts.query;
+    }
   }
   opts.method = 'GET';
 
