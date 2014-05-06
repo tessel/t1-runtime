@@ -244,6 +244,7 @@
 
       # c-ares has some pedantic issues we can ignore
       'cflags': [
+        '-Wno-unused-result',
         '-Wno-unused-value',
         '-Wno-unused-function',
         '-Wno-unused-variable',
@@ -251,6 +252,7 @@
       ],
       'xcode_settings': {
         'OTHER_CFLAGS': [
+          '-Wno-unused-result',
           '-Wno-unused-value',
           '-Wno-unused-function',
           '-Wno-unused-variable',
