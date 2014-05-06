@@ -99,13 +99,17 @@ exports.parse = function(string, parseQueryString, slashesDenoteHost) {
                 parts.urn = true;
             }
         }
-        if (parts.protocol) {
-            parts.protocol += ':';
-        }
     }
 
     // what's left must be the path
     parts.path = parts.pathname = string;
+
+    if (parts.protocol) {
+        parts.protocol += ':';
+    }
+    if (parts.query) {
+        parts.search = '?' + parts.query;
+    }
 
     // and we're done
     return parts;
