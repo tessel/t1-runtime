@@ -10,7 +10,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "./node_modules/.bin/tap -e './out/Release/colony' test/suite/*.js test/issues/*.js test/net/*.js",
+    "test": "./node_modules/.bin/tap -e './bin/colony.js' test/suite/*.js test/issues/*.js test/net/*.js",
     "test-offline": "./node_modules/.bin/tap -e './out/Release/colony' test/suite/*.js test/issues/*.js",
     "test-net": "./node_modules/.bin/tap -e './out/Release/colony' test/net/*.js",
     "test-suite": "./node_modules/.bin/tap -e './out/Release/colony' test/suite/*.js",

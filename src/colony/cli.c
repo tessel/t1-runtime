@@ -57,6 +57,8 @@ int main (int argc, const char *argv[])
   int ret = 0;
 
   signal(SIGINT, intHandler);
+  setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
+  setvbuf(stderr, NULL, _IOLBF, BUFSIZ);
 
   tm_fs_init();
 

@@ -8,5 +8,7 @@ var proc = require('child_process').spawn(cmd, process.argv.slice(2), {
 	stdio: 'inherit'
 });
 proc.on('exit', function (err) {
-	process.exit(err);
+	process.on('exit', function () {
+		process.exit(err);
+	});
 });
