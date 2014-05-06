@@ -1,6 +1,6 @@
 var tm = process.binding('tm');
 
-exports.readFileSync = function (pathname) {
+exports.readFileSync = function (pathname, encoding) {
   var fd = tm.fs_open(pathname, tm.OPEN_EXISTING | tm.RDONLY);
   if (fd == undefined) {
     throw 'ENOENT: Could not open file ' + pathname;
@@ -19,7 +19,13 @@ exports.readFileSync = function (pathname) {
     }
   }
   tm.fs_close(fd);
-  return Buffer.concat(res);
+  
+  var buf = Buffer.concat(res);
+  if (encoding) {
+    return buf.toString(encoding);
+  } else {
+    return buf;
+  }
 };
 
 exports.readdirSync = function (pathname) {

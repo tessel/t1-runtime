@@ -63,7 +63,12 @@
           '-Werror',
           '-Wno-unused-parameter'
         ]
-      }]
+      }],
+      ['enable_ssl==1', {
+        'defines': [
+          "ENABLE_TLS",
+        ],
+      }],
     ],
 
     'default_configuration': 'Release',

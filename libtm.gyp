@@ -372,9 +372,6 @@
           'dependencies': [
             "tm-ssl",
           ],
-          'defines': [
-            "ENABLE_TLS",
-          ],
         }],
       ],
       'sources': [
