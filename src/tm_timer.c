@@ -140,6 +140,8 @@ unsigned tm_timer_base_time() {
 /// Callback enqueued by the timer ISR. It is safe for this to be called more
 /// often than necessary
 void timer_cb(tm_event* event) {
+	(void) event;
+	
 	unsigned prev_time = last_time;
 	last_time = tm_uptime_micro();
 	unsigned elapsed = last_time - prev_time;

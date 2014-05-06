@@ -1,0 +1,27 @@
+description: Linux
+badge_token: QsFQ9CsYegvj7x78qiit
+
+language: c
+before_install:
+  - sudo apt-get -y install python-software-properties
+  - sudo add-apt-repository -y ppa:terry.guo/gcc-arm-embedded
+  - sudo add-apt-repository -y ppa:chris-lea/node.js  
+  - sudo apt-get -y update 
+  - sudo apt-get -y install nodejs python gyp gcc-arm-none-eabi
+  - sudo apt-get -y install binutils-gold binutils-dev
+  - mkdir -p ~/ninja; pushd ~/ninja
+  - wget https://github.com/martine/ninja/releases/download/v1.4.0/ninja-linux.zip 
+  - unzip ninja-linux.zip
+  - export PATH=$(pwd):$PATH
+  - popd
+  - git config credential.helper store
+  - git clone https://tmTestUser:tmTestUser1@github.com/tessel/colony-lua.git deps/colony-lua
+install:
+  - git submodule update --init
+  - npm install
+script:
+  - make colony
+  - npm test
+
+git:
+  submodules: false

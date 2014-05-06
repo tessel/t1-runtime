@@ -1,7 +1,3 @@
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-
 #include "tm.h"
 
 #include <sys/socket.h>
