@@ -12,7 +12,8 @@
     "test-net": "./node_modules/.bin/tap -e './out/Release/colony' test/net/*.js",
     "test-suite": "./node_modules/.bin/tap -e './out/Release/colony' test/suite/*.js",
     "test-issues": "./node_modules/.bin/tap -e './out/Release/colony' test/issues/*.js",
-    "tessel-test": "./node_modules/.bin/tap -e 'tessel-node -qs' test/suite/*.js"
+    "tessel-test": "./node_modules/.bin/tap -e 'tessel-node -qs' test/suite/*.js",
+    "install": "true"
   },
   "dependencies": {
     "async": "~0.2.9",
