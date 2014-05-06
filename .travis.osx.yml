@@ -12,7 +12,8 @@ install:
   - git submodule update --init
   - npm install --ignore-scripts
 script:
-  - make colony
+  - node-gyp rebuild
+  - npm test
 
 git:
   submodules: false
