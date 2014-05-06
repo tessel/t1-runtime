@@ -99,6 +99,9 @@ exports.parse = function(string, parseQueryString, slashesDenoteHost) {
                 parts.urn = true;
             }
         }
+        if (parts.protocol) {
+            parts.protocol += ':';
+        }
     }
 
     // what's left must be the path
