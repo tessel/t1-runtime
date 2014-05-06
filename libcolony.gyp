@@ -175,6 +175,8 @@
         "<(colony_lua_path)/src",
       ],
       "dependencies": [
+        'dir_builtin',
+        'dir_runtime_lib',
         'colony-lua',
         'libtm.gyp:c-ares',
         'libtm.gyp:http_parser',
@@ -182,7 +184,12 @@
         'libtm.gyp:dlmalloc',
         'libtm.gyp:yajl',
         'libtm.gyp:libtm'
-      ]
+      ],
+      "direct_dependent_settings": {
+        "include_dirs": [
+          'src/colony/'
+        ]
+      }
     }
   ]
 }
