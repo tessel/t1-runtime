@@ -266,6 +266,14 @@ local buffer_proto = js_obj({
       arr[i] = this[i]
     end
     return js_arr(arr)
+  end,
+
+  -- Internal use only
+  _random = function (this)
+    local sourceBuffer = getmetatable(this).buffer
+    local sourceBufferLength = getmetatable(this).bufferlen
+    
+    return tm.random_bytes(sourceBuffer, 0, tonumber(sourceBufferLength));
   end
 })
 

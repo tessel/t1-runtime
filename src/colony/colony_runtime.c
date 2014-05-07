@@ -189,6 +189,9 @@ int colony_runtime_run (const char *path, char **argv, int argc)
 
   getargs(L, argv, argc);  /* collect arguments */
 
+  // Seed crypto on startup.
+  tm_entropy_seed();
+
   return tm_eval_lua(L, "require('cli');");
 }
 

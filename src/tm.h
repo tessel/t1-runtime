@@ -122,7 +122,14 @@ int tm_tcp_listen (tm_socket_t sock, uint16_t port);
 tm_socket_t tm_tcp_accept (tm_socket_t sock, uint32_t *ip);
 
 // DNS
+
 uint32_t tm_hostname_lookup (const uint8_t *hostname);
+
+// Random
+
+int tm_entropy_seed (void);
+int tm_entropy_add (const uint8_t* buf, size_t buf_size);
+int tm_random_bytes (uint8_t* buf, size_t buf_size, size_t* read);
 
 // SSL
 

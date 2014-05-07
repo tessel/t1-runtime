@@ -8,6 +8,7 @@
     "c_ares_path": "./deps/c-ares",
     "colony_lua_path": "./deps/colony-lua",
     "lua_bitop_path": "./deps/luabitop-1.0",
+    "fortuna_path": "./deps/fortuna",
     "dlmalloc_path": "./deps/dlmalloc",
     "utf8proc_path": "./deps/utf8proc",
     'builtin_section%': '',
