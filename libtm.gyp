@@ -310,13 +310,15 @@
       "target_name": "fortuna",
       "product_name": "fortuna",
       "type": "static_library",
-      'cflags': [ '-Wno-error' ],
       "defines": [
+      ],
+      "cflags": [
+        "--include", "strings.h" # strncasecmp implicit declaration
       ],
       "sources": [
         '<(fortuna_path)/src/fortuna.c',
         '<(fortuna_path)/src/rijndael.c',
-        '<(fortuna_path)/src/sha2.c',
+        #'<(fortuna_path)/src/sha2.c',
         '<(fortuna_path)/src/px.c',
         '<(fortuna_path)/src/random.c',
         '<(fortuna_path)/src/internal.c',
