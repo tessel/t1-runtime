@@ -310,6 +310,7 @@
       "target_name": "fortuna",
       "product_name": "fortuna",
       "type": "static_library",
+      'cflags': [ '-Wno-error' ],
       "defines": [
       ],
       "sources": [
