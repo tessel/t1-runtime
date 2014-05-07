@@ -20,6 +20,9 @@ function ServerResponse (req, socket) {
   this._closed = false;
 
   var self = this;
+  this.req.on('end', function () {
+    self._closed = true;
+  })
   this.req.on('close', function () {
     self._closed = true;
   })
@@ -138,7 +141,7 @@ function ServerRequest (socket) {
       self.emit('data', body);
     }),
     onMessageComplete: js_wrap_function(function () {
-      self.emit('close');
+      self.emit('end');
       self._closed = true;
       // TODO close
     }),
@@ -275,7 +278,7 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
         response.emit('data', body);
       }),
       onMessageComplete: js_wrap_function(function () {
-        response.emit('close');
+        response.emit('end');
         // TODO close
         self.socket.close();
       })
@@ -322,6 +325,9 @@ exports.request = function (opts, onresponse) {
 exports.get = function (opts, onresponse) {
   if (typeof opts == 'string') {
     opts = url.parse(opts);
+    if (opts.search) {
+      opts.path += opts.search;
+    }
   }
   opts.method = 'GET';
 

@@ -104,6 +104,13 @@ exports.parse = function(string, parseQueryString, slashesDenoteHost) {
     // what's left must be the path
     parts.path = parts.pathname = string;
 
+    if (parts.protocol) {
+        parts.protocol += ':';
+    }
+    if (parts.query) {
+        parts.search = '?' + parts.query;
+    }
+
     // and we're done
     return parts;
 };
