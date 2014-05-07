@@ -311,14 +311,22 @@
       "product_name": "fortuna",
       "type": "static_library",
       "defines": [
+        "C_H", 
       ],
       "cflags": [
-        "--include", "strings.h" # strncasecmp implicit declaration
+        "-fno-strict-aliasing",
+        "--include", "c_alt.h", # custom c defines
+        "--include", "strings.h", # strncasecmp implicit declaration
       ],
+      "xcode_settings": {
+        "OTHER_CFLAGS": [
+          "--include", "c_alt.h", # custom c defines
+        ]
+      },
       "sources": [
         '<(fortuna_path)/src/fortuna.c',
         '<(fortuna_path)/src/rijndael.c',
-        #'<(fortuna_path)/src/sha2.c',
+        '<(fortuna_path)/src/sha2.c',
         '<(fortuna_path)/src/px.c',
         '<(fortuna_path)/src/random.c',
         '<(fortuna_path)/src/internal.c',
@@ -336,6 +344,9 @@
           '<(fortuna_path)/src/',
           '<(fortuna_inc_path)/',
         ],
+        "cflags": [
+          "--include", "stdint.h", # strncasecmp implicit declaration
+        ]
       }
     },
 
