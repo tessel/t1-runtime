@@ -325,11 +325,13 @@
       ],
       "include_dirs": [
         '<(fortuna_path)/src/',
+        '<(fortuna_inc_path)/',
       ],
 
       'direct_dependent_settings': {
         'include_dirs': [
           '<(fortuna_path)/src/',
+          '<(fortuna_inc_path)/',
         ],
       }
     },

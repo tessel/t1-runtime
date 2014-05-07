@@ -9,6 +9,7 @@
     "colony_lua_path": "./deps/colony-lua",
     "lua_bitop_path": "./deps/luabitop-1.0",
     "fortuna_path": "./deps/fortuna",
+    "fortuna_inc_path": "./deps/fortuna-inc",
     "dlmalloc_path": "./deps/dlmalloc",
     "utf8proc_path": "./deps/utf8proc",
     'builtin_section%': '',

@@ -34,7 +34,6 @@ int tm_entropy_add (const uint8_t* buf, size_t buf_size)
 
 int tm_random_bytes (uint8_t* buf, size_t buf_size, size_t* read)
 {
-	printf("fortuna %p, %d\n", buf, buf_size);
 	fortuna_get_bytes(buf_size, buf);
 	*read = buf_size;
 
