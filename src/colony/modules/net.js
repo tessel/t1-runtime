@@ -1,6 +1,7 @@
 var tm = process.binding('tm');
 
 var util = require('util');
+var dns = require('dns');
 var Stream = require('stream').Stream;
 
 /**
@@ -30,8 +31,11 @@ function TCPSocket (socket, _secure) {
 
 util.inherits(TCPSocket, Stream);
 
-TCPSocket.prototype.connect = function (port, ip, cb) {
-  var ips = ip.split('.');
+function isIP (host) {
+  return host.match(/^[0-9.]+$/);
+}
+
+TCPSocket.prototype.connect = function (port, host, cb) {
   var self = this;
 
   if (cb) {
@@ -39,15 +43,29 @@ TCPSocket.prototype.connect = function (port, ip, cb) {
   }
 
   setImmediate(function () {
-    tm.tcp_connect(self.socket, Number(ips[0]), Number(ips[1]), Number(ips[2]), Number(ips[3]), Number(port));
-    
-    if (self._secure) {
-      var ssl = tm.ssl_session_create(ssl_ctx, self.socket);
-      self._ssl = ssl;
+    if (isIP(host)) {
+      doConnect(host);
+    } else {
+      dns.resolve(host, function onResolve(err, ips) {
+        if (err) {
+          return self.emit('error', err);
+        }
+        doConnect(ips[0]);
+      })
     }
 
-    self.__listen();
-    self.emit('connect');
+    function doConnect(ip) {
+      ip = ip.split('.').map(Number);
+      tm.tcp_connect(self.socket, ip[0], ip[1], ip[2], ip[3], Number(port));
+
+      if (self._secure) {
+        var ssl = tm.ssl_session_create(ssl_ctx, self.socket);
+        self._ssl = ssl;
+      }
+
+      self.__listen();
+      self.emit('connect');
+    }
   });
 };
 
