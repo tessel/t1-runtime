@@ -289,6 +289,8 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
         self.socket.emit('error', 'Could not parse tokens at character #' + String(nparsed));
       }
     })
+
+    self.emit('socket', self.socket);
   };
 }
 
