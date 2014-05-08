@@ -33,6 +33,11 @@ util.inherits(TCPSocket, Stream);
 TCPSocket.prototype.connect = function (port, ip, cb) {
   var ips = ip.split('.');
   var self = this;
+
+  if (cb) {
+    self.once('connect', cb);
+  }
+
   setImmediate(function () {
     tm.tcp_connect(self.socket, Number(ips[0]), Number(ips[1]), Number(ips[2]), Number(ips[3]), Number(port));
     
@@ -42,7 +47,6 @@ TCPSocket.prototype.connect = function (port, ip, cb) {
     }
 
     self.__listen();
-    cb();
     self.emit('connect');
   });
 };
