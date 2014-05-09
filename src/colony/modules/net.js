@@ -1,3 +1,15 @@
+// Copyright 2014 Technical Machine, Inc. See the COPYRIGHT
+// file at the top-level directory of this distribution.
+//
+// Portions Copyright Joyent, Inc. and other Node contributors.
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+
 var tm = process.binding('tm');
 
 var util = require('util');
@@ -35,8 +47,37 @@ function isIP (host) {
   return host.match(/^[0-9.]+$/);
 }
 
-TCPSocket.prototype.connect = function (port, host, cb) {
+function isPipeName(s) {
+  return util.isString(s) && toNumber(s) === false;
+}
+
+function normalizeConnectArgs(args) {
+  var options = {};
+
+  if (util.isObject(args[0])) {
+    // connect(options, [cb])
+    options = args[0];
+  } else if (isPipeName(args[0])) {
+    // connect(path, [cb]);
+    options.path = args[0];
+  } else {
+    // connect(port, [host], [cb])
+    options.port = args[0];
+    if (util.isString(args[1])) {
+      options.host = args[1];
+    }
+  }
+
+  var cb = args[args.length - 1];
+  return util.isFunction(cb) ? [options, cb] : [options];
+}
+
+TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   var self = this;
+  var args = normalizeConnectArgs(arguments);
+  var port = args[0].port;
+  var host = args[0].host;
+  var cb = args[1];
 
   if (cb) {
     self.once('connect', cb);
