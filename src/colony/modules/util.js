@@ -28,6 +28,10 @@ function isArray (arg) {
   return Array.isArray(arg);
 }
 
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+
 
 /**
  * Public API
@@ -39,3 +43,4 @@ exports.isString = isString;
 exports.isNull = isNull;
 exports.isObject = isObject;
 exports.isArray = isArray;
+exports.isFunction = isFunction;

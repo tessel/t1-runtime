@@ -1,6 +1,19 @@
+// Copyright 2014 Technical Machine, Inc. See the COPYRIGHT
+// file at the top-level directory of this distribution.
+//
+// Portions Copyright Joyent, Inc. and other Node contributors.
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+
 var tm = process.binding('tm');
 
 var util = require('util');
+var dns = require('dns');
 var Stream = require('stream').Stream;
 
 /**
@@ -30,20 +43,70 @@ function TCPSocket (socket, _secure) {
 
 util.inherits(TCPSocket, Stream);
 
-TCPSocket.prototype.connect = function (port, ip, cb) {
-  var ips = ip.split('.');
+function isIP (host) {
+  return host.match(/^[0-9.]+$/);
+}
+
+function isPipeName(s) {
+  return util.isString(s) && toNumber(s) === false;
+}
+
+function normalizeConnectArgs(args) {
+  var options = {};
+
+  if (util.isObject(args[0])) {
+    // connect(options, [cb])
+    options = args[0];
+  } else if (isPipeName(args[0])) {
+    // connect(path, [cb]);
+    options.path = args[0];
+  } else {
+    // connect(port, [host], [cb])
+    options.port = args[0];
+    if (util.isString(args[1])) {
+      options.host = args[1];
+    }
+  }
+
+  var cb = args[args.length - 1];
+  return util.isFunction(cb) ? [options, cb] : [options];
+}
+
+TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   var self = this;
+  var args = normalizeConnectArgs(arguments);
+  var port = args[0].port;
+  var host = args[0].host;
+  var cb = args[1];
+
+  if (cb) {
+    self.once('connect', cb);
+  }
+
   setImmediate(function () {
-    tm.tcp_connect(self.socket, Number(ips[0]), Number(ips[1]), Number(ips[2]), Number(ips[3]), Number(port));
-    
-    if (self._secure) {
-      var ssl = tm.ssl_session_create(ssl_ctx, self.socket);
-      self._ssl = ssl;
+    if (isIP(host)) {
+      doConnect(host);
+    } else {
+      dns.resolve(host, function onResolve(err, ips) {
+        if (err) {
+          return self.emit('error', err);
+        }
+        doConnect(ips[0]);
+      })
     }
 
-    self.__listen();
-    cb();
-    self.emit('connect');
+    function doConnect(ip) {
+      ip = ip.split('.').map(Number);
+      tm.tcp_connect(self.socket, ip[0], ip[1], ip[2], ip[3], Number(port));
+
+      if (self._secure) {
+        var ssl = tm.ssl_session_create(ssl_ctx, self.socket);
+        self._ssl = ssl;
+      }
+
+      self.__listen();
+      self.emit('connect');
+    }
   });
 };
 
