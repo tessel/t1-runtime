@@ -250,6 +250,9 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
   var parser = http_parser.new('response', {
     onMessageBegin: js_wrap_function(function () {
       response = new HTTPIncomingResponse();
+      self.socket.on('close', function () {
+        response.emit('close');
+      });
     }),
     onUrl: js_wrap_function(function (url) {
       // nop
