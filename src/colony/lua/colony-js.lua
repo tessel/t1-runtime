@@ -722,6 +722,9 @@ end
 
 
 local luafunctor = function (f)
+  if not f then
+    error('Lua function is nil', 2)
+  end
   return (function (this, ...) return f(...) end)
 end
 
