@@ -738,6 +738,7 @@ global.Math = js_obj({
   random = function ()
     return math.random()
   end,
+  pow = luafunctor(math.pow),
   PI = math.pi
 })
 
