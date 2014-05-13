@@ -51,6 +51,8 @@ function isPipeName(s) {
   return util.isString(s) && toNumber(s) === false;
 }
 
+function toNumber(x) { return (x = Number(x)) >= 0 ? x : false; }
+
 function normalizeConnectArgs(args) {
   var options = {};
 
