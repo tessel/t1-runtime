@@ -37,6 +37,8 @@ static int getargs(lua_State *L, char **argv, int argc)
   return argc;
 }
 
+// Creates a traceback from a colony runtime error.
+
 static int report(lua_State *L, int status)
 {
   if (status != 0) {
@@ -52,7 +54,30 @@ static int report(lua_State *L, int status)
   return status;
 }
 
-static int lua_report(lua_State *L) {
+// Create a traceback string from a LUa error object.
+
+static int traceback (lua_State *L)
+{
+  lua_getfield(L, LUA_GLOBALSINDEX, "debug");
+  if (!lua_istable(L, -1)) {
+    lua_pop(L, 1);
+    return 1;
+  }
+  lua_getfield(L, -1, "traceback");
+  if (!lua_isfunction(L, -1)) {
+    lua_pop(L, 2);
+    return 1;
+  }
+  lua_insert(L, -3);
+  lua_insert(L, -3);
+  lua_pushinteger(L, 2);
+  lua_call(L, 2, 1);  /* call debug.traceback(err, 2) */
+  return 1;
+}
+
+static int lua_report(lua_State *L)
+{
+  traceback(L);
   report(L, -1);
   return 0;
 }
