@@ -730,19 +730,52 @@ end
 
 global.Math = js_obj({
   abs = luafunctor(math.abs),
+  acos = luafunctor(math.acos),
+  acosh = luafunctor(math.acosh),
+  asin = luafunctor(math.asin),
+  asinh = luafunctor(math.asinh),
+  atan = luafunctor(math.atan),
+  atanh = luafunctor(math.atanh),
+  atan2 = luafunctor(math.atan2),
+  cbrt = luafunctor(math.cbrt),
+  ceil = luafunctor(math.ceil),
+  clz32 = luafunctor(math.clz32),
+  cos = luafunctor(math.cos),
+  cosh = luafunctor(math.cosh),
+  exp = luafunctor(math.exp),
+  expm1 = luafunctor(math.expm1),
+  floor = luafunctor(math.floor),
+  fround = luafunctor(math.fround),
+  hypot = luafunctor(math.hypot),
+  imul = luafunctor(math.imul),
+  log = luafunctor(math.log),
+  log1p = luafunctor(math.log1p),
+  log10 = luafunctor(math.log10),
+  log2 = luafunctor(math.log2),
   max = luafunctor(math.max),
   min = luafunctor(math.min),
-  sqrt = luafunctor(math.sqrt),
-  ceil = luafunctor(math.ceil),
-  floor = luafunctor(math.floor),
-  log = luafunctor(math.log),
-  cos = luafunctor(math.cos),
-  sin = luafunctor(math.sin),
+  pow = luafunctor(math.pow),
   random = function ()
+    -- lua's math.random has additional arguments
     return math.random()
   end,
-  pow = luafunctor(math.pow),
-  PI = math.pi
+  round = luafunctor(math.round),
+  sign = luafunctor(math.sign),
+  sin = luafunctor(math.sin),
+  sqrt = luafunctor(math.sqrt),
+  tan = luafunctor(math.tan),
+  tanh = luafunctor(math.tanh),
+  trunc = luafunctor(math.trunc),
+  
+
+  E = math.exp(1),
+  LN2 = math.log(2),
+  LN10 = math.log(10),
+  LOG2E = 1/math.log(2),
+  LOG10E = math.log10(math.exp(1)),
+  PI = math.pi,
+  SQRT1_2 = math.sqrt(1/2),
+  SQRT2 = math.sqrt(2),
 })
 
 -- Error
