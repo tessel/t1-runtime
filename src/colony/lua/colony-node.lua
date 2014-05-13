@@ -332,14 +332,14 @@ buffer_proto.writeDoubleLE = function (this, value, pos, opts) return write_buf(
 buffer_proto.writeDoubleBE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 8, tm.buffer_write_double, 0); end
 
 
-local function Buffer (this, length, encoding)
+local function Buffer (this, arg, encoding)
   -- args
-  local str = ''
-  if type(length) == 'number' then
-    length = tonumber(length)
+  local str, length = '', 0
+  if type(arg) == 'number' then
+    length = tonumber(arg)
   else
-    str = length
-    length = str.length
+    str = arg
+    length = arg.length
   end
 
   -- encoding first check
