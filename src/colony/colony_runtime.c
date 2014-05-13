@@ -52,10 +52,24 @@ static int report(lua_State *L, int status)
   return status;
 }
 
+static int lua_report(lua_State *L) {
+  report(L, -1);
+  return 0;
+}
+
 int tm_checked_call(lua_State *L, int nargs)
 {
   int err_func = lua_gettop(L) - nargs;
+
+  // Load error handler for colony, or default Lua reporter
+  // if an internal error has occurred early in the load.
   lua_getglobal(L, "_colony_unhandled_exception");
+  if (lua_isnil(L, -1)) {
+    lua_remove(L, -1);
+    lua_pushcfunction(L, lua_report);
+  }
+
+  // Run checked call.
   lua_insert(L, err_func);
   int r = lua_pcall(L, nargs, 0, err_func);
   lua_remove(L, err_func);
