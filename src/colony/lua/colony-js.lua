@@ -731,42 +731,156 @@ end
 global.Math = js_obj({
   abs = luafunctor(math.abs),
   acos = luafunctor(math.acos),
-  acosh = luafunctor(math.acosh),
+  acosh = function (this, x)
+    -- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/acosh
+    x = tonumber(x) or 0
+    return math.log(x + math.sqrt((x * x) - 1))
+  end,
   asin = luafunctor(math.asin),
-  asinh = luafunctor(math.asinh),
+  asinh = function (this, x)
+    -- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/asinh
+    x = tonumber(x) or 0
+    return math.log(x + math.sqrt((x * x) + 1))
+  end,
   atan = luafunctor(math.atan),
-  atanh = luafunctor(math.atanh),
+  atanh = function (this, x)
+    -- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/atanh
+    x = tonumber(x) or 0
+    return math.log((1+x)/(1-x)) / 2
+  end,
   atan2 = luafunctor(math.atan2),
-  cbrt = luafunctor(math.cbrt),
+  cbrt = function (this, x)
+    -- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/cbrt
+    x = tonumber(x) or 0
+    local y = math.pow(math.abs(x), 1/3)
+    if x < 0 then
+      return -y
+    else
+      return y
+    end
+  end,
   ceil = luafunctor(math.ceil),
-  clz32 = luafunctor(math.clz32),
+  clz32 = function (this, x)
+    -- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/clz32
+    x = tonumber(x) or 0
+    local value = math.floor(x)
+    if value then
+      return 32 - #(tm.itoa(value, 2) or '')
+    else
+      return 32
+    end
+  end,
   cos = luafunctor(math.cos),
   cosh = luafunctor(math.cosh),
   exp = luafunctor(math.exp),
-  expm1 = luafunctor(math.expm1),
+  expm1 = function (this, x)
+    -- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/expm1
+    return math.exp(x) - 1
+  end,
   floor = luafunctor(math.floor),
-  fround = luafunctor(math.fround),
-  hypot = luafunctor(math.hypot),
-  imul = luafunctor(math.imul),
+  fround = function (this, x)
+    local n = tonumber(x)
+    if n ~= n or type(n) ~= 'number' then
+      return (0/0) -- NaN
+    end
+
+    -- convert to single-precision float
+    local b = global.Buffer(nil, 4)
+    b:writeFloatLE(n, 0)
+    return b:readFloatLE(0)
+  end,
+  hypot = function (this, ...)
+    -- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/hypot
+    local y, args = 0, table.pack(...)
+    for i=1,args.length do
+      local arg = tonumber(args[i])
+      if type(arg) ~= 'number' then
+        return 0/0 -- NaN
+      end
+      y = y + (arg * arg)
+    end
+    return math.sqrt(y)
+  end,
+  imul = function (this, a, b)
+    local function signify (value)
+      if bit.band(value, 0x80000000) then
+        return -(bit.bnot(value) + 1)
+      end
+      return bit.tobit(value)
+    end
+
+    -- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/imul
+    local ah  = bit.band(bit.rshift(a, 16), 0xffff);
+    local al = bit.band(a, 0xffff);
+    local bh  = bit.band(bit.rshift(b, 16), 0xffff);
+    local bl = bit.band(b, 0xffff);
+    return signify((al * bl) + signify(bit.lshift(((ah * bl) + (al * bh)), 16)));
+  end,
   log = luafunctor(math.log),
-  log1p = luafunctor(math.log1p),
+  log1p = function (this, x)
+    -- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/log1p
+    x = tonumber(x) or 0
+    return math.log(1 + x)
+  end,
   log10 = luafunctor(math.log10),
-  log2 = luafunctor(math.log2),
+  log2 = function (this, x)
+    return math.log(x) / math.log(2)
+  end,
   max = luafunctor(math.max),
   min = luafunctor(math.min),
   pow = luafunctor(math.pow),
   random = function ()
-    -- lua's math.random has additional arguments
+    -- lua's math.random can take additional arguments
     return math.random()
   end,
-  round = luafunctor(math.round),
-  sign = luafunctor(math.sign),
+  round = function (this, x)
+    if x < 0 then frac = -.5 else frac = .5 end
+    local i, d = math.modf(x, frac)
+    return i
+  end,
+  sign = function (this, x)
+    -- http://tc39wiki.calculist.org/es6/math/
+    local n = tonumber(x)
+    if n ~= n or type(n) ~= 'number' then
+      return (0/0) -- NaN
+    end
+
+    if n == 0 then
+      return n -- Keep the sign of the zero.
+    end
+
+    if n < 0 then
+      return -1
+    else
+      return 1
+    end
+  end,
   sin = luafunctor(math.sin),
   sqrt = luafunctor(math.sqrt),
   tan = luafunctor(math.tan),
-  tanh = luafunctor(math.tanh),
-  trunc = luafunctor(math.trunc),
-  
+  tanh = function (this, x)
+    -- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/tanh
+    if x == math.huge then
+      return 1
+    end
+    x = tonumber(x) or 0
+    local y = math.exp(2 * x)
+    return (y - 1) / (y + 1)
+  end,
+  trunc = function (this, x)
+    -- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/trunc
+    x = tonumber(x)
+    if x ~= x or type(x) ~= 'number' then
+      return (0/0) -- NaN
+    end
+
+    if x < 0 then
+      x = math.ceil(x)
+    else
+      x = math.floor(x)
+    end
+    return x
+  end,
 
   E = math.exp(1),
   LN2 = math.log(2),
@@ -913,7 +1027,9 @@ global.console = js_obj({
   end
 });
 
--- parseFloat, parseInt, isNan
+-- parseFloat, parseInt, isNan, Infinity
+
+global.Infinity = math.huge
 
 global.isNaN = function (this, arg)
   return arg ~= arg -- nan != nan
