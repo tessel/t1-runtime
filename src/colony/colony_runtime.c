@@ -37,6 +37,8 @@ static int getargs(lua_State *L, char **argv, int argc)
   return argc;
 }
 
+// Creates a traceback from a colony runtime error.
+
 static int report(lua_State *L, int status)
 {
   if (status != 0) {
@@ -52,10 +54,48 @@ static int report(lua_State *L, int status)
   return status;
 }
 
+// Create a traceback string from a LUa error object.
+
+static int traceback (lua_State *L)
+{
+  lua_getfield(L, LUA_GLOBALSINDEX, "debug");
+  if (!lua_istable(L, -1)) {
+    lua_pop(L, 1);
+    return 1;
+  }
+  lua_getfield(L, -1, "traceback");
+  if (!lua_isfunction(L, -1)) {
+    lua_pop(L, 2);
+    return 1;
+  }
+  lua_insert(L, -3);
+  lua_insert(L, -3);
+  lua_pushinteger(L, 2);
+  lua_call(L, 2, 1);  /* call debug.traceback(err, 2) */
+  return 1;
+}
+
+static int lua_report(lua_State *L)
+{
+  traceback(L);
+  report(L, -1);
+  tm_runtime_exit_longjmp(255);
+  return 0;
+}
+
 int tm_checked_call(lua_State *L, int nargs)
 {
   int err_func = lua_gettop(L) - nargs;
+
+  // Load error handler for colony, or default Lua reporter
+  // if an internal error has occurred early in the load.
   lua_getglobal(L, "_colony_unhandled_exception");
+  if (lua_isnil(L, -1)) {
+    lua_remove(L, -1);
+    lua_pushcfunction(L, lua_report);
+  }
+
+  // Run checked call.
   lua_insert(L, err_func);
   int r = lua_pcall(L, nargs, 0, err_func);
   lua_remove(L, err_func);
