@@ -49,9 +49,13 @@ end
 --]]
 
 _G._colony_unhandled_exception = function (e)
-  tm.log(22, e:toString())
   if e.stack then
+    -- runtime errors
+    tm.log(22, e:toString())
     tm.log(22, e.stack)
+  else
+    -- internal errors
+    tm.log(22, debug.traceback(e, 2))
   end
 
   global.process.exit(8)
