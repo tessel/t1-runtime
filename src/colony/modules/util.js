@@ -16,6 +16,14 @@ function isString (str) {
   return typeof str == 'string';
 }
 
+function isBuffer (arg) {
+  return Buffer.isBuffer(arg);
+}
+
+function isNumber (arg) {
+  return typeof arg == 'number';
+}
+
 function isNull (arg) {
   return arg == null;
 }
@@ -30,6 +38,10 @@ function isArray (arg) {
 
 function isFunction(arg) {
   return typeof arg === 'function';
+}
+
+function isNullOrUndefined(arg) {
+  return arg == null;
 }
 
 var debugs = {};
@@ -59,8 +71,11 @@ function debuglog(set) {
 exports.inherits = inherits;
 exports.deprecate = deprecate;
 exports.isString = isString;
+exports.isBuffer = isBuffer;
+exports.isNumber = isNumber;
 exports.isNull = isNull;
 exports.isObject = isObject;
 exports.isArray = isArray;
 exports.isFunction = isFunction;
+exports.isNullOrUndefined = isNullOrUndefined;
 exports.debuglog = debuglog;
