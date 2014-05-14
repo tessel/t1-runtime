@@ -79,6 +79,7 @@ static int lua_report(lua_State *L)
 {
   traceback(L);
   report(L, -1);
+  tm_runtime_exit_longjmp(255);
   return 0;
 }
 
