@@ -94,6 +94,11 @@
         {
           'action_name': '<(_target_name)_compile',
           'inputs': [
+            'src/colony/modules/_stream_duplex.js',
+            'src/colony/modules/_stream_passthrough.js',
+            'src/colony/modules/_stream_readable.js',
+            'src/colony/modules/_stream_transform.js',
+            'src/colony/modules/_stream_writable.js',
             'src/colony/modules/_structured_clone.js',
             'src/colony/modules/assert.js',
             'src/colony/modules/buffer.js',
