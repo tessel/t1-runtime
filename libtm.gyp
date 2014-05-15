@@ -182,101 +182,6 @@
     },
 
     {
-      "target_name": "c-ares",
-      "product_name": "c-ares",
-      "type": "static_library",
-      "defines": [
-        'HAVE_CONFIG_H'
-      ],
-      "sources": [
-        '<(c_ares_path)/ares__close_sockets.c',
-        '<(c_ares_path)/ares__get_hostent.c',
-        '<(c_ares_path)/ares__read_line.c',
-        '<(c_ares_path)/ares__timeval.c',
-        '<(c_ares_path)/ares_cancel.c',
-        '<(c_ares_path)/ares_data.c',
-        '<(c_ares_path)/ares_destroy.c',
-        '<(c_ares_path)/ares_expand_name.c',
-        '<(c_ares_path)/ares_expand_string.c',
-        '<(c_ares_path)/ares_fds.c',
-        '<(c_ares_path)/ares_free_hostent.c',
-        '<(c_ares_path)/ares_free_string.c',
-        '<(c_ares_path)/ares_getenv.c',
-        '<(c_ares_path)/ares_gethostbyaddr.c',
-        '<(c_ares_path)/ares_gethostbyname.c',
-        '<(c_ares_path)/ares_getnameinfo.c',
-        '<(c_ares_path)/ares_getsock.c',
-        '<(c_ares_path)/ares_init.c',
-        '<(c_ares_path)/ares_library_init.c',
-        '<(c_ares_path)/ares_llist.c',
-        '<(c_ares_path)/ares_mkquery.c',
-        '<(c_ares_path)/ares_create_query.c',
-        '<(c_ares_path)/ares_nowarn.c',
-        '<(c_ares_path)/ares_options.c',
-        '<(c_ares_path)/ares_parse_a_reply.c',
-        '<(c_ares_path)/ares_parse_aaaa_reply.c',
-        '<(c_ares_path)/ares_parse_mx_reply.c',
-        '<(c_ares_path)/ares_parse_naptr_reply.c',
-        '<(c_ares_path)/ares_parse_ns_reply.c',
-        '<(c_ares_path)/ares_parse_ptr_reply.c',
-        '<(c_ares_path)/ares_parse_soa_reply.c',
-        '<(c_ares_path)/ares_parse_srv_reply.c',
-        '<(c_ares_path)/ares_parse_txt_reply.c',
-        '<(c_ares_path)/ares_platform.c',
-        '<(c_ares_path)/ares_process.c',
-        '<(c_ares_path)/ares_query.c',
-        '<(c_ares_path)/ares_search.c',
-        '<(c_ares_path)/ares_send.c',
-        '<(c_ares_path)/ares_strcasecmp.c',
-        '<(c_ares_path)/ares_strdup.c',
-        '<(c_ares_path)/ares_strerror.c',
-        '<(c_ares_path)/ares_timeout.c',
-        '<(c_ares_path)/ares_version.c',
-        '<(c_ares_path)/ares_writev.c',
-        '<(c_ares_path)/bitncmp.c',
-        '<(c_ares_path)/inet_net_pton.c',
-        '<(c_ares_path)/inet_ntop.c',
-        '<(c_ares_path)/windows_port.c',
-      ],
-      "include_dirs": [
-        "<(c_ares_path)/",
-      ],
-
-      # c-ares has some pedantic issues we can ignore
-      'cflags': [
-        '-Wno-unused-result',
-        '-Wno-unused-value',
-        '-Wno-unused-function',
-        '-Wno-unused-variable',
-        '-std=gnu99',
-      ],
-      'xcode_settings': {
-        'OTHER_CFLAGS': [
-          '-Wno-unused-result',
-          '-Wno-unused-value',
-          '-Wno-unused-function',
-          '-Wno-unused-variable',
-          '-std=gnu99',
-        ],
-      },
-
-      'direct_dependent_settings': {
-        'include_dirs': [
-          "<(c_ares_path)/",
-        ],
-        'link_settings': {
-          'conditions': [
-            ['OS=="linux"', {
-              'libraries': [
-                '-lresolv'
-              ]
-            }]
-          ]
-        }
-      }
-    },
-
-    {
       "target_name": "dlmalloc",
       "product_name": "dlmalloc",
       "type": "static_library",
@@ -400,7 +305,6 @@
       'conditions': [
         ['OS=="arm"', {
           "sources": [
-            '<(c_ares_path)/inet_addr.c',
             'src/vfs/vfs.c',
             'src/vfs/vfs_tar.c',
           ],
@@ -433,7 +337,6 @@
         "http_parser",
         "hsregex",
         "yajl",
-        "c-ares",
         "fortuna",
         "dlmalloc",
         "utf8proc",

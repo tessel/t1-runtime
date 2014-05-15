@@ -184,7 +184,6 @@
         'dir_builtin',
         'dir_runtime_lib',
         'colony-lua',
-        'libtm.gyp:c-ares',
         'libtm.gyp:http_parser',
         'libtm.gyp:hsregex',
         'libtm.gyp:dlmalloc',

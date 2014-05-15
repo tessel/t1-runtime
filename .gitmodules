@@ -10,9 +10,6 @@
 [submodule "deps/yajl"]
 	path = deps/yajl
 	url = https://github.com/lloyd/yajl.git
-[submodule "deps/c-ares"]
-	path = deps/c-ares
-	url = https://github.com/tessel/c-ares.git
 [submodule "deps/fortuna"]
 	path = deps/fortuna
 	url = https://github.com/waitman/libfortuna.git
