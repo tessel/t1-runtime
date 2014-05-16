@@ -613,6 +613,7 @@ global.process.cwd = function ()
   -- TODO
   return '/app'
 end
+global.process.nextTick = global.setImmediate
 
 -- simple process.ref() and process.unref() options
 

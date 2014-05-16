@@ -14,7 +14,7 @@ var tm = process.binding('tm');
 
 var util = require('util');
 var dns = require('dns');
-var Stream = require('stream').Stream;
+var Stream = require('stream');
 
 /**
  * ssl
