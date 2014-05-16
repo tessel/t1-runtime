@@ -654,7 +654,18 @@ function js_wrap_module (module)
     __index = function (this, key)
       if type(module[key]) == 'function' then
         local fn = function (this, ...)
-          return module[key](...)
+          local args = table.pack(module[key](...))
+
+          -- single-arg returns, return single arg
+          if args.length < 2 then
+            return args[1]
+          end
+
+          -- multiple arg returns return array to JS
+          local len = args.length
+          args['length'] = nil
+          args[0] = table.remove(args, 1)
+          return js_arr(args, len);
         end
         this[key] = fn
         return fn
