@@ -571,6 +571,23 @@ EventEmitter.prototype.setMaxListeners = function (this, maxListeners)
 end
 
 
+EventEmitter.listenerCount = function(this, emitter, event) 
+  local ret;
+  
+  if not emitter._events or not emitter._events[event] then 
+    ret = 0;
+
+  elseif (type(emitter._events[event]) == "function") then
+    ret = 1;
+
+  else 
+    return emitter._events[event].length;
+  end
+
+  return ret;
+end
+
+
 --[[
 --|| process
 --]]
