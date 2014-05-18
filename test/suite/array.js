@@ -118,3 +118,9 @@ arr.reverse();
 ok(arreq(arr, [3, 2, 1]), 'array reverses in place');
 ok(arreq(arr.reverse(), [1, 2, 3]), 'array reverses');
 ok(arreq([0xFF, 0x00, 0x00, 0x80, 0x3f, 0xFF].reverse(), [0xFF, 0x3f, 0x80, 0x00, 0x00, 0xFF]), 'array reverses')
+
+// Array::reduce
+var test = Buffer([5,4,3]);
+ok(Array.prototype.slice.call(test).join('') == '543', 'Array::join called on buffer works')
+sum = Array.prototype.reduce.call(test, function (sum, n) { return sum+n; }, 0);
+ok(sum == 12, 'Array::reduce called on non-array object succeeds');

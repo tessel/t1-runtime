@@ -232,7 +232,12 @@ obj_proto.hasInstance = function (ths, p)
 end
 
 obj_proto.hasOwnProperty = function (ths, p)
-  return rawget(ths, p) ~= nil
+  if getmetatable(ths) and getmetatable(ths).buffer then
+    -- TODO remove this buffer exception
+    return ths[p] ~= nil
+  else
+    return rawget(ths, p) ~= nil
+  end
 end
 
 function js_define_setter (self, key, fn)
@@ -491,7 +496,7 @@ arr_proto.reduce = function (this, callback, opt_initialValue)
   end
   local index = 0
   local value = nil
-  local length = bit.bor(this.length, 0)
+  local length = math.floor(this.length)
   local isValueSet = false
 
   if opt_initialValue ~= nil then
