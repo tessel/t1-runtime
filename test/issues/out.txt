@@ -1,0 +1,22 @@
+
+
+return function (_ENV, _module)
+local exports, module = _module.exports, _module;
+
+
+local reduceBuffer = reduceBuffer;
+reduceBuffer = (function () local reduceBuffer = nil; reduceBuffer = function (this, buf, start, _K_end, fn, res)
+local i, len = i, len;
+--[[131]] i = start;  len = end; 
+while ((i)<(len)) do 
+
+--[[186]] res = fn(this, res, buf[i]);
+
+local _r = i + 1; i = _r;
+end;
+--[[219]] if true then return res; end
+end; reduceBuffer.name = "reduceBuffer"; return reduceBuffer; end)()
+--[[0]] 
+
+return _module.exports;
+end 
