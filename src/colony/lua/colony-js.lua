@@ -691,6 +691,8 @@ func_proto.constructor = global.Function
 
 global.Array = function (ths, one, ...)
   local a = table.pack(...)
+  local len = a.length
+  a.length = nil
   if a.length > 0 or type(one) ~= 'number' then
     a[0] = one
     return js_arr(a)
