@@ -234,7 +234,17 @@ local buffer_proto = js_obj({
     targetStart = tonumber(targetStart)
     sourceStart = tonumber(sourceStart)
     sourceEnd = tonumber(sourceEnd)
-    if not targetStart or targetStart > targetBufferLength or targetStart < 0 then
+
+    -- abort early on 0
+    if sourceEnd == 0 then
+      return
+    end
+
+    if targetStart > targetBufferLength then
+      error('targetStart out of bounds')
+    end
+
+    if not targetStart or targetStart < 0 then
       targetStart = 0
     end
     if not sourceStart or sourceStart > sourceBufferLength or sourceStart < 0 then
@@ -443,11 +453,26 @@ Buffer.isBuffer = function (this, arg)
   return js_instanceof(arg, Buffer)
 end
 
-Buffer.concat = function (this, args)
-  local len = 0
-  for i=0,args.length-1 do
-    len = len + args[i].length
+Buffer.concat = function (this, args, len)
+  -- Proper usage
+  if not args then
+    error(js_new(global.TypeError, 'Usage: Buffer.concat(list, [length])'))
   end
+
+  -- For one argument, identity function
+  if args.length == 1 then
+    return args[0]
+  end
+
+  -- If "length" argument isn't supplied, calculate it
+  if not len then
+    len = 0
+    for i=0,args.length-1 do
+      len = len + args[i].length
+    end
+  end
+
+  -- Concatenate buffers.
   local buf = Buffer(nil, len)
   local s = 0
   for i=0,args.length-1 do
