@@ -205,22 +205,29 @@ local buffer_proto = js_obj({
     tm.buffer_fill(sourceBuffer, tonumber(value), offset, endoffset)
   end,
   slice = function (this, sourceStart, len)
+    sourceStart = tonumber(sourceStart or 0) or 0
+
     if len == nil then
       len = this.length
     end
-    sourceStart = tonumber(sourceStart or 0)
     len = tonumber(len)
-    if len < 0 or sourceStart > this.length then
-      len = 0
+    if len < 0 then
+      -- Negative indices are allowed
+      len = len + this.length
+    end
+    if len < 0 or len > this.length then
+      len = this.length
     end
 
     local target = global:Buffer(len - sourceStart)
 
-    local sourceBuffer = getmetatable(this).buffer
-    local sourceBufferLength = getmetatable(this).bufferlen
-    local targetBuffer = getmetatable(target).buffer
-    local targetBufferLength = getmetatable(target).bufferlen
-    tm.buffer_copy(sourceBuffer, targetBuffer, 0, sourceStart, len)
+    if len > 0 then
+      local sourceBuffer = getmetatable(this).buffer
+      local sourceBufferLength = getmetatable(this).bufferlen
+      local targetBuffer = getmetatable(target).buffer
+      local targetBufferLength = getmetatable(target).bufferlen
+      tm.buffer_copy(sourceBuffer, targetBuffer, 0, sourceStart, len)
+    end
     return target
   end,
   copy = function (this, target, targetStart, sourceStart, sourceEnd)
