@@ -290,16 +290,23 @@ local buffer_proto = js_obj({
   end
 })
 
-function read_buf (this, pos, opts, size, fn, le)
+function read_buf (this, pos, no_assert, size, fn, le)
   local sourceBuffer = getmetatable(this).buffer
   local sourceBufferLength = getmetatable(this).bufferlen
   pos = tonumber(pos)
 
   if not (pos >= 0 and pos <= sourceBufferLength - size) then
-    if opts and (opts.noAssert or type(opts.assert) == 'boolean' and opts.assert == false) then
+    if not no_assert then
+      error('RangeError: Trying to access beyond buffer length')
+    end
+
+    if pos >= sourceBufferLength then
       return nil
     end
-    error('RangeError: Trying to access beyond buffer length')
+    local tmp = tm.buffer_create(4)
+    tm.buffer_fill(tmp, 0, 0, 4)
+    tm.buffer_copy(sourceBuffer, tmp, 0, pos, sourceBufferLength)
+    return fn(tmp, 0, le)
   end
 
   return fn(sourceBuffer, pos, le)
@@ -321,16 +328,21 @@ buffer_proto.readFloatBE = function (this, pos, opts) return read_buf(this, pos,
 buffer_proto.readDoubleLE = function (this, pos, opts) return read_buf(this, pos, opts, 8, tm.buffer_read_double, 1); end
 buffer_proto.readDoubleBE = function (this, pos, opts) return read_buf(this, pos, opts, 8, tm.buffer_read_double, 0); end
 
-function write_buf (this, value, pos, opts, size, fn, le)
+function write_buf (this, value, pos, no_assert, size, fn, le)
   local sourceBuffer = getmetatable(this).buffer
   local sourceBufferLength = getmetatable(this).bufferlen
   pos = tonumber(pos)
 
-  if not (pos >= 0 and (pos) <= sourceBufferLength - size) then
-    if opts and (opts.noAssert or type(opts.assert) == 'boolean' and opts.assert == false) then
-      return nil
+  if not (pos >= 0 and pos <= sourceBufferLength - size) then
+    if not no_assert then
+      error('RangeError: Trying to access beyond buffer length')
     end
-    error('RangeError: Trying to access beyond buffer length')
+
+    local tmp = tm.buffer_create(4)
+    tm.buffer_fill(tmp, 0, 0, 4)
+    fn(tmp, 0, value, le)
+    tm.buffer_copy(tmp, sourceBuffer, pos, 0, sourceBufferLength - pos)
+    return
   end
 
   return fn(sourceBuffer, pos, value, le)

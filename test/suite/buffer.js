@@ -68,8 +68,9 @@ ok(!!e, 'error on buffer copy to non-buffer target')
 
 a = new Buffer([0x03, 0xab, 0x23, 0x42])
 for (var i = 0, arr = []; i < a.length + 1; i++) {
-	arr.push(a.readUInt8(i, {assert: false}))
+	arr.push(a.readUInt8(i, true))
 }
+console.log('#', arr);
 ok(arreq(arr, [0x03, 0xab, 0x23, 0x42, undefined]), 'readUInt8 and assert work')
 
 ok(a.readUInt8(0) == 0x3, 'readUInt8')
