@@ -144,9 +144,27 @@ function unlinkSync (pathname)
 }
 
 
+function existsSync (pathname, data)
+{
+  if (!Buffer.isBuffer(data)) {
+    data = new Buffer(String(data));
+  }
+
+  var _ = tm.fs_open(pathname, tm.RDONLY)
+    , fd = _[0]
+    , err = _[1];
+
+  if (fd) {
+    tm.fs_close(fd);
+  }
+  return !err && fd != undefined;
+}
+
+
 exports.readFile = readFile;
 exports.readFileSync = readFileSync;
 exports.readdir = readdir;
 exports.readdirSync = readdirSync;
 exports.writeFileSync = writeFileSync;
 exports.unlinkSync = unlinkSync;
+exports.existsSync = existsSync;
