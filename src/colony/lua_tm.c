@@ -666,6 +666,16 @@ static int l_tm_fs_seek (lua_State* L)
 }
 
 
+static int l_tm_fs_truncate (lua_State* L)
+{
+  tm_fs_t* fd = (tm_fs_t*) lua_touserdata(L, 1);
+
+  int ret = tm_fs_truncate(fd);
+  lua_pushnumber(L, ret);
+  return 1;
+}
+
+
 static int l_tm_fs_length (lua_State* L)
 {
   tm_fs_t* fd = (tm_fs_t*) lua_touserdata(L, 1);
@@ -857,6 +867,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "fs_destroy", l_tm_fs_destroy },
     { "fs_rename", l_tm_fs_rename },
     { "fs_seek", l_tm_fs_seek },
+    { "fs_truncate", l_tm_fs_truncate },
     { "fs_length", l_tm_fs_length },
 
     { "fs_dir_open", l_tm_fs_dir_open },

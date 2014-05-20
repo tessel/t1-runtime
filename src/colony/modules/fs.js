@@ -166,6 +166,20 @@ function renameSync (oldname, newname)
 }
 
 
+function truncateSync (pathname)
+{
+  var _ = tm.fs_open(pathname, tm.OPEN_ALWAYS | tm.WRONLY, 0644)
+    , fd = _[0]
+    , err = _[1];
+  if (err || fd == undefined) {
+    throw new Error('ENOENT: Could not open file ' + pathname);
+  }
+
+  var ret = tm.fs_truncate(fd);
+  tm.fs_close(fd);
+}
+
+
 function unlinkSync (pathname)
 {
   var err = tm.fs_destroy(pathname);
@@ -199,5 +213,6 @@ exports.readdirSync = readdirSync;
 exports.writeFileSync = writeFileSync;
 exports.appendFileSync = appendFileSync;
 exports.renameSync = renameSync;
+exports.truncateSync = truncateSync;
 exports.unlinkSync = unlinkSync;
 exports.existsSync = existsSync;

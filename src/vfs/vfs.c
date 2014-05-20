@@ -291,17 +291,29 @@ int tm_fs_readable (tm_fs_file_handle* fd) {
 	if (!fd->ent) return 0;
 		switch (fd->ent->type) {
 		case VFS_TYPE_RAW_FILE:
-			return fd->position < fd->ent->file.length;
+			return 1;
 		default:
 			return 0;
 	}
 }
 
-unsigned tm_fs_seek(tm_fs_file_handle* fd, unsigned position) {
+int tm_fs_seek(tm_fs_file_handle* fd, unsigned position) {
 	if (!fd->ent) return 0;
 	switch (fd->ent->type) {
 		case VFS_TYPE_RAW_FILE:
 			fd->position = (position > fd->ent->file.length) ? fd->ent->file.length : position;
+			return fd->position;
+		default:
+			return 0;
+	}
+}
+
+int tm_fs_truncate(tm_fs_file_handle* fd) {
+	if (!fd->ent) return 0;
+	switch (fd->ent->type) {
+		case VFS_TYPE_RAW_FILE:
+			fd->ent->file.data = realloc(fd->ent->file.data, fd->position);
+			fd->ent->file.length = fd->position;
 			return fd->position;
 		default:
 			return 0;

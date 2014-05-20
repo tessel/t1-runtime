@@ -90,6 +90,15 @@ int tm_fs_rename (const char* oldname, const char* newname)
 }
 
 
+// truncate to current cursor in file
+int tm_fs_truncate (tm_fs_t* fd)
+{
+  size_t length = lseek(*fd, 0, SEEK_CUR);
+  int ret = ftruncate(*fd, length);
+  return ret < 0 ? errno : length;
+}
+
+
 int tm_fs_dir_create (const char *pathname)
 {
   return mkdir(pathname, 0755) < 0 ? errno : 0;
