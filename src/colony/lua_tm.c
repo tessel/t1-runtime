@@ -551,6 +551,7 @@ static int l_tm_fs_open (lua_State* L)
     lua_pushnil(L);
   }
   lua_pushnumber(L, ret);
+  lua_insert(L, -2);
   return 2;
 }
 
@@ -581,6 +582,8 @@ static int l_tm_fs_read (lua_State* L)
   }
 
   lua_pushnumber(L, ret);
+  lua_insert(L, -2);
+
   free(buf);
   return 2;
 }
@@ -614,6 +617,7 @@ static int l_tm_fs_dir_open (lua_State* L)
     lua_pushnil(L);
   }
   lua_pushnumber(L, ret);
+  lua_insert(L, -2);
   return 2;
 }
 
@@ -629,6 +633,7 @@ static int l_tm_fs_dir_read (lua_State* L)
     lua_pushstring(L, pathname == NULL ? "" : pathname);
   }
   lua_pushnumber(L, ret);
+  lua_insert(L, -2);
   return 2;
 }
 
