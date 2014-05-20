@@ -66,6 +66,23 @@ int tm_fs_destroy (const char *pathname)
 }
 
 
+ssize_t tm_fs_seek (tm_fs_t* fd, size_t position)
+{
+  off_t ret = lseek(*fd, position, SEEK_SET);
+  return (ssize_t) ret;
+}
+
+
+ssize_t tm_fs_length (tm_fs_t* fd)
+{
+  off_t before = lseek(*fd, 0, SEEK_CUR);
+  lseek(*fd, 0, SEEK_END);
+  off_t length = lseek(*fd, 0, SEEK_CUR);
+  lseek(*fd, before, SEEK_SET);
+  return (ssize_t) length;
+}
+
+
 int tm_fs_dir_create (const char *pathname)
 {
   return mkdir(pathname, 0755) < 0 ? errno : 0;

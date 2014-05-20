@@ -639,6 +639,27 @@ static int l_tm_fs_destroy (lua_State* L)
 }
 
 
+static int l_tm_fs_seek (lua_State* L)
+{
+  tm_fs_t* fd = (tm_fs_t*) lua_touserdata(L, 1);
+  size_t position = (size_t) lua_tonumber(L, 2);
+
+  ssize_t length = tm_fs_seek(fd, position);
+  lua_pushnumber(L, length);
+  return 1;
+}
+
+
+static int l_tm_fs_length (lua_State* L)
+{
+  tm_fs_t* fd = (tm_fs_t*) lua_touserdata(L, 1);
+
+  ssize_t length = tm_fs_length(fd);
+  lua_pushnumber(L, length);
+  return 1;
+}
+
+
 static int l_tm_fs_dir_open (lua_State* L)
 {
   const char *pathname = (const char *) lua_tostring(L, 1);
@@ -818,6 +839,9 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "fs_readable", l_tm_fs_readable },
     { "fs_write", l_tm_fs_write },
     { "fs_destroy", l_tm_fs_destroy },
+    { "fs_seek", l_tm_fs_seek },
+    { "fs_length", l_tm_fs_length },
+
     { "fs_dir_open", l_tm_fs_dir_open },
     { "fs_dir_read", l_tm_fs_dir_read },
     { "fs_dir_close", l_tm_fs_dir_close },

@@ -187,7 +187,7 @@ enum {
   TM_OPEN_EXISTING = 0,
   TM_OPEN_ALWAYS = O_CREAT,
   TM_CREATE_NEW = O_CREAT | O_EXCL,
-  TM_CREATE_ALWAYS = O_TRUNC,
+  TM_CREATE_ALWAYS = O_CREAT | O_TRUNC,
 
   TM_EXIST = EEXIST
 };
@@ -203,6 +203,8 @@ int tm_fs_read (tm_fs_t* fd, uint8_t *buf, size_t size, size_t* read);
 int tm_fs_readable (tm_fs_t* fd);
 int tm_fs_write (tm_fs_t* fd, const uint8_t *buf, size_t size, size_t* read);
 int tm_fs_destroy (const char *pathname);
+ssize_t tm_fs_seek (tm_fs_t* fd, size_t position);
+ssize_t tm_fs_length (tm_fs_t* fd);
 
 int tm_fs_dir_create (const char *pathname);
 int tm_fs_dir_open (tm_fs_dir_t* dir, const char *pathname);

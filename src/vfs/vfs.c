@@ -297,6 +297,17 @@ int tm_fs_readable (tm_fs_file_handle* fd) {
 	}
 }
 
+unsigned tm_fs_seek(tm_fs_file_handle* fd, unsigned position) {
+	if (!fd->ent) return 0;
+	switch (fd->ent->type) {
+		case VFS_TYPE_RAW_FILE:
+			fd->position = (position > fd->ent->file.length) ? fd->ent->file.length : position;
+			return fd->position;
+		default:
+			return 0;
+	}
+}
+
 unsigned tm_fs_length(tm_fs_file_handle* fd) {
 	if (!fd->ent) return 0;
 	switch (fd->ent->type) {

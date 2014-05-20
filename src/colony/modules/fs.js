@@ -123,12 +123,34 @@ function writeFileSync (pathname, data)
     data = new Buffer(String(data));
   }
 
-  var _ = tm.fs_open(pathname, tm.OPEN_ALWAYS | tm.WRONLY, 0644)
+  var _ = tm.fs_open(pathname, tm.CREATE_ALWAYS | tm.WRONLY, 0644)
     , fd = _[0]
     , err = _[1];
   if (err || fd == undefined) {
     throw 'ENOENT: Could not open file ' + pathname;
   }
+
+  var ret = tm.fs_write(fd, data, data.length);
+  tm.fs_close(fd);
+}
+
+
+function appendFileSync (pathname, data)
+{
+  if (!Buffer.isBuffer(data)) {
+    data = new Buffer(String(data));
+  }
+
+  var _ = tm.fs_open(pathname, tm.OPEN_EXISTING | tm.APPEND | tm.WRONLY, 0644)
+    , fd = _[0]
+    , err = _[1];
+  if (err || fd == undefined) {
+    throw 'ENOENT: Could not open file ' + pathname;
+  }
+
+  // SEEK TO END OF FILE
+  var len = tm.fs_length(fd)
+  tm.fs_seek(fd, tm.fs_length(fd));
 
   var ret = tm.fs_write(fd, data, data.length);
   tm.fs_close(fd);
@@ -166,5 +188,6 @@ exports.readFileSync = readFileSync;
 exports.readdir = readdir;
 exports.readdirSync = readdirSync;
 exports.writeFileSync = writeFileSync;
+exports.appendFileSync = appendFileSync;
 exports.unlinkSync = unlinkSync;
 exports.existsSync = existsSync;
