@@ -118,6 +118,7 @@
             'src/colony/modules/repl.js',
             'src/colony/modules/stream.js',
             'src/colony/modules/string_decoder.js',
+            'src/colony/modules/tls.js',
             'src/colony/modules/tty.js',
             'src/colony/modules/url.js',
             'src/colony/modules/util.js',
