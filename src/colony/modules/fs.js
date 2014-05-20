@@ -145,7 +145,7 @@ function appendFileSync (pathname, data)
     , fd = _[0]
     , err = _[1];
   if (err || fd == undefined) {
-    throw 'ENOENT: Could not open file ' + pathname;
+    throw new Error('ENOENT: Could not open file ' + pathname);
   }
 
   // SEEK TO END OF FILE
@@ -154,6 +154,15 @@ function appendFileSync (pathname, data)
 
   var ret = tm.fs_write(fd, data, data.length);
   tm.fs_close(fd);
+}
+
+
+function renameSync (oldname, newname)
+{
+  var err = tm.fs_rename(oldname, newname);
+  if (err) {
+    throw new Error('ENOENT: Could not rename file ' + oldname);
+  }
 }
 
 
@@ -189,5 +198,6 @@ exports.readdir = readdir;
 exports.readdirSync = readdirSync;
 exports.writeFileSync = writeFileSync;
 exports.appendFileSync = appendFileSync;
+exports.renameSync = renameSync;
 exports.unlinkSync = unlinkSync;
 exports.existsSync = existsSync;

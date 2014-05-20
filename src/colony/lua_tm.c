@@ -639,6 +639,22 @@ static int l_tm_fs_destroy (lua_State* L)
 }
 
 
+static int l_tm_fs_rename (lua_State* L)
+{
+  const char *oldname = (const char *) lua_tostring(L, 1);
+  const char *newname = (const char *) lua_tostring(L, 2);
+
+  #ifdef TM_FS_vfs
+  int ret = tm_fs_rename(tm_fs_root, oldname, newname);
+  #else
+  int ret = tm_fs_rename(oldname, newname);
+  #endif
+
+  lua_pushnumber(L, ret);
+  return 1;
+}
+
+
 static int l_tm_fs_seek (lua_State* L)
 {
   tm_fs_t* fd = (tm_fs_t*) lua_touserdata(L, 1);
@@ -839,6 +855,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "fs_readable", l_tm_fs_readable },
     { "fs_write", l_tm_fs_write },
     { "fs_destroy", l_tm_fs_destroy },
+    { "fs_rename", l_tm_fs_rename },
     { "fs_seek", l_tm_fs_seek },
     { "fs_length", l_tm_fs_length },
 

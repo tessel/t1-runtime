@@ -83,6 +83,13 @@ ssize_t tm_fs_length (tm_fs_t* fd)
 }
 
 
+int tm_fs_rename (const char* oldname, const char* newname)
+{
+  int ret = rename(oldname, newname);
+  return ret < 0 ? errno : 0;
+}
+
+
 int tm_fs_dir_create (const char *pathname)
 {
   return mkdir(pathname, 0755) < 0 ? errno : 0;

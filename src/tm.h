@@ -206,6 +206,8 @@ int tm_fs_destroy (const char *pathname);
 ssize_t tm_fs_seek (tm_fs_t* fd, size_t position);
 ssize_t tm_fs_length (tm_fs_t* fd);
 
+int tm_fs_rename (const char* oldname, const char* newname);
+
 int tm_fs_dir_create (const char *pathname);
 int tm_fs_dir_open (tm_fs_dir_t* dir, const char *pathname);
 int tm_fs_dir_read (tm_fs_dir_t* dir, const char **strptr);

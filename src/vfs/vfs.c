@@ -328,6 +328,40 @@ const uint8_t* tm_fs_contents(tm_fs_file_handle* fd) {
 	}
 }
 
+static const char* tm_fs_basename (const char* pathname)
+{
+	return strrchr(pathname, '/') + 1;
+}
+
+int tm_fs_rename (tm_fs_ent* root, const char* oldname, const char* newname)
+{
+	int r = 0;
+
+	// Lookup old file
+	tm_fs_ent* oldent = 0;
+	r = tm_fs_lookup(root, oldname, &oldent); 
+	if (r != 0) {
+		return r;
+	}
+
+	// Lookup and possibly new file location.
+	tm_fs_ent* newdir = 0;
+	r = tm_fs_lookup(root, newname, &newdir);
+	if (r == 0) {
+		tm_fs_ent* overwritten = newdir;
+		newdir = overwritten->parent;
+		tm_fs_destroy(overwritten);
+	} else if (r == -ENOENT && newdir != 0) {
+		// noop, folder exists
+	} else {
+		return -ENOENT;
+	}
+
+	tm_fs_dir_remove(oldent->parent, oldent);
+	tm_fs_dir_append(newdir, tm_fs_basename(newname), oldent);
+	return 0;
+}
+
 int tm_fs_dir_open(tm_fs_dir_handle* out, tm_fs_ent* root, const char* pathname) {
 	tm_fs_ent* ent = 0;
 	int r = tm_fs_lookup(root, pathname, &ent);

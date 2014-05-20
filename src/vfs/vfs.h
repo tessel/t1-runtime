@@ -96,6 +96,7 @@ int tm_fs_dir_open(tm_fs_file_handle* out, tm_fs_ent* root, const char* pathname
 int tm_fs_dir_close(tm_fs_file_handle* fd);
 int tm_fs_dir_read(tm_fs_file_handle* fd, const char** out);
 
+int tm_fs_rename (tm_fs_ent* root, const char* oldname, const char* newname);
 unsigned tm_fs_seek(tm_fs_file_handle* fd, unsigned position);
 unsigned tm_fs_length(tm_fs_file_handle* fd);
 const uint8_t* tm_fs_contents(tm_fs_file_handle* fd);
