@@ -62,11 +62,31 @@ int tm_fs_dir_append(tm_fs_ent* dir, const char* name, tm_fs_ent* ent) {
 	return 0;
 }
 
+static int tm_fs_dir_remove(tm_fs_ent* dir, tm_fs_ent* file) {
+	if (dir->type != VFS_TYPE_DIR) {
+		return -ENOTDIR;
+	}
+
+	dir->dir.num_entries -= 1;
+	size_t i = 0;
+	for (tm_fs_direntry* entry = dir->dir.entries; i < dir->dir.num_entries; i++) {
+		if (entry[i].ent == file) {
+			memcpy(&entry[i], &entry[i+1], (dir->dir.num_entries - 1)*sizeof(tm_fs_direntry));
+			dir->dir.entries = realloc(dir->dir.entries, dir->dir.num_entries*sizeof(tm_fs_direntry));
+			return 0;
+		}
+	}
+	return -ENOENT;
+}
+
 void tm_fs_destroy(tm_fs_ent* /* ~ */ ent) {
 	switch (ent->type) {
 		case VFS_TYPE_RAW_FILE:
 			if (ent->file.data_owned) {
 				free(ent->file.data);
+			}
+			if (ent->parent) {
+				tm_fs_dir_remove(ent->parent, ent);
 			}
 			break;
 		case VFS_TYPE_DIR:

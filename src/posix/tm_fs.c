@@ -17,9 +17,9 @@ void tm_fs_init (void *data)
 }
 
 
-int tm_fs_open (tm_fs_t* fd, const char *pathname, uint32_t flags)
+int tm_fs_open (tm_fs_t* fd, const char *pathname, uint32_t flags, uint32_t mode)
 {
-  *fd = open(pathname, flags);
+  *fd = open(pathname, flags, mode);
   return *fd < 0 ? errno : 0;
 }
 
@@ -38,12 +38,13 @@ int tm_fs_read (tm_fs_t* fd, uint8_t *buf, size_t size, size_t* nread)
 }
 
 
-int tm_fs_write (tm_fs_t* fd, uint8_t *buf, size_t size, size_t* nread)
+int tm_fs_write (tm_fs_t* fd, const uint8_t *buf, size_t size, size_t* nread)
 {
   ssize_t ret = write(*fd, buf, size);
   *nread = ret > 0 ? ret : 0;
   return ret < 0 ? errno : 0;
 }
+
 
 // returns > 0 if readable
 int tm_fs_readable (tm_fs_t* fd)
@@ -56,6 +57,14 @@ int tm_fs_readable (tm_fs_t* fd)
   }
   return 0;
 }
+
+
+int tm_fs_destroy (const char *pathname)
+{
+  ssize_t ret = unlink(pathname);
+  return ret < 0 ? errno : 0;
+}
+
 
 int tm_fs_dir_create (const char *pathname)
 {

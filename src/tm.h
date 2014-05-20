@@ -197,11 +197,12 @@ typedef DIR* tm_fs_dir_t;
 
 void tm_fs_init ();
 
-int tm_fs_open (tm_fs_t* fd, const char *pathname, uint32_t flags);
+int tm_fs_open (tm_fs_t* fd, const char *pathname, uint32_t flags, uint32_t mode);
 int tm_fs_close (tm_fs_t* fd);
 int tm_fs_read (tm_fs_t* fd, uint8_t *buf, size_t size, size_t* read);
 int tm_fs_readable (tm_fs_t* fd);
-int tm_fs_write (tm_fs_t* fd, uint8_t *buf, size_t size, size_t* read);
+int tm_fs_write (tm_fs_t* fd, const uint8_t *buf, size_t size, size_t* read);
+int tm_fs_destroy (const char *pathname);
 
 int tm_fs_dir_create (const char *pathname);
 int tm_fs_dir_open (tm_fs_dir_t* dir, const char *pathname);

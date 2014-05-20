@@ -114,10 +114,39 @@ function readFile (pathname, options, next)
   setImmediate(function () {
     next(null, exports.readFileSync(pathname, options));
   });
-};
+}
+
+
+function writeFileSync (pathname, data)
+{
+  if (!Buffer.isBuffer(data)) {
+    data = new Buffer(String(data));
+  }
+
+  var _ = tm.fs_open(pathname, tm.OPEN_ALWAYS | tm.WRONLY, 0644)
+    , fd = _[0]
+    , err = _[1];
+  if (err || fd == undefined) {
+    throw 'ENOENT: Could not open file ' + pathname;
+  }
+
+  var ret = tm.fs_write(fd, data, data.length);
+  tm.fs_close(fd);
+}
+
+
+function unlinkSync (pathname)
+{
+  var err = tm.fs_destroy(pathname);
+  if (err) {
+    throw 'ENOENT: Could not unlink file ' + pathname;
+  }
+}
 
 
 exports.readFile = readFile;
 exports.readFileSync = readFileSync;
 exports.readdir = readdir;
 exports.readdirSync = readdirSync;
+exports.writeFileSync = writeFileSync;
+exports.unlinkSync = unlinkSync;
