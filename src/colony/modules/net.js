@@ -203,8 +203,11 @@ TCPServer.prototype.listen = function (port, ip) {
   }
 
   setInterval(function () {
-    var client;
-    if ((client = tm.tcp_accept(self.socket)) >= 0) {
+    var _ = tm.tcp_accept(self.socket)
+      , client = _[0]
+      , err = _[1];
+
+    if (!err && client >= 0) {
       var clientsocket = new TCPSocket(client);
       clientsocket.__listen();
       self.emit('socket', clientsocket);
