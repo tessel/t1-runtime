@@ -78,3 +78,14 @@ const uint8_t* colony_tobuffer (lua_State* L, int index, size_t* buf_len)
 
   return buf;
 }
+
+uint8_t* colony_tobuffer_dynamic (lua_State* L, int index, size_t* buf_len)
+{
+  uint8_t* buf = NULL;
+  buf = (uint8_t *) colony_getbufferptr(L, index, buf_len);
+  if (buf == NULL) {
+    buf = (uint8_t *) lua_tolstring(L, index, buf_len);
+  }
+
+  return buf;
+}

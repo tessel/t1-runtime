@@ -25,3 +25,4 @@ void colony_createarray (lua_State* L, int size);
 void colony_createobj (lua_State* L, int size, int proto);
 uint8_t* colony_createbuffer (lua_State* L, int size);
 const uint8_t* colony_tobuffer (lua_State* L, int index, size_t* buf_len);
+uint8_t* colony_tobuffer_dynamic (lua_State* L, int index, size_t* buf_len);
