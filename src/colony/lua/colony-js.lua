@@ -359,7 +359,7 @@ end
 arr_proto.pop = function (this)
   local _val = nil
   if this.length == 1 then
-    local _val = this[0]
+    _val = this[0]
     this[0] = nil
   else
     _val = table.remove(this, this.length-1)
