@@ -1,9 +1,11 @@
 #include "tm.h"
 
+#include <stdio.h>
 #include <poll.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <ftw.h>
 #include <unistd.h>
 #include <dirent.h>
 
@@ -77,11 +79,6 @@ int tm_fs_readable (tm_fs_t* fd)
   return 0;
 }
 
-#define _XOPEN_SOURCE 500
-#include <stdio.h>
-#include <ftw.h>
-#include <unistd.h>
-
 static int unlink_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
 {
     int rv = remove(fpath);
@@ -132,6 +129,8 @@ ssize_t tm_fs_length (tm_fs_t* fd)
   struct stat st_buf;
 
   status = fstat(*fd, &st_buf);
+
+  (void) status;
   return (ssize_t) st_buf.st_size;
 }
 
@@ -148,7 +147,7 @@ int tm_fs_truncate (tm_fs_t* fd)
 {
   size_t length = lseek(*fd, 0, SEEK_CUR);
   int ret = ftruncate(*fd, length);
-  return ret < 0 ? errno : length;
+  return ret < 0 ? errno : (int) length;
 }
 
 

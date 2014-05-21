@@ -1,6 +1,24 @@
 var tm = process.binding('tm');
 
 
+function asynchronize (fn)
+{
+  return function () {
+    var args = Array.prototype.slice.apply(arguments);
+    var callback = function () { };
+    if (typeof args[args.length - 1] == 'function') {
+      callback = args.pop();
+    }
+    setImmediate(function () {
+      try {
+        callback(null, fn.apply(this, args));
+      } catch (err) {
+        callback(err);
+      }
+    })
+  }
+}
+
 function _isFile (pathname)
 {
   return tm.fs_type(pathname) == tm.FS_TYPE_FILE;
@@ -80,33 +98,6 @@ function readFileSync (pathname, options)
 };
 
 
-exports.readdirSync = function (pathname) {
-  var _ = tm.fs_dir_open(pathname)
-    , dir = _[0]
-    , err = _[1];
-  if (err) {
-    throw 'ENOENT: Could not open directory ' + pathname;
-  }
-
-  var entries = [];
-  while (true) {
-    var _ = tm.fs_dir_read(dir)
-      , ent = _[0]
-      , err = _[1];
-    // todo throw on err
-    if (err || ent == undefined) {
-      break;
-    }
-
-    if (ent != '.' && ent != '..') {
-      entries.push(ent);
-    }
-  }
-  tm.fs_dir_close(dir);
-  return entries;
-};
-
-
 function readdirSync (pathname)
 {
   var _ = tm.fs_dir_open(pathname)
@@ -133,27 +124,6 @@ function readdirSync (pathname)
   tm.fs_dir_close(dir);
   return entries;
 };
-
-
-function readdir (pathname, next)
-{
-  setImmediate(function () {
-    next(null, exports.readdirSync(pathname));
-  })
-}
-
-
-function readFile (pathname, options, next)
-{
-  if (typeof options == 'function') {
-    next = options;
-    options = {};
-  }
-
-  setImmediate(function () {
-    next(null, exports.readFileSync(pathname, options));
-  });
-}
 
 
 function writeFileSync (pathname, data)
@@ -273,6 +243,7 @@ function existsSync (pathname, data)
   return !err && fd != undefined;
 }
 
+
 function Stats () {
 }
 
@@ -303,18 +274,26 @@ function statSync (pathname) {
   stats.uid = 0;
   stats.gid = 0;
   stats.rdev = 0;
-  stats.size = 0; //tm.fs_length();
+  stats.size = 0;
   stats.blksize = 0;
   stats.blocks = 0;
   stats.atime = new Date();
   stats.mtime = new Date();
   stats.ctime = new Date();
+
+  if (stats._isFile) {
+    var _ = tm.fs_open(pathname, tm.OPEN_EXISTING), fd = _[0], err = _[1];
+    if (!err) {
+      stats.size = tm.fs_length(fd);
+      tm.fs_close(fd);
+    }
+  }
+
+  return stats;
 }
 
 
-exports.readFile = readFile;
 exports.readFileSync = readFileSync;
-exports.readdir = readdir;
 exports.readdirSync = readdirSync;
 exports.writeFileSync = writeFileSync;
 exports.appendFileSync = appendFileSync;
@@ -324,3 +303,20 @@ exports.unlinkSync = unlinkSync;
 exports.mkdirSync = mkdirSync;
 exports.rmdirSync = rmdirSync;
 exports.existsSync = existsSync;
+exports.statSync = statSync;
+exports.lstatSync = lstatSync;
+
+exports.readFile = asynchronize(readFileSync);
+exports.readdir = asynchronize(readdirSync);
+exports.writeFile = asynchronize(writeFileSync);
+exports.appendFile = asynchronize(appendFileSync);
+exports.rename = asynchronize(renameSync);
+exports.truncate = asynchronize(truncateSync);
+exports.unlink = asynchronize(unlinkSync);
+exports.mkdir = asynchronize(mkdirSync);
+exports.rmdir = asynchronize(rmdirSync);
+exports.exists = asynchronize(existsSync);
+exports.stat = asynchronize(statSync);
+exports.lstat = asynchronize(lstatSync);
+
+exports.Stats = Stats;
