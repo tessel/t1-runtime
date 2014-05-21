@@ -309,7 +309,16 @@ HTTPOutgoingRequest.prototype.end = function () {
  * Public API
  */
 
+function ensureSecure (secure) {
+  if (secure) {
+    if (this._secure && !process.binding('tm').ssl_context_create) {
+      throw new Error("SSL/TLS is not supported in this firmware build.");
+    }
+  }
+}
+
 exports.request = function (opts, onresponse) {
+  ensureSecure(this._secure);
   var host = opts.hostname || opts.host || 'localhost';
   var req = new HTTPOutgoingRequest(opts.port || (this._secure ? 443 : 80), host, opts.path || '', opts.method || 'GET', opts.headers || {}, this._secure);
   onresponse && req.on('response', onresponse);
