@@ -1,6 +1,45 @@
 var tm = process.binding('tm');
 
 
+function _isFile (pathname)
+{
+  return tm.fs_type(pathname) == tm.FS_TYPE_FILE;
+}
+
+function _isDirectory (pathname)
+{
+  return tm.fs_type(pathname) == tm.FS_TYPE_DIR;
+}
+
+function _isDirEmpty (pathname)
+{
+  var _ = tm.fs_dir_open(pathname)
+    , dir = _[0]
+    , err = _[1];
+  if (err) {
+    return 0;
+  }
+
+  while (true) {
+    var _ = tm.fs_dir_read(dir)
+      , ent = _[0]
+      , err = _[1];
+
+    if (err || !ent) {
+      return true;
+    }
+    if (ent == '.' || ent == '..') {
+      continue;
+    }
+
+    if (!err && ent != undefined) {
+      return false;
+    }
+    return true;
+  }
+}
+
+
 function readFileSync (pathname, options)
 {
   var _ = tm.fs_open(pathname, tm.OPEN_EXISTING | tm.RDONLY)
@@ -180,18 +219,6 @@ function truncateSync (pathname)
 }
 
 
-function _isFile (pathname)
-{
-  return tm.fs_type(pathname) == tm.FS_TYPE_FILE;
-}
-
-
-function _isDirectory (pathname)
-{
-  return tm.fs_type(pathname) == tm.FS_TYPE_DIR;
-}
-
-
 function unlinkSync (pathname)
 {
   if (!_isFile(pathname)) {
@@ -219,6 +246,9 @@ function rmdirSync (pathname)
   if (!_isDirectory(pathname)) {
     throw new Error('EPERM: Cannot rmdir non-dir ' + pathname)
   }
+  if (!_isDirEmpty(pathname)) {
+    throw new Error('ENOENT: Cannot remove non-empty directory ' + pathname);
+  }
   
   var err = tm.fs_destroy(pathname);
   if (err) {
@@ -241,6 +271,44 @@ function existsSync (pathname, data)
     tm.fs_close(fd);
   }
   return !err && fd != undefined;
+}
+
+function Stats () {
+}
+
+Stats.prototype.isFile = function () { return this._isFile; }
+Stats.prototype.isDirectory = function () { return this._isDirectory; }
+Stats.prototype.isBlockDevice = function () { return this._isBlockDevice; }
+Stats.prototype.isCharacterDevice = function () { return this._isCharacterDevice; }
+Stats.prototype.isSymbolicLink = function () { return this._isSymbolicLink; }
+Stats.prototype.isFIFO = function () { return this._isFIFO; }
+Stats.prototype.isSocket = function () { return this._isSocket; }
+
+function statSync (pathname) {
+  var stats = new Stats;
+
+  stats._isFile = _isFile(pathname);
+  stats._isDirectory = _isDirectory(pathname);
+  stats._isBlockDevice = 0;
+  stats._isCharacterDevice = 0;
+  stats._isSymbolicLink = 0;
+  stats._isFIFO = 0;
+  stats._isSocket = 0;
+
+  // unix fakery
+  stats.dev = 0;
+  stats.ino = 0;
+  stats.mode = 0;
+  stats.nlink = 0;
+  stats.uid = 0;
+  stats.gid = 0;
+  stats.rdev = 0;
+  stats.size = 0; //tm.fs_length();
+  stats.blksize = 0;
+  stats.blocks = 0;
+  stats.atime = new Date();
+  stats.mtime = new Date();
+  stats.ctime = new Date();
 }
 
 

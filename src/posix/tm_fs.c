@@ -104,7 +104,7 @@ int tm_fs_destroy (const char *pathname)
   struct stat st_buf;
 
   status = stat(pathname, &st_buf);
-  if (status > 0) {
+  if (status != 0) {
     return 0;
   }
 
@@ -128,11 +128,11 @@ ssize_t tm_fs_seek (tm_fs_t* fd, size_t position)
 
 ssize_t tm_fs_length (tm_fs_t* fd)
 {
-  off_t before = lseek(*fd, 0, SEEK_CUR);
-  lseek(*fd, 0, SEEK_END);
-  off_t length = lseek(*fd, 0, SEEK_CUR);
-  lseek(*fd, before, SEEK_SET);
-  return (ssize_t) length;
+  int status;
+  struct stat st_buf;
+
+  status = fstat(*fd, &st_buf);
+  return (ssize_t) st_buf.st_size;
 }
 
 
