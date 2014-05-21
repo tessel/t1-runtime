@@ -451,8 +451,18 @@ arr_proto.sort = function (ths)
   return ths
 end
 
-arr_proto.join = function (ths, str)
-  local _r = ""
+arr_proto.join = function (ths, ...)
+  local args = table.pack(...)
+  local str = ','
+  if args.length >= 1 then
+    if args[1] == nil then
+      str = 'null'
+    else
+      str = tostring(args[1]) or 'null'
+    end
+  end
+
+  local _r = ''
   for i=0,ths.length-1 do
     if not ths[i] or ths[i] == _null then _r = _r .. str
     else _r = _r .. ths[i] .. str end
