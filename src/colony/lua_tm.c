@@ -49,7 +49,7 @@ static int l_tm_log(lua_State* L)
 {
   const char level = lua_tonumber(L, 1);
   size_t buf_len = 0;
-  const char* buf = (const char*) colony_tobuffer(L, 2, &buf_len);
+  const char* buf = (const char*) colony_toconstdata(L, 2, &buf_len);
   tm_log(level, buf, buf_len);
   return 0;
 }
@@ -95,7 +95,7 @@ static int l_tm_udp_send (lua_State* L)
   int ip3 = (int) lua_tonumber(L, 5);
   int port = (int) lua_tonumber(L, 6);
   size_t len;
-  const uint8_t* buf = colony_tobuffer(L, 7, &len);
+  const uint8_t* buf = colony_toconstdata(L, 7, &len);
 
   tm_udp_send(socket, ip0, ip1, ip2, ip3, port, buf, len);
   return 0;
@@ -170,7 +170,7 @@ static int l_tm_tcp_write (lua_State* L)
 {
   tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
   size_t len;
-  const uint8_t* buf = colony_tobuffer(L, 2, &len);
+  const uint8_t* buf = colony_toconstdata(L, 2, &len);
 
   tm_tcp_write(socket, buf, len);
   return 0;
