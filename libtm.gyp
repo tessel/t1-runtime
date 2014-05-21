@@ -307,6 +307,50 @@
     },
 
     {
+      "target_name": "fortuna",
+      "product_name": "fortuna",
+      "type": "static_library",
+      "defines": [
+        "C_H", 
+      ],
+      "cflags": [
+        "-fno-strict-aliasing",
+        "--include", "c_alt.h", # custom c defines
+        "--include", "strings.h", # strncasecmp implicit declaration
+      ],
+      "xcode_settings": {
+        "OTHER_CFLAGS": [
+          "--include", "c_alt.h", # custom c defines
+        ]
+      },
+      "sources": [
+        '<(fortuna_path)/src/fortuna.c',
+        '<(fortuna_path)/src/rijndael.c',
+        '<(fortuna_path)/src/sha2.c',
+        '<(fortuna_path)/src/px.c',
+        '<(fortuna_path)/src/random.c',
+        '<(fortuna_path)/src/internal.c',
+        '<(fortuna_path)/src/blf.c',
+        '<(fortuna_path)/src/sha1.c',
+        '<(fortuna_path)/src/md5.c',
+      ],
+      "include_dirs": [
+        '<(fortuna_path)/src/',
+        '<(fortuna_inc_path)/',
+      ],
+
+      'direct_dependent_settings': {
+        'include_dirs': [
+          '<(fortuna_path)/src/',
+          '<(fortuna_inc_path)/',
+        ],
+        "cflags": [
+          "--include", "stdint.h", # strncasecmp implicit declaration
+        ]
+      }
+    },
+
+    {
       "target_name": "utf8proc",
       "product_name": "utf8proc",
       "type": "static_library",
@@ -379,6 +423,7 @@
         'src/tm_buffer.c',
         'src/tm_itoa.c',
         'src/tm_log.c',
+        'src/tm_random.c',
       ],
       "include_dirs": [
         'src/',
@@ -389,6 +434,7 @@
         "hsregex",
         "yajl",
         "c-ares",
+        "fortuna",
         "dlmalloc",
         "utf8proc",
       ],

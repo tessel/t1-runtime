@@ -666,6 +666,23 @@ static int l_tm_itoa (lua_State* L)
   return 1;
 }
 
+/**
+ * Random
+ */
+
+static int l_tm_random_bytes (lua_State *L)
+{
+  uint8_t *a = (uint8_t *) lua_touserdata(L, 1);
+  size_t start = (size_t) lua_tonumber(L, 2);
+  size_t end = (size_t) lua_tonumber(L, 3);
+
+  size_t len = (end - start) > 0 ? end - start : 0;
+  size_t read = 0;
+  lua_pushnumber(L, tm_random_bytes(&a[start], len, &read));
+  lua_pushnumber(L, read);
+  return 2;
+}
+
 
 /**
  * Load Colony.
@@ -759,6 +776,9 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "fs_dir_open", l_tm_fs_dir_open },
     { "fs_dir_read", l_tm_fs_dir_read },
     { "fs_dir_close", l_tm_fs_dir_close },
+
+    // random
+    { "random_bytes", l_tm_random_bytes },
 
     // itoa
     { "itoa", l_tm_itoa },
