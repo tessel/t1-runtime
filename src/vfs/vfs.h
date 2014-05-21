@@ -6,14 +6,20 @@
 #include <string.h>
 #include <errno.h>
 
-struct tm_fs_ent;
 
 typedef enum {
-	VFS_TYPE_INVALID,
-	VFS_TYPE_RAW_FILE,
-	VFS_TYPE_DIR,
-	VFS_TYPE_FAT_MOUNT,
-} tm_fs_enttype;
+  TM_FS_TYPE_INVALID = 0,
+  TM_FS_TYPE_FILE,
+  TM_FS_TYPE_DIR,
+  TM_FS_TYPE_MOUNT_FAT,
+} tm_fs_type_t;
+
+struct tm_fs_ent;
+
+#define VFS_TYPE_INVALID TM_FS_TYPE_INVALID
+#define VFS_TYPE_RAW_FILE TM_FS_TYPE_FILE
+#define VFS_TYPE_DIR TM_FS_TYPE_DIR
+#define VFS_TYPE_MOUNT_FAT TM_FS_TYPE_MOUNT_FAT
 
 typedef struct tm_fs_direntry {
 	const char* name;
@@ -44,7 +50,7 @@ typedef struct tm_fs_file_handle {
 typedef tm_fs_file_handle tm_fs_dir_handle;
 
 typedef struct tm_fs_ent {
-	tm_fs_enttype type;
+	tm_fs_type_t type;
 	struct tm_fs_ent* parent;
 	union {
 		tm_fs_dir dir;
@@ -53,7 +59,7 @@ typedef struct tm_fs_ent {
 	};
 } tm_fs_ent;
 
-tm_fs_ent* /* ~ */ tm_fs_dir_create();
+tm_fs_ent* /* ~ */ tm_fs_dir_create_entry();
 void tm_fs_destroy(/* ~ */ tm_fs_ent* ent);
 
 tm_fs_ent* tm_fs_raw_file_create();
@@ -72,7 +78,7 @@ int tm_fs_lookup(tm_fs_ent* /*&mut 'fs*/ dir, const char* /* & */ path, tm_fs_en
 int tm_fs_mount_tar(tm_fs_ent* /*&mut*/ root, char* /* & */ path, uint8_t* /* &'fs */ tar, unsigned size);
 int tm_fs_mount_fat(tm_fs_ent* /*&mut*/ root, char* /* & */ path, unsigned fatfs_drivenum);
 
-int tm_fs_mkdir(tm_fs_ent* root, const char* path);
+int tm_fs_dir_create(tm_fs_ent* root, const char* path);
 int tm_fs_insert(tm_fs_ent* root, const char* path, tm_fs_ent* ent);
 
 #define TM_RDONLY           (1<<0)
@@ -85,6 +91,8 @@ int tm_fs_insert(tm_fs_ent* root, const char* path, tm_fs_ent* ent);
 #define TM_OPEN_ALWAYS      TM_CREAT
 #define TM_CREATE_NEW       (TM_CREAT | TM_EXCL)
 #define TM_CREATE_ALWAYS    (TM_CREAT | TM_TRUNC)
+
+int tm_fs_type (tm_fs_ent* root, const char* path);
 
 int tm_fs_open(tm_fs_file_handle* /* -> ~<'s> */ out, tm_fs_ent* /* &'s */ root, const char* /* & */ pathname, unsigned flags);
 int tm_fs_close(tm_fs_file_handle* /* move */ handle);

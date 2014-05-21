@@ -33,7 +33,7 @@ char* filename(const char* start) {
 	return str_range_copy(start, end);
 }
 
-tm_fs_ent* /* ~ */ tm_fs_dir_create() {
+tm_fs_ent* /* ~ */ tm_fs_dir_create_entry() {
 	tm_fs_ent* ent = malloc(sizeof(tm_fs_ent));
 	ent->type = VFS_TYPE_DIR;
 	ent->parent = 0;
@@ -82,14 +82,17 @@ static int tm_fs_dir_remove(tm_fs_ent* dir, tm_fs_ent* file) {
 void tm_fs_destroy(tm_fs_ent* /* ~ */ ent) {
 	switch (ent->type) {
 		case VFS_TYPE_RAW_FILE:
-			if (ent->file.data_owned) {
-				free(ent->file.data);
-			}
 			if (ent->parent) {
 				tm_fs_dir_remove(ent->parent, ent);
 			}
+			if (ent->file.data_owned) {
+				free(ent->file.data);
+			}
 			break;
 		case VFS_TYPE_DIR:
+			if (ent->parent) {
+				tm_fs_dir_remove(ent->parent, ent);
+			}
 			for (unsigned i=0; i<ent->dir.num_entries; i++) {
 				tm_fs_direntry* entry = &ent->dir.entries[i];
 				free((void*) entry->name);
@@ -97,7 +100,7 @@ void tm_fs_destroy(tm_fs_ent* /* ~ */ ent) {
 			}
 			free(ent->dir.entries);
 			break;
-		case VFS_TYPE_FAT_MOUNT:
+		case VFS_TYPE_MOUNT_FAT:
 			//TODO
 			break;
 		case VFS_TYPE_INVALID:
@@ -183,13 +186,13 @@ int tm_fs_lookup(tm_fs_ent* /*&mut 'fs*/ dir, const char* /* & */ path, tm_fs_en
 	}
 }
 
-int tm_fs_mkdir(tm_fs_ent* root, const char* path) {
+int tm_fs_dir_create(tm_fs_ent* root, const char* path) {
 	tm_fs_ent* ent = 0;
 	int r = tm_fs_lookup(root, path, &ent);
 
 	if (r == -ENOENT && ent != 0) {
 		// Directory doesn't exist, but its parent does
-		tm_fs_ent* dir = tm_fs_dir_create();
+		tm_fs_ent* dir = tm_fs_dir_create_entry();
 		return tm_fs_dir_append(ent, path, dir);
 	} else if (r == 0) {
 		if (ent->type == VFS_TYPE_DIR) {  // like mkdir -p, but only for one level
@@ -211,6 +214,16 @@ int tm_fs_insert(tm_fs_ent* root, const char* path, tm_fs_ent* ent) {
 		return -EEXIST;
 	}
 
+	return r;
+}
+
+int tm_fs_type (tm_fs_ent* root, const char* path) {
+	tm_fs_ent* ent = 0;
+	int r = tm_fs_lookup(root, path, &ent);
+
+	if (r == 0) {
+		return ent->type;
+	}
 	return r;
 }
 

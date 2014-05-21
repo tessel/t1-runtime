@@ -180,11 +180,49 @@ function truncateSync (pathname)
 }
 
 
+function _isFile (pathname)
+{
+  return tm.fs_type(pathname) == tm.FS_TYPE_FILE;
+}
+
+
+function _isDirectory (pathname)
+{
+  return tm.fs_type(pathname) == tm.FS_TYPE_DIR;
+}
+
+
 function unlinkSync (pathname)
 {
+  if (!_isFile(pathname)) {
+    throw new Error('EPERM: Cannot unlink non-file ' + pathname)
+  }
+
   var err = tm.fs_destroy(pathname);
   if (err) {
-    throw 'ENOENT: Could not unlink file ' + pathname;
+    throw new Error('ENOENT: Could not unlink file ' + pathname);
+  }
+}
+
+
+function mkdirSync (pathname)
+{
+  var err = tm.fs_dir_create(pathname);
+  if (err) {
+    throw new Error('ENOENT: Unsuccessful creation of file ' + pathname);
+  }
+}
+
+
+function rmdirSync (pathname)
+{
+  if (!_isDirectory(pathname)) {
+    throw new Error('EPERM: Cannot rmdir non-dir ' + pathname)
+  }
+  
+  var err = tm.fs_destroy(pathname);
+  if (err) {
+    throw new Error('ENOENT: Could not rmdir ' + pathname);
   }
 }
 
@@ -215,4 +253,6 @@ exports.appendFileSync = appendFileSync;
 exports.renameSync = renameSync;
 exports.truncateSync = truncateSync;
 exports.unlinkSync = unlinkSync;
+exports.mkdirSync = mkdirSync;
+exports.rmdirSync = rmdirSync;
 exports.existsSync = existsSync;

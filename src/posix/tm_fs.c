@@ -16,6 +16,25 @@ void tm_fs_init (void *data)
   // nop
 }
 
+int tm_fs_type (const char *pathname)
+{
+  int status;
+  struct stat st_buf;
+
+  status = stat(pathname, &st_buf);
+  if (status != 0) {
+      return -errno;
+  }
+
+  if (S_ISREG (st_buf.st_mode)) {
+    return TM_FS_TYPE_FILE;
+  }
+  if (S_ISDIR (st_buf.st_mode)) {
+    return TM_FS_TYPE_DIR;
+  }
+  return TM_FS_TYPE_INVALID;
+}
+
 
 int tm_fs_open (tm_fs_t* fd, const char *pathname, uint32_t flags, uint32_t mode)
 {
@@ -58,9 +77,43 @@ int tm_fs_readable (tm_fs_t* fd)
   return 0;
 }
 
+#define _XOPEN_SOURCE 500
+#include <stdio.h>
+#include <ftw.h>
+#include <unistd.h>
+
+static int unlink_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
+{
+    int rv = remove(fpath);
+
+    if (rv)
+        perror(fpath);
+
+    return rv;
+}
+
+static int rmrf(const char *path)
+{
+    return nftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS);
+}
+
 
 int tm_fs_destroy (const char *pathname)
 {
+  int status;
+  struct stat st_buf;
+
+  status = stat(pathname, &st_buf);
+  if (status > 0) {
+    return 0;
+  }
+
+  // Directory
+  if (S_ISDIR (st_buf.st_mode)) {
+    return rmrf(pathname);
+  }
+
+  // File
   ssize_t ret = unlink(pathname);
   return ret < 0 ? errno : 0;
 }

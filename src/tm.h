@@ -164,8 +164,8 @@ void tm_buffer_double_write (uint8_t* buf, size_t index, double value, tm_endian
 
 char* tm_itoa (long long i, char *s, unsigned int radix);
 
-
 // fs
+
 #ifdef TM_FS_vfs
 #include "vfs/vfs.h"
 
@@ -174,6 +174,13 @@ typedef tm_fs_dir_handle tm_fs_dir_t;
 extern tm_fs_ent* tm_fs_root;
 
 #else
+
+typedef enum {
+  TM_FS_TYPE_INVALID = 0,
+  TM_FS_TYPE_FILE,
+  TM_FS_TYPE_DIR,
+  TM_FS_TYPE_MOUNT_FAT,
+} tm_fs_type_t;
 
 #include <sys/stat.h> 
 #include <fcntl.h>
@@ -196,6 +203,8 @@ typedef int tm_fs_t;
 typedef DIR* tm_fs_dir_t;
 
 void tm_fs_init ();
+
+int tm_fs_type (const char* pathname);
 
 int tm_fs_open (tm_fs_t* fd, const char *pathname, uint32_t flags, uint32_t mode);
 int tm_fs_close (tm_fs_t* fd);

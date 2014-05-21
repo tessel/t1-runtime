@@ -57,7 +57,7 @@ int tm_fs_mount_tar(tm_fs_ent* /*&mut*/ root, char* /* & */ path, uint8_t* /* &'
 		switch (header->typeflag) {
 			case '5': {
 				printf("dir:  %s \n", filename);
-				r = tm_fs_mkdir(dir, filename);
+				r = tm_fs_dir_create(dir, filename);
 
 				if (r != 0) {
 					printf("Error creating dir %s: %d\n", filename, r);
