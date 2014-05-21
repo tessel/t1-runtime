@@ -329,11 +329,16 @@ local js_null = {
 
 local function js_void () end
 
+-- a = object, b = last value
 local function js_next (a, b, c)
   local mt = getmetatable(a)
-  if b == nil and mt and ((mt.length ~= nil and mt.length > 0) or rawget(a, 0)) then
+
+  -- first value in arrays should be 0
+  if b == nil and mt and (mt.length ~= nil and mt.length > 0) then
     return 0
   end
+
+  -- next value after 0 should be 1
   if type(b) == 'number' and mt and mt.length ~= nil then
     if b < a.length - 1 then
       return b + 1
