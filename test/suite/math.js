@@ -3,6 +3,9 @@ function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + 
 console.log(t + '..' + tmax);
 ok(process.versions.colony, 'running in colony')
 
+// number encoding
+ok(0644 == 420, 'octal encoding');
+
 // variables
 ok(Math.E == 2.718281828459045, 'Math.E')
 ok(Math.LN2 == 0.6931471805599453, 'Math.LN2')

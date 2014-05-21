@@ -33,7 +33,7 @@ char* filename(const char* start) {
 	return str_range_copy(start, end);
 }
 
-tm_fs_ent* /* ~ */ tm_fs_dir_create() {
+tm_fs_ent* /* ~ */ tm_fs_dir_create_entry() {
 	tm_fs_ent* ent = malloc(sizeof(tm_fs_ent));
 	ent->type = VFS_TYPE_DIR;
 	ent->parent = 0;
@@ -62,14 +62,37 @@ int tm_fs_dir_append(tm_fs_ent* dir, const char* name, tm_fs_ent* ent) {
 	return 0;
 }
 
+static int tm_fs_dir_remove(tm_fs_ent* dir, tm_fs_ent* file) {
+	if (dir->type != VFS_TYPE_DIR) {
+		return -ENOTDIR;
+	}
+
+	dir->dir.num_entries -= 1;
+	size_t i = 0;
+	for (tm_fs_direntry* entry = dir->dir.entries; i < dir->dir.num_entries; i++) {
+		if (entry[i].ent == file) {
+			memcpy(&entry[i], &entry[i+1], (dir->dir.num_entries - 1)*sizeof(tm_fs_direntry));
+			dir->dir.entries = realloc(dir->dir.entries, dir->dir.num_entries*sizeof(tm_fs_direntry));
+			return 0;
+		}
+	}
+	return -ENOENT;
+}
+
 void tm_fs_destroy(tm_fs_ent* /* ~ */ ent) {
 	switch (ent->type) {
 		case VFS_TYPE_RAW_FILE:
+			if (ent->parent) {
+				tm_fs_dir_remove(ent->parent, ent);
+			}
 			if (ent->file.data_owned) {
 				free(ent->file.data);
 			}
 			break;
 		case VFS_TYPE_DIR:
+			if (ent->parent) {
+				tm_fs_dir_remove(ent->parent, ent);
+			}
 			for (unsigned i=0; i<ent->dir.num_entries; i++) {
 				tm_fs_direntry* entry = &ent->dir.entries[i];
 				free((void*) entry->name);
@@ -77,7 +100,7 @@ void tm_fs_destroy(tm_fs_ent* /* ~ */ ent) {
 			}
 			free(ent->dir.entries);
 			break;
-		case VFS_TYPE_FAT_MOUNT:
+		case VFS_TYPE_MOUNT_FAT:
 			//TODO
 			break;
 		case VFS_TYPE_INVALID:
@@ -163,13 +186,13 @@ int tm_fs_lookup(tm_fs_ent* /*&mut 'fs*/ dir, const char* /* & */ path, tm_fs_en
 	}
 }
 
-int tm_fs_mkdir(tm_fs_ent* root, const char* path) {
+int tm_fs_dir_create(tm_fs_ent* root, const char* path) {
 	tm_fs_ent* ent = 0;
 	int r = tm_fs_lookup(root, path, &ent);
 
 	if (r == -ENOENT && ent != 0) {
 		// Directory doesn't exist, but its parent does
-		tm_fs_ent* dir = tm_fs_dir_create();
+		tm_fs_ent* dir = tm_fs_dir_create_entry();
 		return tm_fs_dir_append(ent, path, dir);
 	} else if (r == 0) {
 		if (ent->type == VFS_TYPE_DIR) {  // like mkdir -p, but only for one level
@@ -191,6 +214,16 @@ int tm_fs_insert(tm_fs_ent* root, const char* path, tm_fs_ent* ent) {
 		return -EEXIST;
 	}
 
+	return r;
+}
+
+int tm_fs_type (tm_fs_ent* root, const char* path) {
+	tm_fs_ent* ent = 0;
+	int r = tm_fs_lookup(root, path, &ent);
+
+	if (r == 0) {
+		return ent->type;
+	}
 	return r;
 }
 
@@ -271,7 +304,30 @@ int tm_fs_readable (tm_fs_file_handle* fd) {
 	if (!fd->ent) return 0;
 		switch (fd->ent->type) {
 		case VFS_TYPE_RAW_FILE:
-			return fd->position < fd->ent->file.length;
+			return 1;
+		default:
+			return 0;
+	}
+}
+
+int tm_fs_seek(tm_fs_file_handle* fd, unsigned position) {
+	if (!fd->ent) return 0;
+	switch (fd->ent->type) {
+		case VFS_TYPE_RAW_FILE:
+			fd->position = (position > fd->ent->file.length) ? fd->ent->file.length : position;
+			return fd->position;
+		default:
+			return 0;
+	}
+}
+
+int tm_fs_truncate(tm_fs_file_handle* fd) {
+	if (!fd->ent) return 0;
+	switch (fd->ent->type) {
+		case VFS_TYPE_RAW_FILE:
+			fd->ent->file.data = realloc(fd->ent->file.data, fd->position);
+			fd->ent->file.length = fd->position;
+			return fd->position;
 		default:
 			return 0;
 	}
@@ -295,6 +351,40 @@ const uint8_t* tm_fs_contents(tm_fs_file_handle* fd) {
 		default:
 			return 0;
 	}
+}
+
+static const char* tm_fs_basename (const char* pathname)
+{
+	return strrchr(pathname, '/') + 1;
+}
+
+int tm_fs_rename (tm_fs_ent* root, const char* oldname, const char* newname)
+{
+	int r = 0;
+
+	// Lookup old file
+	tm_fs_ent* oldent = 0;
+	r = tm_fs_lookup(root, oldname, &oldent); 
+	if (r != 0) {
+		return r;
+	}
+
+	// Lookup and possibly new file location.
+	tm_fs_ent* newdir = 0;
+	r = tm_fs_lookup(root, newname, &newdir);
+	if (r == 0) {
+		tm_fs_ent* overwritten = newdir;
+		newdir = overwritten->parent;
+		tm_fs_destroy(overwritten);
+	} else if (r == -ENOENT && newdir != 0) {
+		// noop, folder exists
+	} else {
+		return -ENOENT;
+	}
+
+	tm_fs_dir_remove(oldent->parent, oldent);
+	tm_fs_dir_append(newdir, tm_fs_basename(newname), oldent);
+	return 0;
 }
 
 int tm_fs_dir_open(tm_fs_dir_handle* out, tm_fs_ent* root, const char* pathname) {

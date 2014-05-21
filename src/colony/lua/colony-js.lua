@@ -316,13 +316,13 @@ func_proto.bind = function (func, ths1, ...)
   end
 end
 
-func_proto.apply = function (func, ths, args)
+func_proto.apply = function (func, this, args)
   -- copy args to new args array
   local luargs = {}
   if args then
     for i=0,(args.length or 0)-1 do luargs[i+1] = args[i] end
   end
-  return func(ths, unpack(luargs, 1, args.length or 0))
+  return func(this, unpack(luargs, 1, args and args.length or 0))
 end
 
 func_proto.toString = function (this)
@@ -418,13 +418,16 @@ arr_proto.reverse = function (this)
   return this
 end
 
-arr_proto.slice = function (ths, start, len)
+arr_proto.slice = function (this, start, len)
   local a = js_arr({})
-  if not len then
-    len = ths.length
+  if not this then
+    return a
+  end
+  if len == nil then
+    len = this.length or 0
   end
   for i=start or 0,len-1 do
-    a:push(ths[i])
+    a:push(this[i])
   end
   return a
 end

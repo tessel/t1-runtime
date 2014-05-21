@@ -533,17 +533,34 @@ static int l_tm_buffer_tostring (lua_State *L)
  * fs
  */
 
+
+static int l_tm_fs_type (lua_State* L)
+{
+  const char *pathname = (const char *) lua_tostring(L, 1);
+
+  #ifdef TM_FS_vfs
+  int ret = tm_fs_type(tm_fs_root, pathname);
+  #else
+  int ret = tm_fs_type(pathname);
+  #endif
+  lua_pushnumber(L, ret);
+  return 1;
+}
+
+
 static int l_tm_fs_open (lua_State* L)
 {
   const char *pathname = (const char *) lua_tostring(L, 1);
   uint32_t flags = (uint32_t) lua_tonumber(L, 2);
+  uint32_t mode = (uint32_t) lua_tonumber(L, 3);
 
   tm_fs_t* fd = (tm_fs_t*) lua_newuserdata(L, sizeof(tm_fs_t));
 
   #ifdef TM_FS_vfs
+  (void) mode;
   int ret = tm_fs_open(fd, tm_fs_root, pathname, flags);
   #else
-  int ret = tm_fs_open(fd, pathname, flags);
+  int ret = tm_fs_open(fd, pathname, flags, mode);
   #endif
 
   if (ret > 0) {
@@ -592,6 +609,109 @@ static int l_tm_fs_readable (lua_State* L)
 
   int readable = tm_fs_readable(fd);
   lua_pushnumber(L, readable);
+  return 1;
+}
+
+
+static int l_tm_fs_write (lua_State* L)
+{
+  tm_fs_t* fd = (tm_fs_t*) lua_touserdata(L, 1);
+  size_t size = (size_t) lua_tonumber(L, 3);
+
+  size_t buf_len = 0;
+  const uint8_t* buf = (const uint8_t*) colony_tobuffer(L, 2, &buf_len);
+  #ifdef TM_FS_vfs
+  int ret = tm_fs_write(fd, buf, size);
+  #else
+  size_t nwritten;
+  int ret = tm_fs_write(fd, buf, size, &nwritten);
+  #endif
+
+  lua_pushnumber(L, ret);
+  return 1;
+}
+
+
+static int l_tm_fs_destroy (lua_State* L)
+{
+  const char *pathname = (const char *) lua_tostring(L, 1);
+
+  #ifdef TM_FS_vfs
+  tm_fs_ent* ent = NULL;
+  int r = tm_fs_lookup(tm_fs_root, pathname, &ent);
+  if (r != ENOENT) {
+    ent->file.data_owned = 0;
+    // ent->file.data = malloc(0);
+    tm_fs_destroy(ent);
+  }
+  int ret = -r;
+  #else
+  int ret = tm_fs_destroy(pathname);
+  #endif
+
+  lua_pushnumber(L, ret);
+  return 1;
+}
+
+
+static int l_tm_fs_rename (lua_State* L)
+{
+  const char *oldname = (const char *) lua_tostring(L, 1);
+  const char *newname = (const char *) lua_tostring(L, 2);
+
+  #ifdef TM_FS_vfs
+  int ret = tm_fs_rename(tm_fs_root, oldname, newname);
+  #else
+  int ret = tm_fs_rename(oldname, newname);
+  #endif
+
+  lua_pushnumber(L, ret);
+  return 1;
+}
+
+
+static int l_tm_fs_seek (lua_State* L)
+{
+  tm_fs_t* fd = (tm_fs_t*) lua_touserdata(L, 1);
+  size_t position = (size_t) lua_tonumber(L, 2);
+
+  ssize_t length = tm_fs_seek(fd, position);
+  lua_pushnumber(L, length);
+  return 1;
+}
+
+
+static int l_tm_fs_truncate (lua_State* L)
+{
+  tm_fs_t* fd = (tm_fs_t*) lua_touserdata(L, 1);
+
+  int ret = tm_fs_truncate(fd);
+  lua_pushnumber(L, ret);
+  return 1;
+}
+
+
+static int l_tm_fs_length (lua_State* L)
+{
+  tm_fs_t* fd = (tm_fs_t*) lua_touserdata(L, 1);
+
+  ssize_t length = tm_fs_length(fd);
+  lua_pushnumber(L, length);
+  return 1;
+}
+
+
+static int l_tm_fs_dir_create (lua_State* L)
+{
+  const char *pathname = (const char *) lua_tostring(L, 1);
+
+  #ifdef TM_FS_vfs
+  int ret = tm_fs_dir_create(tm_fs_root, pathname);
+  #else
+  int ret = tm_fs_dir_create(pathname);
+  #endif
+
+  lua_pushnumber(L, ret);
   return 1;
 }
 
@@ -769,10 +889,19 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "buffer_write_double", l_tm_buffer_write_double },
 
     // fs
+    { "fs_type", l_tm_fs_type },
     { "fs_open", l_tm_fs_open },
     { "fs_close", l_tm_fs_close },
     { "fs_read", l_tm_fs_read },
     { "fs_readable", l_tm_fs_readable },
+    { "fs_write", l_tm_fs_write },
+    { "fs_destroy", l_tm_fs_destroy },
+    { "fs_rename", l_tm_fs_rename },
+    { "fs_seek", l_tm_fs_seek },
+    { "fs_truncate", l_tm_fs_truncate },
+    { "fs_length", l_tm_fs_length },
+
+    { "fs_dir_create", l_tm_fs_dir_create },
     { "fs_dir_open", l_tm_fs_dir_open },
     { "fs_dir_read", l_tm_fs_dir_read },
     { "fs_dir_close", l_tm_fs_dir_close },
@@ -787,6 +916,12 @@ LUALIB_API int luaopen_tm (lua_State *L)
 
     { NULL, NULL }
   });
+
+  luaL_setfieldnumber(L, "FS_TYPE_INVALID", TM_FS_TYPE_INVALID);
+  luaL_setfieldnumber(L, "FS_TYPE_FILE", TM_FS_TYPE_FILE);
+  luaL_setfieldnumber(L, "FS_TYPE_DIR", TM_FS_TYPE_DIR);
+  luaL_setfieldnumber(L, "FS_TYPE_MOUNT_FAT", TM_FS_TYPE_MOUNT_FAT);
+
   luaL_setfieldnumber(L, "RDONLY", TM_RDONLY);
   luaL_setfieldnumber(L, "WRONLY", TM_WRONLY);
   luaL_setfieldnumber(L, "RDWR", TM_RDWR);

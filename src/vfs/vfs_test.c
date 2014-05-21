@@ -128,17 +128,17 @@ tm_fs_enttype tm_fs_get_type(tm_fs_ent* root, const char* path) {
 void test_insert() {
 	tm_fs_ent* dir = tm_fs_dir_create();
 
-	assert(tm_fs_mkdir(dir, "/foo") == 0);
+	assert(tm_fs_dir_create(dir, "/foo") == 0);
 	assert(tm_fs_get_type(dir, "foo") == VFS_TYPE_DIR);
 
-	assert(tm_fs_mkdir(dir, "/foo") == 0);
+	assert(tm_fs_dir_create(dir, "/foo") == 0);
 
-	assert(tm_fs_mkdir(dir, "/bar/") == 0);
+	assert(tm_fs_dir_create(dir, "/bar/") == 0);
 	assert(tm_fs_get_type(dir, "/bar/") == VFS_TYPE_DIR);
 
 	assert(tm_fs_get_type(dir, "foo") == VFS_TYPE_DIR);
 
-	assert(tm_fs_mkdir(dir, "/a/b") == -ENOENT);
+	assert(tm_fs_dir_create(dir, "/a/b") == -ENOENT);
 
 	assert(tm_fs_insert(dir, "/bar/test.txt", tm_fs_raw_file_create()) == 0);
 	assert(tm_fs_get_type(dir, "/bar/test.txt") == VFS_TYPE_RAW_FILE);
