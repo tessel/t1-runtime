@@ -6,6 +6,7 @@ function inherits (A, B) {
   var f = function () { };
   f.prototype = B.prototype;
   A.prototype = new f();
+  A.super_ = B;
 }
 
 function deprecate (fn) {

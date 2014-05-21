@@ -306,6 +306,15 @@ HTTPOutgoingRequest.prototype.end = function () {
 
 
 /**
+ * Agent
+ */
+
+function Agent () {
+  throw new Error('Agent not yet implemented.');
+}
+
+
+/**
  * Public API
  */
 
@@ -345,7 +354,7 @@ exports.createServer = function (onrequest) {
   return server;
 };
 
+exports.Agent = Agent;
 exports.ServerResponse = ServerResponse;
 exports.ServerRequest = ServerRequest;
-
 exports.IncomingMessage = ServerResponse;
