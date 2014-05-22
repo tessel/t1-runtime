@@ -461,7 +461,7 @@ arr_proto.join = function (ths, ...)
     if args[1] == nil then
       str = 'null'
     else
-      str = tostring(args[1]) or 'null'
+      str = tostring(args[1])
     end
   end
 
