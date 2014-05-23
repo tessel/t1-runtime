@@ -293,6 +293,86 @@ function statSync (pathname) {
 }
 
 
+function createReadStream (pathname, options)
+{
+  var stream = new (require('stream').Readable);
+  stream._read = function (bytes) {
+
+  }
+
+  var _ = tm.fs_open(pathname, tm.OPEN_EXISTING | tm.RDONLY)
+    , fd = _[0]
+    , err = _[1];
+  if (err || fd == undefined) {
+    throw 'ENOENT: Could not open file ' + pathname;
+  }
+
+  var encoding = options && options.encoding;
+  if (typeof options == 'string') {
+    encoding = options;
+  }
+
+  stream._read = function (len) {
+    function loop () {
+      if (tm.fs_readable(fd) == 0) {
+        return setTimeout(loop, 10);
+      }
+      var _ = tm.fs_read(fd, len)
+        , buf = _[0]
+        , err = _[1];
+      if (!err && buf && buf.length > 0) {
+        return stream.push(buf);
+      }
+      if (err) {
+        stream.emit('error', err);
+      }
+
+      tm.fs_close(fd);
+      fd = null;
+      stream.push(null);
+    }
+    if (fd != null) {
+      loop();
+    }
+  }
+
+  return stream;
+};
+
+
+function createWriteStream (pathname)
+{
+  var _ = tm.fs_open(pathname, tm.CREATE_ALWAYS | tm.WRONLY, 0644)
+    , fd = _[0]
+    , err = _[1];
+  if (err || fd == undefined) {
+    throw 'ENOENT: Could not open file ' + pathname;
+  }
+
+  var stream = new (require('stream')).Writable;
+  stream._write = function (chunk, encoding, callback) {
+    if (fd == null) {
+      return;
+    }
+
+    if (!Buffer.isBuffer(chunk)) {
+      chunk = new Buffer(chunk || '', encoding);
+    }
+    tm.fs_write(fd, chunk, chunk.length);
+    callback();
+  }
+  stream.on('pipe', function (pipe) {
+    pipe.on('end', function () {
+      stream.emit('end');
+      tm.fs_close(fd);
+      fd = null;
+      stream.emit('close');
+    })
+  })
+  return stream;
+};
+
+
 exports.readFileSync = readFileSync;
 exports.readdirSync = readdirSync;
 exports.writeFileSync = writeFileSync;
@@ -320,3 +400,6 @@ exports.stat = asynchronize(statSync);
 exports.lstat = asynchronize(lstatSync);
 
 exports.Stats = Stats;
+
+exports.createReadStream = createReadStream;
+exports.createWriteStream = createWriteStream;
