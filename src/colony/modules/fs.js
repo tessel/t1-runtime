@@ -293,7 +293,7 @@ function statSync (pathname) {
 }
 
 
-exports.createReadStream = function (pathname, options)
+function createReadStream (pathname, options)
 {
   var stream = new (require('stream').Readable);
   stream._read = function (bytes) {
@@ -340,7 +340,7 @@ exports.createReadStream = function (pathname, options)
 };
 
 
-exports.createWriteStream = function (pathname)
+function createWriteStream (pathname)
 {
   var _ = tm.fs_open(pathname, tm.CREATE_ALWAYS | tm.WRONLY, 0644)
     , fd = _[0]
@@ -400,3 +400,6 @@ exports.stat = asynchronize(statSync);
 exports.lstat = asynchronize(lstatSync);
 
 exports.Stats = Stats;
+
+exports.createReadStream = createReadStream;
+exports.createWriteStream = createWriteStream;
