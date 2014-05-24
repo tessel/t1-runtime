@@ -175,6 +175,13 @@
         '<(SHARED_INTERMEDIATE_DIR)/dir_builtin.c',
         '<(SHARED_INTERMEDIATE_DIR)/dir_runtime_lib.c',
       ],
+      'conditions': [
+        ['OS!="arm"', {
+          "sources": [
+            'src/posix/tm_uptime.c',
+          ]
+        }],
+      ],
       "include_dirs": [
         'src/',
         'src/colony/',

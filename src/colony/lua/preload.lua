@@ -56,7 +56,30 @@ end
 
 -- Set up builtin dependencies
 do 
-  local Stream = colony.run('stream').Stream
-  colony.global.process.stdin = colony.js_new(Stream)
-  colony.global.process.stdout = colony.js_new(Stream)
+  local Readable = colony.run('stream').Readable
+  local Writable = colony.run('stream').Writable
+
+  colony.global.process.stdout = colony.js_new(Writable)
+  colony.global.process.stderr = colony.js_new(Writable)
+
+  -- setup stdin
+  colony.global.process.stdin = colony.js_new(Readable)
+  colony.global.process.stdin._read = function ()
+  end
+  colony.global.process.stdin:pause()
+  local stdinkeepalive = nil
+  colony.global.process.stdin:on('resume', function (this)
+    if stdinkeepalive == nil then
+      stdinkeepalive = colony.global:setInterval(function () end, 1e6)
+    end
+  end)
+  colony.global.process.stdin:on('pause', function (this)
+    if stdinkeepalive ~= nil then
+      colony.global:clearInterval(stdinkeepalive)
+    end
+  end)
+  -- hook into builtin ipc command
+  colony.global.process:on('stdin', function (this, buf)
+    colony.global.process.stdin:push(buf)
+  end)
 end
