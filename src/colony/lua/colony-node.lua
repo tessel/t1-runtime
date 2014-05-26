@@ -309,7 +309,11 @@ function read_buf (this, pos, no_assert, size, fn, le)
     end
 
     if pos >= sourceBufferLength then
-      return nil
+      if size == 1 then
+        return nil
+      else
+        return 0
+      end
     end
     local tmp = tm.buffer_create(4)
     tm.buffer_fill(tmp, 0, 0, 4)
