@@ -1070,20 +1070,10 @@ global.parseInt = function (ths, str, radix)
   if not (type(radix) == 'number' and radix >= 2 and radix <= 36) then
    return 0/0
   end
-  if not str then
-    -- These are based off Node's behavior. TODO: Figure out why.
-    if radix == 32 then
-      return 785077
-    end
-    if radix == 31 then
-      return 714695
-    end
-    if radix > 23 then
-      return 23
-    end
-    return 0/0
+  if type(str) ~= 'number' then
+    str = tostring(str or 'null')
   end
-  return math.floor(tonumber(str, radix) or 0)
+  return math.floor(tonumber(str, radix) or (0/0))
 end
 
 -- Date
