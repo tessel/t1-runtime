@@ -58,7 +58,7 @@ _G._colony_unhandled_exception = function (e)
     tm.log(22, debug.traceback(e, 2))
   end
 
-  global.process.exit(8)
+  global.process:exit(8)
 end
 
 --[[
