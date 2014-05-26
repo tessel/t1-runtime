@@ -44,7 +44,7 @@ static void lua_interrupt_hook(lua_State* L, lua_Debug *ar)
 static void intHandler (int dummy)
 {
   if (tm_lua_state != NULL && keeprunning > 0) {
-    lua_sethook(tm_lua_state, lua_interrupt_hook, LUA_MASKCOUNT, 10);
+    lua_sethook(tm_lua_state, lua_interrupt_hook, LUA_MASKCOUNT, 1);
   } else {
     exit(1);
   }

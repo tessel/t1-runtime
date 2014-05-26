@@ -408,7 +408,6 @@
         ['OS!="arm"', {
           "sources": [
             'src/posix/tm_net.c',
-            'src/posix/tm_uptime.c',
             'src/posix/tm_fs.c',
           ]
         }],
