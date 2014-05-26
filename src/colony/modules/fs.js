@@ -1,5 +1,6 @@
-var tm = process.binding('tm');
+var path = require('path');
 
+var tm = process.binding('tm');
 
 function asynchronize (fn)
 {
@@ -57,9 +58,15 @@ function _isDirEmpty (pathname)
   }
 }
 
+function _getAbsolute (pathname) {
+  return pathname.match(/^\//) ? pathname : path.resolve(process.cwd(), pathname);
+}
+
 
 function readFileSync (pathname, options)
 {
+  pathname = _getAbsolute(pathname);
+
   var _ = tm.fs_open(pathname, tm.OPEN_EXISTING | tm.RDONLY)
     , fd = _[0]
     , err = _[1];
@@ -100,6 +107,8 @@ function readFileSync (pathname, options)
 
 function readdirSync (pathname)
 {
+  pathname = _getAbsolute(pathname);
+
   var _ = tm.fs_dir_open(pathname)
     , dir = _[0]
     , err = _[1];
@@ -128,6 +137,8 @@ function readdirSync (pathname)
 
 function writeFileSync (pathname, data)
 {
+  pathname = _getAbsolute(pathname);
+
   if (!Buffer.isBuffer(data)) {
     data = new Buffer(String(data));
   }
@@ -146,6 +157,8 @@ function writeFileSync (pathname, data)
 
 function appendFileSync (pathname, data)
 {
+  pathname = _getAbsolute(pathname);
+
   if (!Buffer.isBuffer(data)) {
     data = new Buffer(String(data));
   }
@@ -168,6 +181,9 @@ function appendFileSync (pathname, data)
 
 function renameSync (oldname, newname)
 {
+  oldname = _getAbsolute(oldname);
+  newname = _getAbsolute(newname);
+
   var err = tm.fs_rename(oldname, newname);
   if (err) {
     throw new Error('ENOENT: Could not rename file ' + oldname);
@@ -177,6 +193,8 @@ function renameSync (oldname, newname)
 
 function truncateSync (pathname)
 {
+  pathname = _getAbsolute(pathname);
+
   var _ = tm.fs_open(pathname, tm.OPEN_ALWAYS | tm.WRONLY, 0644)
     , fd = _[0]
     , err = _[1];
@@ -191,6 +209,8 @@ function truncateSync (pathname)
 
 function unlinkSync (pathname)
 {
+  pathname = _getAbsolute(pathname);
+
   if (!_isFile(pathname)) {
     throw new Error('EPERM: Cannot unlink non-file ' + pathname)
   }
@@ -204,6 +224,8 @@ function unlinkSync (pathname)
 
 function mkdirSync (pathname)
 {
+  pathname = _getAbsolute(pathname);
+
   var err = tm.fs_dir_create(pathname);
   if (err) {
     throw new Error('ENOENT: Unsuccessful creation of file ' + pathname);
@@ -213,6 +235,8 @@ function mkdirSync (pathname)
 
 function rmdirSync (pathname)
 {
+  pathname = _getAbsolute(pathname);
+
   if (!_isDirectory(pathname)) {
     throw new Error('EPERM: Cannot rmdir non-dir ' + pathname)
   }
@@ -229,6 +253,8 @@ function rmdirSync (pathname)
 
 function existsSync (pathname, data)
 {
+  pathname = _getAbsolute(pathname);
+
   if (!Buffer.isBuffer(data)) {
     data = new Buffer(String(data));
   }
@@ -255,7 +281,10 @@ Stats.prototype.isSymbolicLink = function () { return this._isSymbolicLink; }
 Stats.prototype.isFIFO = function () { return this._isFIFO; }
 Stats.prototype.isSocket = function () { return this._isSocket; }
 
-function statSync (pathname) {
+function statSync (pathname)
+{
+  pathname = _getAbsolute(pathname);
+
   var stats = new Stats;
 
   stats._isFile = _isFile(pathname);
@@ -295,9 +324,11 @@ function statSync (pathname) {
 
 function createReadStream (pathname, options)
 {
+  pathname = _getAbsolute(pathname);
+
   var stream = new (require('stream').Readable);
   stream._read = function (bytes) {
-
+    // noop
   }
 
   var _ = tm.fs_open(pathname, tm.OPEN_EXISTING | tm.RDONLY)
@@ -342,6 +373,8 @@ function createReadStream (pathname, options)
 
 function createWriteStream (pathname)
 {
+  pathname = _getAbsolute(pathname);
+  
   var _ = tm.fs_open(pathname, tm.CREATE_ALWAYS | tm.WRONLY, 0644)
     , fd = _[0]
     , err = _[1];

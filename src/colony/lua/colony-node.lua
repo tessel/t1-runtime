@@ -666,8 +666,7 @@ global.process.exit = function (this, code)
   tm.exit(code)
 end
 global.process.cwd = function ()
-  -- TODO
-  return '/app'
+  return tm.cwd()
 end
 global.process.nextTick = global.setImmediate
 
