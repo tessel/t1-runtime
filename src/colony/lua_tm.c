@@ -37,6 +37,22 @@ inline static void stackDump (lua_State *L)
   printf("\n");  /* end the listing */
 }
 
+#ifndef CONFIG_PLATFORM_EMBED
+#include <unistd.h>
+#endif
+
+static int l_tm_cwd(lua_State* L)
+{
+  #ifdef CONFIG_PLATFORM_EMBED
+  lua_pushstring(L, "/app");
+  #else
+  char *cwd = getcwd(NULL, 0);
+  lua_pushstring(L, cwd);
+  free(cwd);
+  #endif
+  return 1;
+}
+
 
 static int l_tm_exit(lua_State* L)
 {
@@ -814,6 +830,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
 {
   lua_newtable (L);
   luaL_register(L, NULL, (luaL_reg[]) {
+    { "cwd", l_tm_cwd },
     { "exit", l_tm_exit },
 
     // log
