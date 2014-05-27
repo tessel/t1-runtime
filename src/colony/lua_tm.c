@@ -838,6 +838,17 @@ static int l_tm_hmac_sha1 (lua_State *L)
   size_t msg_len = 0;
   uint8_t *msg = (uint8_t *) colony_toconstdata(L, 2, &msg_len);
 
+  SHA1_CTX context;
+
+  if (key_len > 64) {
+    uint8_t* hashedkey = lua_newuserdata(L, 64);
+    SHA1_Init(&context);
+    SHA1_Update(&context, key, key_len);
+    SHA1_Final(hashedkey, &context);
+    key_len = 20;
+    key = hashedkey;
+  }
+
   uint8_t* sha1 = colony_createbuffer(L, 20);
   hmac_sha1(msg, msg_len, key, key_len, sha1);
 
