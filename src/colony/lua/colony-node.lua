@@ -219,16 +219,9 @@ local buffer_proto = js_obj({
       len = this.length
     end
 
-    local target = global:Buffer(len - sourceStart)
-
-    if len > 0 then
-      local sourceBuffer = getmetatable(this).buffer
-      local sourceBufferLength = getmetatable(this).bufferlen
-      local targetBuffer = getmetatable(target).buffer
-      local targetBufferLength = getmetatable(target).bufferlen
-      tm.buffer_copy(sourceBuffer, targetBuffer, 0, sourceStart, len)
-    end
-    return target
+    local sourceBuffer = getmetatable(this).buffer
+    local sourceBufferLength = getmetatable(this).bufferlen
+    return _of_buffer({}, tm.buffer_index(sourceBuffer, sourceStart), len - sourceStart)
   end,
   copy = function (this, target, targetStart, sourceStart, sourceEnd)
     local sourceBuffer = getmetatable(this).buffer
@@ -377,31 +370,7 @@ buffer_proto.writeDoubleLE = function (this, value, pos, opts) return write_buf(
 buffer_proto.writeDoubleBE = function (this, value, pos, opts) return write_buf(this, value, pos, opts, 8, tm.buffer_write_double, 0); end
 
 
-local function Buffer (this, arg, encoding)
-  -- args
-  local str, length = '', 0
-  if type(arg) == 'number' then
-    length = tonumber(arg)
-  else
-    str = arg
-    length = arg.length
-  end
-
-  -- encoding first check
-  if type(str) == 'string' and encoding == 'base64' then
-    -- "base64" string
-    str = from_base64(str)
-    length = string.len(str)
-  elseif type(str) == 'string' and encoding == 'hex' then
-    if string.len(str) % 2 ~= 0 or string.gsub(str, '[a-fA-F0-9]', '') ~= '' then
-      error('Invalid hex string.')
-    end
-    str = string.lower(str)
-    length = string.len(str) / 2
-  end
-
-  this = {}
-  local buf = tm.buffer_create(length)
+function _of_buffer (this, buf, length)
   setmetatable(this, {
     buffer = buf,
     bufferlen = length,
@@ -449,6 +418,35 @@ local function Buffer (this, arg, encoding)
     __tostring = js_tostring,
     proto = buffer_proto
   })
+  return this
+end
+
+local function Buffer (this, arg, encoding)
+  -- args
+  local str, length = '', 0
+  if type(arg) == 'number' then
+    length = tonumber(arg)
+  else
+    str = arg
+    length = arg.length
+  end
+
+  -- encoding first check
+  if type(str) == 'string' and encoding == 'base64' then
+    -- "base64" string
+    str = from_base64(str)
+    length = string.len(str)
+  elseif type(str) == 'string' and encoding == 'hex' then
+    if string.len(str) % 2 ~= 0 or string.gsub(str, '[a-fA-F0-9]', '') ~= '' then
+      error('Invalid hex string.')
+    end
+    str = string.lower(str)
+    length = string.len(str) / 2
+  end
+
+  this = {}
+  local buf = tm.buffer_create(length)
+  _of_buffer(this, buf, length)
 
   -- Lua internally uses a "binary" encoding, that is,
   -- operates on (1-indexable) 8-bit values.

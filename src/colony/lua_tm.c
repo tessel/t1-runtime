@@ -369,6 +369,14 @@ static int l_tm_buffer_create (lua_State *L)
   return 1;
 }
 
+static int l_tm_buffer_index (lua_State *L)
+{
+  uint8_t *ud = (uint8_t *) lua_touserdata(L, 1);
+  size_t index = (size_t) lua_tonumber(L, 2);
+  lua_pushlightuserdata(L, &ud[index]);
+  return 1;
+}
+
 
 static int l_tm_buffer_set (lua_State *L)
 {
@@ -875,6 +883,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
 
     // buffer
     { "buffer_create", l_tm_buffer_create },
+    { "buffer_index", l_tm_buffer_index },
     { "buffer_set", l_tm_buffer_set },
     { "buffer_get", l_tm_buffer_get },
     { "buffer_fill", l_tm_buffer_fill },
