@@ -36,5 +36,5 @@ function createHmac (encryption, key)
 }
 
 exports.randomBytes = randomBytes;
-exports.pseudoRandomBytes = pseudoRandomBytes; // todo real
+exports.pseudoRandomBytes = randomBytes; // todo real
 exports.createHmac = createHmac;
