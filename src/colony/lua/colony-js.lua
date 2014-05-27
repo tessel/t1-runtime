@@ -1373,7 +1373,7 @@ function encodeURIComponent (this, str)
   str = string.gsub (str, "([^%w %-%_%.%~])", function (c)
     return string.format ("%%%02X", string.byte(c))
   end)
-  str = string.gsub (str, " ", "+")
+  str = string.gsub (str, " ", "%%20")
   return str  
 end
 
