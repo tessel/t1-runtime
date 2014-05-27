@@ -57,8 +57,8 @@ int tm_ssl_context_create (tm_ssl_ctx_t* ctx)
 
     if ((ssl_ctx = ssl_ctx_new(options, SSL_DEFAULT_CLNT_SESS)) == NULL)
     {
-        fprintf(stderr, "Error: Client context is invalid\n");
-        exit(1);
+        TM_DEBUG("Error: Client context is invalid\n");
+        return 1;
     }
 
     if (private_key_file)
@@ -73,9 +73,9 @@ int tm_ssl_context_create (tm_ssl_ctx_t* ctx)
 
         if (ssl_obj_load(ssl_ctx, obj_type, private_key_file, password))
         {
-            fprintf(stderr, "Error: Private key '%s' is undefined.\n", 
+            TM_DEBUG("Error: Private key '%s' is undefined.\n", 
                                                         private_key_file);
-            exit(1);
+            return 1;
         }
     }
 
@@ -83,8 +83,8 @@ int tm_ssl_context_create (tm_ssl_ctx_t* ctx)
     {
         if (ssl_obj_load(ssl_ctx, SSL_OBJ_X509_CERT, cert[i], NULL))
         {
-            printf("Certificate '%s' is undefined.\n", cert[i]);
-            exit(1);
+            TM_DEBUG("Certificate '%s' is undefined.\n", cert[i]);
+            return 1;
         }
     }
 
@@ -92,8 +92,8 @@ int tm_ssl_context_create (tm_ssl_ctx_t* ctx)
     {
         if (ssl_obj_load(ssl_ctx, SSL_OBJ_X509_CACERT, ca_cert[i], NULL))
         {
-            printf("Certificate '%s' is undefined.\n", ca_cert[i]);
-            exit(1);
+            TM_DEBUG("Certificate '%s' is undefined.\n", ca_cert[i]);
+            return 1;
         }
     }
 
@@ -164,7 +164,7 @@ int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ctx, tm_socke
             ssl_display_error(res);
         }
 
-        exit(1);
+        return 1;
     }
 
     if (!quiet)
