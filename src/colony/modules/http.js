@@ -266,6 +266,15 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
     onHeadersComplete: js_wrap_function(function (obj) {
       response.statusCode = obj.status_code
       self.emit('response', response);
+
+      // Temporary Connection: close fix until we can detect TCP socket closing.
+      if (response.headers['connection'] == 'close') {
+        setTimeout(function () {
+          if (self.socket.socket != null) {
+            self.socket.close();
+          }
+        }, 1000);
+      }
     }),
     onBody: js_wrap_function(function (body) {
       response.emit('data', body);
@@ -344,7 +353,7 @@ exports.get = function (opts, onresponse) {
   opts.method = 'GET';
 
   var req = this.request(opts, onresponse);
-  req.end();
+  // req.end();
   return req;
 };
 

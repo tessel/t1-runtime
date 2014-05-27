@@ -114,7 +114,9 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
 
 TCPSocket.prototype.__listen = function () {
   var self = this;
-  this.__listenid = setInterval(function () {
+  this.__listenid = setTimeout(function loop () {
+    self.__listenid = null;
+
     var buf = '', flag = 0;
     while (self.socket != null && (flag = tm.tcp_readable(self.socket)) > 0) {
       if (self._ssl) {
@@ -130,7 +132,6 @@ TCPSocket.prototype.__listen = function () {
 
     // Check error condition.
     if (flag < 0) {
-      console.log('NOT READABLE');
       self.emit('error', new Error('Socket closed.'));
       self.destroy();
       return;
@@ -139,21 +140,21 @@ TCPSocket.prototype.__listen = function () {
     if (buf.length) {
       self.emit('data', buf);
     }
+
+    self.__listenid = setTimeout(loop, 10);
   }, 10);
 };
 
 TCPSocket.prototype.write = function (buf, cb) {
   var self = this;
-  setImmediate(function () {
-    if (self._ssl) {
-      tm.ssl_write(self._ssl, buf, buf.length);
-    } else {
-      tm.tcp_write(self.socket, buf, buf.length);
-    }
-    if (cb) {
-      cb();
-    }
-  })
+  if (self._ssl) {
+    tm.ssl_write(self._ssl, buf, buf.length);
+  } else {
+    tm.tcp_write(self.socket, buf, buf.length);
+  }
+  if (cb) {
+    setImmediate(cb);
+  }
 };
 
 TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
@@ -162,11 +163,13 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
     clearInterval(this.__listenid);
     this.__listenid = null
   }
-  setImmediate(function () {
-    tm.tcp_close(self.socket);
-    self.socket = null;
-    self.emit('close');
-  });
+  if (self.socket != null) {
+    setImmediate(function () {
+      tm.tcp_close(self.socket);
+      self.socket = null;
+      self.emit('close');
+    });
+  }
 };
 
 exports.connect = function (port, host, callback, _secure) {
