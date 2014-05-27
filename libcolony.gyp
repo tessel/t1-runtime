@@ -181,6 +181,12 @@
             'src/posix/tm_uptime.c',
           ]
         }],
+        ['enable_ssl==1', {
+          'dependencies': [
+            "libtm.gyp:axtls",
+            "libtm.gyp:tm-ssl",
+          ],
+        }],
       ],
       "include_dirs": [
         'src/',
@@ -200,7 +206,7 @@
       ],
       "direct_dependent_settings": {
         "include_dirs": [
-          'src/colony/'
+          'src/colony/',
         ]
       }
     }

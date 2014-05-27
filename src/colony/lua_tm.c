@@ -6,6 +6,10 @@
 #include "colony.h"
 #include "order32.h"
 
+#ifdef ENABLE_TLS
+#include <crypto.h>
+#endif
+
 
 inline static void stackDump (lua_State *L)
 {
@@ -827,6 +831,19 @@ static int l_tm_random_bytes (lua_State *L)
   return 2;
 }
 
+static int l_tm_hmac_sha1 (lua_State *L)
+{
+  size_t key_len = 0;
+  uint8_t *key = (uint8_t *) colony_toconstdata(L, 1, &key_len);
+  size_t msg_len = 0;
+  uint8_t *msg = (uint8_t *) colony_toconstdata(L, 2, &msg_len);
+
+  uint8_t* sha1 = colony_createbuffer(L, 20);
+  hmac_sha1(msg, msg_len, key, key_len, sha1);
+
+  return 1;
+}
+
 
 /**
  * Load Colony.
@@ -934,6 +951,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
 
     // random
     { "random_bytes", l_tm_random_bytes },
+    { "hmac_sha1", l_tm_hmac_sha1 },
 
     // itoa
     { "itoa", l_tm_itoa },
