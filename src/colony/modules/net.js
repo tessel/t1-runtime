@@ -28,6 +28,9 @@ function ensureSSLCtx () {
   }
   if (ssl_ctx == null) {
     ssl_ctx = tm.ssl_context_create();
+    if (!ssl_ctx) {
+      throw new Error('Could not create SSL context.');
+    }
   }
 }
 
@@ -102,12 +105,20 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       tm.tcp_connect(self.socket, ip[0], ip[1], ip[2], ip[3], Number(port));
 
       if (self._secure) {
-        var ssl = tm.ssl_session_create(ssl_ctx, self.socket);
-        self._ssl = ssl;
-      }
+        // setTimeout(function () {
+          var ssl = tm.ssl_session_create(ssl_ctx, self.socket);
+          if (!ssl) {
+            throw new Error('Could not initialize SSL session.');
+          }
+          self._ssl = ssl;
 
-      self.__listen();
-      self.emit('connect');
+          self.__listen();
+          self.emit('connect');
+        // }.bind(this), 5000);
+      } else {
+        self.__listen();
+        self.emit('connect');
+      }
     }
   });
 };
