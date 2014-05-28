@@ -5,6 +5,7 @@
     "yajl_path": "./deps/yajl",
     "yajl_inc_path": "./deps/yajl-inc",
     "axtls_path": "./deps/axtls",
+    "axtls_inc_path": "./deps/axtls-inc",
     "c_ares_path": "./deps/c-ares",
     "colony_lua_path": "./deps/colony-lua",
     "lua_bitop_path": "./deps/luabitop-1.0",

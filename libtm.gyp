@@ -110,7 +110,6 @@
       "sources": [
         "<(axtls_path)/crypto/aes.c",
         "<(axtls_path)/crypto/bigint.c",
-        "<(axtls_path)/crypto/crypto_misc.c",
         "<(axtls_path)/crypto/hmac.c",
         "<(axtls_path)/crypto/md2.c",
         "<(axtls_path)/crypto/md5.c",
@@ -379,6 +378,7 @@
       "type": "static_library",
       'cflags': [ '-Wall', '-Wextra', '-Werror' ],
       "sources": [
+        "<(axtls_inc_path)/crypto_misc.c",
         'src/tm_ssl.c',
       ],
       "include_dirs": [
