@@ -833,6 +833,8 @@ static int l_tm_random_bytes (lua_State *L)
   return 2;
 }
 
+#ifdef ENABLE_TLS
+
 static int l_tm_hmac_sha1 (lua_State *L)
 {
   size_t key_len = 0;
@@ -856,6 +858,16 @@ static int l_tm_hmac_sha1 (lua_State *L)
 
   return 1;
 }
+
+#else
+
+static int l_tm_hmac_sha1 (lua_State *L)
+{
+  lua_pushnil(L);
+  return 1;
+}
+
+#endif
 
 
 /**

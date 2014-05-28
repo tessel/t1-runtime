@@ -27,6 +27,9 @@ Hmac.prototype.update = function (buf) {
 Hmac.prototype.digest = function (encoding) {
 	var msg = Buffer.concat(this._values);
 	var hash = tm.hmac_sha1(this.key, msg);
+	if (!hash) { // disabled
+		return null;
+	}
 	return encoding ? hash.toString(encoding) : hash;
 }
 
