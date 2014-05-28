@@ -181,6 +181,12 @@
             'src/posix/tm_uptime.c',
           ]
         }],
+        ['enable_ssl==1', {
+          'dependencies': [
+            "libtm.gyp:axtls",
+            "libtm.gyp:tm-ssl",
+          ],
+        }],
       ],
       "include_dirs": [
         'src/',

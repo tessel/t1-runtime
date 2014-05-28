@@ -450,8 +450,14 @@ arr_proto.concat = function (this, ...)
   return arr
 end
 
-arr_proto.sort = function (ths)
-  return ths
+arr_proto.sort = function (this)
+  table.insert(this, 1, this[0])
+  this[0] = nil
+  table.sort(this)
+  local zero = this[1]
+  table.remove(this, 1)
+  this[0] = zero
+  return this
 end
 
 arr_proto.join = function (ths, ...)
@@ -1367,7 +1373,7 @@ function encodeURIComponent (this, str)
   str = string.gsub (str, "([^%w %-%_%.%~])", function (c)
     return string.format ("%%%02X", string.byte(c))
   end)
-  str = string.gsub (str, " ", "+")
+  str = string.gsub (str, " ", "%%20")
   return str  
 end
 

@@ -6,6 +6,10 @@
 #include "colony.h"
 #include "order32.h"
 
+#ifdef ENABLE_TLS
+#include <crypto.h>
+#endif
+
 
 inline static void stackDump (lua_State *L)
 {
@@ -294,10 +298,12 @@ static int l_tm_ssl_write (lua_State* L)
 {
   tm_ssl_session_t session = (tm_ssl_session_t) lua_touserdata(L, 1);
   size_t len;
-  const char *text = lua_tolstring(L, 2, &len);
+  const uint8_t *text = colony_toconstdata(L, 2, &len);
 
-  tm_ssl_write(session, (uint8_t*) text, len);
-  return 0;
+  int ret = tm_ssl_write(session, (uint8_t*) text, len);
+
+  lua_pushnumber(L, ret);
+  return 1;
 }
 
 
@@ -827,6 +833,42 @@ static int l_tm_random_bytes (lua_State *L)
   return 2;
 }
 
+#ifdef ENABLE_TLS
+
+static int l_tm_hmac_sha1 (lua_State *L)
+{
+  size_t key_len = 0;
+  uint8_t *key = (uint8_t *) colony_toconstdata(L, 1, &key_len);
+  size_t msg_len = 0;
+  uint8_t *msg = (uint8_t *) colony_toconstdata(L, 2, &msg_len);
+
+  SHA1_CTX context;
+
+  if (key_len > 64) {
+    uint8_t* hashedkey = lua_newuserdata(L, 64);
+    SHA1_Init(&context);
+    SHA1_Update(&context, key, key_len);
+    SHA1_Final(hashedkey, &context);
+    key_len = 20;
+    key = hashedkey;
+  }
+
+  uint8_t* sha1 = colony_createbuffer(L, 20);
+  hmac_sha1(msg, msg_len, key, key_len, sha1);
+
+  return 1;
+}
+
+#else
+
+static int l_tm_hmac_sha1 (lua_State *L)
+{
+  lua_pushnil(L);
+  return 1;
+}
+
+#endif
+
 
 /**
  * Load Colony.
@@ -934,6 +976,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
 
     // random
     { "random_bytes", l_tm_random_bytes },
+    { "hmac_sha1", l_tm_hmac_sha1 },
 
     // itoa
     { "itoa", l_tm_itoa },
