@@ -201,13 +201,8 @@ setmetatable(funcproxies, {__mode = 'k'})
 function js_func_proxy (fn)
   local proxy = rawget(funcproxies, fn)
   if not proxy then
-    proxy = {}
-    setmetatable(proxy, {
-      __index = function (self, key)
-        return js_proto_get(self, func_proto, key)
-      end,
-      proto = func_proto
-    })
+    proxy = js_obj({})
+    proxy.__proto__ = func_proto
     rawset(funcproxies, fn, proxy)
   end
   return proxy

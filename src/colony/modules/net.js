@@ -247,14 +247,14 @@ TCPServer.prototype.listen = function (port, ip) {
   setInterval(function () {
     var _ = tm.tcp_accept(self.socket)
       , client = _[0]
-      , err = _[1];
+      , ip = _[1];
 
-    if (!err && client >= 0) {
+    if (client >= 0) {
       var clientsocket = new TCPSocket(client);
       clientsocket.__listen();
       self.emit('socket', clientsocket);
     }
-  });
+  }, 10);
 };
 
 exports.createServer = function (onsocket) {
