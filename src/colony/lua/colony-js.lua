@@ -1212,7 +1212,7 @@ if type(hs) == 'table' then
     local cre = hs.regex_create()
     local crestr, rc = hs.re_comp(cre, patt, hs.ADVANCED)
     if rc ~= 0 then
-      error('SyntaxError: Invalid regex "' .. patt .. '"')
+      error('SyntaxError: Invalid regex "' .. patt .. '" (error ' + tostring(rc or 0) + ')')
     end
     if hs.regex_nsub(cre) > hsmatchc then
       error('Too many capturing subgroups (max ' .. hsmatchc .. ', compiled ' .. hs.regex_nsub(cre) .. ')')
