@@ -3,6 +3,12 @@
 #include <os_port.h>
 #include <ssl.h>
 
+#ifdef TLS_VERBOSE
+#define TLS_DEBUG(...) printf(##__VA_ARGS__)
+#else
+#define TLS_DEBUG(...) if (0) { printf(__VA_ARGS__); }
+#endif
+
 static void display_cipher(tm_ssl_session_t ssl);
 static void display_session_id(tm_ssl_session_t ssl);
 
@@ -31,7 +37,11 @@ int tm_ssl_context_create (tm_ssl_ctx_t* ctx)
 {
     int i = 0;
     // uint16_t port = 4433;
+#ifdef TLS_VERBOSE
     uint32_t options = SSL_SERVER_VERIFY_LATER|SSL_DISPLAY_CERTS;
+#else
+    uint32_t options = SSL_SERVER_VERIFY_LATER;
+#endif
     // int client_fd;
     char *private_key_file = NULL;
     // sockaddr_in_t client_addr;
@@ -173,7 +183,7 @@ int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ctx, tm_socke
                 SSL_X509_CERT_COMMON_NAME);
         if (common_name)
         {
-            printf("Common Name:\t\t\t%s\n", common_name);
+            TLS_DEBUG("Common Name:\t\t\t%s\n", common_name);
         }
 
         display_session_id(ssl);
@@ -197,31 +207,31 @@ int tm_ssl_session_free (tm_ssl_session_t *session)
  */
 static void display_cipher(tm_ssl_session_t ssl)
 {
-    printf("CIPHER is ");
+    TLS_DEBUG("CIPHER is ");
     switch (ssl_get_cipher_id(ssl))
     {
         case SSL_AES128_SHA:
-            printf("AES128-SHA");
+            TLS_DEBUG("AES128-SHA");
             break;
 
         case SSL_AES256_SHA:
-            printf("AES256-SHA");
+            TLS_DEBUG("AES256-SHA");
             break;
 
         case SSL_RC4_128_SHA:
-            printf("RC4-SHA");
+            TLS_DEBUG("RC4-SHA");
             break;
 
         case SSL_RC4_128_MD5:
-            printf("RC4-MD5");
+            TLS_DEBUG("RC4-MD5");
             break;
 
         default:
-            printf("Unknown - %d", ssl_get_cipher_id(ssl));
+            TLS_DEBUG("Unknown - %d", ssl_get_cipher_id(ssl));
             break;
     }
 
-    printf("\n");
+    TLS_DEBUG("\n");
     TTY_FLUSH();
 }
 
@@ -236,13 +246,13 @@ static void display_session_id(tm_ssl_session_t ssl)
 
     if (sess_id_size > 0)
     {
-        printf("-----BEGIN SSL SESSION PARAMETERS-----\n");
+        TLS_DEBUG("-----BEGIN SSL SESSION PARAMETERS-----\n");
         for (i = 0; i < sess_id_size; i++)
         {
-            printf("%02x", session_id[i]);
+            TLS_DEBUG("%02x", session_id[i]);
         }
 
-        printf("\n-----END SSL SESSION PARAMETERS-----\n");
+        TLS_DEBUG("\n-----END SSL SESSION PARAMETERS-----\n");
         TTY_FLUSH();
     }
 }
