@@ -298,10 +298,12 @@ static int l_tm_ssl_write (lua_State* L)
 {
   tm_ssl_session_t session = (tm_ssl_session_t) lua_touserdata(L, 1);
   size_t len;
-  const char *text = lua_tolstring(L, 2, &len);
+  const uint8_t *text = colony_toconstdata(L, 2, &len);
 
-  tm_ssl_write(session, (uint8_t*) text, len);
-  return 0;
+  int ret = tm_ssl_write(session, (uint8_t*) text, len);
+
+  lua_pushnumber(L, ret);
+  return 1;
 }
 
 

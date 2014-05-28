@@ -39,6 +39,8 @@ function ensureSSLCtx () {
 function TCPSocket (socket, _secure) {
   this.socket = socket;
   this._secure = _secure;
+  this._outgoing = [];
+  this._sending = false;
 }
 
 util.inherits(TCPSocket, Stream);
@@ -115,6 +117,10 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
 TCPSocket.prototype.__listen = function () {
   var self = this;
   this.__listenid = setInterval(function () {
+    if (self._sending) {
+      return;
+    }
+
     var buf = '', flag = 0;
     while (self.socket != null && (flag = tm.tcp_readable(self.socket)) > 0) {
       if (self._ssl) {
@@ -142,19 +148,55 @@ TCPSocket.prototype.__listen = function () {
   }, 10);
 };
 
+// Maximum packet size CC can handle.
+var WRITE_PACKET_SIZE = 1024;
+
 TCPSocket.prototype.write = function (buf, cb) {
   var self = this;
-  setImmediate(function () {
-    if (self._ssl) {
-      tm.ssl_write(self._ssl, buf, buf.length);
-    } else {
-      tm.tcp_write(self.socket, buf, buf.length);
+
+  if (!Buffer.isBuffer(buf)) {
+    buf = new Buffer(buf);
+  }
+  if (buf.length > WRITE_PACKET_SIZE) {
+    for (var i = 0; i < buf.length; i += WRITE_PACKET_SIZE) {
+      var s = buf.slice(i, i + WRITE_PACKET_SIZE);
+      this._outgoing.push(s);
     }
-    if (cb) {
-      cb();
-    }
-  })
+  } else {
+    this._outgoing.push(buf);
+  }
+
+  this.__send();
 };
+
+TCPSocket.prototype.__send = function () {
+  if (this._sending || !this._outgoing.length) {
+    return false;
+  }
+  this._sending = true;
+
+  var self = this;
+  var buf = this._outgoing.shift();
+  (function send () {
+    if (self._ssl) {
+      var ret = tm.ssl_write(self._ssl, buf, buf.length);
+    } else {
+      var ret = tm.tcp_write(self.socket, buf, buf.length);
+    }
+
+    if (ret == -11) {
+      // EWOULDBLOCK / EAGAIN
+      setImmediate(send);
+    } else if (ret < 0) {
+      // Error.
+      throw new Error(-ret);
+    } else {
+      // Next buffer.
+      self._sending = false;
+      self.__send();
+    }
+  })();
+}
 
 TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
   var self = this;

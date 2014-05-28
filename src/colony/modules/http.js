@@ -240,6 +240,14 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
     self.emit('error', err);
   })
 
+  self._outgoing = [];
+  self.socket.once('connect', function () {
+    for (var i = 0; i < self._outgoing.length; i++) {
+      self.socket.write(self._outgoing[i]);
+    }
+    self._outgoing = [];
+  })
+
   function js_wrap_function (fn) {
     return function () {
       return fn.apply(null, [this].concat(arguments));
@@ -293,9 +301,7 @@ HTTPOutgoingRequest.prototype.write = function (data) {
   if (this._connected) {
     this.socket.write(data);
   } else {
-    this.socket.once('connect', function () {
-      this.socket.write(data);
-    }.bind(this))
+    this._outgoing.push(data)
   }
 };
 
