@@ -89,14 +89,14 @@ static const wchar_t* lua_tomultibytelstring (lua_State* L, int pos, size_t* buf
 {
   size_t len;
   const char *patt = lua_tolstring(L, pos, &len);
-  char *oldbuf = (char *) malloc(len + 1);
+  char *oldbuf = (char *) lua_newuserdata(L, len + 1);
   memcpy(oldbuf, patt, len);
   wchar_t *buf = (wchar_t *) lua_newuserdata(L, (len + 1) * sizeof(chr));
   memset(buf, 0, (len + 1) * sizeof(chr));
   // wchar_t *buf = (wchar_t *) malloc((len + 1) * sizeof(chr));
   // lua_pushlightuserdata(L, buf);
   *buflen = hexescapes2bin(buf, oldbuf, len);
-  free(oldbuf);
+  lua_remove(L, -2);
   return buf;
 }
 
