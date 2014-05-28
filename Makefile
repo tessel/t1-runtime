@@ -37,3 +37,10 @@ libtm-test:
 
 libtm:
 	$(call compile, libtm.gyp)
+
+
+# Compiler Targets
+
+compile-axtls:
+	gyp libtm.gyp --depth=. -f ninja -D enable_ssl=1 -R tm-ssl
+	ninja -C out/$(CONFIG)
