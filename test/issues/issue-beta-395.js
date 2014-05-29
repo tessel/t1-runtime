@@ -1,10 +1,11 @@
-var a = [ 'oauth_signature', 'oauth_token', 'oauth_version', 'oauth_nonce', 'oauth_timestamp', 'oauth_signature_method', 'oauth_consumer_key' ]
+console.log('1..2');
+
+var a = ['c', 'd', 'a', 'e', 'b']
+console.log('#', a);
+
 var b = a.slice()
+console.log('#', b.sort());
+console.log(JSON.stringify(b) == JSON.stringify(['a', 'b', 'c', 'd', 'e']) ? 'ok' : 'not ok');
 
-console.log(a);
-
-a.sort()
-
-console.log(a);
-
-console.log(b.sort());
+b.sort().push('hi');
+console.log(b.pop() == 'hi' ? 'ok' : 'not ok')
