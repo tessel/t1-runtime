@@ -218,6 +218,8 @@ obj_proto.toString = function (this)
     return '[object Array]'
   elseif type(this) == 'function' then
     return '[object Function]'
+  elseif a and a.constructor and a.constructor.name then
+    return '[object ' .. a.constructor.name .. ']'
   else
     return '[object Object]'
   end
