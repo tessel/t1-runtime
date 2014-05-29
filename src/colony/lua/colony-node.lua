@@ -49,10 +49,12 @@ end
 --]]
 
 _G._colony_unhandled_exception = function (e)
-  if e.stack then
+  if e ~= nil and e.stack then
     -- runtime errors
     tm.log(22, e:toString())
     tm.log(22, e.stack)
+  elseif e ~= nil and type(e.toString) == 'function' then
+    tm.log(22, e:toString())
   else
     -- internal errors
     tm.log(22, debug.traceback(e, 2))

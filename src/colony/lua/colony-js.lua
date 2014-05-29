@@ -925,6 +925,7 @@ local function error_class (name)
     getmetatable(this).__tostring = function (this)
       return this.message
     end
+    this.name = name
     this.type = name
     this.message = str
     this.stack = tostring(debug.traceback())
@@ -936,8 +937,11 @@ local function error_class (name)
     return {}
   end
 
-  constructor.prototype.toString = function (self)
-    return name .. ": " .. self.message
+  constructor.prototype.toString = function (this)
+    if not this then
+      return '(undefined)'
+    end
+    return this.name .. ": " .. this.message
   end
 
   return constructor
