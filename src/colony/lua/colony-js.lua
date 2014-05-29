@@ -246,11 +246,7 @@ function js_define_setter (self, key, fn)
   end
 
   local mt = getmetatable(self)
-  if not mt.values then
-    mt.values = {}
-    mt.values[key] = rawget(self, key)
-    rawset(self, key, nil)
-  end
+  rawset(self, key, nil)
   if not mt.getters then
     mt.getters = {}
     mt.__index = js_getter_index(mt.proto)
@@ -269,11 +265,7 @@ function js_define_getter (self, key, fn)
   end
   
   local mt = getmetatable(self)
-  if not mt.values then
-    mt.values = {}
-    mt.values[key] = rawget(self, key)
-    rawset(self, key, nil)
-  end
+  rawset(self, key, nil)
   if not mt.getters then
     mt.getters = {}
     mt.__index = js_getter_index(mt.proto)
@@ -669,11 +661,6 @@ global.Object.getOwnPropertyNames = function (this, obj)
       a:push(k)
     end
   end
-  if mt and mt.values then
-    for k,v in pairs(mt.values) do
-      a:push(k)
-    end
-  end
   if mt and mt.setters then
     for k,v in pairs(mt.setters) do
       a:push(k)
@@ -686,7 +673,7 @@ global.Object.getOwnPropertyDescriptor = function (this, obj, key)
   local mt = getmetatable(obj)
   if mt then
     return js_obj({
-      value = (mt and {mt.values and mt.values[key]} or {obj[key]})[1],
+      value = rawget(obj, key),
       get = mt and mt.getters and mt.getters[key],
       set = mt and mt.setters and mt.setters[key],
       writeable = true,
@@ -1212,7 +1199,7 @@ if type(hs) == 'table' then
     local cre = hs.regex_create()
     local crestr, rc = hs.re_comp(cre, patt, hs.ADVANCED)
     if rc ~= 0 then
-      error('SyntaxError: Invalid regex "' .. patt .. '"')
+      error('SyntaxError: Invalid regex "' .. patt .. '" (error ' + tostring(rc or 0) + ')')
     end
     if hs.regex_nsub(cre) > hsmatchc then
       error('Too many capturing subgroups (max ' .. hsmatchc .. ', compiled ' .. hs.regex_nsub(cre) .. ')')
