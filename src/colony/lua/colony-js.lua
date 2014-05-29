@@ -608,6 +608,9 @@ global.Object.defineProperty = function (this, obj, prop, config)
   if type(obj) == 'function' then
     obj = js_func_proxy(obj)
   end
+  if type(obj) ~= 'table' then
+    error('TypeError: Object.defineProperty called on non-object')
+  end
   if config.value then
     rawset(obj, prop, config.value)
   end
