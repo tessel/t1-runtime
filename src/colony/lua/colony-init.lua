@@ -61,7 +61,7 @@ local function js_getter_index (proto)
     if getter then
       return getter(self)
     end
-    return mt.values[key] or js_proto_get(self, proto, key)
+    return rawget(_self or self, key) or js_proto_get(self, proto, key)
   end
 end
 
@@ -72,7 +72,7 @@ local function js_setter_index (proto)
     if setter then
       return setter(self, value)
     end
-    rawset(mt.values, key, value)
+    rawset(self, key, value)
   end
 end
 
@@ -244,7 +244,6 @@ str_mt.getters = {
     return string.len(ths)
   end
 }
-str_mt.values = {}
 str_mt.__index = function (self, key)
   -- custom js_getter_index for strings 
   -- allows numerical indices
