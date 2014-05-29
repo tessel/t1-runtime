@@ -258,6 +258,12 @@ local buffer_proto = js_obj({
     end
     tm.buffer_copy(sourceBuffer, targetBuffer, targetStart, sourceStart, sourceEnd)
   end,
+  write = function (this, string, offset, length, encoding)
+    local buf = js_new(global.Buffer, string)
+    length = tonumber(length) or math.min(this.length, buf.length)
+    buf:copy(this, offset, 0, length)
+    return length
+  end,
   toString = function (this, encoding)
     local sourceBuffer = getmetatable(this).buffer
     local sourceBufferLength = getmetatable(this).bufferlen

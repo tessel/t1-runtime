@@ -160,3 +160,10 @@ console.log('#', new Buffer(new Buffer('hello world').toString('base64'), 'base6
 ok(new Buffer(new Buffer('hello world').toString('hex'), 'hex').toString() == 'hello world', 'str -> hex -> str')
 console.log('#', new Buffer('hello world').toString('hex'))
 console.log('#', new Buffer(new Buffer('hello world').toString('hex'), 'hex'))
+
+// write
+var buf = new Buffer(256);
+var len = buf.write('\u00bd + \u00bc = \u00be', 4);
+console.log('#', len + " bytes: " + buf.toString('utf8', 4, 4 + len));
+ok(len == 12, 'written length is 12 byes')
+ok(buf.slice(4, 4 + 12).toString() == '\u00bd + \u00bc = \u00be', 'result was written')
