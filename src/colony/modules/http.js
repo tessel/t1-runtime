@@ -236,16 +236,16 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
     // self.emit('connect');
   }, _secure)
 
-  self.socket.on('error', function (err) {
-    self.emit('error', err);
-  })
-
   self._outgoing = [];
   self.socket.once('connect', function () {
     for (var i = 0; i < self._outgoing.length; i++) {
       self.socket.write(self._outgoing[i]);
     }
     self._outgoing = [];
+  })
+
+  self.socket.on('error', function (err) {
+    self.emit('error', err);
   })
 
   function js_wrap_function (fn) {
@@ -259,7 +259,8 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
     onMessageBegin: js_wrap_function(function () {
       response = new HTTPIncomingResponse();
       self.socket.on('close', function () {
-        response.emit('close');
+        response.emit('end');
+        response = null;
       });
     }),
     onUrl: js_wrap_function(function (url) {
@@ -269,19 +270,25 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
       lastheader = field;
     }),
     onHeaderValue: js_wrap_function(function (value) {
-      response.headers[lastheader.toLowerCase()] = value;
+      if (response) {
+        response.headers[lastheader.toLowerCase()] = value;
+      }
     }),
     onHeadersComplete: js_wrap_function(function (obj) {
-      response.statusCode = obj.status_code
-      self.emit('response', response);
+      if (response) {
+        response.statusCode = obj.status_code
+        self.emit('response', response);
+      }
     }),
     onBody: js_wrap_function(function (body) {
-      response.emit('data', body);
+      if (response) {
+        response.emit('data', body);
+      }
     }),
     onMessageComplete: js_wrap_function(function () {
-      response.emit('end');
-      // TODO close
-      self.socket.close();
+      if (response) {
+        self.socket.close();
+      }
     })
   })
   self.socket.on('data', function (data) {
@@ -350,7 +357,7 @@ exports.get = function (opts, onresponse) {
   opts.method = 'GET';
 
   var req = this.request(opts, onresponse);
-  req.end();
+  // req.end();
   return req;
 };
 

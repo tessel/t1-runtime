@@ -41,6 +41,18 @@ function TCPSocket (socket, _secure) {
   this._secure = _secure;
   this._outgoing = [];
   this._sending = false;
+
+  var self = this;
+  self._closehandler = function (buf) {
+    var socket = buf.readUInt32LE(0);
+    if (socket == self.socket) {
+      setImmediate(function () {
+        // console.log('closing', socket, 'against', self.socket)
+        self.close();
+      });
+    }
+  }
+  process.on('tcp-close', this._closehandler)
 }
 
 util.inherits(TCPSocket, Stream);
@@ -101,7 +113,10 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
 
     function doConnect(ip) {
       ip = ip.split('.').map(Number);
-      tm.tcp_connect(self.socket, ip[0], ip[1], ip[2], ip[3], Number(port));
+      var ret = tm.tcp_connect(self.socket, ip[0], ip[1], ip[2], ip[3], Number(port));
+      if (ret < 0) {
+        throw new Error('ENOENT Cannot connect to ' + ip.join('.'));
+      }
 
       if (self._secure) {
         var ssl = tm.ssl_session_create(ssl_ctx, self.socket);
@@ -116,7 +131,9 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
 
 TCPSocket.prototype.__listen = function () {
   var self = this;
-  this.__listenid = setInterval(function () {
+  this.__listenid = setTimeout(function loop () {
+    self.__listenid = null;
+
     if (self._sending) {
       return;
     }
@@ -136,8 +153,8 @@ TCPSocket.prototype.__listen = function () {
 
     // Check error condition.
     if (flag < 0) {
-      console.log('NOT READABLE');
-      self.emit('error', new Error('Socket closed.'));
+      // console.log('DESTROY');
+      // self.emit('error', new Error('Socket closed.'));
       self.destroy();
       return;
     }
@@ -145,6 +162,8 @@ TCPSocket.prototype.__listen = function () {
     if (buf.length) {
       self.emit('data', buf);
     }
+
+    self.__listenid = setTimeout(loop, 10);
   }, 10);
 };
 
@@ -200,14 +219,17 @@ TCPSocket.prototype.__send = function () {
 
 TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
   var self = this;
-  if (this.__listenid != null) {
-    clearInterval(this.__listenid);
-    this.__listenid = null
-  }
   setImmediate(function () {
-    tm.tcp_close(self.socket);
-    self.socket = null;
-    self.emit('close');
+    if (self.__listenid != null) {
+      clearInterval(self.__listenid);
+      self.__listenid = null
+    }
+    if (self.socket != null) {
+      process.removeListener('tcp-close', self._closehandler);
+      tm.tcp_close(self.socket);
+      self.socket = null;
+      self.emit('close');
+    }
   });
 };
 
