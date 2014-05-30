@@ -983,6 +983,10 @@ local function objtostring (obj, sset)
     return table.concat(out, ' ') + '>'
   end
 
+  if getmetatable(obj) and getmetatable(obj).date then
+    return obj:toString()
+  end
+
   local vals = {}
   rawset(sset, obj, true)
   for k in js_pairs(obj) do
@@ -1086,6 +1090,11 @@ global.Date = function (this, time)
   end
   if type(time) == 'number' then
     getmetatable(this).date = time
+
+  -- temporary hardcode for ntp-client
+  elseif time == 'Jan 01 1900 GMT' then
+    getmetatable(this).date = -2208988800000000
+
   else
     getmetatable(this).date = tm.uptime_micro()
   end
@@ -1167,11 +1176,14 @@ global.Date.prototype.setTime = function () end
 global.Date.prototype.setUTCDate = function () end
 global.Date.prototype.setUTCFullYear = function () end
 global.Date.prototype.setUTCHours = function () end
-global.Date.prototype.setUTCMilliseconds = function () end
 global.Date.prototype.setUTCMinutes = function () end
 global.Date.prototype.setUTCMonth = function () end
 global.Date.prototype.setUTCSeconds = function () end
 global.Date.prototype.setYear = function () end
+
+global.Date.prototype.setUTCMilliseconds = function (this, sec)
+  getmetatable(this).date = getmetatable(this).date + (sec*1000)
+end
 
 global.Date.prototype.toDateString = function () return ''; end
 global.Date.prototype.toGMTString = function () return ''; end
