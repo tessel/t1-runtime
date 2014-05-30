@@ -135,13 +135,15 @@ static int l_tm_udp_receive (lua_State *L)
 {
   int socket = (int) lua_tonumber(L, 1);
 
-  uint8_t buf[256];
+  // TODO is max buf size 256?
+  uint8_t* buf = colony_createbuffer(L, 256);
   uint32_t from;
-  size_t buf_len = tm_udp_receive(socket, buf, sizeof(buf), &from);
+  size_t buf_len = tm_udp_receive(socket, buf, 256, &from);
 
-  lua_pushlstring(L, (const char *) buf, buf_len);
+  lua_pushnumber(L, buf_len);
+  lua_pushnumber(L, from);
 
-  return 1;
+  return 3;
 }
 
 

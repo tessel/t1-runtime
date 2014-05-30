@@ -1,3 +1,4 @@
+var dns = require('dns');
 var tm = process.binding('tm');
 
 var EventEmitter = require('events').EventEmitter;
@@ -8,29 +9,72 @@ function UDP (socket) {
 
 UDP.prototype = new EventEmitter();
 
-UDP.prototype.bind = function (port) {
-  tm.udp_listen(this.socket, port);
-  var client = this;
-  setInterval(function () {
-    var r = tm.udp_readable(client.socket);
-    while (r) {
-      var buf = tm.udp_receive(client.socket);
-      client.emit('message', buf);
+UDP.prototype.bind = function (port, cb) {
+  var self = this;
+
+  this._bound = true;
+  tm.udp_listen(this.socket, port || 0);
+
+  this._listenid = setTimeout(function poll () {
+    self._listenid = null;
+    if (self.socket == null) {
+      return;
     }
+
+    var r;
+    while ((r = tm.udp_readable(self.socket))) {
+      var buf = tm.udp_receive(self.socket);
+      self.emit('message', buf[0].slice(0, buf[1]));
+    }
+
+    self._listenid = setTimeout(poll);
   }, 100);
+
   cb && cb();
 }
 
-UDP.prototype.send = function (text, offset, len, port, ip) {
-  var ips = ip.split('.');
-  if (typeof text != 'string') {
-    text = text.toString('utf8')
+function isIP (host) {
+  return host.match(/^[0-9.]+$/);
+}
+
+UDP.prototype.send = function (text, offset, len, port, host, cb) {
+  var self = this;
+
+  if (!this._bound) {
+    // TODO 0 on PC build
+    this.bind(7000);
   }
-  tm.udp_send(this.socket, ips[0], ips[1], ips[2], ips[3], port, text.substr(offset, len));
+
+  setImmediate(function () {
+    if (isIP(host)) {
+      doConnect(host);
+    } else {
+      dns.resolve(host, function onResolve(err, ips) {
+        if (err) {
+          return self.emit('error', err);
+        }
+        doConnect(ips[0]);
+      })
+    }
+
+    function doConnect(ip) {
+      var ips = ip.split('.');
+      var buf = Buffer.isBuffer(text) ? text : new Buffer(text);
+      buf = buf.slice(offset, len);
+      var ret = tm.udp_send(self.socket, ips[0], ips[1], ips[2], ips[3], port, buf);
+      cb && cb(ret);
+    }
+  });
 }
 
 UDP.prototype.close = function () {
-  this.socket = tm.udp_close(this.socket);
+  tm.udp_close(this.socket);
+  this.socket = null;
+  this._closed = true;
+  if (this._listenid) {
+    clearTimeout(this._listenid);
+    this._listenid = null;
+  }
 }
 
 exports.createSocket = function () {
