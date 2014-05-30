@@ -9,6 +9,10 @@ function inherits (A, B) {
   A.super_ = B;
 }
 
+function objectToString(o) {
+  return Object.prototype.toString.call(o);
+}
+
 function deprecate (fn) {
   return fn;
 }
@@ -45,6 +49,14 @@ function isNullOrUndefined(arg) {
   return arg == null;
 }
 
+function isDate(arg) {
+  return isObject(d) && objectToString(d) === '[object Date]';
+}
+
+function isRegExp(arg) {
+  return isObject(re) && objectToString(re) === '[object RegExp]';
+}
+
 var debugs = {};
 var debugEnviron = process.env.NODE_DEBUG || '';
 
@@ -78,5 +90,7 @@ exports.isNull = isNull;
 exports.isObject = isObject;
 exports.isArray = isArray;
 exports.isFunction = isFunction;
+exports.isDate = isDate;
+exports.isRegExp = isRegExp;
 exports.isNullOrUndefined = isNullOrUndefined;
 exports.debuglog = debuglog;
