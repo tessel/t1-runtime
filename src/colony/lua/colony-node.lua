@@ -67,16 +67,21 @@ end
 --|| Lua Timers
 --]]
 
-function wrap_timer_cb(fn, ...)
+function wrap_timer_cb(timerfn, ...)
+  -- Swallow errors if non function
+  if type(timerfn) ~= 'function' then
+    return function () end
+  end
+
   -- If extra args were passed, encapsulate them in a closure
   if select("#", ...) then
-    local orig_fn = fn
+    local timerfn_call = timerfn
     local args = table.pack(...)
-    fn = function()
-      orig_fn(global, unpack(args))
+    timerfn = function()
+      timerfn_call(global, unpack(args))
     end
   end
-  return fn
+  return timerfn
 end
 
 global.setTimeout = function (this, fn, timeout, ...)

@@ -181,8 +181,8 @@ static int l_tm_tcp_connect (lua_State* L)
   uint8_t ip3 = (uint8_t) lua_tonumber(L, 5);
   uint16_t port = (uint16_t) lua_tonumber(L, 6);
 
-  tm_tcp_connect(socket, ip0, ip1, ip2, ip3, port);
-  return 0;
+  lua_pushnumber(L, tm_tcp_connect(socket, ip0, ip1, ip2, ip3, port));
+  return 1;
 }
 
 
