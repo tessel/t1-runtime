@@ -150,6 +150,11 @@ ssize_t tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t buf_len);
 void tm_uptime_init ();
 uint32_t tm_uptime_micro ();
 
+// TIMESTAMP
+
+double tm_timestamp ();
+int tm_timestamp_update (double millis);
+
 // BUFFER
 
 typedef enum {

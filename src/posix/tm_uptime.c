@@ -14,19 +14,16 @@
  * Uptime
  */
 
+static double timestamp_base = 0;
+
 void tm_uptime_init ()
 {
-  // nop
+  timestamp_base = tm_timestamp();
 }
 
 uint32_t tm_uptime_micro ()
 {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-
-  double time_in_mill = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000;
-  return (uint32_t) (time_in_mill * 1000);
-  // return 0;
+  return tm_timestamp() - timestamp_base;
 }
 
 
