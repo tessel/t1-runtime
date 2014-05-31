@@ -1096,7 +1096,7 @@ global.Date = function (this, time)
     getmetatable(this).date = -2208988800000000
 
   else
-    getmetatable(this).date = tm.uptime_micro()
+    getmetatable(this).date = tm.timestamp()
   end
   return this
 end
@@ -1194,15 +1194,15 @@ global.Date.prototype.toTimeString = function () return ''; end
 global.Date.prototype.toUTCString = function () return ''; end
 
 global.Date.now = function ()
-  return tonumber(tm.uptime_micro()/1e3) or 0
+  return tonumber(tm.timestamp()/1e3) or 0
 end
 
 global.Date.parse = function ()
-  return tonumber(tm.uptime_micro()/1e3) or 0
+  return tonumber(tm.timestamp()/1e3) or 0
 end
 
 global.Date.UTC = function ()
-  return tonumber(tm.uptime_micro()/1e3) or 0
+  return tonumber(tm.timestamp()/1e3) or 0
 end
 
 -- regexp library

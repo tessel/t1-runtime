@@ -179,6 +179,7 @@
         ['OS!="arm"', {
           "sources": [
             'src/posix/tm_uptime.c',
+            'src/posix/tm_timestamp.c',
           ]
         }],
         ['enable_ssl==1', {

@@ -3,6 +3,10 @@ console.log('# typeof Date.now', typeof Date.now())
 console.log(typeof Date() == 'string');
 console.log(typeof (new Date) == 'object');
 
+if (!(Date.now() > 0)) {
+	throw new Error('Invalid Date.now()');
+}
+
 var d = new Date();
 console.log(d.toString() == Date());
 console.log('# toString', d.toString())

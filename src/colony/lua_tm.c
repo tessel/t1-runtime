@@ -347,6 +347,25 @@ static int l_tm_uptime_micro (lua_State* L)
 
 
 /**
+ * date
+ */
+
+static int l_tm_timestamp (lua_State* L)
+{
+  lua_pushnumber(L, tm_timestamp());
+  return 1;
+}
+
+
+static int l_tm_timestamp_update (lua_State* L)
+{
+  double timestamp = (double) lua_tonumber(L, 1);
+  lua_pushnumber(L, tm_timestamp_update(timestamp));
+  return 1;
+}
+
+
+/**
  * Timers
  */
 
@@ -979,6 +998,10 @@ LUALIB_API int luaopen_tm (lua_State *L)
     // random
     { "random_bytes", l_tm_random_bytes },
     { "hmac_sha1", l_tm_hmac_sha1 },
+
+    // timestamp
+    { "timestamp", l_tm_timestamp },
+    { "timestamp_update", l_tm_timestamp_update },
 
     // itoa
     { "itoa", l_tm_itoa },
