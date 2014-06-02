@@ -95,6 +95,9 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   var host = args[0].host;
   var cb = args[1];
 
+  self._port = port;
+  self._address = host;
+
   if (cb) {
     self.once('connect', cb);
   }
@@ -167,6 +170,14 @@ TCPSocket.prototype.__listen = function () {
   }, 10);
 };
 
+TCPSocket.prototype.address = function () {
+  return {
+    port: this._port,
+    family: 'IPv4',
+    address: this._address
+  };
+};
+
 // Maximum packet size CC can handle.
 var WRITE_PACKET_SIZE = 1024;
 
@@ -233,7 +244,7 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
   });
 };
 
-exports.connect = function (port, host, callback, _secure) {
+function connect (port, host, callback, _secure) {
   if (_secure) {
     ensureSSLCtx();
   }
@@ -266,6 +277,9 @@ TCPServer.prototype.listen = function (port, ip) {
     throw "Error listening on TCP socket (port " + port + ", ip " + ip + ")"
   }
 
+  self._port = port;
+  self._address = ip;
+
   setInterval(function () {
     var _ = tm.tcp_accept(self.socket)
       , client = _[0]
@@ -279,8 +293,18 @@ TCPServer.prototype.listen = function (port, ip) {
   }, 10);
 };
 
-exports.createServer = function (onsocket) {
+function createServer (onsocket) {
   var server = new TCPServer(tm.tcp_open());
   onsocket && server.on('socket', onsocket);
   return server; 
 };
+
+
+/**
+ * Public API
+ */
+
+exports.connect = connect;
+exports.createServer = createServer;
+exports.Socket = TCPSocket;
+exports.Server = TCPServer;

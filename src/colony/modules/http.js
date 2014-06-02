@@ -12,9 +12,9 @@ var dns = require('dns');
  * ServerResponse
  */
 
-function ServerResponse (req, socket) {
+function ServerResponse (req, connection) {
   this.req = req;
-  this.socket = socket;
+  this.connection = connection;
   this.headers = {};
   this._header = false;
   this._closed = false;
@@ -52,18 +52,18 @@ ServerResponse.prototype.writeHead = function (status, headers) {
   if (headers) {
     this.setHeaders(headers);
   }
-  this.socket.write('HTTP/1.1 ' + status + ' OK\r\n');
+  this.connection.write('HTTP/1.1 ' + status + ' OK\r\n');
   this._usesContentType = false;
   for (var key in this.headers) {
     if (key.toLowerCase() == 'content-length') {
       this._usesContentType = true;
     }
-    this.socket.write(key + ': ' + this.headers[key] + '\r\n');
+    this.connection.write(key + ': ' + this.headers[key] + '\r\n');
   }
   if (!this._usesContentType) {
-    this.socket.write('Transfer-Encoding: chunked\r\n');
+    this.connection.write('Transfer-Encoding: chunked\r\n');
   }
-  this.socket.write('\r\n');
+  this.connection.write('\r\n');
   this._header = true;
   // console.log('writing headers', headers);
 };
@@ -74,12 +74,12 @@ ServerResponse.prototype.write = function (data) {
   }
 
   if (!this._usesContentType) {
-    this.socket.write(Number(data.length).toString(16));
-    this.socket.write('\r\n');
-    this.socket.write(data);
-    this.socket.write('\r\n');
+    this.connection.write(Number(data.length).toString(16));
+    this.connection.write('\r\n');
+    this.connection.write(data);
+    this.connection.write('\r\n');
   } else {
-    this.socket.write(data);
+    this.connection.write(data);
   }
 }
 
@@ -97,9 +97,9 @@ ServerResponse.prototype.end = function (data) {
   }
   this._closed = true;
   if (!this._usesContentType) {
-    this.socket.write('0\r\n\r\n');
+    this.connection.write('0\r\n\r\n');
   }
-  this.socket.close();
+  this.connection.close();
 };
 
 
@@ -107,11 +107,11 @@ ServerResponse.prototype.end = function (data) {
  * ServerRequest
  */
 
-function ServerRequest (socket) {
+function ServerRequest (connection) {
   var self = this;
 
   this.headers = {};
-  this.socket = socket;
+  this.connection = connection;
   this.url = null;
 
   function js_wrap_function (fn) {
@@ -146,10 +146,10 @@ function ServerRequest (socket) {
       // TODO close
     }),
     onError: js_wrap_function(function (err) {
-      self.socket.emit('error', err)
+      self.connection.emit('error', err)
     })
   })
-  this.socket.on('data', function (data) {
+  this.connection.on('data', function (data) {
     // console.log('received', data.length, data.substr(0, 15));
     parser.execute(data, 0, data.length);
   })
@@ -162,9 +162,9 @@ util.inherits(ServerRequest, EventEmitter);
 
 function HTTPServer () {
   var self = this;
-  this.socket = net.createServer(function (socket) {
-    var request = new ServerRequest(socket);
-    var response = new ServerResponse(request, socket);
+  this.connection = net.createServer(function (connection) {
+    var request = new ServerRequest(connection);
+    var response = new ServerResponse(request, connection);
     request.on('request', function () {
       self.emit('request', request, response)
     });
@@ -174,7 +174,7 @@ function HTTPServer () {
 util.inherits(HTTPServer, EventEmitter);
 
 HTTPServer.prototype.listen = function (port, ip) {
-  this.socket.listen(port, ip);
+  this.connection.listen(port, ip);
 };
 
 
@@ -211,7 +211,7 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
 
   self._connected = false;
   self._contentLength = 0;
-  self.socket = net.connect(port, host, function () {
+  self.connection = net.connect(port, host, function () {
     self._connected = true;
     var header = '';
     if (method != 'GET') {
@@ -232,19 +232,19 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
     if (!usedUserAgent) {
       header = header + 'User-Agent: tessel\r\n';
     }
-    self.socket.write(method + ' ' + path + ' HTTP/1.1\r\n' + header + '\r\n');
+    self.connection.write(method + ' ' + path + ' HTTP/1.1\r\n' + header + '\r\n');
     // self.emit('connect');
   }, _secure)
 
   self._outgoing = [];
-  self.socket.once('connect', function () {
+  self.connection.once('connect', function () {
     for (var i = 0; i < self._outgoing.length; i++) {
-      self.socket.write(self._outgoing[i]);
+      self.connection.write(self._outgoing[i]);
     }
     self._outgoing = [];
   })
 
-  self.socket.on('error', function (err) {
+  self.connection.on('error', function (err) {
     self.emit('error', err);
   })
 
@@ -258,7 +258,7 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
   var parser = http_parser.new('response', {
     onMessageBegin: js_wrap_function(function () {
       response = new HTTPIncomingResponse();
-      self.socket.on('close', function () {
+      self.connection.on('close', function () {
         response.emit('end');
         response = null;
       });
@@ -287,18 +287,18 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
     }),
     onMessageComplete: js_wrap_function(function () {
       if (response) {
-        self.socket.close();
+        self.connection.close();
       }
     })
   })
-  self.socket.on('data', function (data) {
+  self.connection.on('data', function (data) {
     var nparsed = parser.execute(data, 0, data.length);
     if (nparsed != data.length) {
-      self.socket.emit('error', 'Could not parse tokens at character #' + String(nparsed));
+      self.connection.emit('error', 'Could not parse tokens at character #' + String(nparsed));
     }
   })
 
-  self.emit('socket', self.socket);
+  self.emit('connection', self.connection);
 }
 
 util.inherits(HTTPOutgoingRequest, EventEmitter);
@@ -306,7 +306,7 @@ util.inherits(HTTPOutgoingRequest, EventEmitter);
 HTTPOutgoingRequest.prototype.write = function (data) {
   this._contentLength += data.length;
   if (this._connected) {
-    this.socket.write(data);
+    this.connection.write(data);
   } else {
     this._outgoing.push(data)
   }
@@ -361,12 +361,13 @@ exports.get = function (opts, onresponse) {
   return req;
 };
 
-exports.createServer = function (onrequest) {
+function createServer (onrequest) {
   var server = new HTTPServer();
   onrequest && server.on('request', onrequest);
   return server;
 };
 
+exports.Server = exports.createServer = createServer;
 exports.Agent = Agent;
 exports.ServerResponse = ServerResponse;
 exports.ServerRequest = ServerRequest;
