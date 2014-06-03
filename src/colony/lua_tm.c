@@ -1080,5 +1080,11 @@ LUALIB_API int luaopen_tm (lua_State *L)
   luaL_setfieldnumber(L, "OPEN_ALWAYS", TM_OPEN_ALWAYS);
   luaL_setfieldnumber(L, "CREATE_NEW", TM_CREATE_NEW);
   luaL_setfieldnumber(L, "CREATE_ALWAYS", TM_CREATE_ALWAYS);
+
+  #ifdef ENABLE_TLS
+  luaL_setfieldnumber(L, "TLS_ENABLED", 1);
+  #else
+  luaL_setfieldnumber(L, "TLS_ENABLED", 0);
+  #endif
   return 1;
 }

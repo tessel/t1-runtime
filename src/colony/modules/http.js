@@ -15,6 +15,8 @@ var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var net = require('net');
 var dns = require('dns');
+var Readable = require('stream').Readable;
+var Writable = require('stream').Writable;
 
 
 /**
@@ -38,7 +40,7 @@ function ServerResponse (req, connection) {
 }
 
 // TODO stream
-util.inherits(ServerResponse, EventEmitter);
+util.inherits(ServerResponse, Writable);
 
 ServerResponse.prototype.setHeader = function (name, value) {
   if (this._header) {
@@ -77,19 +79,20 @@ ServerResponse.prototype.writeHead = function (status, headers) {
   // console.log('writing headers', headers);
 };
 
-ServerResponse.prototype.write = function (data) {
+ServerResponse.prototype._write = function (chunk, encoding, callback) {
   if (!this._header) {
     this.writeHead(200);
   }
 
   if (!this._usesContentType) {
-    this.connection.write(Number(data.length).toString(16));
+    this.connection.write(Number(chunk.length).toString(16));
     this.connection.write('\r\n');
-    this.connection.write(data);
+    this.connection.write(chunk);
     this.connection.write('\r\n');
   } else {
-    this.connection.write(data);
+    this.connection.write(chunk);
   }
+  callback();
 }
 
 ServerResponse.prototype.getHeader = function (key) {
@@ -147,10 +150,10 @@ function ServerRequest (connection) {
       self.emit('request', self);
     }),
     onBody: js_wrap_function(function (body) {
-      self.emit('data', body);
+      self.push(body);
     }),
     onMessageComplete: js_wrap_function(function () {
-      self.emit('end');
+      self.push(null);
       self._closed = true;
       // TODO close
     }),
@@ -164,7 +167,7 @@ function ServerRequest (connection) {
   })
 }
 
-util.inherits(ServerRequest, EventEmitter);
+util.inherits(ServerRequest, Readable);
 
 
 
@@ -192,11 +195,15 @@ HTTPServer.prototype.listen = function (port, ip) {
  */
 
 function HTTPIncomingResponse (data) {
+  Readable.call(this);
   this.headers = {};
 }
 
-// TODO stream
-util.inherits(HTTPIncomingResponse, EventEmitter);
+util.inherits(HTTPIncomingResponse, Readable);
+
+HTTPIncomingResponse.prototype._read = function () {
+  // noop
+};
 
 HTTPIncomingResponse.prototype.setEncoding = function () {
   // TODO
@@ -268,7 +275,7 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
     onMessageBegin: js_wrap_function(function () {
       response = new HTTPIncomingResponse();
       self.connection.on('close', function () {
-        response.emit('end');
+        response.push(null);
         response = null;
       });
     }),
@@ -291,7 +298,7 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
     }),
     onBody: js_wrap_function(function (body) {
       if (response) {
-        response.emit('data', body);
+        response.push(body);
       }
     }),
     onMessageComplete: js_wrap_function(function () {
