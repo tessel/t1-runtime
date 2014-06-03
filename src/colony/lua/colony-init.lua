@@ -396,7 +396,7 @@ end
 
 function js_new (f, ...)
   if type(f) ~= 'function' then
-    error('TypeError: object is not a function')
+    error(js_new(global.TypeError, 'object is not a function'))
   end
   local o = {}
   local mt = {
