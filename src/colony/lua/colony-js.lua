@@ -938,6 +938,10 @@ local function error_class (name)
     this.type = name
     this.message = str
     this.stack = tostring(debug.traceback())
+
+    if not global.process.debug then
+      this.stack = string.gsub(this.stack, "\t%[[TC]%].-\n", '') 
+    end
   end
 
   constructor.prototype.name = name
