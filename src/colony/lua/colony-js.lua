@@ -91,8 +91,7 @@ num_proto.toString = function (this, radix)
     radix = 10
   end
   if not (type(radix) == 'number' and radix >= 2 and radix <= 36) then
-    -- TODO: real rangeerror
-    error("RangeError: toString() radix argument must be between 2 and 36")
+    error(js_new(global.RangeError, 'toString() radix argument must be between 2 and 36'))
   end
   return tm.itoa(this, radix)
 end
@@ -206,8 +205,7 @@ str_proto.replace = function (this, match, out)
   elseif str_regex_replace and js_instanceof(match, global.RegExp) then
     return str_regex_replace(this, match, out)
   else
-    print(match)
-    error('Unknown regex invocation object: ' .. type(match))
+    error(js_new(global.TypeError, 'Unknown regex invocation object: ' .. type(match)))
   end
 end
 
@@ -509,20 +507,21 @@ arr_proto.filter = function (this, fn)
   return a
 end
 
-arr_proto.reduce = function (this, callback, opt_initialValue)
+arr_proto.reduce = function (this, callback, ...)
   if this == nil then
-    error('Array.prototype.reduce called on null or undefined')
+    error(js_new(global.TypeError, 'Array.prototype.reduce called on null or undefined'))
   end
   if type(callback) ~= 'function' then
-    error(callback + ' is not a function')
+    error(js_new(global.TypeError, callback + ' is not a function'))
   end
   local index = 0
   local value = nil
   local length = math.floor(this.length)
   local isValueSet = false
 
-  if opt_initialValue ~= nil then
-    value = opt_initialValue
+  local args = table.pack(...)
+  if args.length > 0 then
+    value = args[1]
     isValueSet = true
   end
 
@@ -538,7 +537,7 @@ arr_proto.reduce = function (this, callback, opt_initialValue)
     index = index + 1
   end
   if not isValueSet then
-    error('Reduce of empty array with no initial value')
+    error(js_new(global.TypeError, 'Reduce of empty array with no initial value'))
   end
   return value
 end
@@ -620,7 +619,7 @@ global.Object.defineProperty = function (this, obj, prop, config)
     obj = js_func_proxy(obj)
   end
   if type(obj) ~= 'table' then
-    error('TypeError: Object.defineProperty called on non-object')
+    error(js_new(global.TypeError, 'Object.defineProperty called on non-object'))
   end
   if config.value then
     rawset(obj, prop, config.value)
@@ -940,6 +939,10 @@ local function error_class (name)
     this.type = name
     this.message = str
     this.stack = tostring(debug.traceback())
+
+    if not global.process.debug then
+      this.stack = string.gsub(this.stack, "\t%[[TC]%].-\n", '') 
+    end
   end
 
   constructor.prototype.name = name
@@ -1229,10 +1232,10 @@ if type(hs) == 'table' then
     local cre = hs.regex_create()
     local crestr, rc = hs.re_comp(cre, patt, hs.ADVANCED)
     if rc ~= 0 then
-      error('SyntaxError: Invalid regex "' .. patt .. '" (error ' + tostring(rc or 0) + ')')
+      error(js_new(global.SyntaxError, 'Invalid regex "' .. patt .. '" (error ' + tostring(rc or 0) + ')'))
     end
     if hs.regex_nsub(cre) > hsmatchc then
-      error('Too many capturing subgroups (max ' .. hsmatchc .. ', compiled ' .. hs.regex_nsub(cre) .. ')')
+      error(js_new(global.Error, 'Too many capturing subgroups (max ' .. hsmatchc .. ', compiled ' .. hs.regex_nsub(cre) .. ')'))
     end
 
     local o = {pattern=patt, flags=flags}
@@ -1255,7 +1258,7 @@ if type(hs) == 'table' then
     local cre = getmetatable(regex).cre
     local crestr = getmetatable(regex).crestr
     if type(cre) ~= 'userdata' then
-      error('Cannot call String::replace on non-regex')
+      error(js_new(global.Error, 'Cannot call String::replace on non-regex'))
     end
 
     local dorepeat = string.find(regex.flags, 'g')
@@ -1308,7 +1311,7 @@ if type(hs) == 'table' then
     local cre = getmetatable(regex).cre
     local crestr = getmetatable(regex).crestr
     if type(cre) ~= 'userdata' then
-      error('Cannot call RegExp::match on non-regex')
+      error(js_new(global.TypeError, 'Cannot call RegExp::match on non-regex'))
     end
 
     local data = tostring(this)
@@ -1331,7 +1334,7 @@ if type(hs) == 'table' then
     local cre = getmetatable(regex).cre
     local crestr = getmetatable(regex).crestr
     if type(cre) ~= 'userdata' then
-      error('Cannot call RegExp::match on non-regex')
+      error(js_new(global.TypeError, 'Cannot call RegExp::match on non-regex'))
     end
 
     local data = tostring(subj)
@@ -1353,7 +1356,7 @@ if type(hs) == 'table' then
   global.RegExp.prototype.test = function (this, subj)
     local cre = getmetatable(this).cre
     if type(cre) ~= 'userdata' then
-      error('Cannot call RegExp::match on non-regex')
+      error(js_new(global.TypeError, 'Cannot call RegExp::match on non-regex'))
     end
 
     -- TODO optimize by capturing no subgroups?

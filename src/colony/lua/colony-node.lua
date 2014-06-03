@@ -187,7 +187,7 @@ function from_base64(to_decode)
     local char = string.sub(to_decode, i, i)
     local offset, _ = string.find(index_table, char)
     if offset == nil then
-      error("Invalid character '" .. char .. "' found.")
+      error(js_new(global.Error, "Invalid character '" .. char .. "' found."))
     end
 
     bit_pattern = bit_pattern .. string.sub(to_binary(offset-1), 3)
@@ -244,7 +244,7 @@ local buffer_proto = js_obj({
     local targetBuffer = getmetatable(target).buffer
     local targetBufferLength = getmetatable(target).bufferlen
     if not sourceBuffer or not targetBuffer then
-      error('Buffer::copy requires a buffer source and buffer target')
+      error(js_new(global.TypeError, 'Buffer::copy requires a buffer source and buffer target'))
     end
     targetStart = tonumber(targetStart)
     sourceStart = tonumber(sourceStart)
@@ -256,7 +256,7 @@ local buffer_proto = js_obj({
     end
 
     if targetStart > targetBufferLength then
-      error('targetStart out of bounds')
+      error(js_new(global.RangeError, 'targetStart out of bounds'))
     end
 
     if not targetStart or targetStart < 0 then
@@ -319,7 +319,7 @@ function read_buf (this, pos, no_assert, size, fn, le)
 
   if not (pos >= 0 and pos <= sourceBufferLength - size) then
     if not no_assert then
-      error('RangeError: Trying to access beyond buffer length')
+      error(js_new(global.RangeError, 'Trying to access beyond buffer length'))
     end
 
     if pos >= sourceBufferLength then
@@ -361,7 +361,7 @@ function write_buf (this, value, pos, no_assert, size, fn, le)
 
   if not (pos >= 0 and pos <= sourceBufferLength - size) then
     if not no_assert then
-      error('RangeError: Trying to access beyond buffer length')
+      error(js_new(global.RangeError, 'Trying to access beyond buffer length'))
     end
 
     local tmp = tm.buffer_create(4)
@@ -459,7 +459,7 @@ local function Buffer (this, arg, encoding)
     length = string.len(str)
   elseif type(str) == 'string' and encoding == 'hex' then
     if string.len(str) % 2 ~= 0 or string.gsub(str, '[a-fA-F0-9]', '') ~= '' then
-      error('Invalid hex string.')
+      error(js_new(global.TypeError, 'Invalid hex string.'))
     end
     str = string.lower(str)
     length = string.len(str) / 2
@@ -939,7 +939,7 @@ colony.run = function (name, root, parent)
   end
   local res = pfound and require_load(p)
   if not pfound or not res then
-    error('Could not find module "' .. p .. '"')
+    error(js_new(global.Error, 'Could not find module "' .. p .. '"'))
   end
 
   -- Run the script and return its value.
