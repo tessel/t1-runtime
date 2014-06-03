@@ -140,6 +140,26 @@ nil_mt.__add = function (op1, op2)
   return "null" + op2
 end
 
+nil_mt.__sub = function (op1, op2)
+  return 0 - tonumber(op2)
+end
+
+nil_mt.__mul = function (op1, op2)
+  return 0 * tonumber(op2)
+end
+
+nil_mt.__div = function (op1, op2)
+  return 0 / tonumber(op2)
+end
+
+nil_mt.__mod = function (op1, op2)
+  return 0 % tonumber(op2)
+end
+
+nil_mt.__pow = function (op1, op2)
+  return 0 ^ tonumber(op2)
+end
+
 nil_mt.__eq = function (op1, op2)
   return op2 == nil
 end
