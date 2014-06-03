@@ -1,4 +1,4 @@
-console.log('1..4'); // Just success in runnning
+console.log('1..7'); // Just success in runnning
 
 var crypto = require('crypto');
 
@@ -24,5 +24,27 @@ var hash = crypto.createHmac('sha1', hash_input)
 
 console.log('#', hash);
 console.log(hash == hash_output ? 'ok' : 'not ok', '#SKIP');
+
+// md5
+var hash_output = '902fbdd2b1df0c4f70b4a5d23525e932';
+var hash = crypto.createHash('md5')
+  .update(String('A'))
+  .update(String('B'))
+  .update(String('C'))
+  .digest('hex');
+
+console.log('#', hash);
+console.log(hash == hash_output ? 'ok' : 'not ok', '#SKIP');
+
+var hash = crypto.createHash('md5');
+hash.on('readable', function () {
+	var md5 = hash.read().toString('hex');
+	console.log('#', md5);
+	console.log(md5 == hash_output ? 'ok' : 'not ok', '#SKIP');
+})
+hash.write(String('A'));
+hash.write(String('B'))
+hash.write(String('C'))
+hash.end();
 
 console.log('ok');

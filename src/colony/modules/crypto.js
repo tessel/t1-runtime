@@ -9,6 +9,9 @@
 
 var tm = process.binding('tm');
 
+var util = require('util');
+var Duplex = require('stream').Duplex;
+
 function randomBytes (n) {
 	var buf = new Buffer(n);
 	if (buf._random() != 0) {
@@ -47,6 +50,57 @@ function createHmac (encryption, key)
 	return new Hmac(encryption, key);
 }
 
+function Hash (algorithm)
+{
+	Duplex.call(this);
+
+	if (algorithm != 'md5') {
+		throw new Error('Hash algorithm ' + String(algorithm) + ' not supported.');
+	}
+
+	this.algorithm = algorithm;
+	this._ctx = tm.hash_md5_create();
+}
+
+util.inherits(Hash, Duplex);
+
+Hash.prototype.update = function (buf) {
+	tm.hash_md5_update(this._ctx, buf);
+	return this;
+}
+
+Hash.prototype._write = function (chunk, encoding, callback) {
+	this.update(chunk);
+	callback();
+}
+
+Hash.prototype._read = function (size) {
+	// noop
+}
+
+Hash.prototype.end = function (chunk, encoding, callback) {
+	if (chunk) {
+		this._write.call(this, chunk, encoding, callback);
+	}
+	this.push(this.digest());
+	this.push(null);
+	Duplex.prototype.end.call(this);
+}
+
+Hash.prototype.digest = function (encoding) {
+	var hash = tm.hash_md5_digest(this._ctx);
+	if (!hash) { // disabled
+		return null;
+	}
+	return encoding ? hash.toString(encoding) : hash;
+}
+
+function createHash (algorithm)
+{
+	return new Hash(algorithm);
+}
+
 exports.randomBytes = randomBytes;
 exports.pseudoRandomBytes = randomBytes; // todo real
 exports.createHmac = createHmac;
+exports.createHash = createHash;
