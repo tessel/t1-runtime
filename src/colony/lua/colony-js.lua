@@ -507,7 +507,7 @@ arr_proto.filter = function (this, fn)
   return a
 end
 
-arr_proto.reduce = function (this, callback, opt_initialValue)
+arr_proto.reduce = function (this, callback, ...)
   if this == nil then
     error(js_new(global.TypeError, 'Array.prototype.reduce called on null or undefined'))
   end
@@ -519,8 +519,9 @@ arr_proto.reduce = function (this, callback, opt_initialValue)
   local length = math.floor(this.length)
   local isValueSet = false
 
-  if opt_initialValue ~= nil then
-    value = opt_initialValue
+  local args = table.pack(...)
+  if args.length > 0 then
+    value = args[1]
     isValueSet = true
   end
 
