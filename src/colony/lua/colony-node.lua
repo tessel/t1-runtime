@@ -627,17 +627,26 @@ EventEmitter.prototype.removeAllListeners = function (this, type)
 end
 
 EventEmitter.prototype.emit = function (this, type, ...)
-  if not this._events or not this._events[type] then
-    return
+  local count = 0
+  if this._events and this._events[type] then
+    local fns, listeners = {}, this._events[type]
+    for i=0,listeners.length do
+      table.insert(fns, listeners[i])
+    end
+    count = #fns
+    for i=1,#fns do
+      fns[i](this, ...)
+    end
   end
-  local fns, listeners = {}, this._events[type]
-  for i=0,listeners.length do
-    table.insert(fns, listeners[i])
+  if type == 'error' and count == 0 then
+    local args = table.pack(...)
+    if js_instanceof(args[1], global.Error) then
+      error(args[1])
+    else
+      error(js_new(global.TypeError, 'Uncaught, unspecified "error" event.'))
+    end
   end
-  for i=1,#fns do
-    fns[i](this, ...)
-  end
-  return #fns
+  return count
 end
 
 EventEmitter.prototype.setMaxListeners = function (this, maxListeners)
