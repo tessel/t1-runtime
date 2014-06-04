@@ -17,7 +17,6 @@ try {
 try {
 	a.emit('error', new RangeError('some error'))
 } catch (e) {
-	console.log('hi', new RangeError('hi') instanceof Error);
 	ok(e instanceof RangeError);
 }
 
