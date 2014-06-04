@@ -924,40 +924,44 @@ global.Math = js_obj({
 
 -- Error
 
-local function error_class (name)
-  local constructor = nil
+local function error_constructor (this, str)
+  getmetatable(this).__tostring = function (this)
+    return this.message
+  end
+  this.name = 'Error'
+  this.type = 'Error'
+  this.message = str
+  this.stack = tostring(debug.traceback())
 
+  if not global.process.debug then
+    this.stack = string.gsub(this.stack, "\t%[[TC]%].-\n", '')
+  end
+end
+
+error_constructor.prototype.captureStackTrace = function ()
+  return {}
+end
+
+error_constructor.prototype.toString = function (this)
+  if not this then
+    return '(undefined)'
+  end
+  return this.name .. ": " .. this.message
+end
+
+local function error_class (name)
+  local constructor
   constructor = function (this, str)
     if not js_instanceof(this, constructor) then
       return js_new(constructor, str)
     end
 
-    getmetatable(this).__tostring = function (this)
-      return this.message
-    end
+    error_constructor(this, str)
     this.name = name
     this.type = name
-    this.message = str
-    this.stack = tostring(debug.traceback())
-
-    if not global.process.debug then
-      this.stack = string.gsub(this.stack, "\t%[[TC]%].-\n", '') 
-    end
   end
 
-  constructor.prototype.name = name
-
-  constructor.captureStackTrace = function ()
-    return {}
-  end
-
-  constructor.prototype.toString = function (this)
-    if not this then
-      return '(undefined)'
-    end
-    return this.name .. ": " .. this.message
-  end
-
+  constructor.prototype = error_constructor.prototype
   return constructor
 end
 
