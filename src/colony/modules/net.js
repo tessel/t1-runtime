@@ -304,7 +304,7 @@ function createServer (onsocket) {
  * Public API
  */
 
-exports.connect = connect;
+exports.connect = exports.createConnection = connect;
 exports.createServer = createServer;
 exports.Socket = TCPSocket;
 exports.Server = TCPServer;
