@@ -230,15 +230,14 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
   self.connection = net.connect(port, host, function () {
     self._connected = true;
     var header = '';
-    if (method != 'GET') {
-      header = 'Content-Length: ' + self._contentLength + '\r\n';
-    }
-    var usedHost = false, usedUserAgent;
+    var usedHost = false, usedUserAgent = false, usedContentLength = false;
     for (var key in headers) {
       if (key.toLowerCase() == 'host') {
         usedHost = true;
       } else if (key.toLowerCase() == 'user-agent') {
         usedUserAgent = true;
+      } else if (key.toLowerCase() == 'content-length') {
+        usedContentLength = true;
       }
       header = header + key + ': ' + headers[key] + '\r\n';
     }
@@ -247,6 +246,9 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
     }
     if (!usedUserAgent) {
       header = header + 'User-Agent: tessel\r\n';
+    }
+    if (!usedContentLength && method != 'GET') {
+      header = header + 'Content-Length: ' + self._contentLength + '\r\n';
     }
     self.connection.write(method + ' ' + path + ' HTTP/1.1\r\n' + header + '\r\n');
     // self.emit('connect');
