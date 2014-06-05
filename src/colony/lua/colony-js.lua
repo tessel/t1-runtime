@@ -451,10 +451,21 @@ arr_proto.concat = function (this, ...)
   return arr
 end
 
-arr_proto.sort = function (this)
+arr_proto.sort = function (this, fn)
   table.insert(this, 1, this[0])
   this[0] = nil
-  table.sort(this)
+  table.sort(this, function (a, b)
+    if not b then
+      return 0
+    end
+    local ret
+    if not fn then
+      ret = a < b
+    else
+      ret = fn(this, a, b)
+    end
+    return ret
+  end)
   local zero = this[1]
   table.remove(this, 1)
   this[0] = zero
