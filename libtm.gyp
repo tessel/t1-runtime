@@ -133,6 +133,10 @@
         "<(axtls_path)/config",
       ],
 
+      "dependencies": [
+        "fortuna"
+      ],
+
       'conditions': [
         [ 'OS=="arm"', {
           'include_dirs': [
