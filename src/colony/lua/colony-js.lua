@@ -1332,36 +1332,32 @@ if type(hs) == 'table' then
         nullmatch = so == eo
         table.insert(ret, string.sub(data, 1, so))
 
-        if type(out) == 'function' then 
-          local args, argn = {this, string.sub(data, so + 1, eo)}, 2
-          for i=1,hs.regex_nsub(cre) do
-            local subso, subeo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
-            if subso > -1 and subeo > -1 then
-              args[argn + 1] = string.sub(data, subso + 1, subeo)
-            else
-              args[argn + 1] = nil
-            end
-            argn = argn + 1
+      if type(out) == 'function' then 
+        local args, argn = {this, string.sub(data, so + 1, eo)}, 2
+        for i=1,hs.regex_nsub(cre) do
+          local subso, subeo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
+          if subso > -1 and subeo > -1 then
+            args[argn + 1] = string.sub(data, subso + 1, subeo)
+          else
+            args[argn + 1] = nil
           end
-          args[argn + 1] = idx + so
-          args[argn + 2] = this
-          table.insert(ret, tostring(out(unpack(args)) or 'undefined'))
-        else
-          local ins = tostring(out)
-          local i, j = 0, 0
-          while true do
-            i, j = string.find(ins, "$%d+", i+1)    -- find 'next' newline
-            if i == nil then break end
-            local subindex = tonumber(string.sub(ins, i+1, j))
-            local subso, subeo = hs.regmatch_so(hsmatch, subindex), hs.regmatch_eo(hsmatch, subindex)
-            ins = string.sub(ins, 0, i-1) .. string.sub(data, subso + 1, subeo) .. string.sub(ins, j+1)
-            i = i + (subeo - subso)
-          end
-          table.insert(ret, ins)
+          argn = argn + 1
         end
-
-        data = string.sub(data, eo+1)
-        idx = eo
+        args[argn + 1] = idx + so
+        args[argn + 2] = this
+        table.insert(ret, tostring(out(unpack(args)) or 'undefined'))
+      else
+        local ins = tostring(out)
+        local i, j = 0, 0
+        while true do
+          i, j = string.find(ins, "$%d+", i+1)    -- find 'next' newline
+          if i == nil then break end
+          local subindex = tonumber(string.sub(ins, i+1, j))
+          local subso, subeo = hs.regmatch_so(hsmatch, subindex), hs.regmatch_eo(hsmatch, subindex)
+          ins = string.sub(ins, 0, i-1) .. string.sub(data, subso + 1, subeo) .. string.sub(ins, j+1)
+          i = i + (subeo - subso)
+        end
+        table.insert(ret, ins)
       end
     until not dorepeat
     table.insert(ret, data)

@@ -15,6 +15,7 @@ var tm = process.binding('tm');
 var util = require('util');
 var dns = require('dns');
 var Stream = require('stream');
+var tls = require('tls');
 
 /**
  * ssl
@@ -122,7 +123,40 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       }
 
       if (self._secure) {
-        var ssl = tm.ssl_session_create(ssl_ctx, self.socket);
+        var _ = tm.ssl_session_create(ssl_ctx, self.socket)
+          , ssl = _[0]
+          , ret = _[1]
+        if (ret != 0) {
+          if (ret == -517) {
+            throw new Error('CERT_HAS_EXPIRED');
+          } else {
+            throw new Error('Could not validate SSL request.');
+          }
+        }
+
+        var cert = {
+          subjectaltname: (function () {
+            var altnames = [];
+            for (var i = 0; ; i++) {
+              var _ = tm.ssl_session_altname(ssl, i)
+                , altname = _[0]
+                , ret = _[1]
+              if (ret != 0) {
+                break;
+              }
+              altnames.push(altname);
+            }
+            return 'DNS:' + altnames.join(', DNS:');
+          })(),
+          subject: {
+            CN: tm.ssl_session_cn(ssl)[0]
+          }
+        }
+        
+        if (!tls.checkServerIdentity(host, cert)) {
+          throw new Error('Hostname/IP doesn\'t match certificate\'s altnames error event');
+        }
+
         self._ssl = ssl;
       }
 
@@ -304,6 +338,7 @@ function createServer (onsocket) {
  * Public API
  */
 
+exports.isIP = isIP;
 exports.connect = exports.createConnection = connect;
 exports.createServer = createServer;
 exports.Socket = TCPSocket;
