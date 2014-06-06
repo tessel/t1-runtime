@@ -24,6 +24,7 @@ var Writable = require('stream').Writable;
  */
 
 function ServerResponse (req, connection) {
+  Writable.call(this);
   this.req = req;
   this.connection = connection;
   this.headers = {};
@@ -120,6 +121,7 @@ ServerResponse.prototype.end = function (data) {
  */
 
 function ServerRequest (connection) {
+  Readable.call(this);
   var self = this;
 
   this.headers = {};
