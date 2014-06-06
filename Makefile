@@ -1,4 +1,4 @@
-ENABLE_TLS ?= 0
+ENABLE_TLS ?= 1
 
 CONFIG ?= Release
 
