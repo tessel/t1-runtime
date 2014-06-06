@@ -42,88 +42,37 @@ ssize_t tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t buf_len)
     return ret;
 }
 
+typedef struct dir_reg { const char *path; const unsigned char *src; unsigned int len; } dir_reg_t;
+extern dir_reg_t cacert_bundle[];
+
 int tm_ssl_context_create (tm_ssl_ctx_t* ctx)
 {
-    int i = 0;
-    // uint16_t port = 4433;
 #ifdef TLS_VERBOSE
     uint32_t options = SSL_DISPLAY_CERTS;
 #else
     uint32_t options = 0;
 #endif
-    // int client_fd;
-    // char *private_key_file = NULL;
-    // sockaddr_in_t client_addr;
-    // // struct hostent *hostent;
-    // int reconnect = 0;
-    // uint32_t sin_addr;
+
     SSL_CTX *ssl_ctx;
-    // SSL *ssl = NULL;
-    // int quiet = 0;
-    int cert_index = 0, ca_cert_index = 0;
-    int cert_size = 0, ca_cert_size = 0;
-    char **ca_cert, **cert;
-    // uint8_t session_id[SSL_SESSION_ID_SIZE];
-    // fd_set read_set;
-    const char *password = NULL;
-
-    // FD_ZERO(&read_set);
-    // sin_addr = htonl(127 << 24 | 0 << 16 | 0 << 8 | 1);
-    // cert_size = ssl_get_config(SSL_MAX_CERT_CFG_OFFSET);
-    ca_cert_size = ssl_get_config(SSL_MAX_CA_CERT_CFG_OFFSET);
-    ca_cert = (char **)calloc(1, sizeof(char *)*ca_cert_size);
-    cert = (char **)calloc(1, sizeof(char *)*cert_size);
-
     if ((ssl_ctx = ssl_ctx_new(options, SSL_DEFAULT_CLNT_SESS)) == NULL)
     {
         TLS_DEBUG("SSL client context is invalid.\n");
         return -1;
     }
 
-    // if (private_key_file)
-    // {
-    //     int obj_type = SSL_OBJ_RSA_KEY;
-        
-    //     /* auto-detect the key type from the file extension */
-    //     if (strstr(private_key_file, ".p8"))
-    //         obj_type = SSL_OBJ_PKCS8;
-    //     else if (strstr(private_key_file, ".p12"))
-    //         obj_type = SSL_OBJ_PKCS12;
-
-    //     if (ssl_obj_load(ssl_ctx, obj_type, private_key_file, password))
-    //     {
-    //         fprintf(stderr, "Error: Private key '%s' is undefined.\n", 
-    //                                                     private_key_file);
-    //         exit(1);
-    //     }
-    // }
-
-    // for (i = 0; i < cert_index; i++)
-    // {
-    //     if (ssl_obj_load(ssl_ctx, SSL_OBJ_X509_CERT, cert[i], NULL))
-    //     {
-    //         printf("Certificate '%s' is undefined.\n", cert[i]);
-    //         exit(1);
-    //     }
-    // }
-
-    if (ssl_obj_load(ssl_ctx, SSL_OBJ_X509_CACERT, "./deps/cacert/ca-bundle.crt", NULL))
-    {
-        TLS_DEBUG("Invalid CA cert bundle, aborting.\n");
-        return -1;
+    // Load lib/*.lua files into memory.
+    for (int i = 0; cacert_bundle[i].path != NULL; i++) {
+        if (add_cert_auth(ssl_ctx, cacert_bundle[i].src, 1)) {
+            TLS_DEBUG("Invalid CA cert bundle at index %d, aborting.\n", i);
+            return -1;
+        }
     }
 
-    // for (i = 0; i < ca_cert_index; i++)
+    // if (ssl_obj_load(ssl_ctx, SSL_OBJ_X509_CACERT, "./deps/cacert/ca-bundle.crt", NULL))
     // {
-    //     if (ssl_obj_load(ssl_ctx, SSL_OBJ_X509_CACERT, ca_cert[i], NULL))
-    //     {
-    //         printf("Certificate '%s' is undefined.\n", ca_cert[i]);
-    //         exit(1);
-    //     }
+    //     TLS_DEBUG("Invalid CA cert bundle, aborting.\n");
+    //     return -1;
     // }
-
-    free(cert);
-    free(ca_cert);
 
     *ctx = ssl_ctx;
 
