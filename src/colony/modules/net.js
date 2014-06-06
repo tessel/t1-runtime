@@ -129,6 +129,8 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         if (ret != 0) {
           if (ret == -517) {
             throw new Error('CERT_HAS_EXPIRED');
+          } else if (ret == -516) {
+            throw new Error('CERT_NOT_YET_VALID');
           } else {
             throw new Error('Could not validate SSL request (error ' + ret + ')');
           }
@@ -154,7 +156,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         }
         
         if (!tls.checkServerIdentity(host, cert)) {
-          throw new Error('Hostname/IP doesn\'t match certificate\'s altnames error event');
+          throw new Error('Hostname/IP doesn\'t match certificate\'s altnames');
         }
 
         self._ssl = ssl;

@@ -13,7 +13,6 @@
     "fortuna_inc_path": "./deps/fortuna-inc",
     "dlmalloc_path": "./deps/dlmalloc",
     "utf8proc_path": "./deps/utf8proc",
-    'builtin_section%': '',
     'enable_ssl%': 0,
   },
 

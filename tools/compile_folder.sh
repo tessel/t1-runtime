@@ -8,22 +8,22 @@ var packageFolder = require('./package-folder');
 
 // console.log(process.argv);
 
-if (process.argv.length < 5) {
-  console.error('Usage: ./compile_files.js outfile token_name section [files ... ]') 
+if (process.argv.length < 4) {
+  console.error('Usage: ./compile_folder.sh outfile token_name [files ... ]') 
+  console.error('Compiles code into built-in binary.')
   process.exit(1);
 }
 
 var outfile = process.argv[2];
 var varname = process.argv[3];
-var section = process.argv[4];
-var infiles = process.argv.slice(5);
+var infiles = process.argv.slice(4);
 
 
 var colonyCompiler = require('colony-compiler');
 
 // console.log('>>>', process.argv);
 
-packageFolder(infiles, varname, section, function (file, buf, next) {
+packageFolder(infiles, varname, function (file, buf, next) {
   buf = buf.toString('utf-8');
   if (file.match(/\.js$/)) {
     try {
