@@ -130,7 +130,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
           if (ret == -517) {
             throw new Error('CERT_HAS_EXPIRED');
           } else {
-            throw new Error('Could not validate SSL request.');
+            throw new Error('Could not validate SSL request (error ' + ret + ')');
           }
         }
 
