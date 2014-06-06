@@ -194,7 +194,7 @@
         {
           'action_name': '<(_target_name)_compile',
           'inputs': [
-            'deps/cacert/ca-bundle.crt'
+            'deps/cacert/certdata.new'
           ],
           'outputs': [
             '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c',

@@ -11,8 +11,8 @@ var section = process.argv[4];
 var infile = process.argv[5];
 
 var pem = fs.readFileSync(infile, 'utf-8');
-var certs = pem.split(/--\n(?=-)/g).map(function (cert) {
-	return cert.replace(/-$/, '---\n');
+var certs = pem.split(/\n\n/g).filter(function (cert) {
+	return cert.indexOf('---') > -1;
 });
 
 try {
