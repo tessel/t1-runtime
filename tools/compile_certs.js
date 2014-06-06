@@ -7,8 +7,7 @@ var packageFolder = require('./package-folder');
 var out = process.argv[2];
 var pemdir = out + '.pem/';
 var derdir = out + '.der/';
-var section = process.argv[4];
-var infile = process.argv[5];
+var infile = process.argv[4];
 
 var pem = fs.readFileSync(infile, 'utf-8');
 var certs = pem.split(/\n\n/g).filter(function (cert) {
@@ -42,7 +41,7 @@ var i = 0;
 		if (certs.length > i) {
 			loop();
 		} else {
-			packageFolder(outfiles, process.argv[3], process.argv[4], function (err, out) {
+			packageFolder(outfiles, process.argv[3], function (err, out) {
 				fs.writeFileSync(process.argv[2], out);
 			});
 		}

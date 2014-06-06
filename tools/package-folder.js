@@ -2,7 +2,7 @@ var fs = require('fs');
 var async = require('async');
 var path = require('path');
 
-function packageFolder (files, varname, section, filter, next)
+function packageFolder (files, varname, filter, next)
 {
   if (!next) {
     next = filter;
@@ -12,7 +12,6 @@ function packageFolder (files, varname, section, filter, next)
   }
 
   var dirname = varname;
-  section = section ? '__attribute__ ((section ("' + section + '\\n\\t#")))' : '';
 
   var _out = [];
   function write (arg) {
@@ -31,7 +30,7 @@ function packageFolder (files, varname, section, filter, next)
     }
 
     var name = path.basename(f).replace(/[^a-z0-9_]/g, '_');
-    write('static unsigned char ' + section + ' ' + name + '[] = {');
+    write('static const unsigned char ' + ' ' + name + '[] = {');
 
     fs.readFile(f, function (err, buf) {
       filter(f, buf, function (err, buf) {

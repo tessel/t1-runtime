@@ -127,7 +127,7 @@
           'outputs': [
             '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c',
           ],
-          'action': [ 'tools/compile_folder.sh', '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c', '<(_target_name)', '<(builtin_section)', '<@(_inputs)' ],
+          'action': [ 'tools/compile_folder.sh', '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c', '<(_target_name)', '<@(_inputs)' ],
         },
       ]
     },
@@ -152,7 +152,7 @@
           'outputs': [
             '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c',
           ],
-          'action': [ 'tools/compile_folder.sh', '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c', '<(_target_name)', '<(builtin_section)', '<@(_inputs)' ],
+          'action': [ 'tools/compile_folder.sh', '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c', '<(_target_name)', '<@(_inputs)' ],
         },
       ]
     },
