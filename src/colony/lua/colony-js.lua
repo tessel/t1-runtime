@@ -170,6 +170,8 @@ str_proto.trim = function (s)
   return string.match(s, '^()%s*$') and '' or string.match(s, '^%s*(.*%S)')
 end
 
+local str_regex_replace, str_regex_split = nil, nil
+
 str_proto.split = function (str, sep, max)
   if sep == '' then
     local ret = js_arr({})
@@ -180,7 +182,10 @@ str_proto.split = function (str, sep, max)
   end
 
   local ret = {}
-  if type(sep) == 'string' and string.len(str) > 0 then
+
+  if str_regex_split and js_instanceof(sep, global.RegExp) then
+    return str_regex_split(str, sep, max)
+  elseif type(sep) == 'string' and string.len(str) > 0 then
     max = max or -1
 
     local i, start=1, 1
@@ -193,11 +198,8 @@ str_proto.split = function (str, sep, max)
     end
     ret[i-1] = string.sub(str, start)
   end
-  -- TODO regex
   return js_arr(ret)
 end
-
-local str_regex_replace = nil
 
 str_proto.replace = function (this, match, out)
   if type(match) == 'string' then
@@ -1268,6 +1270,36 @@ if type(hs) == 'table' then
     return js_new(global.RegExp, pat, flags)
   end
 
+  str_regex_split = function (this, regex)
+    -- verify regex
+    local cre = getmetatable(regex).cre
+    local crestr = getmetatable(regex).crestr
+    if type(cre) ~= 'userdata' then
+      error(js_new(global.Error, 'Cannot call String::split on non-regex'))
+    end
+
+    local dorepeat = string.find(regex.flags, 'g')
+    local data = tostring(this)
+    local ret = {}
+    local idx = 0
+    -- TODO: optimize, give string with offset in re_exec
+    repeat
+      local datastr, rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
+      if rc ~= 0 then
+        break
+      end
+      local so, eo = hs.regmatch_so(hsmatch, 0), hs.regmatch_eo(hsmatch, 0)
+      table.insert(ret, string.sub(data, 1, so))
+
+      data = string.sub(data, eo+1)
+      idx = eo
+    until not dorepeat
+    table.insert(ret, data)
+    ret[0] = ret[1]
+    table.remove(ret, 1)
+    return js_arr(ret)
+  end
+
   str_regex_replace = function (this, regex, out)
     -- verify regex
     local cre = getmetatable(regex).cre
@@ -1290,13 +1322,18 @@ if type(hs) == 'table' then
       table.insert(ret, string.sub(data, 1, so))
 
       if type(out) == 'function' then 
-        local args = {this, string.sub(data, so + 1, eo)}
+        local args, argn = {this, string.sub(data, so + 1, eo)}, 2
         for i=1,hs.regex_nsub(cre) do
           local subso, subeo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
-          table.insert(args, string.sub(data, subso + 1, subeo))
+          if subso > -1 and subeo > -1 then
+            args[argn + 1] = string.sub(data, subso + 1, subeo)
+          else
+            args[argn + 1] = nil
+          end
+          argn = argn + 1
         end
-        table.insert(args, idx + so)
-        table.insert(args, this)
+        args[argn + 1] = idx + so
+        args[argn + 2] = this
         table.insert(ret, tostring(out(unpack(args)) or 'undefined'))
       else
         local ins = tostring(out)
