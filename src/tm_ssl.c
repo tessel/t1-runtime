@@ -68,6 +68,7 @@ int tm_ssl_context_create (tm_ssl_ctx_t* ctx)
         }
     }
 
+    // If we were loading a cert bundle...
     // if (ssl_obj_load(ssl_ctx, SSL_OBJ_X509_CACERT, "./deps/cacert/ca-bundle.crt", NULL))
     // {
     //     TLS_DEBUG("Invalid CA cert bundle, aborting.\n");
@@ -86,12 +87,11 @@ int tm_ssl_context_free (tm_ssl_ctx_t *ctx)
     return 0;
 }
 
-int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ctx, tm_socket_t client_fd, const char* host_name)
+int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ssl_ctx, tm_socket_t client_fd, const char* host_name)
 {
     int res;
     int quiet = 0;
 
-	tm_ssl_ctx_t ssl_ctx = ctx;
    // /* Try session resumption? */
    //  if (reconnect)
    //  {
@@ -124,16 +124,13 @@ int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ctx, tm_socke
    //          }
    //      }
    //  }
-   //  else
-   //  {
-        // ssl = ssl_client_new(ssl_ctx, client_fd, NULL, 0);
-    // }
-    // ((SSL*) ssl)->host_name = "sni.velox.ch";
 
-
+    // Create SSL context with hostname.
     SSL *ssl = ssl_new(ssl_ctx, client_fd);
     ssl->version = SSL_PROTOCOL_VERSION_MAX; /* try top version first */
-    ssl->host_name = host_name;
+    if (host_name != NULL) {
+        strncpy((char*) &ssl->host_name, host_name, 255);
+    }
     SET_SSL_FLAG(SSL_IS_CLIENT);
     do_client_connect(ssl);
 
