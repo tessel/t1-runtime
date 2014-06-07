@@ -3,74 +3,28 @@
 var fs = require('fs');
 var async = require('async');
 var path = require('path');
-
-function packageFolder (files, varname, section, filter, next)
-{
-  var dirname = varname;
-  section = section ? '__attribute__ ((section ("' + section + '\\n\\t#")))' : '';
-
-  var _out = [];
-  function write (arg) {
-    _out.push(arg);
-    // console.log(arg);
-  }
-
-  write('#include <stddef.h>\n');
-  write('typedef struct dir_reg { const char *path; const unsigned char *src; unsigned int len; } dir_reg_t;')
-
-  async.map(files, function (f, next) {
-    var _out = [];
-    function write (arg) {
-      _out.push(arg);
-      // console.log(arg);
-    }
-
-    var name = path.basename(f).replace(/[^a-z0-9_]/g, '_');
-    write('static unsigned char ' + section + ' ' + name + '[] = {');
-
-    fs.readFile(f, 'utf-8', function (err, buf) {
-      filter(f, buf, function (err, buf) {
-        write([].slice.apply(Buffer.isBuffer(buf) ? buf : new Buffer(buf)).map(function (h) {
-          return '0x' + h.toString(16)
-        }).join(', ') + ' \n');
-        write('};\n');
-        setImmediate(next, null, [path.basename(f), name, buf.length, _out.join('\n')]);
-      });
-    });
-  }, function (err, results) {
-    for (var i = 0; i < results.length; i++) {
-      write(results[i][3]);
-    }
-
-    write('\n\nconst dir_reg_t ' + dirname + '[] = {')
-    write(results.map(function (e) {
-      return '{' + [JSON.stringify(e[0]), e[1], e[2]].join(', ') + '}'
-    }).join(',\n'));
-    write(', {0, 0, 0} };');
-
-    next(err, _out.join('\n'));
-  });
-}
+var packageFolder = require('./package-folder');
 
 
 // console.log(process.argv);
 
-if (process.argv.length < 5) {
-  console.error('Usage: ./compile_files.js outfile token_name section [files ... ]') 
+if (process.argv.length < 4) {
+  console.error('Usage: ./compile_folder.sh outfile token_name [files ... ]') 
+  console.error('Compiles code into built-in binary.')
   process.exit(1);
 }
 
 var outfile = process.argv[2];
 var varname = process.argv[3];
-var section = process.argv[4];
-var infiles = process.argv.slice(5);
+var infiles = process.argv.slice(4);
 
 
 var colonyCompiler = require('colony-compiler');
 
 // console.log('>>>', process.argv);
 
-packageFolder(infiles, varname, section, function (file, buf, next) {
+packageFolder(infiles, varname, function (file, buf, next) {
+  buf = buf.toString('utf-8');
   if (file.match(/\.js$/)) {
     try {
       colonyCompiler.toBytecode(colonyCompiler.colonize(String(buf)), '[T]:' + file, next);
