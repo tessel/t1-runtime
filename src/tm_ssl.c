@@ -13,7 +13,7 @@
 #include <ssl.h>
 
 #ifdef TLS_VERBOSE
-#define TLS_DEBUG(...) printf(##__VA_ARGS__)
+#define TLS_DEBUG(...) printf(__VA_ARGS__)
 #else
 #define TLS_DEBUG(...) if (0) { printf(__VA_ARGS__); }
 #endif
@@ -42,82 +42,37 @@ ssize_t tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t buf_len)
     return ret;
 }
 
+typedef struct dir_reg { const char *path; const unsigned char *src; unsigned int len; } dir_reg_t;
+extern dir_reg_t cacert_bundle[];
+
 int tm_ssl_context_create (tm_ssl_ctx_t* ctx)
 {
-    int i = 0;
-    // uint16_t port = 4433;
 #ifdef TLS_VERBOSE
-    uint32_t options = SSL_SERVER_VERIFY_LATER|SSL_DISPLAY_CERTS;
+    uint32_t options = SSL_DISPLAY_CERTS;
 #else
-    uint32_t options = SSL_SERVER_VERIFY_LATER;
+    uint32_t options = 0;
 #endif
-    // int client_fd;
-    char *private_key_file = NULL;
-    // sockaddr_in_t client_addr;
-    // // struct hostent *hostent;
-    // int reconnect = 0;
-    // uint32_t sin_addr;
+
     SSL_CTX *ssl_ctx;
-    // SSL *ssl = NULL;
-    // int quiet = 0;
-    int cert_index = 0, ca_cert_index = 0;
-    int cert_size = 0, ca_cert_size = 0;
-    char **ca_cert, **cert;
-    // uint8_t session_id[SSL_SESSION_ID_SIZE];
-    // fd_set read_set;
-    const char *password = NULL;
-
-    // FD_ZERO(&read_set);
-    // sin_addr = htonl(127 << 24 | 0 << 16 | 0 << 8 | 1);
-    // cert_size = ssl_get_config(SSL_MAX_CERT_CFG_OFFSET);
-    ca_cert_size = ssl_get_config(SSL_MAX_CA_CERT_CFG_OFFSET);
-    ca_cert = (char **)calloc(1, sizeof(char *)*ca_cert_size);
-    cert = (char **)calloc(1, sizeof(char *)*cert_size);
-
     if ((ssl_ctx = ssl_ctx_new(options, SSL_DEFAULT_CLNT_SESS)) == NULL)
     {
-        fprintf(stderr, "Error: Client context is invalid\n");
-        exit(1);
+        TLS_DEBUG("SSL client context is invalid.\n");
+        return -1;
     }
 
-    if (private_key_file)
-    {
-        int obj_type = SSL_OBJ_RSA_KEY;
-        
-        /* auto-detect the key type from the file extension */
-        if (strstr(private_key_file, ".p8"))
-            obj_type = SSL_OBJ_PKCS8;
-        else if (strstr(private_key_file, ".p12"))
-            obj_type = SSL_OBJ_PKCS12;
-
-        if (ssl_obj_load(ssl_ctx, obj_type, private_key_file, password))
-        {
-            fprintf(stderr, "Error: Private key '%s' is undefined.\n", 
-                                                        private_key_file);
-            exit(1);
+    // Load lib/*.lua files into memory.
+    for (int i = 0; cacert_bundle[i].path != NULL; i++) {
+        if (add_cert_auth(ssl_ctx, cacert_bundle[i].src, 1)) {
+            TLS_DEBUG("Invalid CA cert bundle at index %d, aborting.\n", i);
+            return -1;
         }
     }
 
-    for (i = 0; i < cert_index; i++)
-    {
-        if (ssl_obj_load(ssl_ctx, SSL_OBJ_X509_CERT, cert[i], NULL))
-        {
-            printf("Certificate '%s' is undefined.\n", cert[i]);
-            exit(1);
-        }
-    }
-
-    for (i = 0; i < ca_cert_index; i++)
-    {
-        if (ssl_obj_load(ssl_ctx, SSL_OBJ_X509_CACERT, ca_cert[i], NULL))
-        {
-            printf("Certificate '%s' is undefined.\n", ca_cert[i]);
-            exit(1);
-        }
-    }
-
-    free(cert);
-    free(ca_cert);
+    // if (ssl_obj_load(ssl_ctx, SSL_OBJ_X509_CACERT, "./deps/cacert/ca-bundle.crt", NULL))
+    // {
+    //     TLS_DEBUG("Invalid CA cert bundle, aborting.\n");
+    //     return -1;
+    // }
 
     *ctx = ssl_ctx;
 
@@ -131,13 +86,12 @@ int tm_ssl_context_free (tm_ssl_ctx_t *ctx)
     return 0;
 }
 
-int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ctx, tm_socket_t client_fd)
+int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ctx, tm_socket_t client_fd, const char* host_name)
 {
     int res;
     int quiet = 0;
 
 	tm_ssl_ctx_t ssl_ctx = ctx;
-    tm_ssl_session_t ssl;
    // /* Try session resumption? */
    //  if (reconnect)
    //  {
@@ -172,8 +126,16 @@ int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ctx, tm_socke
    //  }
    //  else
    //  {
-        ssl = ssl_client_new(ssl_ctx, client_fd, NULL, 0);
+        // ssl = ssl_client_new(ssl_ctx, client_fd, NULL, 0);
     // }
+    // ((SSL*) ssl)->host_name = "sni.velox.ch";
+
+
+    SSL *ssl = ssl_new(ssl_ctx, client_fd);
+    ssl->version = SSL_PROTOCOL_VERSION_MAX; /* try top version first */
+    ssl->host_name = host_name;
+    SET_SSL_FLAG(SSL_IS_CLIENT);
+    do_client_connect(ssl);
 
     /* check the return status */
     if ((res = ssl_handshake_status(ssl)) != SSL_OK)
@@ -183,7 +145,7 @@ int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ctx, tm_socke
             ssl_display_error(res);
         }
 
-        exit(1);
+        return res;
     }
 
     if (!quiet)
@@ -193,6 +155,15 @@ int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ctx, tm_socke
         if (common_name)
         {
             TLS_DEBUG("Common Name:\t\t\t%s\n", common_name);
+            int i = 0;
+            while (1) {
+                const char* altname = ssl_get_cert_subject_alt_dnsname(ssl, i);
+                if (altname == NULL) {
+                    break;
+                }
+                TLS_DEBUG("Altname %d:\t\t\t%s\n", i, altname);
+                i += 1;
+            }
         }
 
         display_session_id(ssl);
@@ -201,6 +172,24 @@ int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ctx, tm_socke
 
     *session = ssl;
 
+    return 0;
+}
+
+int tm_ssl_session_cn (tm_ssl_session_t* session, const char** cn)
+{
+    *cn = ssl_get_cert_dn(*session, SSL_X509_CERT_COMMON_NAME);
+    if (*cn == NULL) {
+        return 1;
+    }
+    return 0;
+}
+
+int tm_ssl_session_altname (tm_ssl_session_t* session, size_t index, const char** altname)
+{
+    *altname = ssl_get_cert_subject_alt_dnsname(*session, index);
+    if (*altname == NULL) {
+        return 1;
+    }
     return 0;
 }
 

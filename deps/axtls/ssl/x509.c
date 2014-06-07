@@ -41,6 +41,8 @@
 #include "os_port.h"
 #include "crypto_misc.h"
 
+#include <sha2.h>
+
 #ifdef CONFIG_SSL_CERT_VERIFICATION
 /**
  * Retrieve the signature from a certificate.
@@ -147,6 +149,15 @@ int x509_new(const uint8_t *cert, int *len, X509_CTX **ctx)
         MD2_Update(&md2_ctx, &cert[begin_tbs], end_tbs-begin_tbs);
         MD2_Final(md2_dgst, &md2_ctx);
         x509_ctx->digest = bi_import(bi_ctx, md2_dgst, MD2_SIZE);
+    }
+    else if (x509_ctx->sig_type == SIG_TYPE_SHA256)
+    {
+        SHA256_CTX sha256_ctx;
+        uint8_t sha_dgst[SHA256_DIGEST_LENGTH];
+        SHA256_Init(&sha256_ctx);
+        SHA256_Update(&sha256_ctx,  &cert[begin_tbs], end_tbs-begin_tbs);
+        SHA256_Final(sha_dgst, &sha256_ctx);
+        x509_ctx->digest = bi_import(bi_ctx, sha_dgst, SHA256_DIGEST_LENGTH);
     }
 
     if (cert[offset] == ASN1_V3_DATA)
