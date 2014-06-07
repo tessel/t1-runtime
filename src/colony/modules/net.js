@@ -123,7 +123,11 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       }
 
       if (self._secure) {
-        var _ = tm.ssl_session_create(ssl_ctx, self.socket)
+        var hostname = null;
+        if (!isIP(host)) {
+          hostname = host;
+        }
+        var _ = tm.ssl_session_create(ssl_ctx, self.socket, hostname)
           , ssl = _[0]
           , ret = _[1]
         if (ret != 0) {

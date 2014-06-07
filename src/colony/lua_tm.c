@@ -282,8 +282,12 @@ static int l_tm_ssl_session_create (lua_State* L)
 
   tm_ssl_ctx_t ctx = (tm_ssl_ctx_t) lua_touserdata(L, 1);
   tm_socket_t sock = (tm_socket_t) lua_tonumber(L, 2);
+  const char* host_name = NULL;
+  if (!lua_isnil(L, 3)) {
+    host_name = lua_tostring(L, 3);
+  }
 
-  int res = tm_ssl_session_create(&session, ctx, sock);
+  int res = tm_ssl_session_create(&session, ctx, sock, host_name);
 
   lua_pushlightuserdata(L, session);
   lua_pushnumber(L, res);

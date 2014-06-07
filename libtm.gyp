@@ -106,6 +106,7 @@
       "product_name": "axtls",
       "type": "static_library",
       "defines": [
+        "CONFIG_SSL_SNI"
       ],
       "sources": [
         "<(axtls_path)/crypto/aes.c",
@@ -180,6 +181,9 @@
           "<(axtls_path)/crypto",
           "<(axtls_path)/config",
           "<(axtls_path)/ssl"
+        ],
+        "defines": [
+          "CONFIG_SSL_SNI"
         ]
       }
     },
