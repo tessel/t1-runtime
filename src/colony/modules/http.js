@@ -391,4 +391,4 @@ exports.Server = exports.createServer = createServer;
 exports.Agent = Agent;
 exports.ServerResponse = ServerResponse;
 exports.ServerRequest = ServerRequest;
-exports.IncomingMessage = ServerResponse;
+exports.IncomingMessage = ServerRequest;
