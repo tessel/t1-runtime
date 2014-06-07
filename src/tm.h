@@ -149,7 +149,7 @@ typedef void* tm_ssl_session_t;
 
 int tm_ssl_context_create (tm_ssl_ctx_t* ctx);
 int tm_ssl_context_free (tm_ssl_ctx_t *ctx);
-int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ctx, tm_socket_t client_fd);
+int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ctx, tm_socket_t client_fd, const char* host_name);
 int tm_ssl_session_altname (tm_ssl_session_t* session, size_t index, const char** altname);
 int tm_ssl_session_cn (tm_ssl_session_t* session, const char** cn);
 int tm_ssl_session_free (tm_ssl_session_t *session);
