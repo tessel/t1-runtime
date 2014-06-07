@@ -198,7 +198,7 @@ struct _SSL
     uint8_t hmac_header[SSL_RECORD_SIZE];    /* rx hmac */
 
 #ifdef CONFIG_SSL_SNI
-    const char* host_name;
+    const char host_name[255];
 #endif
 };
 
