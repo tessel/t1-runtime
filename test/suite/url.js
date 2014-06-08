@@ -25,6 +25,7 @@ ok(url.parse('http://tools.ietf.org/html/draft-ietf-6man-text-addr-representatio
 var actual = url.parse('ws://user:pass@somedomain.com:1234/events?q=123#hash1');
 
 Object.keys(expected).forEach(function(k){
-  equal(actual[k], expected[k], k + ' should matched expected '+ actual[k] + ' !== ' + expected[k] )
+  
+  equal(actual[k], expected[k], k + ' should matched expected ')
 });
 
