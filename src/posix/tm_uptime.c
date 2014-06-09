@@ -35,22 +35,6 @@ uint32_t tm_uptime_micro ()
   return tm_timestamp() - timestamp_base;
 }
 
-
-void colony_ipc_emit (char *type, void* data, size_t size) {
-	lua_State* L = tm_lua_state;
-	if (!L) return;
-	// Get preload table.
-	lua_getglobal(L, "_colony_emit");
-	if (lua_isnil(L, -1)) {
-		lua_pop(L, 1);
-	} else {
-		lua_pushstring(L, type);
-		uint8_t* buf = colony_createbuffer(L, size);
-		memcpy(buf, data, size);
-		tm_checked_call(L, 2);
-	}
-}
-
 static void wait_int (int dummy)
 {
 	exit(1);
@@ -63,6 +47,8 @@ static void wait_alarm (int dummy)
 
 void hw_wait_for_event()
 {
+	if (tm_lua_state == NULL) return;
+	
 	unsigned ms = tm_timer_head_time() / 1000;
 
 	struct pollfd fd;
@@ -83,7 +69,7 @@ void hw_wait_for_event()
 	if (ret > 0 && ((fd.revents & POLLIN) != 0))  {
 		uint8_t buffer[16*1024];
 		if (fgets((char*) buffer, sizeof(buffer), stdin) != NULL) {
-			colony_ipc_emit("stdin", buffer, strlen((const char*) buffer));
+			colony_ipc_emit(tm_lua_state, "stdin", buffer, strlen((const char*) buffer));
 		}
 	}
 
