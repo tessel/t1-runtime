@@ -220,7 +220,8 @@ static int send_client_hello(SSL *ssl)
 
 #ifdef CONFIG_SSL_SNI
     if (ssl->host_name[0] != 0) {
-        unsigned int host_len = strnlen((char*) ssl->host_name, 255);
+        const char * end = (const char *) memchr((char*) ssl->host_name, '\0', 255);
+        unsigned int host_len = end == NULL ? 255 : end - (char*) ssl->host_name;
 
         buf[offset++] = 0;
         buf[offset++] = host_len+9;     /* extensions length */
