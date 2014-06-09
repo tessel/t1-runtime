@@ -1313,44 +1313,56 @@ if type(hs) == 'table' then
     local ret = {}
     local idx = 0
     -- TODO: optimize, give string with offset in re_exec
+    local nullmatch = false
     repeat
+      -- returns whether we've found a match (rc == 0)
       local datastr, rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
       if rc ~= 0 then
         break
       end
       local so, eo = hs.regmatch_so(hsmatch, 0), hs.regmatch_eo(hsmatch, 0)
-      table.insert(ret, string.sub(data, 1, so))
+      if nullmatch then
+        nullmatch = false
+        table.insert(ret, string.sub(data, 1, 1))
+        if #data == 0 then
+          break
+        end
+        data = string.sub(data, 2)
+      else 
+        nullmatch = so == eo
+        table.insert(ret, string.sub(data, 1, so))
 
-      if type(out) == 'function' then 
-        local args, argn = {this, string.sub(data, so + 1, eo)}, 2
-        for i=1,hs.regex_nsub(cre) do
-          local subso, subeo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
-          if subso > -1 and subeo > -1 then
-            args[argn + 1] = string.sub(data, subso + 1, subeo)
-          else
-            args[argn + 1] = nil
+        if type(out) == 'function' then 
+          local args, argn = {this, string.sub(data, so + 1, eo)}, 2
+          for i=1,hs.regex_nsub(cre) do
+            local subso, subeo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
+            if subso > -1 and subeo > -1 then
+              args[argn + 1] = string.sub(data, subso + 1, subeo)
+            else
+              args[argn + 1] = nil
+            end
+            argn = argn + 1
           end
-          argn = argn + 1
+          args[argn + 1] = idx + so
+          args[argn + 2] = this
+          table.insert(ret, tostring(out(unpack(args)) or 'undefined'))
+        else
+          local ins = tostring(out)
+          local i, j = 0, 0
+          while true do
+            i, j = string.find(ins, "$%d+", i+1)    -- find 'next' newline
+            if i == nil then break end
+            local subindex = tonumber(string.sub(ins, i+1, j))
+            local subso, subeo = hs.regmatch_so(hsmatch, subindex), hs.regmatch_eo(hsmatch, subindex)
+            ins = string.sub(ins, 0, i-1) .. string.sub(data, subso + 1, subeo) .. string.sub(ins, j+1)
+            i = i + (subeo - subso)
+          end
+          table.insert(ret, ins)
         end
-        args[argn + 1] = idx + so
-        args[argn + 2] = this
-        table.insert(ret, tostring(out(unpack(args)) or 'undefined'))
-      else
-        local ins = tostring(out)
-        local i, j = 0, 0
-        while true do
-          i, j = string.find(ins, "$%d+", i+1)    -- find 'next' newline
-          if i == nil then break end
-          local subindex = tonumber(string.sub(ins, i+1, j))
-          local subso, subeo = hs.regmatch_so(hsmatch, subindex), hs.regmatch_eo(hsmatch, subindex)
-          ins = string.sub(ins, 0, i-1) .. string.sub(data, subso + 1, subeo) .. string.sub(ins, j+1)
-          i = i + (subeo - subso)
-        end
-        table.insert(ret, ins)
-      end
 
-      data = string.sub(data, eo+1)
-      idx = eo
+        data = string.sub(data, eo+1)
+        idx = eo
+      end
     until not dorepeat
     table.insert(ret, data)
     return table.concat(ret, '')
