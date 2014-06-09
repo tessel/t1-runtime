@@ -672,6 +672,14 @@ global.Object.keys = function (this, obj)
   return a
 end
 
+global.Object.getPrototypeOf = function (this, obj)
+  local mt = getmetatable(obj)
+  if mt then
+    return mt.proto
+  end
+  return nil
+end
+
 global.Object.getOwnPropertyNames = function (this, obj)
   local a = js_arr({})
   -- TODO debug this one:
