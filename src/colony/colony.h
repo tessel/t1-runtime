@@ -20,6 +20,8 @@ int colony_runtime_open();
 int colony_runtime_run(const char *path, const char **argv, int argc);
 int colony_runtime_close();
 
+void colony_init (lua_State* L);
+
 int tm_eval_lua(lua_State *L, const char* script);
 int tm_checked_call(lua_State *L, int nargs);
 

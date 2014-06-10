@@ -23,6 +23,7 @@
 #include "lua_bit.h"
 #include "lua_yajl.h"
 
+#include "colony.h"
 #include "dlmalloc.h"
 #include "dlmallocfork.h"
 
@@ -219,6 +220,9 @@ int colony_runtime_open ()
   }
   lua_setglobal(L, "_builtin");
 
+  // Initialize runtime semantics.
+  colony_init(L);
+
   // Load all builtin libraries immediately on init.
   // This can trade loss of sped for later access.
 #ifdef COLONY_PRELOAD
@@ -231,12 +235,12 @@ int colony_runtime_open ()
   return tm_eval_lua(L, "require('preload');");
 }
 
-int colony_runtime_run (const char *path, char **argv, int argc)
+int colony_runtime_run (const char *path, const char **argv, int argc)
 {
   (void) path;
   lua_State* L = tm_lua_state;
 
-  getargs(L, argv, argc);  /* collect arguments */
+  getargs(L, (char **) argv, argc);  /* collect arguments */
 
   // Seed crypto on startup.
   tm_entropy_seed();

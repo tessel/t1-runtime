@@ -55,13 +55,9 @@ end
 local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_proto = {}, {}, {}, {}, {}, {}, {}
 funcproxies = {}
 
--- get from prototype chain while maintaining "self"
+_G.funcproxies = funcproxies
 
-local function js_proto_get (self, proto, key)
-  if key == '__proto__' then return proto; end
-  proto = rawget(funcproxies, proto) or proto
-  return rawget(proto, key) or (getmetatable(proto) and getmetatable(proto).__index and getmetatable(proto).__index(self, key, proto)) or nil
-end
+-- NOTE: js_getter_proto defined in colony_init.c
 
 local function js_getter_index (proto)
   return function (self, key, _self)

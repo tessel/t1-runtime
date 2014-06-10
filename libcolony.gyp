@@ -171,6 +171,7 @@
         'src/colony/lua_tm.c',
         'src/colony/lua_yajl.c',
         'src/colony/colony.c',
+        'src/colony/colony_init.c',
         'src/colony/colony_runtime.c',
         '<(SHARED_INTERMEDIATE_DIR)/dir_builtin.c',
         '<(SHARED_INTERMEDIATE_DIR)/dir_runtime_lib.c',
