@@ -34,7 +34,7 @@ lua_State* tm_lua_state = NULL;
  */
 
 
-static int getargs(lua_State *L, char **argv, int argc)
+static int getargs(lua_State *L, const char **argv, int argc)
 {
   int i;
   luaL_checkstack(L, argc + 3, "too many arguments to script");
@@ -240,7 +240,7 @@ int colony_runtime_run (const char *path, const char **argv, int argc)
   (void) path;
   lua_State* L = tm_lua_state;
 
-  getargs(L, (char **) argv, argc);  /* collect arguments */
+  getargs(L, argv, argc);  /* collect arguments */
 
   // Seed crypto on startup.
   tm_entropy_seed();

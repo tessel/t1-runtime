@@ -296,9 +296,7 @@ str_mt.proto = str_proto
 --  Array
 --]]
 
-function array_getter_length (this)
-  return math.max((this[0] ~= nil and {#this + 1} or {#this})[1], getmetatable(this).length)
-end
+-- NOTE: array_getter_length defined in colony_init.c
 
 function array_setter (this, key, val)
   if type(key) == 'number' then
