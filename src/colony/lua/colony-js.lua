@@ -1286,22 +1286,22 @@ if type(hs) == 'table' then
       error(js_new(global.Error, 'Cannot call String::split on non-regex'))
     end
 
-    local dorepeat = string.find(regex.flags, 'g')
     local data = tostring(this)
     local ret = {}
     local idx = 0
     -- TODO: optimize, give string with offset in re_exec
-    repeat
+    while true do
       local datastr, rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
       if rc ~= 0 then
         break
       end
+
       local so, eo = hs.regmatch_so(hsmatch, 0), hs.regmatch_eo(hsmatch, 0)
       table.insert(ret, string.sub(data, 1, so))
 
       data = string.sub(data, eo+1)
       idx = eo
-    until not dorepeat
+    end
     table.insert(ret, data)
     ret[0] = ret[1]
     table.remove(ret, 1)
@@ -1328,6 +1328,7 @@ if type(hs) == 'table' then
       if rc ~= 0 then
         break
       end
+      
       local so, eo = hs.regmatch_so(hsmatch, 0), hs.regmatch_eo(hsmatch, 0)
       if nullmatch then
         nullmatch = false
