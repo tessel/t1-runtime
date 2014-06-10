@@ -1,4 +1,4 @@
-console.log('1..2')
+console.log('1..3')
 
 var a = new Date();
 console.log(new Date() - new Date() == 0 ? 'ok' : 'not ok')
