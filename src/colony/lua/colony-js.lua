@@ -422,17 +422,19 @@ arr_proto.reverse = function (this)
 end
 
 arr_proto.slice = function (this, start, len)
-  local a = js_arr({})
+  local a = {}
   if not this then
-    return a
+    return js_arr({})
   end
   if len == nil then
     len = this.length or 0
   end
+  local j = 0
   for i=start or 0,len-1 do
-    a:push(this[i])
+    a[j] = this[i]
+    j = j + 1
   end
-  return a
+  return js_arr(a, j)
 end
 
 arr_proto.concat = function (this, ...)

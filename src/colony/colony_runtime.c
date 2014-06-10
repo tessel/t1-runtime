@@ -23,6 +23,7 @@
 #include "lua_bit.h"
 #include "lua_yajl.h"
 
+#include "colony.h"
 #include "dlmalloc.h"
 #include "dlmallocfork.h"
 
@@ -33,7 +34,7 @@ lua_State* tm_lua_state = NULL;
  */
 
 
-static int getargs(lua_State *L, char **argv, int argc)
+static int getargs(lua_State *L, const char **argv, int argc)
 {
   int i;
   luaL_checkstack(L, argc + 3, "too many arguments to script");
@@ -219,6 +220,9 @@ int colony_runtime_open ()
   }
   lua_setglobal(L, "_builtin");
 
+  // Initialize runtime semantics.
+  colony_init(L);
+
   // Load all builtin libraries immediately on init.
   // This can trade loss of sped for later access.
 #ifdef COLONY_PRELOAD
@@ -231,7 +235,7 @@ int colony_runtime_open ()
   return tm_eval_lua(L, "require('preload');");
 }
 
-int colony_runtime_run (const char *path, char **argv, int argc)
+int colony_runtime_run (const char *path, const char **argv, int argc)
 {
   (void) path;
   lua_State* L = tm_lua_state;
