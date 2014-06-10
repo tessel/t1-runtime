@@ -282,17 +282,50 @@ static int l_tm_ssl_session_create (lua_State* L)
 
   tm_ssl_ctx_t ctx = (tm_ssl_ctx_t) lua_touserdata(L, 1);
   tm_socket_t sock = (tm_socket_t) lua_tonumber(L, 2);
-
-  int res = tm_ssl_session_create(&session, ctx, sock);
-
-  if (res > 0) {
-    lua_pushnil(L);
-  } else {
-    lua_pushlightuserdata(L, session);
+  const char* host_name = NULL;
+  if (!lua_isnil(L, 3)) {
+    host_name = lua_tostring(L, 3);
   }
-  return 1;
+
+  int res = tm_ssl_session_create(&session, ctx, sock, host_name);
+
+  lua_pushlightuserdata(L, session);
+  lua_pushnumber(L, res);
+  return 2;
 }
 
+static int l_tm_ssl_session_altname (lua_State* L)
+{
+  tm_ssl_session_t session = (tm_ssl_session_t) lua_touserdata(L, 1);
+  size_t index = (size_t) lua_tonumber(L, 2);
+
+  const char* altname = NULL;
+  int res = tm_ssl_session_altname(&session, index, &altname);
+
+  if (altname == NULL) {
+    lua_pushnil(L);
+  } else {
+    lua_pushstring(L, altname);
+  }
+  lua_pushnumber(L, res);
+  return 2;
+}
+
+static int l_tm_ssl_session_cn (lua_State* L)
+{
+  tm_ssl_session_t session = (tm_ssl_session_t) lua_touserdata(L, 1);
+
+  const char* cn = NULL;
+  int res = tm_ssl_session_cn(&session, &cn);
+
+  if (cn == NULL) {
+    lua_pushnil(L);
+  } else {
+    lua_pushstring(L, cn);
+  }
+  lua_pushnumber(L, res);
+  return 2;
+}
 
 static int l_tm_ssl_session_free (lua_State* L)
 {
@@ -985,6 +1018,8 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "ssl_context_create", l_tm_ssl_context_create },
     { "ssl_context_free", l_tm_ssl_context_free },
     { "ssl_session_create", l_tm_ssl_session_create },
+    { "ssl_session_altname", l_tm_ssl_session_altname },
+    { "ssl_session_cn", l_tm_ssl_session_cn },
     { "ssl_session_free", l_tm_ssl_session_free },
     { "ssl_write", l_tm_ssl_write },
     { "ssl_read", l_tm_ssl_read },
