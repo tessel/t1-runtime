@@ -128,10 +128,10 @@ static int l_re_exec (lua_State* L)
   // ignore 3
   int pmatchlen = (int) lua_tonumber(L, 4);
   regmatch_t* pmatch = (regmatch_t*) lua_touserdata(L, 5);
-  // int flags = (int) lua_tonumber(L, 6);
+  int flags = (int) lua_tonumber(L, 6);
 
   const wchar_t* data = lua_tomultibytelstring(L, 2, &datalen);
-  int rc = re_exec(cre, data, datalen, NULL, pmatchlen, pmatch, 0);
+  int rc = re_exec(cre, data, datalen, NULL, pmatchlen, pmatch, flags);
   lua_pushnumber(L, rc);
   return 2;
 }
