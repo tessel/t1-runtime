@@ -32,6 +32,7 @@ npm install
 npm install -g colony-compiler
 make colony
 npm link --local
+npm test
 ```
 
 You can now run code on your PC using `colony` from your command line. For building firmware, please see the [firmware building instructions](https://github.com/tessel/firmware).
