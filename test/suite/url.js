@@ -29,3 +29,4 @@ Object.keys(expected).forEach(function(k){
   equal(actual[k], expected[k], k + ' should matched expected ')
 });
 
+ok(url.parse('http://api.openweathermap.org/data/2.5/weather?id=5327684&units=imperial').hostname == 'api.openweathermap.org', 'hostname match');

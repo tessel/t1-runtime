@@ -374,9 +374,6 @@ exports.request = function (opts, onresponse) {
 exports.get = function (opts, onresponse) {
   if (typeof opts == 'string') {
     opts = url.parse(opts);
-    if (opts.search) {
-      opts.path += opts.search;
-    }
   }
   opts.method = 'GET';
   if (opts.agent) {
