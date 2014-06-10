@@ -196,9 +196,10 @@ HTTPServer.prototype.listen = function (port, ip) {
  * HTTPIncomingResponse
  */
 
-function HTTPIncomingResponse (data) {
+function HTTPIncomingResponse (connection) {
   Readable.call(this);
   this.headers = {};
+  this.connection = connection;
 }
 
 util.inherits(HTTPIncomingResponse, Readable);
@@ -207,8 +208,8 @@ HTTPIncomingResponse.prototype._read = function () {
   // noop
 };
 
-HTTPIncomingResponse.prototype.setEncoding = function () {
-  // TODO
+HTTPIncomingResponse.prototype.setEncoding = function (encoding) {
+  this.encoding = encoding;
 };
 
 
@@ -277,7 +278,7 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
   var response, lastheader;
   var parser = http_parser.new('response', {
     onMessageBegin: js_wrap_function(function () {
-      response = new HTTPIncomingResponse();
+      response = new HTTPIncomingResponse(self.connection);
       self.connection.on('close', function () {
         response.push(null);
         response = null;
@@ -343,7 +344,7 @@ HTTPOutgoingRequest.prototype.end = function () {
  */
 
 function Agent () {
-  throw new Error('Agent not yet implemented.');
+  // NYI
 }
 
 
@@ -361,6 +362,9 @@ function ensureSecure (secure) {
 
 exports.request = function (opts, onresponse) {
   ensureSecure(this._secure);
+  if (opts.agent) {
+    throw new Error('Agent not yet implemented.');
+  }
   var host = opts.hostname || opts.host || 'localhost';
   var req = new HTTPOutgoingRequest(opts.port || (this._secure ? 443 : 80), host, opts.path || '', opts.method || 'GET', opts.headers || {}, this._secure);
   onresponse && req.on('response', onresponse);
@@ -375,6 +379,9 @@ exports.get = function (opts, onresponse) {
     }
   }
   opts.method = 'GET';
+  if (opts.agent) {
+    throw new Error('Agent not yet implemented.');
+  }
 
   var req = this.request(opts, onresponse);
   // req.end();
