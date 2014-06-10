@@ -1324,7 +1324,8 @@ if type(hs) == 'table' then
     local nullmatch = false
     repeat
       -- returns whether we've found a match (rc == 0)
-      local datastr, rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
+      -- TODO: encode REG_NOTBOL == 1 as a string
+      local datastr, rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, idx and 1 or 0)
       if rc ~= 0 then
         break
       end
