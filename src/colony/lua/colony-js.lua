@@ -1373,7 +1373,7 @@ if type(hs) == 'table' then
         end
 
         data = string.sub(data, eo+1)
-        idx = eo
+        idx = eo+1
       end
     until not dorepeat
     table.insert(ret, data)
