@@ -916,7 +916,7 @@ colony.cache = {}
 local function require_resolve (origname, root)
   root = root or './'
 
-  local isLocal = false
+  local islocal = false
   local name = origname
   if string.sub(name, 1, 1) == '.' then
     if string.sub(name, -3) == '.js' then
@@ -924,13 +924,13 @@ local function require_resolve (origname, root)
     elseif string.sub(name, -5) == '.json' then
       name = string.sub(name, 1, -6)
     end
-    isLocal = true
+    islocal = true
     root = ''
     name = tm.cwd() .. string.sub(name, 2)
   end
 
   -- module
-  if not isLocal then
+  if not islocal then
     if colony.precache[name] or colony.cache[name] then
       root = ''
     else
@@ -981,7 +981,7 @@ local function require_resolve (origname, root)
       name = name .. '/index'
     end
   end
-  if isLocal or (root ~= '' and string.sub(name, -3) ~= '.js') then
+  if islocal or (root ~= '' and string.sub(name, -3) ~= '.js') then
     local p = path_normalize(root .. name)
     if string.sub(origname, -5) == '.json' or fs_exists(p .. '.json') then
       name = name .. '.json'
