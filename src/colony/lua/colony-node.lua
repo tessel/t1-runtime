@@ -848,6 +848,8 @@ colony.cache = {}
 
 local function require_resolve (origname, root)
   root = root or './'
+
+  local isLocal = false
   local name = origname
   -- print('<-', root, name)
   if string.sub(name, 1, 1) == '.' then
@@ -856,10 +858,13 @@ local function require_resolve (origname, root)
     elseif string.sub(name, -5) == '.json' then
       name = string.sub(name, 1, -6)
     end
+    isLocal = true
+    root = ''
+    name = tm.cwd() .. string.sub(name, 2)
   end
 
   -- module
-  if string.sub(name, 1, 1) ~= '.' then
+  if not isLocal then
     if colony.precache[name] or colony.cache[name] then
       root = ''
     else
@@ -897,7 +902,7 @@ local function require_resolve (origname, root)
       name = name .. '/index'
     end
   end
-  if root ~= '' and string.sub(name, -3) ~= '.js' then
+  if isLocal or (root ~= '' and string.sub(name, -3) ~= '.js') then
     local p = path_normalize(root .. name)
     if string.sub(origname, -5) == '.json' or fs_exists(p .. '.json') then
       name = name .. '.json'
@@ -965,6 +970,16 @@ colony.run = function (name, root, parent)
 
     -- Return the new script.
     return colony.run(value, path_dirname(scriptpath) .. '/', colony.cache[scriptpath])
+  end
+
+  colony.global.require.resolve = function(ths, str)
+    local path, found = require_resolve(str)
+    if found then
+      return path
+    else
+      -- TODO: Throw Cannot find module 'module'
+      return nil
+    end
   end
   
   colony.cache[p] = js_obj({exports=js_obj({}),parent=parent}) --dummy
