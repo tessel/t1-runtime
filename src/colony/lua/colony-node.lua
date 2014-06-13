@@ -698,6 +698,15 @@ global.process.cwd = function ()
 end
 global.process.nextTick = global.setImmediate
 
+-- DEPLOY_TIME workaround for setting environmental time
+
+global.Object:defineProperty(global.process.env, 'DEPLOY_TIMESTAMP', {
+  set = function (this, value)
+    tm.timestamp_update((tonumber(value or 0) or 0)*1e3)
+    rawset(this, 'DEPLOY_TIMESTAMP', value)
+  end
+});
+
 -- simple process.ref() and process.unref() options
 
 global.process.ref = function ()
