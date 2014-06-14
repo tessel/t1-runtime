@@ -1309,7 +1309,15 @@ if type(hs) == 'table' then
   _G._HSMATCH = hsmatch
 
   global.RegExp = function (this, patt, flags)
-    -- hsrude requires special flags handling
+    -- unescape \x and \u escapes explicitly
+    patt = string.gsub(patt, "\\x(%x%x)", function (x)
+      return string.char(tonumber(x, 16))
+    end)
+    patt = string.gsub(patt, "\\u(%x%x%x%x)", function (x)
+      return string.char(bit.band(bit.rshift(tonumber(x, 16), 8), 0xFF)) .. string.char(bit.band(tonumber(x, 16), 0xFF))
+    end)
+
+    -- hsregex requires special flags handling
     if flags and string.find(flags, "i") then
       patt = '(?i)' .. patt
     end
