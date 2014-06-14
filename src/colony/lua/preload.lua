@@ -12,6 +12,7 @@
 -- Called to initialize colony in a new runtime environment.
 --
 
+local tm = require('tm')
 local colony = require('colony')
 -- This is temporary until we can do global._arr in C extension methods
 _G._colony = colony
@@ -69,7 +70,15 @@ do
   local Writable = colony.run('stream').Writable
 
   colony.global.process.stdout = colony.js_new(Writable)
+  colony.global.process.stdout._write = function (this, chunk, encoding, callback)
+    tm.log(10, chunk)
+    callback()
+  end
   colony.global.process.stderr = colony.js_new(Writable)
+  colony.global.process.stderr._write = function (this, chunk, encoding, callback)
+    tm.log(13, chunk)
+    callback()
+  end
 
   -- setup stdin
   colony.global.process.stdin = colony.js_new(Readable)
