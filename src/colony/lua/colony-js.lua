@@ -798,7 +798,11 @@ end
 global.String.prototype = str_proto
 str_proto.constructor = global.String
 global.String.fromCharCode = function (ths, ord)
-  return string.char(ord or 0)
+  local n = tonumber(ord or 0) or 0
+  if n > 255 or n < 0 then
+    return string.char(0xFF)
+  end
+  return string.char(n)
 end
 
 -- Math
