@@ -956,6 +956,14 @@ colony.run = function (name, root, parent)
     return colony.cache[p].exports
   end
   local res = pfound and require_load(p)
+
+  -- If we can't find the file, they may have passed in a folder
+  -- eg. lib may need to resolve to lib/index.js, not lib.js
+  if not res then
+    local extensionIndex = string.find(p, '.js');
+    p = string.sub(p, 1, extensionIndex-1) + "/index.js";
+    res = require_load(p)
+  end
   if not pfound or not res then
     error(js_new(global.Error, 'Could not find module "' .. p .. '"'))
   end
