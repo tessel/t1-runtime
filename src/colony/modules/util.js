@@ -85,6 +85,10 @@ function debuglog(set) {
   return debugs[set];
 };
 
+// TODO: Make it work like Node's inspect
+function inspect(object) {
+  console.log(object);
+}
 
 /**
  * Public API
@@ -101,5 +105,6 @@ exports.isArray = isArray;
 exports.isFunction = isFunction;
 exports.isDate = isDate;
 exports.isRegExp = isRegExp;
+exports.dir = exports.inspect = inspect;
 exports.isNullOrUndefined = isNullOrUndefined;
 exports.debuglog = debuglog;
