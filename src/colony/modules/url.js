@@ -19,7 +19,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-var punycode = require('punycode');
+// var punycode = require('punycode');
 var util = require('util');
 
 exports.parse = urlParse;
@@ -264,8 +264,9 @@ Url.prototype.parse = function(url, parseQueryString, slashesDenoteHost) {
       var newOut = [];
       for (var i = 0; i < domainArray.length; ++i) {
         var s = domainArray[i];
-        newOut.push(s.match(/[^A-Za-z0-9_-]/) ?
-            'xn--' + punycode.encode(s) : s);
+        // newOut.push(s.match(/[^A-Za-z0-9_-]/) ?
+            // 'xn--' + punycode.encode(s) : s);
+        newOut.push(s);
       }
       this.hostname = newOut.join('.');
     }
