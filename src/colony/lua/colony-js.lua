@@ -34,6 +34,8 @@ local js_seq = colony.js_seq
 local js_in = colony.js_in
 local js_setter_index = colony.js_setter_index
 local js_getter_index = colony.js_getter_index
+local js_define_getter = colony.js_define_getter
+local js_define_setter = colony.js_define_setter
 local js_proto_get = colony.js_proto_get
 local js_func_proxy = colony.js_func_proxy
 local js_with = colony.js_with
@@ -249,44 +251,6 @@ obj_proto.hasOwnProperty = function (ths, p)
   else
     return rawget(ths, p) ~= nil
   end
-end
-
-function js_define_setter (self, key, fn)
-  if type(self) == 'function' then
-    self = js_func_proxy(self)
-  end
-
-  local mt = getmetatable(self)
-  rawset(self, key, nil)
-  if not mt.getters then
-    mt.getters = {}
-    mt.__index = js_getter_index(mt.proto)
-  end
-  if not mt.setters then
-    mt.setters = {}
-    mt.__newindex = js_setter_index(mt.proto)
-  end
-
-  mt.setters[key] = fn
-end
-
-function js_define_getter (self, key, fn)
-  if type(self) == 'function' then
-    self = js_func_proxy(self)
-  end
-  
-  local mt = getmetatable(self)
-  rawset(self, key, nil)
-  if not mt.getters then
-    mt.getters = {}
-    mt.__index = js_getter_index(mt.proto)
-  end
-  if not mt.setters then
-    mt.setters = {}
-    mt.__newindex = js_setter_index(mt.proto)
-  end
-
-  mt.getters[key] = fn
 end
 
 obj_proto.__defineGetter__ = js_define_getter

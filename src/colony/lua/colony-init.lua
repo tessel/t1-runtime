@@ -81,6 +81,44 @@ local function js_setter_index (proto)
   end
 end
 
+function js_define_setter (self, key, fn)
+  if type(self) == 'function' then
+    self = js_func_proxy(self)
+  end
+
+  local mt = get_unique_metatable(self)
+  rawset(self, key, nil)
+  if not mt.getters then
+    mt.getters = {}
+    mt.__index = js_getter_index(mt.proto)
+  end
+  if not mt.setters then
+    mt.setters = {}
+    mt.__newindex = js_setter_index(mt.proto)
+  end
+
+  mt.setters[key] = fn
+end
+
+function js_define_getter (self, key, fn)
+  if type(self) == 'function' then
+    self = js_func_proxy(self)
+  end
+  
+  local mt = get_unique_metatable(self)
+  rawset(self, key, nil)
+  if not mt.getters then
+    mt.getters = {}
+    mt.__index = js_getter_index(mt.proto)
+  end
+  if not mt.setters then
+    mt.setters = {}
+    mt.__newindex = js_setter_index(mt.proto)
+  end
+
+  mt.getters[key] = fn
+end
+
 local function js_tostring (this)
   return this:toString()
 end
@@ -173,34 +211,56 @@ end
 --  Object
 --]]
 
+function get_unique_metatable (this)
+  local mt = getmetatable(this)
+  if mt and mt.shared then
+    setmetatable(this, {
+      __index = js_obj_index,
+      __newindex = js_obj_newindex,
+      __tostring = js_tostring,
+      __tovalue = js_valueof,
+      proto = mt.proto,
+      shared = false
+    });
+    return getmetatable(this)
+  end
+  return mt
+end
+
 function js_obj_index (self, key)
   return js_proto_get(self, obj_proto, key)
 end
 
-function js_obj (o)
-  local mt = getmetatable(o) or {}
-  local proto = obj_proto
-  if o.__proto__ then
-    proto = o.__proto__
-    o.__proto__ = nil
-  end
-  mt.__index = function (self, key)
-    return js_proto_get(self, proto, key)
-  end
-  mt.__newindex = function (this, key, value)
-    if key == '__proto__' then
-      mt.proto = value
-      mt.__index = function (self, key)
-        return js_proto_get(self, value, key)
-      end
-    else
-      rawset(this, key, value)
+function js_obj_newindex (this, key, value)
+  if key == '__proto__' then
+    local mt = get_unique_metatable(this)
+    mt.proto = value
+    mt.__index = function (self, key)
+      return js_proto_get(self, value, key)
     end
+  else
+    rawset(this, key, value)
   end
-  mt.__tostring = js_tostring
-  mt.__tovalue = js_valueof
-  mt.proto = proto
-  setmetatable(o, mt)
+end
+
+local js_obj_mt = {
+  __index = js_obj_index,
+  __newindex = js_obj_newindex,
+  __tostring = js_tostring,
+  __tovalue = js_valueof,
+  proto = obj_proto,
+  shared = true
+};
+
+function js_obj (o)
+  if rawget(o, '__proto__') then
+    local proto = o.__proto__
+    rawset(o, '__proto__', nil)
+    setmetatable(o, js_obj_mt)
+    o.__proto__ = proto
+  else
+    setmetatable(o, js_obj_mt)
+  end
   return o
 end
 
@@ -300,7 +360,7 @@ str_mt.proto = str_proto
 
 function array_setter (this, key, val)
   if type(key) == 'number' then
-    local mt = getmetatable(this)
+    local mt = get_unique_metatable(this)
     mt.length = math.max(mt.length, (tonumber(key) or 0) + 1)
   end
   rawset(this, key, val)
@@ -419,7 +479,7 @@ function js_new (f, ...)
     end,
     __newindex = function (this, key, value)
       if key == '__proto__' then
-        local mt = getmetatable(this)
+        local mt = get_unique_metatable(this)
         mt.proto = value
         mt.__index = function (self, key)
           return js_proto_get(self, value, key)
@@ -485,7 +545,7 @@ function js_with (env, fn)
     idx = 1 + idx
   end
   
-  local mt = getmetatable(env) or {};
+  local mt = get_unique_metatable(env) or {};
 
   mt.__index = function (this, key)
     if locals[key] ~= nil then
@@ -532,6 +592,8 @@ colony.js_seq = js_seq
 colony.js_in = js_in
 colony.js_setter_index = js_setter_index
 colony.js_getter_index = js_getter_index
+colony.js_define_getter = js_define_getter
+colony.js_define_setter = js_define_setter
 colony.js_proto_get = js_proto_get
 colony.js_func_proxy = js_func_proxy
 colony.js_with = js_with
