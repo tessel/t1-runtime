@@ -150,12 +150,12 @@ str_proto.toUpperCase = function (str)
 end
 
 str_proto.indexOf = function (str, needle)
-  local ret = string.find(str, tostring(needle), 1, true) 
+  local ret = string.find(str, tostring(needle), 1, true)
   if ret == null then return -1; else return ret - 1; end
 end
 
 str_proto.lastIndexOf = function (str, needle)
-  local ret = string.find(string.reverse(str), tostring(needle), 1, true) 
+  local ret = string.find(string.reverse(str), tostring(needle), 1, true)
   if ret == null then return -1; else return str.length - ret; end
 end
 
@@ -553,7 +553,7 @@ Globals
 
 -- Boolean
 
-global.Boolean = function (ths, n) 
+global.Boolean = function (ths, n)
   return not not n
 end
 global.Boolean.prototype = bool_proto
@@ -563,7 +563,7 @@ bool_proto.constructor = global.Boolean
 
 -- Number
 
-global.Number = function (ths, n) 
+global.Number = function (ths, n)
   return tonumber(n)
 end
 global.Number.prototype = num_proto
@@ -1036,7 +1036,7 @@ local function logger (level, ...)
   local parts = {}
   for i=1,select('#',...) do
     local x = select(i,...)
-    if js_typeof(x) == 'object' and x ~= nil then 
+    if js_typeof(x) == 'object' and x ~= nil then
       parts[#parts+1] = objtostring(x, {})
     else
       parts[#parts+1] = tostring(x)
@@ -1240,7 +1240,7 @@ if type(hs) == 'table' then
     return o
   end
 
-  global._regexp = function (pat, flags) 
+  global._regexp = function (pat, flags)
     return js_new(global.RegExp, pat, flags)
   end
 
@@ -1295,7 +1295,7 @@ if type(hs) == 'table' then
       if rc ~= 0 then
         break
       end
-      
+
       local so, eo = hs.regmatch_so(hsmatch, 0), hs.regmatch_eo(hsmatch, 0)
       if nullmatch then
         nullmatch = false
@@ -1304,11 +1304,11 @@ if type(hs) == 'table' then
           break
         end
         data = string.sub(data, 2)
-      else 
+      else
         nullmatch = so == eo
         table.insert(ret, string.sub(data, 1, so))
 
-        if type(out) == 'function' then 
+        if type(out) == 'function' then
           local args, argn = {this, string.sub(data, so + 1, eo)}, 2
           for i=1,hs.regex_nsub(cre) do
             local subso, subeo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
@@ -1434,7 +1434,7 @@ function encodeURIComponent (this, str)
     return string.format ("%%%02X", string.byte(c))
   end)
   str = string.gsub (str, " ", "%%20")
-  return str  
+  return str
 end
 
 function decodeURIComponent (this, str)
