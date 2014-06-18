@@ -8,6 +8,7 @@ console.log(arr.length == 2 ? 'ok' : 'not ok');
 var a = /a(b)|c/g;
 
 'abc'.replace(a, function (all, sub) {
+	console.log('#', all, sub);
 	if (all == 'c') {
 		console.log(sub == null ? 'ok' : 'not ok')
 	}

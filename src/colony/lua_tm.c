@@ -277,7 +277,7 @@ static int l_tm_ssl_context_free (lua_State* L)
 }
 
 static int l_tm_ssl_session_create (lua_State* L)
-{ 
+{
   tm_ssl_session_t session;
 
   tm_ssl_ctx_t ctx = (tm_ssl_ctx_t) lua_touserdata(L, 1);
@@ -519,7 +519,7 @@ static int l_tm_buffer_read_float (lua_State *L)
   uint8_t *ud = (uint8_t *) lua_touserdata(L, 1);
   size_t index = (size_t) lua_tonumber(L, 2);
   uint8_t le = (int) lua_tonumber(L, 3);
-  
+
   uint8_t *a = &ud[index];
   float out = 0;
   char* temp = (char*) &out;
@@ -537,7 +537,7 @@ static int l_tm_buffer_read_double (lua_State *L)
   uint8_t *ud = (uint8_t *) lua_touserdata(L, 1);
   size_t index = (size_t) lua_tonumber(L, 2);
   uint8_t le = (int) lua_tonumber(L, 3);
-  
+
   uint8_t *a = &ud[index];
   double out = 0;
   char* temp = (char*) &out;
@@ -556,7 +556,7 @@ static int l_tm_buffer_write_float (lua_State *L)
   size_t index = (size_t) lua_tonumber(L, 2);
   float value = (float) lua_tonumber(L, 3);
   uint8_t le = (int) lua_tonumber(L, 4);
-  
+
   uint8_t *a = &ud[index];
   char* temp = (char*) &value;
   if (le ^ (O32_HOST_ORDER == O32_BIG_ENDIAN)) {
@@ -573,11 +573,11 @@ static int l_tm_buffer_write_double (lua_State *L)
   size_t index = (size_t) lua_tonumber(L, 2);
   double value = (double) lua_tonumber(L, 3);
   uint8_t le = (int) lua_tonumber(L, 4);
-  
+
   uint8_t *a = &ud[index];
   char* temp = (char*) &value;
   if (le ^ (O32_HOST_ORDER == O32_BIG_ENDIAN)) {
-    a[0] = temp[0]; a[1] = temp[1]; a[2] = temp[2]; a[3] = temp[3]; a[4] = temp[4]; a[5] = temp[5]; a[6] = temp[6]; a[7] = temp[7]; 
+    a[0] = temp[0]; a[1] = temp[1]; a[2] = temp[2]; a[3] = temp[3]; a[4] = temp[4]; a[5] = temp[5]; a[6] = temp[6]; a[7] = temp[7];
   } else {
     a[0] = temp[7]; a[1] = temp[6]; a[2] = temp[5]; a[3] = temp[4]; a[4] = temp[3]; a[5] = temp[2]; a[6] = temp[1]; a[7] = temp[0];
   }
@@ -874,7 +874,7 @@ static int l_tm_itoa (lua_State* L)
   char buf[256] = { 0 };
   tm_itoa(value, buf, radix == 0 ? 10 : radix);
   buf[255] = 0;
-  
+
   lua_pushstring(L, buf);
   return 1;
 }

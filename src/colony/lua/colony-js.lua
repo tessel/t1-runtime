@@ -150,12 +150,12 @@ str_proto.toUpperCase = function (str)
 end
 
 str_proto.indexOf = function (str, needle)
-  local ret = string.find(str, tostring(needle), 1, true) 
+  local ret = string.find(str, tostring(needle), 1, true)
   if ret == null then return -1; else return ret - 1; end
 end
 
 str_proto.lastIndexOf = function (str, needle)
-  local ret = string.find(string.reverse(str), tostring(needle), 1, true) 
+  local ret = string.find(string.reverse(str), tostring(needle), 1, true)
   if ret == null then return -1; else return str.length - ret; end
 end
 
@@ -553,7 +553,7 @@ Globals
 
 -- Boolean
 
-global.Boolean = function (ths, n) 
+global.Boolean = function (ths, n)
   return not not n
 end
 global.Boolean.prototype = bool_proto
@@ -563,7 +563,7 @@ bool_proto.constructor = global.Boolean
 
 -- Number
 
-global.Number = function (ths, n) 
+global.Number = function (ths, n)
   return tonumber(n)
 end
 global.Number.prototype = num_proto
@@ -1036,7 +1036,7 @@ local function logger (level, ...)
   local parts = {}
   for i=1,select('#',...) do
     local x = select(i,...)
-    if js_typeof(x) == 'object' and x ~= nil then 
+    if js_typeof(x) == 'object' and x ~= nil then
       parts[#parts+1] = objtostring(x, {})
     else
       parts[#parts+1] = tostring(x)
@@ -1214,6 +1214,8 @@ if type(hs) == 'table' then
   local hsmatchc = 100
   local hsmatch = hs.regmatch_create(hsmatchc)
 
+  _G._HSMATCH = hsmatch
+
   global.RegExp = function (this, patt, flags)
     -- hsrude requires special flags handling
     if flags and string.find(flags, "i") then
@@ -1240,108 +1242,22 @@ if type(hs) == 'table' then
     return o
   end
 
-  global._regexp = function (pat, flags) 
+  global._regexp = function (pat, flags)
     return js_new(global.RegExp, pat, flags)
   end
 
-  str_regex_split = function (this, regex)
-    -- verify regex
-    local cre = getmetatable(regex).cre
-    local crestr = getmetatable(regex).crestr
-    if type(cre) ~= 'userdata' then
+  str_regex_split = function (this, input)
+    if not js_instanceof(input, global.RegExp) then
       error(js_new(global.Error, 'Cannot call String::split on non-regex'))
     end
-
-    local data = tostring(this)
-    local ret = {}
-    local idx = 0
-    -- TODO: optimize, give string with offset in re_exec
-    while true do
-      local datastr, rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
-      if rc ~= 0 then
-        break
-      end
-
-      local so, eo = hs.regmatch_so(hsmatch, 0), hs.regmatch_eo(hsmatch, 0)
-      table.insert(ret, string.sub(data, 1, so))
-
-      data = string.sub(data, eo+1)
-      idx = eo
-    end
-    table.insert(ret, data)
-    ret[0] = ret[1]
-    table.remove(ret, 1)
-    return js_arr(ret)
+    return js_arr(hs.regex_split(this, input))
   end
 
   str_regex_replace = function (this, regex, out)
-    -- verify regex
-    local cre = getmetatable(regex).cre
-    local crestr = getmetatable(regex).crestr
-    if type(cre) ~= 'userdata' then
+    if not js_instanceof(regex, global.RegExp) then
       error(js_new(global.Error, 'Cannot call String::replace on non-regex'))
     end
-
-    local dorepeat = string.find(regex.flags, 'g')
-    local data = tostring(this)
-    local ret = {}
-    local idx = 0
-    -- TODO: optimize, give string with offset in re_exec
-    local nullmatch = false
-    repeat
-      -- returns whether we've found a match (rc == 0)
-      -- TODO: encode REG_NOTBOL == 1 as a string
-      local datastr, rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, idx and 1 or 0)
-      if rc ~= 0 then
-        break
-      end
-      
-      local so, eo = hs.regmatch_so(hsmatch, 0), hs.regmatch_eo(hsmatch, 0)
-      if nullmatch then
-        nullmatch = false
-        table.insert(ret, string.sub(data, 1, 1))
-        if #data == 0 then
-          break
-        end
-        data = string.sub(data, 2)
-      else 
-        nullmatch = so == eo
-        table.insert(ret, string.sub(data, 1, so))
-
-        if type(out) == 'function' then 
-          local args, argn = {this, string.sub(data, so + 1, eo)}, 2
-          for i=1,hs.regex_nsub(cre) do
-            local subso, subeo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
-            if subso > -1 and subeo > -1 then
-              args[argn + 1] = string.sub(data, subso + 1, subeo)
-            else
-              args[argn + 1] = nil
-            end
-            argn = argn + 1
-          end
-          args[argn + 1] = idx + so
-          args[argn + 2] = this
-          table.insert(ret, tostring(out(unpack(args)) or 'undefined'))
-        else
-          local ins = tostring(out)
-          local i, j = 0, 0
-          while true do
-            i, j = string.find(ins, "$%d+", i+1)    -- find 'next' newline
-            if i == nil then break end
-            local subindex = tonumber(string.sub(ins, i+1, j))
-            local subso, subeo = hs.regmatch_so(hsmatch, subindex), hs.regmatch_eo(hsmatch, subindex)
-            ins = string.sub(ins, 0, i-1) .. string.sub(data, subso + 1, subeo) .. string.sub(ins, j+1)
-            i = i + (subeo - subso)
-          end
-          table.insert(ret, ins)
-        end
-
-        data = string.sub(data, eo+1)
-        idx = eo+1
-      end
-    until not dorepeat
-    table.insert(ret, data)
-    return table.concat(ret, '')
+    return hs.regex_replace(this, regex, out)
   end
 
   global.String.prototype.match = function (this, regex)
@@ -1355,7 +1271,7 @@ if type(hs) == 'table' then
     end
 
     local data = tostring(this)
-    local datastr, rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
+    local rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
     if rc ~= 0 then
       return nil
     end
@@ -1378,7 +1294,7 @@ if type(hs) == 'table' then
     end
 
     local data = tostring(subj)
-    local datastr, rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
+    local rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
     if rc ~= 0 then
       return nil
     end
@@ -1400,7 +1316,7 @@ if type(hs) == 'table' then
     end
 
     -- TODO optimize by capturing no subgroups?
-    local datastr, rc = hs.re_exec(cre, tostring(subj), nil, hsmatchc, hsmatch, 0)
+    local rc = hs.re_exec(cre, tostring(subj), nil, hsmatchc, hsmatch, 0)
     return rc == 0
   end
 end
@@ -1434,7 +1350,7 @@ function encodeURIComponent (this, str)
     return string.format ("%%%02X", string.byte(c))
   end)
   str = string.gsub (str, " ", "%%20")
-  return str  
+  return str
 end
 
 function decodeURIComponent (this, str)
