@@ -46,6 +46,8 @@ ok(subj2.match(c)[0] == 'caveaaAEEAAEeaeaEAEaeeaEEAEEAet', 'matches char classes
 
 ok(c.test(subj2), 'test() works')
 
+console.log('#', subj3.replace(/\#+/, '___'));
+console.log('#', subj3.replace(/\#+/g, '___'));
 ok(subj3.replace(/\#+/, '___') == " ___    ##     ####  ", 'non-global replace')
 ok(subj3.replace(/\#+/g, '___') == " ___    ___     ___  ", 'global replace')
 

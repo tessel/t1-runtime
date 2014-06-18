@@ -1247,77 +1247,17 @@ if type(hs) == 'table' then
   end
 
   str_regex_split = function (this, input)
+    if not js_instanceof(input, global.RegExp) then
+      error(js_new(global.Error, 'Cannot call String::split on non-regex'))
+    end
     return js_arr(hs.regex_split(this, input))
   end
 
   str_regex_replace = function (this, regex, out)
-    -- verify regex
-    local cre = getmetatable(regex).cre
-    local crestr = getmetatable(regex).crestr
-    if type(cre) ~= 'userdata' then
+    if not js_instanceof(regex, global.RegExp) then
       error(js_new(global.Error, 'Cannot call String::replace on non-regex'))
     end
-
-    local dorepeat = string.find(regex.flags, 'g')
-    local data = tostring(this)
-    local ret = {}
-    local idx = 0
-    -- TODO: optimize, give string with offset in re_exec
-    local nullmatch = false
-    repeat
-      -- returns whether we've found a match (rc == 0)
-      -- TODO: encode REG_NOTBOL == 1 as a string
-      local rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, idx and 1 or 0)
-      if rc ~= 0 then
-        break
-      end
-
-      local so, eo = hs.regmatch_so(hsmatch, 0), hs.regmatch_eo(hsmatch, 0)
-      if nullmatch then
-        nullmatch = false
-        table.insert(ret, string.sub(data, 1, 1))
-        if #data == 0 then
-          break
-        end
-        data = string.sub(data, 2)
-      else
-        nullmatch = so == eo
-        table.insert(ret, string.sub(data, 1, so))
-
-        if type(out) == 'function' then
-          local args, argn = {this, string.sub(data, so + 1, eo)}, 2
-          for i=1,hs.regex_nsub(cre) do
-            local subso, subeo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
-            if subso > -1 and subeo > -1 then
-              args[argn + 1] = string.sub(data, subso + 1, subeo)
-            else
-              args[argn + 1] = nil
-            end
-            argn = argn + 1
-          end
-          args[argn + 1] = idx + so
-          args[argn + 2] = this
-          table.insert(ret, tostring(out(unpack(args)) or 'undefined'))
-        else
-          local ins = tostring(out)
-          local i, j = 0, 0
-          while true do
-            i, j = string.find(ins, "$%d+", i+1)    -- find 'next' newline
-            if i == nil then break end
-            local subindex = tonumber(string.sub(ins, i+1, j))
-            local subso, subeo = hs.regmatch_so(hsmatch, subindex), hs.regmatch_eo(hsmatch, subindex)
-            ins = string.sub(ins, 0, i-1) .. string.sub(data, subso + 1, subeo) .. string.sub(ins, j+1)
-            i = i + (subeo - subso)
-          end
-          table.insert(ret, ins)
-        end
-
-        data = string.sub(data, eo+1)
-        idx = eo+1
-      end
-    until not dorepeat
-    table.insert(ret, data)
-    return table.concat(ret, '')
+    return hs.regex_replace(this, regex, out)
   end
 
   global.String.prototype.match = function (this, regex)
