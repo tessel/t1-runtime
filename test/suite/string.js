@@ -7,4 +7,5 @@ ok("1234567890".substring(3, 6) == "456", 'substring')
 ok("ababababab".indexOf('a') == 0, 'indexOf')
 ok("ababababab".lastIndexOf('a') == 8, 'lastIndexOf')
 ok("a,b,c,d,e".split(',').length == 5, 'split (string)')
+console.log("#", "a,b,c,d,e".split(/,/));
 ok("a,b,c,d,e".split(/,/).length == 5, 'split (regexp)')

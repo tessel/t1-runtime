@@ -11,6 +11,7 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include "colony.h"
 #include "regalone.h"
 #include "regex.h"
 
@@ -64,49 +65,30 @@ static int l_regmatch_eo (lua_State* L)
   return 1;
 }
 
-static size_t hexescapes2bin(chr *t, char *src, size_t mxlen)
+// Lua is using ascii. We are too, until we have real usc2 functions.
+
+static chr* _toregexstr (const char *input, size_t input_len, chr *output, size_t* output_len)
 {
-  char  *s, *xs;
-  size_t  len;
-  s = xs = src;
-  len = 0;
-  while ( (s = strstr(s, "\\x")) )
-  {
-    int cbin;
-    sscanf(&s[2], "%2x", &cbin);
-#   ifdef REGEX_WCHAR
-      *s = '\0';
-      len += mbstowcs(&t[len], xs, mxlen-len);
-#   else
-      memcpy(&t[len], xs, (size_t ) (s-xs));
-      len += (size_t ) (s-xs);
-#   endif
-    t[len++] = cbin;
-    s += 4;
-    xs = s;
-  }
-# ifdef REGEX_WCHAR
-    len += mbstowcs(&t[len], xs, mxlen-len);
-# else
-    strcpy(&t[len], xs);
-    len += strlen(xs);
-# endif
-  return len;
+  #ifdef REGEX_WCHAR
+    *output_len = mbstowcs(output, input, input_len);
+  #else
+    *output_len = memcpy(output, input, input_len);
+  #endif
+  return output;
 }
 
-static const wchar_t* lua_tomultibytelstring (lua_State* L, int pos, size_t* buflen)
+static chr* toregexstr (const char *input, size_t input_len, size_t* output_len)
 {
-  size_t len;
-  const char *patt = lua_tolstring(L, pos, &len);
-  char *oldbuf = (char *) lua_newuserdata(L, len + 1);
-  memcpy(oldbuf, patt, len);
-  wchar_t *buf = (wchar_t *) lua_newuserdata(L, (len + 1) * sizeof(chr));
-  memset(buf, 0, (len + 1) * sizeof(chr));
-  // wchar_t *buf = (wchar_t *) malloc((len + 1) * sizeof(chr));
-  // lua_pushlightuserdata(L, buf);
-  *buflen = hexescapes2bin(buf, oldbuf, len);
-  lua_remove(L, -2);
-  return buf;
+  chr* output = (chr*) calloc(1, input_len * sizeof(chr));
+  return _toregexstr(input, input_len, output, output_len);
+}
+
+static const chr* lua_toregexstr (lua_State* L, int pos, size_t* buflen)
+{
+  size_t patt_len = 0;
+  const char *patt = lua_tolstring(L, pos, &patt_len);
+  chr *mbpatt = (chr *) lua_newuserdata(L, (patt_len+1) * sizeof(chr));
+  return _toregexstr(patt, patt_len, mbpatt, buflen);
 }
 
 static int l_re_comp (lua_State* L)
@@ -115,32 +97,35 @@ static int l_re_comp (lua_State* L)
   regex_t* cre = (regex_t*) lua_touserdata(L, 1);
   int flags = (int) lua_tonumber(L, 3);
 
-  const wchar_t* patt = lua_tomultibytelstring(L, 2, &pattlen);
+  const wchar_t* patt = lua_toregexstr(L, 2, &pattlen);
   int rc = re_comp(cre, patt, pattlen, flags);
+
   lua_pushnumber(L, rc);
   return 2;
 }
 
 static int l_re_exec (lua_State* L)
 {
-  size_t datalen;
   regex_t* cre = (regex_t*) lua_touserdata(L, 1);
   // ignore 3
   int pmatchlen = (int) lua_tonumber(L, 4);
   regmatch_t* pmatch = (regmatch_t*) lua_touserdata(L, 5);
   int flags = (int) lua_tonumber(L, 6);
 
-  const wchar_t* data = lua_tomultibytelstring(L, 2, &datalen);
-  int rc = re_exec(cre, data, datalen, NULL, pmatchlen, pmatch, flags);
+  size_t input_len;
+  const char* input = lua_tolstring(L, 2, &input_len);
+  size_t data_len;
+  chr* data = toregexstr(input, input_len, &data_len);
+  int rc = re_exec(cre, data, data_len, NULL, pmatchlen, pmatch, flags);
   lua_pushnumber(L, rc);
-  return 2;
+  return 1;
 }
 
 static int l_regerror (lua_State* L)
 {
   int rc = (int) lua_tonumber(L, 1);
   regex_t* cre = (regex_t*) lua_touserdata(L, 2);
-  
+
   char buf[1024] = { 0 };
   regerror(rc, cre, buf, sizeof(buf));
   lua_pushstring(L, buf);
@@ -151,6 +136,53 @@ static int l_regfree (lua_State* L)
 {
   regfree(lua_touserdata(L, 1));
   return 0;
+}
+
+static int l_regex_split (lua_State *L)
+{
+  // stack: this regex
+  size_t input_len = 0;
+  const char* input = lua_tolstring(L, 1, &input_len);
+  lua_getmetatable(L, 2);
+  lua_getfield(L, -1, "cre");
+  regex_t* cre = (regex_t*) lua_touserdata(L, -1);
+
+  // matches
+  int pmatch_len = 100;
+  lua_getglobal(L, "_HSMATCH");
+  regmatch_t* pmatch = (regmatch_t*) lua_touserdata(L, -1);
+
+  lua_checkstack(L, 256); // double each time
+
+  size_t w_input_len = 0;
+  chr* orig_w_input = toregexstr(input, input_len, &w_input_len);
+  chr* w_input = orig_w_input;
+
+  lua_createtable(L, 0, 0);
+
+  int idx = 0;
+  while (w_input_len > 0) {
+    int rc = re_exec(cre, w_input, w_input_len, NULL, pmatch_len, pmatch, 0);
+    if (rc != 0) {
+      lua_pushlstring(L, input, input_len);
+      lua_rawseti(L, -2, idx);
+      idx++;
+      break;
+    }
+
+    lua_pushlstring(L, input, pmatch[0].rm_so);
+    lua_rawseti(L, -2, idx);
+
+    w_input = &w_input[pmatch[0].rm_eo];
+    input = &input[pmatch[0].rm_eo];
+    idx++;
+    w_input_len -= pmatch[0].rm_eo;
+    input_len -= pmatch[0].rm_eo;
+  }
+
+  free(orig_w_input);
+
+  return 1;
 }
 
 /**
@@ -173,6 +205,7 @@ LUALIB_API int luaopen_hsregex (lua_State *L)
     { "re_exec", l_re_exec },
     { "regerror", l_regerror },
     { "regfree", l_regfree },
+    { "regex_split", l_regex_split },
 
     { NULL, NULL }
   });

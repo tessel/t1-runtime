@@ -1214,6 +1214,8 @@ if type(hs) == 'table' then
   local hsmatchc = 100
   local hsmatch = hs.regmatch_create(hsmatchc)
 
+  _G._HSMATCH = hsmatch
+
   global.RegExp = function (this, patt, flags)
     -- hsrude requires special flags handling
     if flags and string.find(flags, "i") then
@@ -1244,34 +1246,8 @@ if type(hs) == 'table' then
     return js_new(global.RegExp, pat, flags)
   end
 
-  str_regex_split = function (this, regex)
-    -- verify regex
-    local cre = getmetatable(regex).cre
-    local crestr = getmetatable(regex).crestr
-    if type(cre) ~= 'userdata' then
-      error(js_new(global.Error, 'Cannot call String::split on non-regex'))
-    end
-
-    local data = tostring(this)
-    local ret = {}
-    local idx = 0
-    -- TODO: optimize, give string with offset in re_exec
-    while true do
-      local datastr, rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
-      if rc ~= 0 then
-        break
-      end
-
-      local so, eo = hs.regmatch_so(hsmatch, 0), hs.regmatch_eo(hsmatch, 0)
-      table.insert(ret, string.sub(data, 1, so))
-
-      data = string.sub(data, eo+1)
-      idx = eo
-    end
-    table.insert(ret, data)
-    ret[0] = ret[1]
-    table.remove(ret, 1)
-    return js_arr(ret)
+  str_regex_split = function (this, input)
+    return js_arr(hs.regex_split(this, input))
   end
 
   str_regex_replace = function (this, regex, out)
@@ -1291,7 +1267,7 @@ if type(hs) == 'table' then
     repeat
       -- returns whether we've found a match (rc == 0)
       -- TODO: encode REG_NOTBOL == 1 as a string
-      local datastr, rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, idx and 1 or 0)
+      local rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, idx and 1 or 0)
       if rc ~= 0 then
         break
       end
@@ -1355,7 +1331,7 @@ if type(hs) == 'table' then
     end
 
     local data = tostring(this)
-    local datastr, rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
+    local rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
     if rc ~= 0 then
       return nil
     end
@@ -1378,7 +1354,7 @@ if type(hs) == 'table' then
     end
 
     local data = tostring(subj)
-    local datastr, rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
+    local rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
     if rc ~= 0 then
       return nil
     end
@@ -1400,7 +1376,7 @@ if type(hs) == 'table' then
     end
 
     -- TODO optimize by capturing no subgroups?
-    local datastr, rc = hs.re_exec(cre, tostring(subj), nil, hsmatchc, hsmatch, 0)
+    local rc = hs.re_exec(cre, tostring(subj), nil, hsmatchc, hsmatch, 0)
     return rc == 0
   end
 end
