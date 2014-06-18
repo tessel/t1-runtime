@@ -11,6 +11,8 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include <ctype.h>
+
 #include "colony.h"
 #include "regalone.h"
 #include "regex.h"
@@ -144,16 +146,43 @@ static int l_regfree (lua_State* L)
   return 0;
 }
 
-static unsigned long upper_power_of_two(unsigned long v)
+typedef struct {
+  uint8_t* string;
+  size_t len;
+  size_t buffer_len;
+} stringbuilder_t;
+
+static stringbuilder_t stringbuilder_create ()
 {
-    v--;
-    v |= v >> 1;
-    v |= v >> 2;
-    v |= v >> 4;
-    v |= v >> 8;
-    v |= v >> 16;
-    v++;
-    return v;
+  stringbuilder_t b;
+  b.string = NULL;
+  b.len = 0;
+  b.buffer_len = 0;
+  return b;
+}
+
+unsigned long upper_power_of_two(unsigned long v)
+{
+  v--;
+  v |= v >> 1;
+  v |= v >> 2;
+  v |= v >> 4;
+  v |= v >> 8;
+  v |= v >> 16;
+  v++;
+  return v;
+}
+
+static void stringbuilder_append (stringbuilder_t* b, const char* input, size_t input_len)
+{
+  if (b->len + input_len + 1 >= b->buffer_len) {
+    size_t newlen = upper_power_of_two((b->buffer_len < 64 ? 64 : b->buffer_len) + input_len);
+    b->string = realloc(b->string, newlen);
+    b->buffer_len = newlen;
+  }
+  memcpy(&b->string[b->len], input, input_len);
+  b->len += input_len;
+  b->string[b->len] = 0;
 }
 
 static int l_regex_replace (lua_State *L)
@@ -166,8 +195,8 @@ static int l_regex_replace (lua_State *L)
   regex_t* cre = (regex_t*) lua_touserdata(L, -1);
 
   lua_getfield(L, 2, "flags");
-  const char* flags = lua_tostring(L, -1);
-  int repeat_flag = strstr(flags, "g") == NULL;
+  const char* regex_flags = lua_tostring(L, -1);
+  int repeat_flag = strstr(regex_flags, "g") == NULL;
 
   // matches
   int pmatch_len = 100;
@@ -178,19 +207,31 @@ static int l_regex_replace (lua_State *L)
   chr* orig_w_input = toregexstr(input, input_len, &w_input_len);
   chr* w_input = orig_w_input;
 
-  size_t count = 0;
   int nullmatch_flag = 0;
   int isfn_flag = lua_isfunction(L, 3);
 
-  // TODO: properly set upper stack.
-  lua_checkstack(L, 256);
+  // Replace with strings.
+  size_t out_len = 0, orig_out_len = 0;
+  const char* out = NULL;
+  const char* orig_out = NULL;
+  if (!isfn_flag) {
+    out = lua_tolstring(L, 3, &out_len);
+    orig_out_len = out_len;
+    orig_out = out;
+  }
 
+  stringbuilder_t b = stringbuilder_create();
+
+  int flags = 0;
   do {
     // Create match.
-    int rc = re_exec(cre, w_input, w_input_len, NULL, pmatch_len, pmatch, count > 0 ? REG_NOTBOL : 0);
+    int rc = re_exec(cre, w_input, w_input_len, NULL, pmatch_len, pmatch, flags);
     if (rc != 0) {
       break;
     }
+
+    // On next loop, we won't be first.
+    flags = REG_NOTBOL;
 
     // Don't make an empty match twice.
     if (nullmatch_flag) {
@@ -199,8 +240,7 @@ static int l_regex_replace (lua_State *L)
         break;
       }
 
-      lua_pushlstring(L, input, 1);
-      count += 1;
+      stringbuilder_append(&b, &input[0], 1);
 
       input_len -= 1;
       w_input_len -= 1;
@@ -211,8 +251,7 @@ static int l_regex_replace (lua_State *L)
 
     nullmatch_flag = pmatch[0].rm_so == pmatch[0].rm_eo;
     if (pmatch[0].rm_so > 0) {
-      lua_pushlstring(L, &input[0], pmatch[0].rm_so);
-      count += 1;
+      stringbuilder_append(&b, &input[0], pmatch[0].rm_so);
     }
 
     if (isfn_flag) {
@@ -220,7 +259,7 @@ static int l_regex_replace (lua_State *L)
 
       lua_pushvalue(L, 1); // this
       lua_pushlstring(L, &input[pmatch[0].rm_so], pmatch[0].rm_eo - pmatch[0].rm_so);
-      for (int i = 0; i < cre->re_nsub; i++) {
+      for (size_t i = 0; i < cre->re_nsub; i++) {
         if (pmatch[i+1].rm_so > -1 && pmatch[i+1].rm_eo > -1) {
           lua_pushlstring(L, &input[pmatch[i+1].rm_so], pmatch[i+1].rm_eo - pmatch[i+1].rm_so);
         } else {
@@ -240,43 +279,23 @@ static int l_regex_replace (lua_State *L)
         sect = lua_tolstring(L, -1, &sect_len);
       }
       lua_remove(L, -1);
-      lua_pushlstring(L, sect, sect_len); // enforce string cast
-
-      count += 1;
-
-      /*
-        local args, argn = {this, string.sub(data, so + 1, eo)}, 2
-        for i=1,hs.regex_nsub(cre) do
-          local subso, subeo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
-          if subso > -1 and subeo > -1 then
-            args[argn + 1] = string.sub(data, subso + 1, subeo)
-          else
-            args[argn + 1] = nil
-          end
-          argn = argn + 1
-        end
-        args[argn + 1] = idx + so
-        args[argn + 2] = this
-        table.insert(ret, tostring(out(unpack(args)) or 'undefined'))
-      */
-
+      stringbuilder_append(&b, sect, sect_len);
     } else {
-      // Replace with strings.
-      size_t out_len = 0;
-      const char* out = lua_tolstring(L, 3, &out_len);
-      for (int i = 0; out_len > 0 && i < out_len - 1; i++) {
-        if (out[i] == '$' && isdigit(out[i+1])) {
-          int subindex = 0, offset = 0;
+      out = orig_out;
+      out_len = orig_out_len;
+
+      for (size_t i = 0; out_len > 0 && i < out_len - 1; i++) {
+        if (out[i] == '$' && isdigit((unsigned char) out[i+1])) {
+          int subindex_i = 0, offset_i = 0;
           // safe since lua_tolstring returns null-terminated string
-          if (sscanf(&out[i], "$%d%n", &subindex, &offset)) {
+          if (sscanf(&out[i], "$%d%n", &subindex_i, &offset_i)) {
+            size_t offset = (size_t) offset_i, subindex = (size_t) subindex_i;
             // check subindex is valid
-            if (subindex > 0 && subindex <= cre->re_nsub) {
-              lua_pushlstring(L, out, i);
-              lua_pushlstring(L, &input[pmatch[subindex].rm_so], pmatch[subindex].rm_eo - pmatch[subindex].rm_so);
-              count += 2;
+            if (subindex_i > 0 && subindex <= cre->re_nsub) {
+              stringbuilder_append(&b, out, i);
+              stringbuilder_append(&b, &input[pmatch[subindex].rm_so], pmatch[subindex].rm_eo - pmatch[subindex].rm_so);
             } else {
-              lua_pushlstring(L, out, offset);
-              count += 1;
+              stringbuilder_append(&b, out, offset);
             }
             out = &out[i + offset];
             out_len -= i + offset;
@@ -285,95 +304,23 @@ static int l_regex_replace (lua_State *L)
         }
       }
       if (out_len > 0) {
-        lua_pushlstring(L, out, out_len);
-        count += 1;
+        stringbuilder_append(&b, out, out_len);
       }
-
-      /*
-
-        local ins = tostring(out)
-        local i, j = 0, 0
-        while true do
-          i, j = string.find(ins, "$%d+", i+1)    -- find 'next' newline
-          if i == nil then break end
-          local subindex = tonumber(string.sub(ins, i+1, j))
-          local subso, subeo = hs.regmatch_so(hsmatch, subindex), hs.regmatch_eo(hsmatch, subindex)
-          ins = string.sub(ins, 0, i-1) .. string.sub(data, subso + 1, subeo) .. string.sub(ins, j+1)
-          i = i + (subeo - subso)
-        end
-        table.insert(ret, ins)
-      end
-
-      */
     }
 
     input = &input[pmatch[0].rm_eo];
     input_len -= pmatch[0].rm_eo;
     w_input = &w_input[pmatch[0].rm_eo];
     w_input_len -= pmatch[0].rm_eo;
-
-
-    /*
-    data = string.sub(data, eo+1)
-    idx = eo+1
-    */
   } while (!repeat_flag);
 
-  lua_pushlstring(L, input, input_len);
-  lua_concat(L, count + 1);
+  stringbuilder_append(&b, input, input_len);
+  lua_pushlstring(L, (const char*) b.string, b.len);
+  free(b.string);
 
   free(orig_w_input);
 
   return 1;
-
-/*
-    local so, eo = hs.regmatch_so(hsmatch, 0), hs.regmatch_eo(hsmatch, 0)
-    if nullmatch then
-      nullmatch = false
-      table.insert(ret, string.sub(data, 1, 1))
-      if #data == 0 then
-        break
-      end
-      data = string.sub(data, 2)
-    else
-      nullmatch = so == eo
-      table.insert(ret, string.sub(data, 1, so))
-
-      if type(out) == 'function' then
-        local args, argn = {this, string.sub(data, so + 1, eo)}, 2
-        for i=1,hs.regex_nsub(cre) do
-          local subso, subeo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
-          if subso > -1 and subeo > -1 then
-            args[argn + 1] = string.sub(data, subso + 1, subeo)
-          else
-            args[argn + 1] = nil
-          end
-          argn = argn + 1
-        end
-        args[argn + 1] = idx + so
-        args[argn + 2] = this
-        table.insert(ret, tostring(out(unpack(args)) or 'undefined'))
-      else
-        local ins = tostring(out)
-        local i, j = 0, 0
-        while true do
-          i, j = string.find(ins, "$%d+", i+1)    -- find 'next' newline
-          if i == nil then break end
-          local subindex = tonumber(string.sub(ins, i+1, j))
-          local subso, subeo = hs.regmatch_so(hsmatch, subindex), hs.regmatch_eo(hsmatch, subindex)
-          ins = string.sub(ins, 0, i-1) .. string.sub(data, subso + 1, subeo) .. string.sub(ins, j+1)
-          i = i + (subeo - subso)
-        end
-        table.insert(ret, ins)
-      end
-
-      data = string.sub(data, eo+1)
-      idx = eo+1
-    end
-  until not dorepeat
-  table.insert(ret, data)
-  return table.concat(ret, '')
-  */
 }
 
 static int l_regex_split (lua_State *L)
