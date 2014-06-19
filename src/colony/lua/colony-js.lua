@@ -245,6 +245,10 @@ obj_proto.hasInstance = function (ths, p)
 end
 
 obj_proto.hasOwnProperty = function (ths, p)
+  if type(ths) == 'function' then
+    ths = js_func_proxy(ths)
+  end
+
   if getmetatable(ths) and getmetatable(ths).buffer then
     -- TODO remove this buffer exception
     return ths[p] ~= nil
