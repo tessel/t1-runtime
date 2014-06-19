@@ -138,7 +138,14 @@ str_proto.substring = function (str, i, j)
 end
 
 str_proto.slice = function (str, i, len)
-  return string.sub(str, i+1, len or -1)
+  len = tonumber(len)
+  if len < 0 then
+    len = str.length + len
+  end
+  if len < 0 then
+    len = 0
+  end
+  return string.sub(str, i+1, len)
 end
 
 str_proto.toLowerCase = function (str)
