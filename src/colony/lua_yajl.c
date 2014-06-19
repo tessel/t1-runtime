@@ -172,6 +172,20 @@ static int got_map_key(lua_State* L) {
 /* See STRATEGY section below */
 static int got_array_value(lua_State* L) {
     /* ..., Table, Integer, Func, Value */
+    lua_pushliteral(L, "length");
+    /* ..., Table, Integer, Func, Value, "length" */
+    lua_pushvalue(L, -1);
+    /* ..., Table, Integer, Func, Value, "length", "length" */
+    lua_rawget(L, -6);
+    /* ..., Table, Integer, Func, Value, "length", len */
+    long len = lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    /* ..., Table, Integer, Func, Value, "length" */
+    lua_pushnumber(L, len + 1);
+    /* ..., Table, Integer, Func, Value, "length", len */
+    lua_rawset(L, -6);
+
+    /* ..., Table, Integer, Func, Value */
     lua_rawseti(L, -4, lua_tointeger(L, -3));
     lua_pushinteger(L, lua_tointeger(L, -2)+1);
     lua_replace(L, -3);
@@ -228,6 +242,17 @@ static int to_value_start_array(void* ctx) {
 }
 
 /* See STRATEGY section below */
+static int to_value_end_array(void* ctx) {
+    lua_State* L = (lua_State*)ctx;
+
+    /* Simply pop the stack and call the cfunction: */
+    lua_pop(L, 2);
+    (lua_tocfunction(L, -2))(L);
+
+    return 1;
+}
+
+/* See STRATEGY section below */
 static int to_value_end(void* ctx) {
     lua_State* L = (lua_State*)ctx;
 
@@ -256,7 +281,7 @@ static yajl_callbacks js_to_value_callbacks = {
     to_value_string,
     to_value_end,
     to_value_start_array,
-    to_value_end,
+    to_value_end_array,
 };
 
 
@@ -587,7 +612,7 @@ static int js_parser(lua_State *L) {
     lua_getfield(L, 1, "events");
 
     /* Create callback function that calls yajl_parse[_complete]()
-     
+
       upvalue(1) = yajl_handle*
       upvalue(2) = events table */
     lua_pushcclosure(L, &js_parser_parse, 2);
@@ -664,7 +689,7 @@ static int js_generator_number(lua_State *L) {
         str = "-1e+666";
         len = 7;
     } else if ( isnan(num) ) {
-        str = "-0"; 
+        str = "-0";
         len = 2;
    } else {
         str = luaL_checklstring(L, 2, &len);
@@ -780,7 +805,7 @@ static int js_generator_value(lua_State *L) {
     case LUA_TSTRING:
         return js_generator_string(L);
     case LUA_TUSERDATA:
-        if ( lua_topointer(L, 2) == js_null ) { 
+        if ( lua_topointer(L, 2) == js_null ) {
             return js_generator_null(L);
         }
     case LUA_TLIGHTUSERDATA:
@@ -822,6 +847,8 @@ static int js_generator_value(lua_State *L) {
                     is_array = 0;
                     break;
                 }
+            } else if (lua_type(L, -2) == LUA_TSTRING && strncmp(lua_tostring(L, -2), "length", 6) == 0) {
+                // ignore "length"
             } else {
                 lua_pop(L, 2);
                 is_array = 0;

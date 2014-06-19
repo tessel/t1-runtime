@@ -3,7 +3,8 @@
   "version": "0.2.0",
   "private": true,
   "bin": {
-    "colony": "./out/Release/colony"
+    "colony": "./out/Release/colony",
+    "colony-profile": "./bin/colony-profile.js"
   },
   "directories": {
     "example": "examples",
@@ -20,7 +21,7 @@
   },
   "dependencies": {
     "async": "~0.2.9",
-    "colony-compiler": "~0.6.8",
+    "colony-compiler": "~0.6.12",
     "mkdirp": "~0.3.5",
     "bindings": "~1.2.0"
   },

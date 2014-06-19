@@ -31,7 +31,7 @@ end
 
 static int js_proto_get (lua_State* L)
 {
-	// self, proto, key
+	// stack: self, proto, key
 
 	// if key == '__proto__' then return proto; end
 	size_t len = 0;
@@ -87,42 +87,126 @@ static int js_proto_get (lua_State* L)
 }
 
 /*
-function array_getter_length (this)
-  return math.max((this[0] ~= nil and {#this + 1} or {#this})[1], getmetatable(this).length)
+local function js_getter_index (self, key, _self)
+	local mt = getmetatable(_self or self)
+	local getter = mt.getters[key]
+	if getter then
+		return getter(self)
+	end
+	return rawget(_self or self, key) or js_proto_get(self, mt.proto, key)
 end
 */
 
-// This function is a getter for the array length property.
-
-static int array_getter_length (lua_State* L)
+static int js_getter_index (lua_State* L)
 {
-	// -- this
+	// stack: self, key, _self
 
-	size_t len = lua_objlen(L, 1);
+	while (lua_gettop(L) < 3) {
+		lua_pushnil(L);
+	}
 
-	lua_pushnumber(L, 0);
-	lua_rawget(L, 1);
+	// _self or self
+	if (lua_isnil(L, 3)) {
+		lua_pushvalue(L, 1);
+	} else {
+		lua_pushvalue(L, 3);
+	}
+
+	if (lua_getmetatable(L, -1) == 0) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	// stack: self, key, _self, (_self or self), mt
+	// Check getters
+	lua_getfield(L, -1, "getters");
 	if (!lua_isnil(L, -1)) {
-		len = len + 1;
+		lua_pushvalue(L, 2);
+		lua_rawget(L, -2);
+		if (!lua_isnil(L, -1)) {
+			lua_pushvalue(L, 1);
+			lua_call(L, 1, 1);
+			return 1;
+		}
+		lua_remove(L, -1);
+	}
+	lua_remove(L, -1);
+
+	// stack: self, key, _self, (_self or self), mt
+	// Get raw key or defer to proto getter
+	lua_pushvalue(L, 2);
+	// stack: self, key, _self, (_self or self), mt, key
+	lua_rawget(L, -3);
+
+	// stack: self, key, _self, (_self or self), mt, (_self or self)[key]
+	if (lua_isnil(L, -1)) {
+		// stack: self, key, _self, (_self or self), mt, nil
+		lua_getfield(L, -2, "proto");
+		// stack: self, key, _self, (_self or self), mt, nil, mt.proto
+		lua_insert(L, 2);
+		// stack: self, mt.proto, key, _self, (_self or self), mt, nil
+		lua_remove(L, -1);
+		// stack: self, mt.proto, key, _self, (_self or self), mt
+		lua_remove(L, -1);
+		// stack: self, mt.proto, key, _self, (_self or self)
+		lua_remove(L, -1);
+		// stack: self, mt.proto, key, _self
+		lua_remove(L, -1);
+		// stack: self, mt.proto, key
+		return js_proto_get(L);
 	}
 
-	// -- self, proto, key ... proto
-	size_t mt_len = 0;
-	if (lua_getmetatable(L, 1) != 0) {
-		// -- self, proto, key ... proto, mt(proto)
-		lua_getfield(L, -1, "length");
-		mt_len = lua_tonumber(L, -1);
-	}
-
-	lua_pushnumber(L, len > mt_len ? len : mt_len);
 	return 1;
 }
+
+
+/*
+function (this, fn)
+	local len = this.length-1
+	for i=0, len do
+		fn(this, rawget(this, i) or this[i], i)
+	end
+	return this
+end
+*/
+
+static int arr_proto_forEach (lua_State* L)
+{
+	// stack: this fn
+	lua_getfield(L, 1, "length");
+	long length_value = lua_tonumber(L, -1);
+	size_t len = length_value < 0 ? 0 : (size_t) length_value;
+
+	for (size_t i = 0; i < len; i++) {
+		lua_pushvalue(L, 2);
+		lua_pushvalue(L, 1);
+
+		// rawget(this, i) ...
+		lua_rawgeti(L, 1, i);
+		if (lua_isnil(L, -1)) {
+			lua_remove(L, -1);
+			lua_pushnumber(L, i);
+			lua_gettable(L, 1);
+		}
+
+		// i
+		lua_pushnumber(L, i);
+		lua_call(L, 3, 0);
+	}
+
+	lua_settop(L, 1);
+	return 1;
+}
+
 
 void colony_init (lua_State* L)
 {
 	lua_pushcfunction(L, js_proto_get);
 	lua_setglobal(L, "js_proto_get");
 
-	lua_pushcfunction(L, array_getter_length);
-	lua_setglobal(L, "array_getter_length");
+	lua_pushcfunction(L, js_getter_index);
+	lua_setglobal(L, "js_getter_index");
+
+	lua_pushcfunction(L, arr_proto_forEach);
+	lua_setglobal(L, "arr_proto_forEach");
 }

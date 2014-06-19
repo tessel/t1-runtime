@@ -30,15 +30,15 @@ ok(arr.length == 0, 'array::pop - length unmodified when 0');
 
 var a = [1];
 a.splice(0, 1);
-ok(arreq(a, []));
+ok(arreq(a, []), 'splice(0, 1)');
 
 var a = [1, 2, 3];
 a.splice(1, 1);
-ok(arreq(a, [1, 3]));
+ok(arreq(a, [1, 3]), 'splice(1, 1)');
 
 var a = [2, 3];
 a.unshift(1);
-ok(arreq(a, [1, 2, 3]))
+ok(arreq(a, [1, 2, 3]), 'unshift(1)')
 
 var arr = [2];
 ok(arr.length == 1, 'array::unshift - length')
@@ -124,3 +124,7 @@ var test = Buffer([5,4,3]);
 ok(Array.prototype.slice.call(test).join('') == '543', 'Array::join called on buffer works')
 sum = Array.prototype.reduce.call(test, function (sum, n) { return sum+n; }, 0);
 ok(sum == 12, 'Array::reduce called on non-array object succeeds');
+
+// Array creation
+var a = Array(1,2,3)
+ok(arreq(a, [1,2,3]), 'Array(1,2,3) == [1,2,3]')

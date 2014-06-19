@@ -138,7 +138,14 @@ str_proto.substring = function (str, i, j)
 end
 
 str_proto.slice = function (str, i, len)
-  return string.sub(str, i+1, len or -1)
+  len = tonumber(len)
+  if len < 0 then
+    len = str.length + len
+  end
+  if len < 0 then
+    len = 0
+  end
+  return string.sub(str, i+1, len)
 end
 
 str_proto.toLowerCase = function (str)
@@ -176,31 +183,33 @@ local str_regex_replace, str_regex_split = nil, nil
 
 str_proto.split = function (str, sep, max)
   if sep == '' then
-    local ret = js_arr({})
-    for i=0,str.length-1 do
-      ret:push(str:charAt(i));
+    local ret, len = {}, str.length-1
+    for i = 0, len do
+      ret[i] = str:charAt(i)
     end
-    return ret
+    return js_arr(ret, len + 1)
   end
 
   local ret = {}
 
+  local i = 0
   if str_regex_split and js_instanceof(sep, global.RegExp) then
     return str_regex_split(str, sep, max)
   elseif type(sep) == 'string' and string.len(str) > 0 then
     max = max or -1
 
-    local i, start=1, 1
+    local start=1
     local first, last = string.find(str, sep, start, true)
     while first and max ~= 0 do
-      ret[i-1] = string.sub(str, start, first-1)
+      ret[i] = string.sub(str, start, first-1)
       i, start = i+1, last+1
       first, last = string.find(str, sep, start, true)
       max = max-1
     end
-    ret[i-1] = string.sub(str, start)
+    ret[i] = string.sub(str, start)
+    i = i + 1
   end
-  return js_arr(ret)
+  return js_arr(ret, i)
 end
 
 str_proto.replace = function (this, match, out)
@@ -310,73 +319,63 @@ arr_proto.toString = function (ths)
   return str
 end
 
-arr_proto.push = function (ths, ...)
+arr_proto.push = function (this, ...)
   local args = table.pack(...)
-  local mt = getmetatable(ths)
+  local len = tonumber(rawget(this, 'length'))
   for i=1,args.length do
-    local len = ths.length
-    if len == 0 then
-      ths[0] = args[i]
-    else
-      table.insert(ths, len, args[i])
-    end
-    if mt and mt.length ~= nil then
-      mt.length = len + 1
-    end
+    rawset(this, len, args[i])
+    len = len + 1
   end
-  return ths.length
+  rawset(this, 'length', len)
+  return len
 end
 
 arr_proto.pop = function (this)
-  local _val = nil
-  if this.length == 1 then
-    _val = this[0]
-    this[0] = nil
-  else
-    _val = table.remove(this, this.length-1)
+  local length = tonumber(rawget(this, 'length'))
+  if length == 0 then
+    return nil
   end
-  local mt = getmetatable(this)
-  if mt and type(mt.length) == 'number' and mt.length > 0 then
-    mt.length = mt.length - 1
-  end
+  local _val = rawget(this, length - 1)
+  rawset(this, 'length', length - 1)
   return _val
 end
 
 arr_proto.shift = function (this)
-  local ret = this[0]
-  this[0] = table.remove(this, 1)
-  local mt = getmetatable(this)
-  if mt and type(mt.length) == 'number' and mt.length > 0 then
-    mt.length = mt.length - 1
+  local len = tonumber(rawget(this, 'length'))
+  local ret = rawget(this, 0)
+  if len > 0 then
+    rawset(this, 0, table.remove(this, 1) or nil)
+    rawset(this, 'length', len - 1)
   end
   return ret
 end
 
-arr_proto.unshift = function (ths, elem)
-  local _val = nil
-  if ths.length > 0 then
-    _val = table.insert(ths, 0, elem[0])
-  end
-  ths[0] = elem
-  return ths.length
+arr_proto.unshift = function (this, elem)
+  local len = rawget(this, 'length')
+  table.insert(this, 1, rawget(this, 0))
+  rawset(this, 0, elem)
+  rawset(this, 'length', len + 1)
+  return len + 1
 end
 
-arr_proto.splice = function (ths, i, del, ...)
-  local ret = js_arr({})
-  for j=1,(tonumber(del) or 0) do
-    ret:push(ths[i])
-    table.remove(ths, i)
+arr_proto.splice = function (this, i, del, ...)
+  local del_len = (tonumber(del) or 0)
+  local ret = {}
+  for j=1,del_len do
+    ret[j-1] = rawget(this, i)
     if i == 0 then
-      ths[0] = table.remove(ths, 1)
+      rawset(this, 0, rawget(this, i))
     end
+    table.remove(this, i)
   end
+
   local args = table.pack(...)
   for j=1,args.length do
-    table.insert(ths, i, args[j])
+    rawset(this, i, args[j])
     i = i + 1
   end
-  getmetatable(ths).length = getmetatable(ths).length - (tonumber(del) or 0)
-  return ret
+  rawset(this, 'length', tonumber(rawget(this, 'length')) - del_len + args.length)
+  return js_arr(ret, del_len)
 end
 
 arr_proto.reverse = function (this)
@@ -392,7 +391,7 @@ end
 arr_proto.slice = function (this, start, len)
   local a = {}
   if not this then
-    return js_arr({})
+    return js_arr(a, 0)
   end
   if len == nil then
     len = this.length or 0
@@ -406,7 +405,7 @@ arr_proto.slice = function (this, start, len)
 end
 
 arr_proto.concat = function (this, ...)
-  local arr = js_arr({})
+  local arr = js_arr({}, 0)
   for i=0,(this.length or 0)-1 do
     arr:push(this[i])
   end
@@ -463,9 +462,10 @@ arr_proto.join = function (ths, ...)
   return string.sub(_r, 1, string.len(_r) - string.len(str))
 end
 
-arr_proto.indexOf = function (ths, val)
-  for i=0,ths.length-1 do
-    if ths[i] == val then
+arr_proto.indexOf = function (this, val)
+  local len = this.length - 1
+  for i=0, len do
+    if this[i] == val then
       return i
     end
   end
@@ -473,7 +473,7 @@ arr_proto.indexOf = function (ths, val)
 end
 
 arr_proto.map = function (ths, fn)
-  local a = js_arr({})
+  local a = js_arr({}, 0)
   for i=0,ths.length-1 do
     a:push(fn(ths, ths[i], i))
   end
@@ -481,7 +481,7 @@ arr_proto.map = function (ths, fn)
 end
 
 arr_proto.filter = function (this, fn)
-  local a = js_arr({})
+  local a = js_arr({}, 0)
   for i=0,this.length-1 do
     if fn(this, this[i], i) then
       a:push(this[i])
@@ -525,12 +525,7 @@ arr_proto.reduce = function (this, callback, ...)
   return value
 end
 
-arr_proto.forEach = function (ths, fn)
-  for i=0,ths.length-1 do
-    fn(ths, ths[i], i)
-  end
-  return ths
-end
+arr_proto.forEach = arr_proto_forEach
 
 arr_proto.some = function (ths, fn)
   for i=0,ths.length-1 do
@@ -542,7 +537,7 @@ arr_proto.some = function (ths, fn)
 end
 
 arr_proto.filter = function (ths, fn)
-  local a = js_arr({})
+  local a = js_arr({}, 0)
   for i=0,ths.length-1 do
     if global._truthy(fn(ths, ths[i], i)) then
       a:push(ths[i])
@@ -631,15 +626,17 @@ global.Object.freeze = function (this, obj)
 end
 
 global.Object.keys = function (this, obj)
-  local a = js_arr({})
+  local a = {}
   -- TODO debug this one:
   if type(obj) == 'function' then
     obj = js_func_proxy(obj)
   end
+  local i = 0
   for k,v in js_pairs(obj) do
-    a:push(k)
+    a[i] = k
+    i = i + 1
   end
-  return a
+  return js_arr(a, i)
 end
 
 global.Object.getPrototypeOf = function (this, obj)
@@ -651,7 +648,7 @@ global.Object.getPrototypeOf = function (this, obj)
 end
 
 global.Object.getOwnPropertyNames = function (this, obj)
-  local a = js_arr({})
+  local a = js_arr({}, 0)
   -- TODO debug this one:
   if type(obj) == 'function' then
     obj = js_func_proxy(obj)
@@ -699,19 +696,19 @@ func_proto.constructor = global.Function
 
 -- Array
 
-global.Array = function (ths, one, ...)
+global.Array = function (ths, ...)
   local a = table.pack(...)
   local len = a.length
   a.length = nil
-  if a.length > 0 or type(one) ~= 'number' then
-    a[0] = one
-    return js_arr(a)
-  elseif one ~= nil then
-    local arr = js_arr({})
-    arr[tonumber(one)-1] = nil
-    return arr
+  if len == 1 and type(a[1]) == 'number' then
+    local len = tonumber(a[1])
+    return js_arr({}, len)
+  elseif len > 0 then
+    a[0] = a[1]
+    table.remove(a, 1)
+    return js_arr(a, len)
   end
-  return js_arr({})
+  return js_arr({}, 0)
 end
 
 global.Array.prototype = arr_proto
@@ -1254,7 +1251,8 @@ if type(hs) == 'table' then
     if not js_instanceof(input, global.RegExp) then
       error(js_new(global.Error, 'Cannot call String::split on non-regex'))
     end
-    return js_arr(hs.regex_split(this, input))
+    local arr, len = hs.regex_split(this, input)
+    return js_arr(arr, len)
   end
 
   str_regex_replace = function (this, regex, out)
@@ -1265,9 +1263,7 @@ if type(hs) == 'table' then
   end
 
   global.String.prototype.match = function (this, regex)
-    -- return rex.match(this, regex.pattern)
-
-    -- Match using hsrude
+    -- Match using hsregex
     local cre = getmetatable(regex).cre
     local crestr = getmetatable(regex).crestr
     if type(cre) ~= 'userdata' then
@@ -1286,7 +1282,7 @@ if type(hs) == 'table' then
       table.insert(ret, pos, string.sub(data, so + 1, eo))
       pos = pos + 1
     end
-    return js_arr(ret)
+    return js_arr(ret, pos)
   end
 
   global.RegExp.prototype.exec = function (regex, subj)
@@ -1302,15 +1298,13 @@ if type(hs) == 'table' then
     if rc ~= 0 then
       return nil
     end
-    local ret = {}
+    local ret, len = {}, 0
     for i=0,hs.regex_nsub(cre) do
       local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
-      -- print('match', i, '=> start:', so, ', end:', eo)
-      table.insert(ret, string.sub(data, so + 1, eo))
+      ret[len] = string.sub(data, so + 1, eo)
+      len = len + 1
     end
-    local arrret = js_arr(ret)
-    arrret:shift()
-    return arrret
+    return js_arr(ret, len)
   end
 
   global.RegExp.prototype.test = function (this, subj)

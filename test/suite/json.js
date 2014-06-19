@@ -19,11 +19,13 @@ var obj = JSON.parse("{\"hi\": 5}");
 ok(obj.hi == 5, 'json parse object')
 
 var obj = JSON.parse("[0, 1, 2]");
+console.log('#', JSON.parse("[0, 1, 2]"), JSON.parse("[0, 1, 2]").length)
 ok(arreq(obj, [0,1,2]), 'json parse array');
 
 ok(JSON.parse("{\"hi\": 5}").hasOwnProperty, 'json object is real object');
 ok(JSON.parse("[0, 1, 2]").slice, 'json array is real array');
 
+console.log('#', JSON.stringify([0, 1, 2]))
 ok(JSON.stringify([0, 1, 2]) == '[0,1,2]', 'stringify array');
 ok(JSON.stringify({a: function () {}, b: 5}) == '{"b":5}', 'stringify fn #TODO functions should not be output');
 ok(JSON.stringify({"hi": 5}) == "{\"hi\":5}", 'stringify obj');

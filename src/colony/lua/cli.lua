@@ -30,4 +30,6 @@ if string.sub(p, 1, 1) ~= '.' then
   p = './' .. p
 end
 
-colony.run(p)
+colony.global:setImmediate(function ()
+	colony.run(p)
+end)

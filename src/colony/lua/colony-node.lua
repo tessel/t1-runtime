@@ -294,22 +294,24 @@ local buffer_proto = js_obj({
         return string.format('%02x', string.byte(c))
       end)
     end
-    
+
     return str
   end,
   toJSON = function (this)
     local arr = {}
-    for i=0,this.length-1 do
+    local len = this.length
+    local lenmax = len - 1
+    for i=0,lenmax do
       arr[i] = this[i]
     end
-    return js_arr(arr)
+    return js_arr(arr, len)
   end,
 
   -- Internal use only
   _random = function (this)
     local sourceBuffer = getmetatable(this).buffer
     local sourceBufferLength = getmetatable(this).bufferlen
-    
+
     return tm.random_bytes(sourceBuffer, 0, tonumber(sourceBufferLength));
   end
 })
@@ -553,7 +555,7 @@ EventEmitter.prototype.listeners = function (this, type)
     this._events = js_obj({})
   end
   if not this.hasOwnProperty:call(this._events, type) then
-    this._events[type] = js_arr({})
+    this._events[type] = js_arr({}, 0)
   end
   return this._events[type]
 end
@@ -582,25 +584,25 @@ end
 
 EventEmitter.prototype.removeListener = function (this, type, f)
 
-  local i = this:listeners(type):indexOf(f); 
+  local i = this:listeners(type):indexOf(f);
   local callback = f;
 
   if (f.listener) then
     callback = f.listener;
   end
 
-  -- If the listener wasn't found 
-  if i ~= -1 then 
+  -- If the listener wasn't found
+  if i ~= -1 then
     -- the index is the index of the callback listener
     this:listeners(type):splice(i, 1);
     this:emit("removeListener", type, callback);
   end
-  
+
   return this
 end
 
 EventEmitter.prototype.removeAllListeners = function (this, type)
-  
+
   -- If no events, just return
   if (not this._events) then
     return;
@@ -632,7 +634,7 @@ EventEmitter.prototype.emit = function (this, type, ...)
   local count = 0
   if this._events and this._events[type] then
     local fns, listeners = {}, this._events[type]
-    for i=0,listeners.length do
+    for i=0,listeners.length-1 do
       table.insert(fns, listeners[i])
     end
     count = #fns
@@ -657,16 +659,16 @@ EventEmitter.prototype.setMaxListeners = function (this, maxListeners)
 end
 
 
-EventEmitter.listenerCount = function(this, emitter, event) 
+EventEmitter.listenerCount = function(this, emitter, event)
   local ret;
-  
-  if not emitter._events or not emitter._events[event] then 
+
+  if not emitter._events or not emitter._events[event] then
     ret = 0;
 
   elseif (type(emitter._events[event]) == "function") then
     ret = 1;
 
-  else 
+  else
     return emitter._events[event].length;
   end
 
@@ -690,7 +692,7 @@ global.process.versions = js_obj({
   colony = "0.10.0"
 })
 global.process.EventEmitter = EventEmitter
-global.process.argv = js_arr({})
+global.process.argv = js_arr({}, 0)
 global.process.env = js_obj({})
 global.process.exit = function (this, code)
   tm.exit(code)
@@ -730,11 +732,19 @@ end
 --]]
 
 global:__defineGetter__('____dirname', function (this)
-  return string.gsub(string.sub(debug.getinfo(3).source, 2), "/?[^/]+$", "")
+  local ret = string.gsub(string.sub(debug.getinfo(3).source, 2), "/?[^/]+$", "")
+  if string.sub(ret, 1, 2) == './' then
+    ret = os.getenv('PWD') + string.sub(ret, 2)
+  end
+  return ret
 end)
 
 global:__defineGetter__('____filename', function (this)
-  return string.sub(debug.getinfo(3).source, 2)
+  local ret = string.sub(debug.getinfo(3).source, 2)
+  if string.sub(ret, 1, 2) == './' then
+    ret = os.getenv('PWD') + string.sub(ret, 2)
+  end
+  return ret
 end)
 
 
@@ -820,7 +830,7 @@ local function fs_exists (path)
   --   return file:close() and true
   -- end
 end
- 
+
 
 local LUA_DIRSEP = '/'
 
@@ -833,7 +843,7 @@ local function path_normalize (path)
   return path
 end
 
--- Returns string with any leading directory components removed. If specified, also remove a trailing suffix. 
+-- Returns string with any leading directory components removed. If specified, also remove a trailing suffix.
 -- Copied and adapted from http://dev.alpinelinux.org/alpine/acf/core/acf-core-0.4.20.tar.bz2/acf-core-0.4.20/lib/fs.lua
 local function path_basename (string_, suffix)
   string_ = string_ or ''
@@ -850,7 +860,7 @@ local function path_dirname (string_)
   string_ = string.gsub (string_, LUA_DIRSEP ..'$', '')
   local basename = path_basename(string_)
   string_ = string.sub(string_, 1, #string_ - #basename - 1)
-  return(string_)  
+  return(string_)
 end
 
 -- lookup and execution
@@ -912,7 +922,7 @@ local function require_resolve (origname, root)
     local p = path_normalize(root .. name)
     if string.sub(origname, -5) == '.json' or fs_exists(p .. '.json') then
       name = name .. '.json'
-    else 
+    else
       name = name .. '.js'
     end
   end
@@ -934,7 +944,7 @@ local function require_load (p)
         res = function (global, module)
           module.exports = parsed
         end
-      else 
+      else
         res = assert(loadstring(colony._load(p), "@"..p))()
       end
     end
@@ -985,7 +995,8 @@ colony.run = function (name, root, parent)
     -- Return the new script.
     return colony.run(value, path_dirname(scriptpath) .. '/', colony.cache[scriptpath])
   end
-  
+  colony.global.require.cache = colony.cache
+
   colony.cache[p] = js_obj({exports=js_obj({}),parent=parent}) --dummy
   res(colony.global, colony.cache[p])
   return colony.cache[p].exports

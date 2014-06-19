@@ -108,7 +108,7 @@
         'conditions': [
           [ 'OS=="arm"', {
             'cflags': [
-              '-Ofast',
+              '-O3',
             ],
           }],
           [ 'OS!="arm"', {
@@ -117,7 +117,7 @@
             ],
             'xcode_settings': {
               'OTHER_CFLAGS': [
-                '-O3',
+                '-O3'
               ]
             },
             'msvs_settings': {
