@@ -17,11 +17,11 @@
 
 local bit = require('bit32')
 
--- local logger = assert(io.open('colony.log', 'w+'))
--- debug.sethook(function ()
---   logger:write(debug.traceback())
---   logger:write('\n\n')
--- end, 'c', 1000)
+local logger = assert(io.open('colony.log', 'w+'))
+debug.sethook(function ()
+  logger:write(debug.traceback())
+  logger:write('\n\n')
+end, 'c', 1000)
 
 -- lua methods
 
@@ -63,16 +63,8 @@ funcproxies = {}
 
 _G.funcproxies = funcproxies
 
--- NOTE: js_getter_proto defined in colony_init.c
-
-local function js_getter_index (self, key, _self)
-  local mt = getmetatable(_self or self)
-  local getter = mt.getters[key]
-  if getter then
-    return getter(self)
-  end
-  return rawget(_self or self, key) or js_proto_get(self, mt.proto, key)
-end
+-- NOTE: js_proto_get defined in colony_init.c
+-- NOTE: js_getter_index defined in colony_init.c
 
 local function js_setter_index (proto)
   return function (self, key, value)

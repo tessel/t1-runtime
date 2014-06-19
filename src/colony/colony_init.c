@@ -31,7 +31,7 @@ end
 
 static int js_proto_get (lua_State* L)
 {
-	// self, proto, key
+	// stack: self, proto, key
 
 	// if key == '__proto__' then return proto; end
 	size_t len = 0;
@@ -87,6 +87,76 @@ static int js_proto_get (lua_State* L)
 }
 
 /*
+local function js_getter_index (self, key, _self)
+	local mt = getmetatable(_self or self)
+	local getter = mt.getters[key]
+	if getter then
+		return getter(self)
+	end
+	return rawget(_self or self, key) or js_proto_get(self, mt.proto, key)
+end
+*/
+
+static int js_getter_index (lua_State* L)
+{
+	// stack: self, key, _self
+
+	while (lua_gettop(L) < 3) {
+		lua_pushnil(L);
+	}
+
+	// _self or self
+	if (lua_isnil(L, 3)) {
+		lua_pushvalue(L, 1);
+	} else {
+		lua_pushvalue(L, 3);
+	}
+
+	if (lua_getmetatable(L, -1) == 0) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	// stack: self, key, _self, (_self or self), mt
+	// Check getters
+	lua_getfield(L, -1, "getters");
+	if (!lua_isnil(L, -1)) {
+		lua_pushvalue(L, 2);
+		lua_rawget(L, -2);
+		if (!lua_isnil(L, -1)) {
+			lua_pushvalue(L, 1);
+			lua_call(L, 1, 1);
+			return 1;
+		}
+		lua_remove(L, -1);
+	}
+	lua_remove(L, -1);
+
+	// stack: self, key, _self, (_self or self), mt
+	// Get raw key or defer to proto getter
+	lua_pushvalue(L, 2);
+	// stack: self, key, _self, (_self or self), mt, key
+	lua_rawget(L, -3);
+
+	// stack: self, key, _self, (_self or self), mt, (_self or self)[key]
+	if (lua_isnil(L, -1)) {
+		// stack: self, key, _self, (_self or self), mt, nil
+		lua_pushcfunction(L, js_proto_get);
+		// stack: self, key, _self, (_self or self), mt, nil, fn
+		lua_pushvalue(L, 1);
+		// stack: self, key, _self, (_self or self), mt, nil, fn, self
+		lua_getfield(L, -4, "proto");
+		// stack: self, key, _self, (_self or self), mt, nil, fn, self, mt.proto
+		lua_pushvalue(L, 2);
+		// stack: self, key, _self, (_self or self), mt, nil, fn, self, mt.proto, key
+		lua_call(L, 3, 1);
+		return 1;
+	}
+
+	return 1;
+}
+
+/*
 function array_getter_length (this)
   return math.max((this[0] ~= nil and {#this + 1} or {#this})[1], getmetatable(this).length)
 end
@@ -122,6 +192,9 @@ void colony_init (lua_State* L)
 {
 	lua_pushcfunction(L, js_proto_get);
 	lua_setglobal(L, "js_proto_get");
+
+	lua_pushcfunction(L, js_getter_index);
+	lua_setglobal(L, "js_getter_index");
 
 	lua_pushcfunction(L, array_getter_length);
 	lua_setglobal(L, "array_getter_length");
