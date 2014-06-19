@@ -156,37 +156,6 @@ static int js_getter_index (lua_State* L)
 	return 1;
 }
 
-/*
-function array_getter_length (this)
-  return math.max((this[0] ~= nil and {#this + 1} or {#this})[1], getmetatable(this).length)
-end
-*/
-
-// This function is a getter for the array length property.
-
-static int array_getter_length (lua_State* L)
-{
-	// -- this
-
-	size_t len = lua_objlen(L, 1);
-
-	lua_pushnumber(L, 0);
-	lua_rawget(L, 1);
-	if (!lua_isnil(L, -1)) {
-		len = len + 1;
-	}
-
-	// -- self, proto, key ... proto
-	size_t mt_len = 0;
-	if (lua_getmetatable(L, 1) != 0) {
-		// -- self, proto, key ... proto, mt(proto)
-		lua_getfield(L, -1, "length");
-		mt_len = lua_tonumber(L, -1);
-	}
-
-	lua_pushnumber(L, len > mt_len ? len : mt_len);
-	return 1;
-}
 
 void colony_init (lua_State* L)
 {
@@ -195,7 +164,4 @@ void colony_init (lua_State* L)
 
 	lua_pushcfunction(L, js_getter_index);
 	lua_setglobal(L, "js_getter_index");
-
-	lua_pushcfunction(L, array_getter_length);
-	lua_setglobal(L, "array_getter_length");
 }

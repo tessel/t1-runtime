@@ -17,11 +17,11 @@
 
 local bit = require('bit32')
 
-local logger = assert(io.open('colony.log', 'w+'))
-debug.sethook(function ()
-  logger:write(debug.traceback())
-  logger:write('\n\n')
-end, 'c', 1000)
+-- local logger = assert(io.open('colony.log', 'w+'))
+-- debug.sethook(function ()
+--   logger:write(debug.traceback())
+--   logger:write('\n\n')
+-- end, 'c', 1000)
 
 -- lua methods
 
@@ -348,32 +348,35 @@ str_mt.proto = str_proto
 --  Array
 --]]
 
--- NOTE: array_getter_length defined in colony_init.c
-
 function array_setter (this, key, val)
   if type(key) == 'number' then
-    local mt = getmetatable(this)
-    mt.length = math.max(mt.length, (tonumber(key) or 0) + 1)
+    rawset(this, 'length', math.max(rawget(this, 'length', (tonumber(key) or 0) + 1)))
   end
-  rawset(this, key, val)
+  if key ~= 'length' then
+    rawset(this, key, val)
+  end
 end
+
+function js_arr_index (self, key)
+  return js_proto_get(self, arr_proto, key)
+end
+
+local arr_mt_cached = {
+  __index = js_arr_index,
+  __newindex = array_setter,
+  __tostring = js_tostring,
+  __valueof = js_valueof,
+  proto = arr_proto,
+  shared = true
+}
 
 function js_arr (arr, len)
   if len == nil then
     error('js_arr invoked without length')
   end
 
-  setmetatable(arr, {
-    getters = {
-      length = array_getter_length
-    },
-    length = len,
-    __index = js_getter_index,
-    __newindex = array_setter,
-    __tostring = js_tostring,
-    __valueof = js_valueof,
-    proto = arr_proto
-  })
+  rawset(arr, 'length', len)
+  setmetatable(arr, arr_mt_cached)
   return arr
 end
 
@@ -396,16 +399,16 @@ local function js_void () end
 
 -- a = object, b = last value
 local function js_next (a, b, c)
-  local mt = getmetatable(a)
+  local len = rawget(a, 'length')
 
   -- first value in arrays should be 0
-  if b == nil and mt and (mt.length ~= nil and mt.length > 0) then
+  if b == nil and type(len) == 'number' and len > 0 then
     return 0
   end
 
   -- next value after 0 should be 1
-  if type(b) == 'number' and mt and mt.length ~= nil then
-    if b < a.length - 1 then
+  if type(b) == 'number' and len then
+    if b < len - 1 then
       return b + 1
     end
     b = nil
@@ -413,7 +416,7 @@ local function js_next (a, b, c)
   local k = b
   repeat
     k = next(a, k)
-  until mt == nil or mt.length == nil or type(k) ~= 'number'
+  until len == nil or type(k) ~= 'number'
   return k
 end
 

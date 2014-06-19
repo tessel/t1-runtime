@@ -315,29 +315,22 @@ end
 arr_proto.push = function (this, ...)
   local args = table.pack(...)
   local mt = getmetatable(this)
-  local len = this.length
+  local len = tonumber(rawget(this, 'length'))
   for i=1,args.length do
     rawset(this, len, args[i])
     len = len + 1
   end
-  if mt and mt.length ~= nil then
-    mt.length = len
-  end
+  rawset(this, 'length', len)
   return len
 end
 
 arr_proto.pop = function (this)
-  local _val = nil
-  if this.length == 1 then
-    _val = this[0]
-    this[0] = nil
-  else
-    _val = table.remove(this, this.length-1)
+  local length = tonumber(rawget(this, 'length'))
+  if length == 0 then
+    return nil
   end
-  local mt = getmetatable(this)
-  if mt and type(mt.length) == 'number' and mt.length > 0 then
-    mt.length = mt.length - 1
-  end
+  local _val = rawget(this, length - 1)
+  rawset(this, 'length', length - 1)
   return _val
 end
 
@@ -528,7 +521,7 @@ end
 arr_proto.forEach = function (this, fn)
   local len = this.length-1
   for i=0, len do
-    fn(this, this[i], i)
+    fn(this, rawget(this, i) or this[i], i)
   end
   return this
 end
