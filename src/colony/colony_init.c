@@ -141,18 +141,60 @@ static int js_getter_index (lua_State* L)
 	// stack: self, key, _self, (_self or self), mt, (_self or self)[key]
 	if (lua_isnil(L, -1)) {
 		// stack: self, key, _self, (_self or self), mt, nil
-		lua_pushcfunction(L, js_proto_get);
-		// stack: self, key, _self, (_self or self), mt, nil, fn
-		lua_pushvalue(L, 1);
-		// stack: self, key, _self, (_self or self), mt, nil, fn, self
-		lua_getfield(L, -4, "proto");
-		// stack: self, key, _self, (_self or self), mt, nil, fn, self, mt.proto
-		lua_pushvalue(L, 2);
-		// stack: self, key, _self, (_self or self), mt, nil, fn, self, mt.proto, key
-		lua_call(L, 3, 1);
-		return 1;
+		lua_getfield(L, -2, "proto");
+		// stack: self, key, _self, (_self or self), mt, nil, mt.proto
+		lua_insert(L, 2);
+		// stack: self, mt.proto, key, _self, (_self or self), mt, nil
+		lua_remove(L, -1);
+		// stack: self, mt.proto, key, _self, (_self or self), mt
+		lua_remove(L, -1);
+		// stack: self, mt.proto, key, _self, (_self or self)
+		lua_remove(L, -1);
+		// stack: self, mt.proto, key, _self
+		lua_remove(L, -1);
+		// stack: self, mt.proto, key
+		return js_proto_get(L);
 	}
 
+	return 1;
+}
+
+
+/*
+function (this, fn)
+	local len = this.length-1
+	for i=0, len do
+		fn(this, rawget(this, i) or this[i], i)
+	end
+	return this
+end
+*/
+
+static int arr_proto_forEach (lua_State* L)
+{
+	// stack: this fn
+	lua_getfield(L, 1, "length");
+	long length_value = lua_tonumber(L, -1);
+	size_t len = length_value < 0 ? 0 : (size_t) length_value;
+
+	for (size_t i = 0; i < len; i++) {
+		lua_pushvalue(L, 2);
+		lua_pushvalue(L, 1);
+
+		// rawget(this, i) ...
+		lua_rawgeti(L, 1, i);
+		if (lua_isnil(L, -1)) {
+			lua_remove(L, -1);
+			lua_pushnumber(L, i);
+			lua_gettable(L, 1);
+		}
+
+		// i
+		lua_pushnumber(L, i);
+		lua_call(L, 3, 0);
+	}
+
+	lua_settop(L, 1);
 	return 1;
 }
 
@@ -164,4 +206,7 @@ void colony_init (lua_State* L)
 
 	lua_pushcfunction(L, js_getter_index);
 	lua_setglobal(L, "js_getter_index");
+
+	lua_pushcfunction(L, arr_proto_forEach);
+	lua_setglobal(L, "arr_proto_forEach");
 }

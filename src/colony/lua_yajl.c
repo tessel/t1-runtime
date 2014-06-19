@@ -587,7 +587,7 @@ static int js_parser(lua_State *L) {
     lua_getfield(L, 1, "events");
 
     /* Create callback function that calls yajl_parse[_complete]()
-     
+
       upvalue(1) = yajl_handle*
       upvalue(2) = events table */
     lua_pushcclosure(L, &js_parser_parse, 2);
@@ -664,7 +664,7 @@ static int js_generator_number(lua_State *L) {
         str = "-1e+666";
         len = 7;
     } else if ( isnan(num) ) {
-        str = "-0"; 
+        str = "-0";
         len = 2;
    } else {
         str = luaL_checklstring(L, 2, &len);
@@ -780,7 +780,7 @@ static int js_generator_value(lua_State *L) {
     case LUA_TSTRING:
         return js_generator_string(L);
     case LUA_TUSERDATA:
-        if ( lua_topointer(L, 2) == js_null ) { 
+        if ( lua_topointer(L, 2) == js_null ) {
             return js_generator_null(L);
         }
     case LUA_TLIGHTUSERDATA:

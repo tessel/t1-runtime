@@ -518,13 +518,7 @@ arr_proto.reduce = function (this, callback, ...)
   return value
 end
 
-arr_proto.forEach = function (this, fn)
-  local len = this.length-1
-  for i=0, len do
-    fn(this, rawget(this, i) or this[i], i)
-  end
-  return this
-end
+arr_proto.forEach = arr_proto_forEach
 
 arr_proto.some = function (ths, fn)
   for i=0,ths.length-1 do
