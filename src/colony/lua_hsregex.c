@@ -364,8 +364,9 @@ static int l_regex_split (lua_State *L)
   }
 
   free(orig_w_input);
+  lua_pushnumber(L, idx);
 
-  return 1;
+  return 2;
 }
 
 

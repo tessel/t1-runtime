@@ -91,7 +91,7 @@ function readFileSync (pathname, options)
   var res = [];
   while (true) {
     if (tm.fs_readable(fd) != 0) {
-      var len = 16*1024;
+      var len = 1024*1024;
       var _ = tm.fs_read(fd, len)
         , buf = _[0]
         , err = _[1];
@@ -104,7 +104,7 @@ function readFileSync (pathname, options)
     }
   }
   tm.fs_close(fd);
-  
+
   var buf = Buffer.concat(res);
   if (encoding) {
     return buf.toString(encoding);
@@ -252,7 +252,7 @@ function rmdirSync (pathname)
   if (!_isDirEmpty(pathname)) {
     throw new Error('ENOENT: Cannot remove non-empty directory ' + pathname);
   }
-  
+
   var err = tm.fs_destroy(pathname);
   if (err) {
     throw new Error('ENOENT: Could not rmdir ' + pathname);
@@ -383,7 +383,7 @@ function createReadStream (pathname, options)
 function createWriteStream (pathname)
 {
   pathname = _getAbsolute(pathname);
-  
+
   var _ = tm.fs_open(pathname, tm.CREATE_ALWAYS | tm.WRONLY, 0644)
     , fd = _[0]
     , err = _[1];

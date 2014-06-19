@@ -3,7 +3,8 @@
   "version": "0.2.0",
   "private": true,
   "bin": {
-    "colony": "./out/Release/colony"
+    "colony": "./out/Release/colony",
+    "colony-profile": "./bin/colony-profile.js"
   },
   "directories": {
     "example": "examples",

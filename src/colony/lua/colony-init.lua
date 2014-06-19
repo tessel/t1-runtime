@@ -17,6 +17,12 @@
 
 local bit = require('bit32')
 
+-- local logger = assert(io.open('colony.log', 'w+'))
+-- debug.sethook(function ()
+--   logger:write(debug.traceback())
+--   logger:write('\n\n')
+-- end, 'c', 1000)
+
 -- lua methods
 
 function table.augment (t1,t2)
@@ -59,15 +65,13 @@ _G.funcproxies = funcproxies
 
 -- NOTE: js_getter_proto defined in colony_init.c
 
-local function js_getter_index (proto)
-  return function (self, key, _self)
-    local mt = getmetatable(_self or self)
-    local getter = mt.getters[key]
-    if getter then
-      return getter(self)
-    end
-    return rawget(_self or self, key) or js_proto_get(self, proto, key)
+local function js_getter_index (self, key, _self)
+  local mt = getmetatable(_self or self)
+  local getter = mt.getters[key]
+  if getter then
+    return getter(self)
   end
+  return rawget(_self or self, key) or js_proto_get(self, mt.proto, key)
 end
 
 local function js_setter_index (proto)
@@ -90,7 +94,7 @@ function js_define_setter (self, key, fn)
   rawset(self, key, nil)
   if not mt.getters then
     mt.getters = {}
-    mt.__index = js_getter_index(mt.proto)
+    mt.__index = js_getter_index
   end
   if not mt.setters then
     mt.setters = {}
@@ -104,12 +108,12 @@ function js_define_getter (self, key, fn)
   if type(self) == 'function' then
     self = js_func_proxy(self)
   end
-  
+
   local mt = get_unique_metatable(self)
   rawset(self, key, nil)
   if not mt.getters then
     mt.getters = {}
-    mt.__index = js_getter_index(mt.proto)
+    mt.__index = js_getter_index
   end
   if not mt.setters then
     mt.setters = {}
@@ -194,10 +198,6 @@ nil_mt.__pow = function (op1, op2)
   return 0 ^ tonumber(op2)
 end
 
-nil_mt.__eq = function (op1, op2)
-  return op2 == nil
-end
-
 nil_mt.__lt = function (op1, op2)
   return op2 > 0
 end
@@ -215,10 +215,10 @@ function get_unique_metatable (this)
   local mt = getmetatable(this)
   if mt and mt.shared then
     setmetatable(this, {
-      __index = js_obj_index,
-      __newindex = js_obj_newindex,
-      __tostring = js_tostring,
-      __tovalue = js_valueof,
+      __index = mt.__index,
+      __newindex = mt.__newindex,
+      __tostring = mt.__tostring,
+      __tovalue = mt.__tovalue,
       proto = mt.proto,
       shared = false
     });
@@ -278,7 +278,7 @@ js_obj(arr_proto)
 --]]
 
 -- Functions don't have objects on them by default
--- so when we access an __index or __newindex, we 
+-- so when we access an __index or __newindex, we
 -- set up an intermediary object to handle it
 
 setmetatable(funcproxies, {__mode = 'k'})
@@ -330,7 +330,7 @@ str_mt.getters = {
   end
 }
 str_mt.__index = function (self, key)
-  -- custom js_getter_index for strings 
+  -- custom js_getter_index for strings
   -- allows numerical indices
   local mt = getmetatable(self)
   local getter = mt.getters[key]
@@ -360,7 +360,7 @@ str_mt.proto = str_proto
 
 function array_setter (this, key, val)
   if type(key) == 'number' then
-    local mt = get_unique_metatable(this)
+    local mt = getmetatable(this)
     mt.length = math.max(mt.length, (tonumber(key) or 0) + 1)
   end
   rawset(this, key, val)
@@ -368,19 +368,15 @@ end
 
 function js_arr (arr, len)
   if len == nil then
-    len = #arr
-    if len > 1 or arr[0] ~= nil then
-      len = len + 1
-    end
+    error('js_arr invoked without length')
   end
 
   setmetatable(arr, {
     getters = {
       length = array_getter_length
     },
-    values = {},
     length = len,
-    __index = js_getter_index(arr_proto),
+    __index = js_getter_index,
     __newindex = array_setter,
     __tostring = js_tostring,
     __valueof = js_valueof,
@@ -544,7 +540,7 @@ function js_with (env, fn)
     end
     idx = 1 + idx
   end
-  
+
   local mt = get_unique_metatable(env) or {};
 
   mt.__index = function (this, key)
@@ -567,7 +563,7 @@ function js_with (env, fn)
   setmetatable(env, mt);
 
   setfenv(fn, env)
-  
+
   return fn(js_with)
 end
 

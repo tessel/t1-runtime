@@ -31,7 +31,7 @@ double tm_timestamp ()
   struct timeval tv;
   gettimeofday(&tv, NULL);
 
-  double time_in_mill = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000;
+  double time_in_mill = (((double) tv.tv_sec) * 1000) + (((double) tv.tv_usec) / 1000);
   return (double) (time_in_mill * 1000);
 }
 
