@@ -699,7 +699,7 @@ global.Array = function (ths, ...)
   elseif len > 0 then
     a[0] = a[1]
     table.remove(a, 1)
-    return js_arr(a, 1)
+    return js_arr(a, len)
   end
   return js_arr({}, 0)
 end

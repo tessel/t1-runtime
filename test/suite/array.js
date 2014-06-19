@@ -124,3 +124,7 @@ var test = Buffer([5,4,3]);
 ok(Array.prototype.slice.call(test).join('') == '543', 'Array::join called on buffer works')
 sum = Array.prototype.reduce.call(test, function (sum, n) { return sum+n; }, 0);
 ok(sum == 12, 'Array::reduce called on non-array object succeeds');
+
+// Array creation
+var a = Array(1,2,3)
+ok(arreq(a, [1,2,3]), 'Array(1,2,3) == [1,2,3]')
