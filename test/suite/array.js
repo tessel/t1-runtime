@@ -30,15 +30,15 @@ ok(arr.length == 0, 'array::pop - length unmodified when 0');
 
 var a = [1];
 a.splice(0, 1);
-ok(arreq(a, []));
+ok(arreq(a, []), 'splice(0, 1)');
 
 var a = [1, 2, 3];
 a.splice(1, 1);
-ok(arreq(a, [1, 3]));
+ok(arreq(a, [1, 3]), 'splice(1, 1)');
 
 var a = [2, 3];
 a.unshift(1);
-ok(arreq(a, [1, 2, 3]))
+ok(arreq(a, [1, 2, 3]), 'unshift(1)')
 
 var arr = [2];
 ok(arr.length == 1, 'array::unshift - length')

@@ -11,6 +11,7 @@ simpleQueue.pushItem = function(item) {
   ok(this.length == 2, "Length should be 2: " + this.length);
 };
 
+console.log('well', simpleQueue.length)
 simpleQueue.push(1);
 ok(simpleQueue.length == 1);
 

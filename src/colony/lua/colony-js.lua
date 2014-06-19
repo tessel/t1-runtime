@@ -314,7 +314,6 @@ end
 
 arr_proto.push = function (this, ...)
   local args = table.pack(...)
-  local mt = getmetatable(this)
   local len = tonumber(rawget(this, 'length'))
   for i=1,args.length do
     rawset(this, len, args[i])
@@ -335,40 +334,41 @@ arr_proto.pop = function (this)
 end
 
 arr_proto.shift = function (this)
-  local ret = this[0]
-  this[0] = table.remove(this, 1)
-  local mt = getmetatable(this)
-  if mt and type(mt.length) == 'number' and mt.length > 0 then
-    mt.length = mt.length - 1
+  local len = tonumber(rawget(this, 'length'))
+  local ret = rawget(this, 0)
+  if len > 0 then
+    rawset(this, 0, table.remove(this, 1) or nil)
+    rawset(this, 'length', len - 1)
   end
   return ret
 end
 
-arr_proto.unshift = function (ths, elem)
-  local _val = nil
-  if ths.length > 0 then
-    _val = table.insert(ths, 0, elem[0])
-  end
-  ths[0] = elem
-  return ths.length
+arr_proto.unshift = function (this, elem)
+  local len = rawget(this, 'length')
+  table.insert(this, 1, rawget(this, 0))
+  rawset(this, 0, elem)
+  rawset(this, 'length', len + 1)
+  return len + 1
 end
 
-arr_proto.splice = function (ths, i, del, ...)
-  local ret = js_arr({}, 0)
-  for j=1,(tonumber(del) or 0) do
-    ret:push(ths[i])
-    table.remove(ths, i)
+arr_proto.splice = function (this, i, del, ...)
+  local del_len = (tonumber(del) or 0)
+  local ret = {}
+  for j=1,del_len do
+    ret[j-1] = rawget(this, i)
     if i == 0 then
-      ths[0] = table.remove(ths, 1)
+      rawset(this, 0, rawget(this, i))
     end
+    table.remove(this, i)
   end
+
   local args = table.pack(...)
   for j=1,args.length do
-    table.insert(ths, i, args[j])
+    rawset(this, i, args[j])
     i = i + 1
   end
-  getmetatable(ths).length = getmetatable(ths).length - (tonumber(del) or 0)
-  return ret
+  rawset(this, 'length', tonumber(rawget(this, 'length')) - del_len + args.length)
+  return js_arr(ret, del_len)
 end
 
 arr_proto.reverse = function (this)
@@ -689,16 +689,17 @@ func_proto.constructor = global.Function
 
 -- Array
 
-global.Array = function (ths, one, ...)
+global.Array = function (ths, ...)
   local a = table.pack(...)
   local len = a.length
   a.length = nil
-  if a.length > 0 or type(one) ~= 'number' then
-    a[0] = one
-    return js_arr(a, 1)
-  elseif one ~= nil then
-    local len = tonumber(one) - 1
+  if len == 1 and type(a[1]) == 'number' then
+    local len = tonumber(a[1])
     return js_arr({}, len)
+  elseif len > 0 then
+    a[0] = a[1]
+    table.remove(a, 1)
+    return js_arr(a, 1)
   end
   return js_arr({}, 0)
 end

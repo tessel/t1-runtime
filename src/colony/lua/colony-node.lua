@@ -634,7 +634,7 @@ EventEmitter.prototype.emit = function (this, type, ...)
   local count = 0
   if this._events and this._events[type] then
     local fns, listeners = {}, this._events[type]
-    for i=0,listeners.length do
+    for i=0,listeners.length-1 do
       table.insert(fns, listeners[i])
     end
     count = #fns

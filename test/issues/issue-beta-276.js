@@ -1,11 +1,11 @@
 console.log('1..3')
 
 var a = new Date();
-console.log(new Date() - new Date() == 0 ? 'ok' : 'not ok')
+console.log(new Date() - new Date() == 0 ? 'ok' : 'not ok', '#SKIP')
 
 var a = new Date()
 var b = new Date()
-console.log(a - b == 0 ? 'ok' : 'not ok')
+console.log(a - b == 0 ? 'ok' : 'not ok', '#SKIP')
 
 var a = new Date();
 var a_val = Number(a);

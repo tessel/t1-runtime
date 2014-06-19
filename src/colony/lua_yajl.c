@@ -172,6 +172,20 @@ static int got_map_key(lua_State* L) {
 /* See STRATEGY section below */
 static int got_array_value(lua_State* L) {
     /* ..., Table, Integer, Func, Value */
+    lua_pushliteral(L, "length");
+    /* ..., Table, Integer, Func, Value, "length" */
+    lua_pushvalue(L, -1);
+    /* ..., Table, Integer, Func, Value, "length", "length" */
+    lua_rawget(L, -6);
+    /* ..., Table, Integer, Func, Value, "length", len */
+    long len = lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    /* ..., Table, Integer, Func, Value, "length" */
+    lua_pushnumber(L, len + 1);
+    /* ..., Table, Integer, Func, Value, "length", len */
+    lua_rawset(L, -6);
+
+    /* ..., Table, Integer, Func, Value */
     lua_rawseti(L, -4, lua_tointeger(L, -3));
     lua_pushinteger(L, lua_tointeger(L, -2)+1);
     lua_replace(L, -3);
@@ -228,6 +242,17 @@ static int to_value_start_array(void* ctx) {
 }
 
 /* See STRATEGY section below */
+static int to_value_end_array(void* ctx) {
+    lua_State* L = (lua_State*)ctx;
+
+    /* Simply pop the stack and call the cfunction: */
+    lua_pop(L, 2);
+    (lua_tocfunction(L, -2))(L);
+
+    return 1;
+}
+
+/* See STRATEGY section below */
 static int to_value_end(void* ctx) {
     lua_State* L = (lua_State*)ctx;
 
@@ -256,7 +281,7 @@ static yajl_callbacks js_to_value_callbacks = {
     to_value_string,
     to_value_end,
     to_value_start_array,
-    to_value_end,
+    to_value_end_array,
 };
 
 
@@ -822,6 +847,8 @@ static int js_generator_value(lua_State *L) {
                     is_array = 0;
                     break;
                 }
+            } else if (lua_type(L, -2) == LUA_TSTRING && strncmp(lua_tostring(L, -2), "length", 6) == 0) {
+                // ignore "length"
             } else {
                 lua_pop(L, 2);
                 is_array = 0;

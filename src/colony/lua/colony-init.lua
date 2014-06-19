@@ -350,7 +350,7 @@ str_mt.proto = str_proto
 
 function array_setter (this, key, val)
   if type(key) == 'number' then
-    rawset(this, 'length', math.max(rawget(this, 'length', (tonumber(key) or 0) + 1)))
+    rawset(this, 'length', math.max(rawget(this, 'length'), (tonumber(key) or 0) + 1))
   end
   if key ~= 'length' then
     rawset(this, key, val)
@@ -400,6 +400,7 @@ local function js_void () end
 -- a = object, b = last value
 local function js_next (a, b, c)
   local len = rawget(a, 'length')
+  local mt = getmetatable(a)
 
   -- first value in arrays should be 0
   if b == nil and type(len) == 'number' and len > 0 then
@@ -416,7 +417,7 @@ local function js_next (a, b, c)
   local k = b
   repeat
     k = next(a, k)
-  until len == nil or type(k) ~= 'number'
+  until (len == nil or type(k) ~= 'number') and not (k == 'length' and mt.proto == arr_proto)
   return k
 end
 
