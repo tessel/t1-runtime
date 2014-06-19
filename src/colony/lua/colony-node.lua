@@ -732,11 +732,19 @@ end
 --]]
 
 global:__defineGetter__('____dirname', function (this)
-  return string.gsub(string.sub(debug.getinfo(3).source, 2), "/?[^/]+$", "")
+  local ret = string.gsub(string.sub(debug.getinfo(3).source, 2), "/?[^/]+$", "")
+  if string.sub(ret, 1, 2) == './' then
+    ret = os.getenv('PWD') + string.sub(ret, 2)
+  end
+  return ret
 end)
 
 global:__defineGetter__('____filename', function (this)
-  return string.sub(debug.getinfo(3).source, 2)
+  local ret = string.sub(debug.getinfo(3).source, 2)
+  if string.sub(ret, 1, 2) == './' then
+    ret = os.getenv('PWD') + string.sub(ret, 2)
+  end
+  return ret
 end)
 
 
