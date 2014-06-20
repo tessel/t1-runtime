@@ -731,20 +731,19 @@ end
 --|| global variables
 --]]
 
-global:__defineGetter__('____dirname', function (this)
-  local ret = string.gsub(string.sub(debug.getinfo(3).source, 2), "/?[^/]+$", "")
+function abssource (ret)
   if string.sub(ret, 1, 2) == './' then
     ret = os.getenv('PWD') + string.sub(ret, 2)
   end
   return ret
+end
+
+global:__defineGetter__('____dirname', function (this)
+  return abssource(string.gsub(string.sub(debug.getinfo(3).source, 2), "/?[^/]+$", ""))
 end)
 
 global:__defineGetter__('____filename', function (this)
-  local ret = string.sub(debug.getinfo(3).source, 2)
-  if string.sub(ret, 1, 2) == './' then
-    ret = os.getenv('PWD') + string.sub(ret, 2)
-  end
-  return ret
+  return abssource(string.sub(debug.getinfo(3).source, 2))
 end)
 
 
@@ -870,7 +869,6 @@ colony.cache = {}
 local function require_resolve (origname, root)
   root = root or './'
   local name = origname
-  -- print('<-', root, name)
   if string.sub(name, 1, 1) == '.' then
     if string.sub(name, -3) == '.js' then
       name = string.sub(name, 1, -4)
@@ -889,8 +887,11 @@ local function require_resolve (origname, root)
       while string.find(name, '/') do
         name = path_dirname(name)
       end
-      while not fs_exists(root .. 'node_modules/' .. name) and not fs_exists(root .. 'node_modules/' .. name .. '/package.json') and string.find(path_dirname(root), "/") do
+      while not fs_exists(root .. 'node_modules/' .. name .. '/package.json') do
         root = path_dirname(root) .. '/'
+        if path_dirname(root) == path_dirname(path_dirname(root)) then
+          break
+        end
       end
       if not root then
         -- no node_modules folder found
