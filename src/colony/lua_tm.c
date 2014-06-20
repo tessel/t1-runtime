@@ -16,6 +16,7 @@
 #include "order32.h"
 
 #ifdef ENABLE_TLS
+#include <sha2.h>
 #include <crypto.h>
 #endif
 
@@ -922,31 +923,42 @@ static int l_tm_hmac_sha1 (lua_State *L)
   return 1;
 }
 
-static int l_tm_hash_md5_create (lua_State *L)
-{
-  MD5_CTX* ctx = (MD5_CTX *) lua_newuserdata(L, sizeof(MD5_CTX));
-  MD5_Init(ctx);
-  return 1;
-}
+#define L_TM_HASH(x, X) static int l_tm_hash_##x##_create (lua_State *L) \
+  { \
+    X##_CTX* ctx = (X##_CTX *) lua_newuserdata(L, sizeof(X##_CTX)); \
+    X##_Init(ctx); \
+    return 1; \
+  } \
+  \
+  static int l_tm_hash_##x##_update (lua_State *L) \
+  { \
+    X##_CTX *ctx = (X##_CTX *) lua_touserdata(L, 1); \
+    size_t msg_len = 0; \
+    uint8_t *msg = (uint8_t *) colony_toconstdata(L, 2, &msg_len); \
+  \
+    X##_Update(ctx, msg, msg_len); \
+    return 0; \
+  } \
+  \
+  static int l_tm_hash_##x##_digest (lua_State *L) \
+  { \
+    X##_CTX *ctx = (X##_CTX *) lua_touserdata(L, 1); \
+    \
+    uint8_t* digest = colony_createbuffer(L, X##_SIZE); \
+    X##_Final(digest, ctx); \
+    return 1; \
+  }
 
-static int l_tm_hash_md5_update (lua_State *L)
-{
-  MD5_CTX *ctx = (MD5_CTX *) lua_touserdata(L, 1);
-  size_t msg_len = 0;
-  uint8_t *msg = (uint8_t *) colony_toconstdata(L, 2, &msg_len);
-
-  MD5_Update(ctx, msg, msg_len);
-  return 0;
-}
-
-static int l_tm_hash_md5_digest (lua_State *L)
-{
-  MD5_CTX *ctx = (MD5_CTX *) lua_touserdata(L, 1);
-
-  uint8_t* digest = colony_createbuffer(L, MD5_SIZE);
-  MD5_Final(digest, ctx);
-  return 1;
-}
+L_TM_HASH(md5, MD5);
+L_TM_HASH(sha1, SHA1);
+#define SHA224_SIZE SHA224_DIGEST_LENGTH
+L_TM_HASH(sha224, SHA224);
+#define SHA256_SIZE SHA256_DIGEST_LENGTH
+L_TM_HASH(sha256, SHA256);
+#define SHA384_SIZE SHA384_DIGEST_LENGTH
+L_TM_HASH(sha384, SHA384);
+#define SHA512_SIZE SHA512_DIGEST_LENGTH
+L_TM_HASH(sha512, SHA512);
 
 
 #else
@@ -984,6 +996,10 @@ static int l_tm_hash_md5_digest (lua_State *L)
 
 #define luaL_setfieldnumber(L, str, num) lua_pushnumber (L, num); lua_setfield (L, -2, str);
 
+#define L_TM_HASH_ENTRIES(x) { "hash_" #x "_create", l_tm_hash_##x##_create }, \
+  { "hash_" #x "_update", l_tm_hash_##x##_update }, \
+  { "hash_" #x "_digest", l_tm_hash_##x##_digest }
+
 LUALIB_API int luaopen_tm (lua_State *L)
 {
   lua_newtable (L);
@@ -1002,7 +1018,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "udp_close", l_tm_udp_close },
     { "udp_listen", l_tm_udp_listen },
     { "udp_receive", l_tm_udp_receive },
-    { "udp_readable", l_tm_udp_readable }, 
+    { "udp_readable", l_tm_udp_readable },
     { "udp_send", l_tm_udp_send },
 
     { "tcp_open", l_tm_tcp_open },
@@ -1087,9 +1103,12 @@ LUALIB_API int luaopen_tm (lua_State *L)
     // random
     { "random_bytes", l_tm_random_bytes },
     { "hmac_sha1", l_tm_hmac_sha1 },
-    { "hash_md5_create", l_tm_hash_md5_create },
-    { "hash_md5_update", l_tm_hash_md5_update },
-    { "hash_md5_digest", l_tm_hash_md5_digest },
+    L_TM_HASH_ENTRIES(md5),
+    L_TM_HASH_ENTRIES(sha1),
+    L_TM_HASH_ENTRIES(sha224),
+    L_TM_HASH_ENTRIES(sha256),
+    L_TM_HASH_ENTRIES(sha384),
+    L_TM_HASH_ENTRIES(sha512),
 
     // timestamp
     { "timestamp", l_tm_timestamp },

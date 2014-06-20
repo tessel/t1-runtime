@@ -7,7 +7,7 @@ if (!crypto._tls) {
   process.exit(0);
 }
 
-console.log('1..7'); // Just success in runnning
+console.log('1..8'); // Just success in runnning
 
 console.log(crypto.randomBytes(16).length == 16 ? 'ok' : 'not ok');
 console.log(crypto.randomBytes(256).length == 256 ? 'ok' : 'not ok');
@@ -32,26 +32,58 @@ var hash = crypto.createHmac('sha1', hash_input)
 console.log('#', hash);
 console.log(hash == hash_output ? 'ok' : 'not ok', 'hmac key > 64 bytes');
 
-// md5
-var hash_output = '902fbdd2b1df0c4f70b4a5d23525e932';
-var hash = crypto.createHash('md5')
-  .update(String('A'))
-  .update(String('B'))
-  .update(String('C'))
-  .digest('hex');
+/**
+ * MD5
+ */
 
-console.log('#', hash);
-console.log(hash == hash_output ? 'ok' : 'not ok', 'md5');
+(function () {
+  var hash_output = '902fbdd2b1df0c4f70b4a5d23525e932';
+  var hash = crypto.createHash('md5')
+    .update(String('A'))
+    .update(String('B'))
+    .update(String('C'))
+    .digest('hex');
 
-var hash = crypto.createHash('md5');
-hash.on('readable', function () {
-	var md5 = hash.read().toString('hex');
-	console.log('#', md5);
-	console.log(md5 == hash_output ? 'ok' : 'not ok', 'md5 stream');
-})
-hash.write(String('A'));
-hash.write(String('B'))
-hash.write(String('C'))
-hash.end();
+  console.log('#', hash);
+  console.log(hash == hash_output ? 'ok' : 'not ok', 'md5');
+
+  var hash = crypto.createHash('md5');
+  hash.on('readable', function () {
+  	var md5 = hash.read().toString('hex');
+  	console.log('#', md5);
+  	console.log(md5 == hash_output ? 'ok' : 'not ok', 'md5 stream');
+  })
+  hash.write(String('A'));
+  hash.write(String('B'))
+  hash.write(String('C'))
+  hash.end();
+})();
+
+/**
+ * SHA1
+ */
+
+(function () {
+  var hash_output = '3c01bdbb26f358bab27f267924aa2c9a03fcfdb8';
+  var hash = crypto.createHash('sha1')
+    .update(String('A'))
+    .update(String('B'))
+    .update(String('C'))
+    .digest('hex');
+
+  console.log('#', hash);
+  console.log(hash == hash_output ? 'ok' : 'not ok', 'sha1');
+
+  var hash = crypto.createHash('SHA1');
+  hash.on('readable', function () {
+    var sha1 = hash.read().toString('hex');
+    console.log('#', sha1);
+    console.log(sha1 == hash_output ? 'ok' : 'not ok', 'sha1 stream');
+  })
+  hash.write(String('A'));
+  hash.write(String('B'))
+  hash.write(String('C'))
+  hash.end();
+})();
 
 console.log('ok');
