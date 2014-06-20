@@ -1068,7 +1068,8 @@ global.console = js_obj({
 global.Infinity = math.huge
 
 global.isFinite = function(this, arg)
-  return arg ~= math.huge and arg ~= -math.huge and global.isNaN(this, arg)
+  arg = tonumber(arg)
+  return type(arg) == 'number' and arg ~= math.huge and arg ~= -math.huge and not global.isNaN(this, arg)
 end
 
 global.isNaN = function (this, arg)
