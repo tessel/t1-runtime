@@ -62,9 +62,33 @@ function createHmac (encryption, key)
  */
 
 var hashes = {
-	'sha': [ tm.hash_sha1_create, tm.hash_sha1_update, tm.hash_sha1_digest ],
 	'sha1': [ tm.hash_sha1_create, tm.hash_sha1_update, tm.hash_sha1_digest ],
+	'sha1withrsaencryption': [ tm.hash_sha1_create, tm.hash_sha1_update, tm.hash_sha1_digest ],
+	'rsa-sha1': [ tm.hash_sha1_create, tm.hash_sha1_update, tm.hash_sha1_digest ],
+	'rsa-sha1-2': [ tm.hash_sha1_create, tm.hash_sha1_update, tm.hash_sha1_digest ],
+	'ssl3-sha1': [ tm.hash_sha1_create, tm.hash_sha1_update, tm.hash_sha1_digest ],
+
+	'sha224': [ tm.hash_sha224_create, tm.hash_sha224_update, tm.hash_sha224_digest ],
+	'sha224withrsaencryption': [ tm.hash_sha224_create, tm.hash_sha224_update, tm.hash_sha224_digest ],
+	'rsa-sha224': [ tm.hash_sha224_create, tm.hash_sha224_update, tm.hash_sha224_digest ],
+
+	'sha256': [ tm.hash_sha256_create, tm.hash_sha256_update, tm.hash_sha256_digest ],
+	'sha256withrsaencryption': [ tm.hash_sha256_create, tm.hash_sha256_update, tm.hash_sha256_digest ],
+	'rsa-sha256': [ tm.hash_sha256_create, tm.hash_sha256_update, tm.hash_sha256_digest ],
+
+	'sha384': [ tm.hash_sha384_create, tm.hash_sha384_update, tm.hash_sha384_digest ],
+	'sha384withrsaencryption': [ tm.hash_sha384_create, tm.hash_sha384_update, tm.hash_sha384_digest ],
+	'rsa-sha384': [ tm.hash_sha384_create, tm.hash_sha384_update, tm.hash_sha384_digest ],
+
+	'sha512': [ tm.hash_sha512_create, tm.hash_sha512_update, tm.hash_sha512_digest ],
+	'sha512withrsaencryption': [ tm.hash_sha512_create, tm.hash_sha512_update, tm.hash_sha512_digest ],
+	'rsa-sha512': [ tm.hash_sha512_create, tm.hash_sha512_update, tm.hash_sha512_digest ],
+
 	'md5': [ tm.hash_md5_create, tm.hash_md5_update, tm.hash_md5_digest ],
+	'md5withrsaencryption': [ tm.hash_md5_create, tm.hash_md5_update, tm.hash_md5_digest ],
+	'rsa-md5': [ tm.hash_md5_create, tm.hash_md5_update, tm.hash_md5_digest ],
+	'ssl2-md5': [ tm.hash_md5_create, tm.hash_md5_update, tm.hash_md5_digest ],
+	'ssl3-md5': [ tm.hash_md5_create, tm.hash_md5_update, tm.hash_md5_digest ],
 };
 
 function getHashes ()

@@ -2,7 +2,7 @@
   "includes": [
     "common.gypi",
   ],
-  
+
   "targets":  [
     {
       "target_name": "colony-lua",
@@ -202,6 +202,7 @@
         'libtm.gyp:c-ares',
         'libtm.gyp:http_parser',
         'libtm.gyp:hsregex',
+        'libtm.gyp:fortuna',
         'libtm.gyp:dlmalloc',
         'libtm.gyp:yajl',
         'libtm.gyp:libtm'
