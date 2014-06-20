@@ -452,8 +452,8 @@ local function Buffer (this, arg, encoding)
   if type(arg) == 'number' then
     length = tonumber(arg)
   else
-    str = arg
-    length = arg.length
+    str = arg or ''
+    length = arg and arg.length or 0
   end
 
   -- encoding first check

@@ -158,7 +158,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
             CN: tm.ssl_session_cn(ssl)[0]
           }
         }
-        
+
         if (!tls.checkServerIdentity(host, cert)) {
           throw new Error('Hostname/IP doesn\'t match certificate\'s altnames');
         }
@@ -284,6 +284,9 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
   });
 };
 
+TCPSocket.prototype.setTimeout = function () { /* noop */ };
+TCPSocket.prototype.setNoDelay = function () { /* noop */ };
+
 function connect (port, host, callback, _secure) {
   if (_secure) {
     ensureSSLCtx();
@@ -293,7 +296,7 @@ function connect (port, host, callback, _secure) {
   if (sock == -1) {
     throw 'ENOENT: Cannot connect to new socket.'
   }
-  
+
   var client = new TCPSocket(sock, _secure);
   client.connect(port, host, callback);
   return client;
@@ -336,7 +339,7 @@ TCPServer.prototype.listen = function (port, ip) {
 function createServer (onsocket) {
   var server = new TCPServer(tm.tcp_open());
   onsocket && server.on('socket', onsocket);
-  return server; 
+  return server;
 };
 
 
