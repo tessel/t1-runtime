@@ -167,27 +167,35 @@ nil_mt.__tostring = function (arg)
 end
 
 nil_mt.__add = function (op1, op2)
-  return "null" + op2
+  if op1 == nil then
+    op1 = 'null'
+  end
+  if op2 == nil and type(op1) == 'string' then
+    op2 = 'null'
+  elseif op2 == nil then
+    op2 = 0
+  end
+  return op1 + op2
 end
 
 nil_mt.__sub = function (op1, op2)
-  return 0 - tonumber(op2)
+  return (tonumber(op1) or 0) - (tonumber(op2) or 0)
 end
 
 nil_mt.__mul = function (op1, op2)
-  return 0 * tonumber(op2)
+  return (tonumber(op1) or 0) * (tonumber(op2) or 0)
 end
 
 nil_mt.__div = function (op1, op2)
-  return 0 / tonumber(op2)
+  return (tonumber(op1) or 0) / (tonumber(op2) or 0)
 end
 
 nil_mt.__mod = function (op1, op2)
-  return 0 % tonumber(op2)
+  return (tonumber(op1) or 0) % (tonumber(op2) or 0)
 end
 
 nil_mt.__pow = function (op1, op2)
-  return 0 ^ tonumber(op2)
+  return (tonumber(op1) or 0) ^ (tonumber(op2) or 0)
 end
 
 nil_mt.__lt = function (op1, op2)
