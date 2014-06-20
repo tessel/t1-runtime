@@ -423,8 +423,9 @@ arr_proto.concat = function (this, ...)
 end
 
 arr_proto.sort = function (this, fn)
+  local len = this.length
   table.insert(this, 1, this[0])
-  this[0] = nil
+  rawset(this, 0, nil)
   table.sort(this, function (a, b)
     if not b then
       return 0
@@ -437,9 +438,10 @@ arr_proto.sort = function (this, fn)
     end
     return ret
   end)
-  local zero = this[1]
+  local zero = rawget(this, 1)
   table.remove(this, 1)
-  this[0] = zero
+  rawset(this, 0, zero)
+  rawset(this, 'length', len)
   return this
 end
 
