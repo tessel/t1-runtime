@@ -46,6 +46,10 @@ function isObject (arg) {
   return typeof arg == 'object';
 }
 
+function isBoolean(arg) {
+  return typeof arg == 'boolean';
+}
+
 function isArray (arg) {
   return Array.isArray(arg);
 }
@@ -98,6 +102,7 @@ exports.inherits = inherits;
 exports.deprecate = deprecate;
 exports.isString = isString;
 exports.isBuffer = isBuffer;
+exports.isBoolean = isBoolean;
 exports.isNumber = isNumber;
 exports.isNull = isNull;
 exports.isObject = isObject;
