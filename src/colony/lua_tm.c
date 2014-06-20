@@ -948,6 +948,32 @@ static int l_tm_hash_md5_digest (lua_State *L)
   return 1;
 }
 
+static int l_tm_hash_sha1_create (lua_State *L)
+{
+  SHA1_CTX* ctx = (SHA1_CTX *) lua_newuserdata(L, sizeof(MD5_CTX));
+  SHA1_Init(ctx);
+  return 1;
+}
+
+static int l_tm_hash_sha1_update (lua_State *L)
+{
+  SHA1_CTX *ctx = (SHA1_CTX *) lua_touserdata(L, 1);
+  size_t msg_len = 0;
+  uint8_t *msg = (uint8_t *) colony_toconstdata(L, 2, &msg_len);
+
+  SHA1_Update(ctx, msg, msg_len);
+  return 0;
+}
+
+static int l_tm_hash_sha1_digest (lua_State *L)
+{
+  SHA1_CTX *ctx = (SHA1_CTX *) lua_touserdata(L, 1);
+
+  uint8_t* digest = colony_createbuffer(L, SHA1_SIZE);
+  SHA1_Final(digest, ctx);
+  return 1;
+}
+
 
 #else
 
@@ -1002,7 +1028,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "udp_close", l_tm_udp_close },
     { "udp_listen", l_tm_udp_listen },
     { "udp_receive", l_tm_udp_receive },
-    { "udp_readable", l_tm_udp_readable }, 
+    { "udp_readable", l_tm_udp_readable },
     { "udp_send", l_tm_udp_send },
 
     { "tcp_open", l_tm_tcp_open },
@@ -1090,6 +1116,9 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "hash_md5_create", l_tm_hash_md5_create },
     { "hash_md5_update", l_tm_hash_md5_update },
     { "hash_md5_digest", l_tm_hash_md5_digest },
+    { "hash_sha1_create", l_tm_hash_sha1_create },
+    { "hash_sha1_update", l_tm_hash_sha1_update },
+    { "hash_sha1_digest", l_tm_hash_sha1_digest },
 
     // timestamp
     { "timestamp", l_tm_timestamp },

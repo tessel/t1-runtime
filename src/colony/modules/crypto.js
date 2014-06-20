@@ -57,22 +57,37 @@ function createHmac (encryption, key)
 	return new Hmac(encryption, key);
 }
 
+/**
+ * Hashes
+ */
+
+var hashes = {
+	'sha': [ tm.hash_sha1_create, tm.hash_sha1_update, tm.hash_sha1_digest ],
+	'sha1': [ tm.hash_sha1_create, tm.hash_sha1_update, tm.hash_sha1_digest ],
+	'md5': [ tm.hash_md5_create, tm.hash_md5_update, tm.hash_md5_digest ],
+};
+
+function getHashes ()
+{
+	return Object.keys(hashes);
+}
+
 function Hash (algorithm)
 {
 	Duplex.call(this);
+	this.algorithm = String(algorithm).toLowerCase();
 
-	if (algorithm != 'md5') {
+	if (!(this.algorithm in hashes)) {
 		throw new Error('Hash algorithm ' + String(algorithm) + ' not supported.');
 	}
 
-	this.algorithm = algorithm;
-	this._ctx = tm.hash_md5_create();
+	this._ctx = hashes[this.algorithm][0]();
 }
 
 util.inherits(Hash, Duplex);
 
 Hash.prototype.update = function (buf) {
-	tm.hash_md5_update(this._ctx, buf);
+	hashes[this.algorithm][1](this._ctx, buf);
 	return this;
 }
 
@@ -95,7 +110,7 @@ Hash.prototype.end = function (chunk, encoding, callback) {
 }
 
 Hash.prototype.digest = function (encoding) {
-	var hash = tm.hash_md5_digest(this._ctx);
+	var hash = hashes[this.algorithm][2](this._ctx);
 	return encoding ? hash.toString(encoding) : hash;
 }
 
