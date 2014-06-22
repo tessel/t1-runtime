@@ -275,7 +275,7 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
     }
   }
 
-  var response, lastheader;
+  var response, lastheader, upgrade = false;
   var parser = http_parser.new('response', {
     onMessageBegin: js_wrap_function(function () {
       response = new HTTPIncomingResponse(self.connection);
@@ -298,26 +298,33 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
     onHeadersComplete: js_wrap_function(function (obj) {
       if (response) {
         response.statusCode = obj.status_code
+      }
+      if (obj.upgrade) {
+        upgrade = true;
+      } else {
         self.emit('response', response);
       }
     }),
     onBody: js_wrap_function(function (body) {
-      if (response) {
+      if (!upgrade && response) {
         response.push(body);
       }
     }),
     onMessageComplete: js_wrap_function(function () {
-      if (response) {
+      if (!upgrade && response) {
         self.connection.close();
       }
     })
-  })
-  self.connection.on('data', function (data) {
+  });
+  self.connection.on('data', function listener (data) {
     var nparsed = parser.execute(data, 0, data.length);
-    if (nparsed != data.length) {
+    if (upgrade) {
+      self.emit('upgrade', response, self.connection, (Buffer.isBuffer(data) ? data : new Buffer(data)).slice(nparsed));
+      self.connection.removeListener('data', listener);
+    } else if (nparsed != data.length) {
       self.connection.emit('error', 'Could not parse tokens at character #' + String(nparsed));
     }
-  })
+  });
 
   self.emit('connection', self.connection);
 }
