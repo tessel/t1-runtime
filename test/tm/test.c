@@ -46,20 +46,26 @@ TEST doubles()
 	PASS();
 }
 
-TEST random_test()
-{
-	uint8_t buf[16] = { 0 };
-	tm_random(buf, sizeof(buf));
-	print_buffer(buf, sizeof(buf));
-
-	PASS();
-}
-
-
 SUITE(tm_buf)
 {
 	RUN_TEST(floats);
 	RUN_TEST(doubles);
+}
+
+
+TEST random_test()
+{
+	size_t read = 0;
+	uint8_t buf[16] = { 0 };
+	tm_entropy_seed();
+	tm_random_bytes(buf, sizeof(buf), &read);
+	// print_buffer(buf, sizeof(buf));
+
+	PASS();
+}
+
+SUITE(tm_random)
+{
 	RUN_TEST(random_test);
 }
 
@@ -119,6 +125,7 @@ int main(int argc, char **argv)
 {
 	GREATEST_MAIN_BEGIN();      /* command-line arguments, initialization. */
 	RUN_SUITE(tm_buf);
+	RUN_SUITE(tm_random);
 	// RUN_SUITE(runtime);
 	GREATEST_MAIN_END();        /* display results */
 }

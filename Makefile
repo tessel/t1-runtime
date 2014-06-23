@@ -20,7 +20,7 @@ clean:
 	ninja -v -C out/Debug -t clean
 	ninja -v -C out/Release -t clean
 
-nuke: 
+nuke:
 	rm -rf out build
 
 
@@ -34,6 +34,7 @@ colony:
 
 libtm-test:
 	$(call compile, libtm-test.gyp)
+	./out/Release/libtm-test
 
 libtm:
 	$(call compile, libtm.gyp)
