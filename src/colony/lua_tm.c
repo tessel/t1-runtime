@@ -893,7 +893,7 @@ static int l_tm_deflate_start (lua_State *L)
 
   // Need minimum 32kb dictionary size
   size_t out_len = 64*1024, out_total = 0;
-  uint8_t* out = colony_createbuffer(L, out_len);
+  colony_createbuffer(L, out_len);
 
   int status = tm_deflate_start(deflate, type, level);
   lua_pushnumber(L, out_total);
@@ -955,7 +955,7 @@ static int l_tm_inflate_start (lua_State *L)
 
   // Need minimum 32kb dictionary size
   size_t out_len = 64*1024, out_total = 0;
-  uint8_t* out = colony_createbuffer(L, out_len);
+  colony_createbuffer(L, out_len);
 
   int status = tm_inflate_start(inflate, type);
   lua_pushnumber(L, out_total);

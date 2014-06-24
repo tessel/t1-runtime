@@ -287,8 +287,10 @@ int tm_inflate_write (tm_inflate_t _inflator, const uint8_t* in, size_t in_len, 
 
 int tm_inflate_end (tm_inflate_t _inflator, uint8_t* out, size_t out_len, size_t* out_total)
 {
+  (void) out;
+  (void) out_len;
+
   _tm_inflate_t* inflator = (_tm_inflate_t*) _inflator;
-  size_t out_written = lower_power_of_two(out_len);
   *out_total = 0;
 
   if (inflator->state != TM_END) {
