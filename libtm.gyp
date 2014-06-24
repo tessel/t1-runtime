@@ -480,6 +480,7 @@
         'src/tm_itoa.c',
         'src/tm_log.c',
         'src/tm_random.c',
+        'src/tm_deflate.c',
       ],
       "include_dirs": [
         'src/',
