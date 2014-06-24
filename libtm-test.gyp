@@ -15,6 +15,7 @@
         'src/',
       ],
       "dependencies": [
+        "libtm.gyp:miniz",
         "libtm.gyp:libtm",
       ]
     }
