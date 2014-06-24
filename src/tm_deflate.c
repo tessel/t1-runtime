@@ -84,7 +84,7 @@ int tm_deflate_start (tm_deflate_t _deflator, uint8_t type, size_t level)
   tdefl_status status;
 
   // create tdefl() compatible flags (we have to compose the low-level flags ourselves, or use tdefl_create_comp_flags_from_zip_params() but that means MINIZ_NO_ZLIB_APIS can't be defined).
-  mz_uint comp_flags = s_tdefl_num_probes[MZ_MIN(10, level)] | ((level <= 3) ? TDEFL_GREEDY_PARSING_FLAG : 0);
+  mz_uint comp_flags = s_tdefl_num_probes[MZ_MIN(10, level)] | ((level <= 3) ? TDEFL_GREEDY_PARSING_FLAG : 0) | (type == TM_ZLIB ? TDEFL_WRITE_ZLIB_HEADER : 0);
   if (!level)
     comp_flags |= TDEFL_FORCE_ALL_RAW_BLOCKS;
 
@@ -136,7 +136,9 @@ int tm_deflate_write (tm_deflate_t _deflator, const uint8_t* in, size_t in_len, 
     *in_total += in_read;
     *out_total += out_written;
 
-    deflator->crc32 = (uint32_t) mz_crc32(deflator->crc32, in, in_read);
+    if (deflator->type == TM_GZIP) {
+      deflator->crc32 = (uint32_t) mz_crc32(deflator->crc32, in, in_read);
+    }
     deflator->length += in_read;
 
     return status;
@@ -258,11 +260,17 @@ int tm_inflate_write (tm_inflate_t _inflator, const uint8_t* in, size_t in_len, 
   }
 
   if (inflator->state == TM_BODY) {
-    int status = tinfl_decompress(&inflator->c, in, &in_read, out, out, &out_written, TINFL_FLAG_HAS_MORE_INPUT);
+    int status = tinfl_decompress(&inflator->c, in, &in_read, out, out, &out_written, TINFL_FLAG_HAS_MORE_INPUT | (inflator->type == TM_ZLIB ? TINFL_FLAG_PARSE_ZLIB_HEADER : 0));
     *in_total += in_read;
     *out_total += out_written;
 
-    inflator->crc32 = (uint32_t) mz_crc32(inflator->crc32, out, out_written);
+    if (status == -1) {
+      printf("okay %d\n", status);
+    }
+
+    if (inflator->type == TM_GZIP) {
+      inflator->crc32 = (uint32_t) mz_crc32(inflator->crc32, out, out_written);
+    }
     inflator->length += out_written;
 
     if (status == TINFL_STATUS_DONE) {

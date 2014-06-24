@@ -891,7 +891,8 @@ static int l_tm_deflate_start (lua_State *L)
 
   tm_deflate_t deflate = (tm_deflate_t) lua_newuserdata(L, tm_deflate_alloc_size());
 
-  size_t out_len = 16*1024, out_total = 0;
+  // Need minimum 32kb dictionary size
+  size_t out_len = 64*1024, out_total = 0;
   uint8_t* out = colony_createbuffer(L, out_len);
 
   int status = tm_deflate_start(deflate, type, level);
@@ -952,7 +953,8 @@ static int l_tm_inflate_start (lua_State *L)
 
   tm_inflate_t inflate = (tm_inflate_t) lua_newuserdata(L, tm_inflate_alloc_size());
 
-  size_t out_len = 16*1024, out_total = 0;
+  // Need minimum 32kb dictionary size
+  size_t out_len = 64*1024, out_total = 0;
   uint8_t* out = colony_createbuffer(L, out_len);
 
   int status = tm_inflate_start(inflate, type);
@@ -1007,15 +1009,6 @@ static int l_tm_inflate_end (lua_State *L)
  return 3;
 }
 
-// int tm_deflate_start_gzip (tm_deflate_t deflator, size_t level, uint8_t* out, size_t out_len, size_t* out_total);
-// int tm_deflate_write (tm_deflate_t deflator, const uint8_t* in, size_t in_len, size_t* in_total, uint8_t* out, size_t out_len, size_t* out_total);
-// int tm_deflate_end_gzip (tm_deflate_t deflator, uint8_t* out, size_t out_len, size_t* out_total);
-//
-// size_t tm_inflate_alloc_size ();
-// int tm_inflate_alloc (tm_inflate_t* inflator);
-// int tm_inflate_start_gzip (tm_inflate_t inflator, uint8_t* out, size_t out_len, size_t* out_total);
-// int tm_inflate_write (tm_inflate_t inflator, const uint8_t* in, size_t in_len, size_t* in_total, uint8_t* out, size_t out_len, size_t* out_total);
-// int tm_inflate_end_gzip (tm_inflate_t _inflator, uint8_t* out, size_t out_len, size_t* out_total);
 
 /**
  * Random
