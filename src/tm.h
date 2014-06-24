@@ -148,12 +148,12 @@ typedef void* tm_inflate_t;
 int tm_deflate_alloc (tm_deflate_t* deflator);
 int tm_deflate_start_gzip (tm_deflate_t deflator, size_t level, uint8_t* out, size_t out_len, size_t* out_total);
 int tm_deflate_write (tm_deflate_t deflator, const uint8_t* in, size_t in_len, size_t* in_total, uint8_t* out, size_t out_len, size_t* out_total);
-int tm_deflate_end_gzip (tm_deflate_t deflator, uint8_t* out, size_t out_len, size_t* out_total);
+int tm_deflate_end_gzip (tm_deflate_t deflator, const uint8_t* in, size_t in_len, size_t* in_total, uint8_t* out, size_t out_len, size_t* out_total);
 
 int tm_inflate_alloc (tm_inflate_t* inflator);
 int tm_inflate_start_gzip (tm_inflate_t inflator, uint8_t* out, size_t out_len, size_t* out_total);
 int tm_inflate_write (tm_inflate_t inflator, const uint8_t* in, size_t in_len, size_t* in_total, uint8_t* out, size_t out_len, size_t* out_total);
-int tm_inflate_end_gzip (tm_inflate_t inflator, uint8_t* out, size_t out_len, size_t* out_total);
+int tm_inflate_end_gzip (tm_inflate_t _inflator, const uint8_t* in, size_t in_len, size_t* in_total, uint8_t* out, size_t out_len, size_t* out_total);
 
 // SSL
 

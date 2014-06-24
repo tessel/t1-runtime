@@ -13,6 +13,15 @@ static void tm_buffer_write_uint32le (uint8_t *p, uint32_t n)
   p[3] = n >> 24;
 }
 
+static uint32_t tm_buffer_read_uint32le (const uint8_t *p)
+{
+  return
+    (p[3] << 24) |
+    (p[2] << 16) |
+    (p[1] <<  8) |
+    (p[0] <<  0);
+}
+
 typedef struct _tm_deflate {
   tdefl_compressor c;
   uint32_t crc32;
@@ -87,13 +96,14 @@ int tm_deflate_write (tm_deflate_t _deflator, const uint8_t* in, size_t in_len, 
   return status;
 }
 
-int tm_deflate_end_gzip (tm_deflate_t _deflator, uint8_t* out, size_t out_len, size_t* out_total)
+int tm_deflate_end_gzip (tm_deflate_t _deflator, const uint8_t* in, size_t in_len, size_t* in_total, uint8_t* out, size_t out_len, size_t* out_total)
 {
   _tm_deflate_t* deflator = (_tm_deflate_t*) _deflator;
-  size_t out_written = out_len, in_read = 0;
+  size_t out_written = out_len, in_read = in_len;
   *out_total = 0;
 
-  int status = tdefl_compress(&deflator->c, NULL, &in_read, &out[*out_total], &out_written, TDEFL_FINISH);
+  int status = tdefl_compress(&deflator->c, in, &in_read, &out[*out_total], &out_written, TDEFL_FINISH);
+  *in_total += in_read;
   *out_total += out_written;
   if (status == TDEFL_STATUS_OKAY) {
     return ENOSPC;
@@ -166,37 +176,51 @@ int tm_inflate_write (tm_inflate_t _inflator, const uint8_t* in, size_t in_len, 
   if (inflator->need_header) {
     in = &in[10];
     in_read -= 10;
-    in_total += 10;
+    *in_total += 10;
   }
 
   int status = tinfl_decompress(&inflator->c, in, &in_read, out, out, &out_written, TINFL_FLAG_HAS_MORE_INPUT);
   *in_total += in_read;
   *out_total += out_written;
 
-  inflator->length += in_read;
+  inflator->crc32 = (uint32_t) mz_crc32(inflator->crc32, out, out_written);
+  inflator->length += out_written;
 
   return -status;
 }
 
-int tm_inflate_end_gzip (tm_inflate_t _inflator, uint8_t* out, size_t out_len, size_t* out_total)
+int tm_inflate_end_gzip (tm_inflate_t _inflator, const uint8_t* in, size_t in_len, size_t* in_total, uint8_t* out, size_t out_len, size_t* out_total)
 {
   _tm_inflate_t* inflator = (_tm_inflate_t*) _inflator;
-  size_t out_written = lower_power_of_two(out_len), in_read = 0;
+  size_t out_written = lower_power_of_two(out_len), in_read = in_len;
   *out_total = 0;
 
-  int status = tinfl_decompress(&inflator->c, NULL, &in_read, out, &out[*out_total], &out_written, 0);
+  int status = tinfl_decompress(&inflator->c, in, &in_read, out, &out[*out_total], &out_written, 0);
   *out_total += out_written;
+  *in_total -= in_read;
+  inflator->crc32 = (uint32_t) mz_crc32(inflator->crc32, in, in_read);
+
   if (status != TINFL_STATUS_DONE) {
     return EPERM;
   }
 
-  // if (out_len - *out_total < 8) {
-  //   return ENOSPC;
-  // }
-  //
-  // tm_buffer_write_uint32le(&out[*out_total + 0], deflator->crc32);
-  // tm_buffer_write_uint32le(&out[*out_total + 4], deflator->length);
-  // *out_total += 8;
+  if (in_len - in_read != 8) {
+    // trailing junk
+    return EINVAL;
+  }
+
+
+  // Checks crc32.
+  uint32_t crc = tm_buffer_read_uint32le(&in[in_read + 0]);
+  if (crc != inflator->crc32) {
+    return EINVAL;
+  }
+
+  // Checks length.
+  uint32_t length = tm_buffer_read_uint32le(&in[in_read + 4]);
+  if (length != inflator->length) {
+    return EINVAL;
+  }
 
   return 0;
 }
