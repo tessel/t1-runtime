@@ -16,6 +16,7 @@ static void tm_buffer_write_uint32le (uint8_t *p, uint32_t n)
 typedef struct _tm_deflate {
   tdefl_compressor c;
   uint32_t crc32;
+  uint32_t length;
 } _tm_deflate_t;
 
 int tm_deflate_alloc (tm_deflate_t* deflator)
@@ -64,6 +65,7 @@ int tm_deflate_start_gzip (tm_deflate_t _deflator, size_t level, uint8_t* out, s
   *out_total += out_written;
 
   deflator->crc32 = MZ_CRC32_INIT;
+  deflator->length = 0;
 
   return 0;
 }
@@ -80,6 +82,7 @@ int tm_deflate_write (tm_deflate_t _deflator, const uint8_t* in, size_t in_len, 
   *out_total += out_written;
 
   deflator->crc32 = (uint32_t) mz_crc32(deflator->crc32, in, in_read);
+  deflator->length += in_read;
 
   return status;
 }
@@ -87,10 +90,10 @@ int tm_deflate_write (tm_deflate_t _deflator, const uint8_t* in, size_t in_len, 
 int tm_deflate_end_gzip (tm_deflate_t _deflator, uint8_t* out, size_t out_len, size_t* out_total)
 {
   _tm_deflate_t* deflator = (_tm_deflate_t*) _deflator;
-  size_t out_written = out_len;
+  size_t out_written = out_len, in_read = 0;
   *out_total = 0;
 
-  int status = tdefl_compress(&deflator->c, NULL, 0, &out[*out_total], &out_written, TDEFL_FINISH);
+  int status = tdefl_compress(&deflator->c, NULL, &in_read, &out[*out_total], &out_written, TDEFL_FINISH);
   *out_total += out_written;
   if (status == TDEFL_STATUS_OKAY) {
     return ENOSPC;
@@ -103,8 +106,97 @@ int tm_deflate_end_gzip (tm_deflate_t _deflator, uint8_t* out, size_t out_len, s
   }
 
   tm_buffer_write_uint32le(&out[*out_total + 0], deflator->crc32);
-  tm_buffer_write_uint32le(&out[*out_total + 4], 0x0c + 1);
+  tm_buffer_write_uint32le(&out[*out_total + 4], deflator->length);
   *out_total += 8;
+
+  return 0;
+}
+
+
+
+typedef struct _tm_inflate {
+  tinfl_decompressor c;
+  uint32_t crc32;
+  uint32_t length;
+  uint8_t need_header;
+} _tm_inflate_t;
+
+int tm_inflate_alloc (tm_inflate_t* inflate)
+{
+  *inflate = (tm_inflate_t) calloc(1, sizeof(_tm_inflate_t));
+  return 0;
+}
+
+int tm_inflate_start_gzip (tm_inflate_t _inflator, uint8_t* out, size_t out_len, size_t* out_total)
+{
+  _tm_inflate_t* inflator = (_tm_inflate_t*) _inflator;
+  size_t out_written = out_len;
+  *out_total = 0;
+
+  // Initialize the low-level compressor.
+  tinfl_init(&inflator->c);
+
+  inflator->crc32 = MZ_CRC32_INIT;
+  inflator->length = 0;
+  inflator->need_header = 1;
+
+  return 0;
+}
+
+static unsigned long lower_power_of_two(unsigned long v)
+{
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    v++;
+    return v >> 1;
+}
+
+
+int tm_inflate_write (tm_inflate_t _inflator, const uint8_t* in, size_t in_len, size_t* in_total, uint8_t* out, size_t out_len, size_t* out_total)
+{
+  _tm_inflate_t* inflator = (_tm_inflate_t*) _inflator;
+  size_t in_read = in_len, out_written = lower_power_of_two(out_len);
+  *in_total = 0;
+  *out_total = 0;
+
+  if (inflator->need_header) {
+    in = &in[10];
+    in_read -= 10;
+    in_total += 10;
+  }
+
+  int status = tinfl_decompress(&inflator->c, in, &in_read, out, out, &out_written, TINFL_FLAG_HAS_MORE_INPUT);
+  *in_total += in_read;
+  *out_total += out_written;
+
+  inflator->length += in_read;
+
+  return -status;
+}
+
+int tm_inflate_end_gzip (tm_inflate_t _inflator, uint8_t* out, size_t out_len, size_t* out_total)
+{
+  _tm_inflate_t* inflator = (_tm_inflate_t*) _inflator;
+  size_t out_written = lower_power_of_two(out_len), in_read = 0;
+  *out_total = 0;
+
+  int status = tinfl_decompress(&inflator->c, NULL, &in_read, out, &out[*out_total], &out_written, 0);
+  *out_total += out_written;
+  if (status != TINFL_STATUS_DONE) {
+    return EPERM;
+  }
+
+  // if (out_len - *out_total < 8) {
+  //   return ENOSPC;
+  // }
+  //
+  // tm_buffer_write_uint32le(&out[*out_total + 0], deflator->crc32);
+  // tm_buffer_write_uint32le(&out[*out_total + 4], deflator->length);
+  // *out_total += 8;
 
   return 0;
 }
