@@ -28,9 +28,14 @@ typedef struct _tm_deflate {
   uint32_t length;
 } _tm_deflate_t;
 
+size_t tm_deflate_alloc_size ()
+{
+  return sizeof(_tm_deflate_t);
+}
+
 int tm_deflate_alloc (tm_deflate_t* deflator)
 {
-  *deflator = (tm_deflate_t) calloc(1, sizeof(_tm_deflate_t));
+  *deflator = (tm_deflate_t) calloc(1, tm_deflate_alloc_size());
   return 0;
 }
 
@@ -131,9 +136,14 @@ typedef struct _tm_inflate {
   uint8_t need_trailer;
 } _tm_inflate_t;
 
+size_t tm_inflate_alloc_size ()
+{
+  return sizeof(_tm_inflate_t);
+}
+
 int tm_inflate_alloc (tm_inflate_t* inflate)
 {
-  *inflate = (tm_inflate_t) calloc(1, sizeof(_tm_inflate_t));
+  *inflate = (tm_inflate_t) calloc(1, tm_inflate_alloc_size());
   return 0;
 }
 
