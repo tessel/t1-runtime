@@ -46,12 +46,6 @@ TEST doubles()
 	PASS();
 }
 
-SUITE(tm_buf)
-{
-	RUN_TEST(floats);
-	RUN_TEST(doubles);
-}
-
 
 TEST random_test()
 {
@@ -62,11 +56,6 @@ TEST random_test()
 	// print_buffer(buf, sizeof(buf));
 
 	PASS();
-}
-
-SUITE(tm_random)
-{
-	RUN_TEST(random_test);
 }
 
 
@@ -129,11 +118,15 @@ TEST tm_deflate_test()
 		// Compares result to "hello world"
 		ASSERT_BUF_N_EQ(in, helloworld, in_total);
 	}
+	
 	PASS();
 }
 
-SUITE(tm_deflate)
+SUITE(tm)
 {
+	RUN_TEST(floats);
+	RUN_TEST(doubles);
+	RUN_TEST(random_test);
 	RUN_TEST(tm_deflate_test);
 }
 
@@ -193,9 +186,7 @@ GREATEST_MAIN_DEFS();
 int main(int argc, char **argv)
 {
 	GREATEST_MAIN_BEGIN();      /* command-line arguments, initialization. */
-	RUN_SUITE(tm_buf);
-	RUN_SUITE(tm_random);
-	RUN_SUITE(tm_deflate);
+	RUN_SUITE(tm);
 	// RUN_SUITE(runtime);
 	GREATEST_MAIN_END();        /* display results */
 }
