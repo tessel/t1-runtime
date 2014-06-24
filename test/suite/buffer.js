@@ -167,3 +167,27 @@ var len = buf.write('\u00bd + \u00bc = \u00be', 4);
 console.log('#', len + " bytes: " + buf.toString('utf8', 4, 4 + len));
 ok(len == 12, 'written length is 12 byes')
 ok(buf.slice(4, 4 + 12).toString() == '\u00bd + \u00bc = \u00be', 'result was written')
+
+// copy on write -> write(type)(size) tests
+var writableFunctions = ["writeUInt8", "writeUInt16LE", "writeUInt16BE", "writeUInt32LE", "writeUInt32BE", "writeInt8", 
+													"writeInt16LE", "writeInt16BE", "writeInt32LE", "writeInt32BE", "writeFloatLE", "writeFloatBE", 
+													"writeDoubleLE", "writeDoubleBE"];
+for (var i = 0; i<writableFunctions.length; i++) {
+	var buf = new Buffer(256);
+	buf[writableFunctions[i]](0x55, 0)
+	console.log("old buf:", buf._oldBuffer, "new buf:", buf._newBuffer)
+	ok(buf._oldBuffer !== buf._newBuffer, "New buffer pointer is different than old buffer pointer");
+}
+
+
+// copy on write -> other copy and slice
+var buf = new Buffer(256);
+buf.slice(0, 10);
+console.log("old buf:", buf._oldBuffer, "new buf:", buf._newBuffer)
+ok(buf._oldBuffer !== buf._newBuffer, "New buffer pointer is different than old buffer pointer");
+
+var buf = new Buffer(256);
+var buf2 = new Buffer(256);
+buf.copy(buf2, 0, 0, buf.length);
+console.log("old buf:", buf2._oldBuffer, "new buf:", buf2._newBuffer)
+ok(buf2._oldBuffer !== buf2._newBuffer, "New buffer pointer is different than old buffer pointer");

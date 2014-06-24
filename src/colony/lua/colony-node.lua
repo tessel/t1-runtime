@@ -225,6 +225,8 @@ local buffer_proto = js_obj({
   slice = function (this, sourceStart, len)
     sourceStart = tonumber(sourceStart or 0) or 0
 
+    checkCopyOnWrite(this);
+
     if len == nil then
       len = this.length
     end
@@ -455,10 +457,12 @@ end
 
 function checkCopyOnWrite (this)
   if this._copyOnWrite then 
+    this._oldBuffer = getmetatable(this).buffer;
     local bufCopy = tm.buffer_create(getmetatable(this).bufferlen)
     tm.buffer_copy(getmetatable(this).buffer, bufCopy, 0, 0, getmetatable(this).bufferlen)
     getmetatable(this).buffer = bufCopy;
     this._copyOnWrite = false
+    this._newBuffer = getmetatable(this).buffer;
   end
 end
 
