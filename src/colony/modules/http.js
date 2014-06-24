@@ -317,6 +317,7 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
     })
   });
   self.connection.on('data', function listener (data) {
+    data = data.toString('utf8');
     var nparsed = parser.execute(data, 0, data.length);
     if (upgrade) {
       self.emit('upgrade', response, self.connection, (Buffer.isBuffer(data) ? data : new Buffer(data)).slice(nparsed));

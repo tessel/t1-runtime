@@ -38,6 +38,7 @@ function ensureSSLCtx () {
  */
 
 function TCPSocket (socket, _secure) {
+  Stream.Duplex.call(this);
   this.socket = socket;
   this._secure = _secure;
   this._outgoing = [];
@@ -56,7 +57,7 @@ function TCPSocket (socket, _secure) {
   process.on('tcp-close', this._closehandler)
 }
 
-util.inherits(TCPSocket, Stream);
+util.inherits(TCPSocket, Stream.Duplex);
 
 function isIP (host) {
   return host.match(/^[0-9.]+$/);
@@ -172,6 +173,10 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   });
 };
 
+TCPSocket.prototype._read = function (size) {
+  // TODO: start polling it again
+}
+
 TCPSocket.prototype.__listen = function () {
   var self = this;
   this.__listenid = setTimeout(function loop () {
@@ -203,7 +208,8 @@ TCPSocket.prototype.__listen = function () {
     }
 
     if (buf.length) {
-      self.emit('data', buf);
+      self.push(buf);
+      // TODO: stop polling if this returns false
     }
 
     self.__listenid = setTimeout(loop, 10);
@@ -221,7 +227,7 @@ TCPSocket.prototype.address = function () {
 // Maximum packet size CC can handle.
 var WRITE_PACKET_SIZE = 1024;
 
-TCPSocket.prototype.write = function (buf, cb) {
+TCPSocket.prototype._write = function (buf, encoding, cb) {
   var self = this;
 
   if (!Buffer.isBuffer(buf)) {
@@ -237,6 +243,7 @@ TCPSocket.prototype.write = function (buf, cb) {
   }
 
   this.__send();
+  cb(); // TODO: only once it actually sends
 };
 
 TCPSocket.prototype.__send = function () {
