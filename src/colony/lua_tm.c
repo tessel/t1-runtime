@@ -884,16 +884,17 @@ static int l_tm_itoa (lua_State* L)
  * deflate / inflate
  */
 
-static int l_tm_deflate_start_gzip (lua_State *L)
+static int l_tm_deflate_start (lua_State *L)
 {
-  size_t level = (size_t) lua_tonumber(L, 1);
+  uint8_t type = (uint8_t) lua_tonumber(L, 1);
+  size_t level = (size_t) lua_tonumber(L, 2);
 
   tm_deflate_t deflate = (tm_deflate_t) lua_newuserdata(L, tm_deflate_alloc_size());
 
   size_t out_len = 16*1024, out_total = 0;
   uint8_t* out = colony_createbuffer(L, out_len);
 
-  int status = tm_deflate_start_gzip(deflate, level, out, out_len, &out_total);
+  int status = tm_deflate_start(deflate, type, level);
   lua_pushnumber(L, out_total);
 
   lua_pushnumber(L, status);
@@ -926,7 +927,7 @@ static int l_tm_deflate_write (lua_State *L)
   return 5;
 }
 
-static int l_tm_deflate_end_gzip (lua_State *L)
+static int l_tm_deflate_end (lua_State *L)
 {
   tm_deflate_t deflate = (tm_deflate_t) lua_touserdata(L, 1);
   size_t out_len = 0;
@@ -936,7 +937,7 @@ static int l_tm_deflate_end_gzip (lua_State *L)
   // TODO check for < half of buffer available
 
   size_t out_written = 0;
-  int status = tm_deflate_end_gzip(deflate, &out[out_total], out_len - out_total, &out_written);
+  int status = tm_deflate_end(deflate, &out[out_total], out_len - out_total, &out_written);
 
   lua_pushvalue(L, 2);
   lua_pushnumber(L, out_total + out_written);
@@ -945,18 +946,20 @@ static int l_tm_deflate_end_gzip (lua_State *L)
   return 3;
 }
 
-static int l_tm_inflate_start_gzip (lua_State *L)
+static int l_tm_inflate_start (lua_State *L)
 {
- tm_inflate_t inflate = (tm_inflate_t) lua_newuserdata(L, tm_inflate_alloc_size());
+  uint8_t type = (uint8_t) lua_tonumber(L, 1);
 
- size_t out_len = 16*1024, out_total = 0;
- uint8_t* out = colony_createbuffer(L, out_len);
+  tm_inflate_t inflate = (tm_inflate_t) lua_newuserdata(L, tm_inflate_alloc_size());
 
- int status = tm_inflate_start_gzip(inflate, out, out_len, &out_total);
- lua_pushnumber(L, out_total);
+  size_t out_len = 16*1024, out_total = 0;
+  uint8_t* out = colony_createbuffer(L, out_len);
 
- lua_pushnumber(L, status);
- return 4;
+  int status = tm_inflate_start(inflate, type);
+  lua_pushnumber(L, out_total);
+
+  lua_pushnumber(L, status);
+  return 4;
 }
 
 static int l_tm_inflate_write (lua_State *L)
@@ -985,7 +988,7 @@ static int l_tm_inflate_write (lua_State *L)
  return 5;
 }
 
-static int l_tm_inflate_end_gzip (lua_State *L)
+static int l_tm_inflate_end (lua_State *L)
 {
  tm_inflate_t inflate = (tm_inflate_t) lua_touserdata(L, 1);
  size_t out_len = 0;
@@ -995,7 +998,7 @@ static int l_tm_inflate_end_gzip (lua_State *L)
  // TODO check for < half of buffer available
 
  size_t out_written = 0;
- int status = tm_inflate_end_gzip(inflate, &out[out_total], out_len - out_total, &out_written);
+ int status = tm_inflate_end(inflate, &out[out_total], out_len - out_total, &out_written);
 
  lua_pushvalue(L, 2);
  lua_pushnumber(L, out_total + out_written);
@@ -1235,14 +1238,14 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "fs_dir_close", l_tm_fs_dir_close },
 
     // deflate
-    { "deflate_start_gzip", l_tm_deflate_start_gzip },
+    { "deflate_start", l_tm_deflate_start },
     { "deflate_write", l_tm_deflate_write },
-    { "deflate_end_gzip", l_tm_deflate_end_gzip },
+    { "deflate_end", l_tm_deflate_end },
 
     // inflate
-    { "inflate_start_gzip", l_tm_inflate_start_gzip },
+    { "inflate_start", l_tm_inflate_start },
     { "inflate_write", l_tm_inflate_write },
-    { "inflate_end_gzip", l_tm_inflate_end_gzip },
+    { "inflate_end", l_tm_inflate_end },
 
     // random
     { "random_bytes", l_tm_random_bytes },
@@ -1265,6 +1268,10 @@ LUALIB_API int luaopen_tm (lua_State *L)
 
     { NULL, NULL }
   });
+
+  luaL_setfieldnumber(L, "RAW", TM_RAW);
+  luaL_setfieldnumber(L, "ZLIB", TM_ZLIB);
+  luaL_setfieldnumber(L, "GZIP", TM_GZIP);
 
   luaL_setfieldnumber(L, "FS_TYPE_INVALID", TM_FS_TYPE_INVALID);
   luaL_setfieldnumber(L, "FS_TYPE_FILE", TM_FS_TYPE_FILE);

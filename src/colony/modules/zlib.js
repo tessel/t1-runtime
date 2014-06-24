@@ -3,7 +3,7 @@ var Duplex = require('stream').Duplex;
 
 function createGzip () {
   var stream = new Duplex();
-  var _ = tm.deflate_start_gzip(1)
+  var _ = tm.deflate_start(tm.GZIP, 1)
     , status = _[3]
 
   if (status != 0) {
@@ -36,7 +36,7 @@ function createGzip () {
   stream.end = function () {
     Duplex.prototype.end.call(this);
 
-    var _ = tm.deflate_end_gzip(this.deflate, this.out, this.out_total)
+    var _ = tm.deflate_end(this.deflate, this.out, this.out_total)
       , status = _[2];
 
     if (status != 0) {
@@ -53,7 +53,7 @@ function createGzip () {
 
 function createGunzip () {
   var stream = new Duplex();
-  var _ = tm.inflate_start_gzip()
+  var _ = tm.inflate_start(tm.GZIP)
     , status = _[3]
 
   if (status != 0) {
@@ -86,7 +86,7 @@ function createGunzip () {
   stream.end = function () {
     Duplex.prototype.end.call(this);
 
-    var _ = tm.inflate_end_gzip(this.inflate, this.out, this.out_total)
+    var _ = tm.inflate_end(this.inflate, this.out, this.out_total)
       , status = _[2];
 
     if (status != 0) {

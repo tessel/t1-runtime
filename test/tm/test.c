@@ -82,17 +82,15 @@ TEST tm_deflate_test()
 		tm_deflate_t deflator;
 		tm_deflate_alloc(&deflator);
 
-		ASSERT_EQ(tm_deflate_start_gzip(deflator, 1, &out[out_total], out_len, &out_written), 0);
-		out_total += out_written;
-		ASSERT_EQ(out_total, 10);
-		ASSERT_EQ(out[0], 0x1F); // magic
-		ASSERT_EQ(out[1], 0x8b); // magic
+		ASSERT_EQ(tm_deflate_start(deflator, TM_GZIP, 1), 0);
 
 		ASSERT_EQ(tm_deflate_write(deflator, helloworld, helloworld_len, &in_read, &out[out_total], out_len - out_total, &out_written), 0);
 		out_total += out_written;
+		ASSERT_EQ(out[0], 0x1F); // magic
+		ASSERT_EQ(out[1], 0x8b); // magic
 		ASSERT_EQ(in_read, helloworld_len);
 
-		ASSERT_EQ(tm_deflate_end_gzip(deflator, &out[out_total], out_len - out_total, &out_written), 0);
+		ASSERT_EQ(tm_deflate_end(deflator, &out[out_total], out_len - out_total, &out_written), 0);
 		out_total += out_written;
 
 		// Check compiled version.
@@ -105,8 +103,7 @@ TEST tm_deflate_test()
 		tm_inflate_t inflator;
 		tm_inflate_alloc(&inflator);
 
-		ASSERT_EQ(tm_inflate_start_gzip(inflator, &in[in_total], in_len, &in_written), 0);
-		in_total += in_written;
+		ASSERT_EQ(tm_inflate_start(inflator, TM_GZIP), 0);
 
 		out_len = out_total;
 		for (size_t offset = 0; offset < out_len; ) {
@@ -120,7 +117,7 @@ TEST tm_deflate_test()
 			in_total += in_written;
 		}
 
-		ASSERT_EQ(tm_inflate_end_gzip(inflator, &in[in_total], in_len - in_total, &in_written), 0);
+		ASSERT_EQ(tm_inflate_end(inflator, &in[in_total], in_len - in_total, &in_written), 0);
 		in_total += in_written;
 
 		// Compares result to "hello world"
