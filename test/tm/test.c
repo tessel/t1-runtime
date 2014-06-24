@@ -92,7 +92,7 @@ TEST tm_deflate_test()
 		out_total += out_written;
 		ASSERT_EQ(in_read, helloworld_len);
 
-		ASSERT_EQ(tm_deflate_end_gzip(deflator, helloworld, 0, &in_read, &out[out_total], out_len - out_total, &out_written), 0);
+		ASSERT_EQ(tm_deflate_end_gzip(deflator, &out[out_total], out_len - out_total, &out_written), 0);
 		out_total += out_written;
 
 		// Check compiled version.
@@ -108,11 +108,19 @@ TEST tm_deflate_test()
 		ASSERT_EQ(tm_inflate_start_gzip(inflator, &in[in_total], in_len, &in_written), 0);
 		in_total += in_written;
 
-		ASSERT_EQ(tm_inflate_write(inflator, &out[out_read], out_total, &out_read, &in[in_total], in_len - in_total, &in_written), 0);
-		out_total -= out_read;
-		in_total += in_written;
+		out_len = out_total;
+		for (size_t offset = 0; offset < out_len; ) {
+			size_t in_chunk_size = out_len - offset < 10 ? out_len - offset : 10;
+			out_read = 0;
+			int status = tm_inflate_write(inflator, &out[out_read + offset], in_chunk_size, &out_read, &in[in_total], in_len - in_total, &in_written);
+			ASSERT_EQ(status, 0);
+			ASSERT_FALSE(out_read == 0 && in_written == 0);
 
-		ASSERT_EQ(tm_inflate_end_gzip(inflator, &out[out_read], out_total, &out_read, &in[in_total], in_len - in_total, &in_written), 0);
+			offset += out_read;
+			in_total += in_written;
+		}
+
+		ASSERT_EQ(tm_inflate_end_gzip(inflator, &in[in_total], in_len - in_total, &in_written), 0);
 		in_total += in_written;
 
 		// Compares result to "hello world"
