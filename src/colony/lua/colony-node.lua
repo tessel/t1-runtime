@@ -836,7 +836,8 @@ local LUA_DIRSEP = '/'
 -- https://github.com/leafo/lapis/blob/master/lapis/cmd/path.lua
 local function path_normalize (path)
   while string.find(path, "%w+/%.%./") or string.find(path, "/%./") do
-    path = string.gsub(path, "%w+/%.%./", "/")
+    path = string.gsub(path, "/[%w-_]+/%.%./", "/")
+    path = string.gsub(path, "[%w-_]+/%.%./", "")
     path = string.gsub(path, "/%./", "/")
   end
   return path
