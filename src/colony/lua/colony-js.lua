@@ -601,7 +601,7 @@ global.Object.defineProperty = function (this, obj, prop, config)
   if type(obj) ~= 'table' then
     error(js_new(global.TypeError, 'Object.defineProperty called on non-object'))
   end
-  if config.value then
+  if config.value ~= nil then
     rawset(obj, prop, config.value)
   end
   if config.get then
