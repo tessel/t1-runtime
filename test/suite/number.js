@@ -15,6 +15,6 @@ console.log(Number.isSafeInteger(2e53) == false ? 'ok' : 'not ok - isSafeInteger
 console.log(Number.isSafeInteger((9007199254740991)) == true ? 'ok' : 'not ok - isSafeInteger 2e53 -1');
 console.log(Number.isSafeInteger(3) == true ? 'ok' : 'not ok - isSafeInteger 3');
 
-console.log(Number.parseInt('4') == 4 ? 'ok' : 'not ok - parseInt int string');
+console.log(Number.parseInt('4') == 4 ? 'ok' : 'not ok - parseInt int string');\
 
-console.log(Number.parseFloat('4.3') == 4.3 ? 'ok' : 'not ok - parseFloat float string');
+console.log(Number.parseFloat('4.3') == 4.3 ? 'ok' : 'not ok - parseFloat float string');\
