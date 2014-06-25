@@ -164,6 +164,7 @@ function ServerRequest (connection) {
     })
   })
   this.connection.on('data', function (data) {
+    data = data.toString('utf8');
     // console.log('received', data.length, data.substr(0, 15));
     parser.execute(data, 0, data.length);
   })
