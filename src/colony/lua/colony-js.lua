@@ -564,6 +564,8 @@ bool_proto.constructor = global.Boolean
 
 -- Number
 
+global.NaN = 0/0
+
 global.Number = function (ths, n)
   return tonumber(n)
 end
