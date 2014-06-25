@@ -570,8 +570,12 @@ end
 global.Number.prototype = num_proto
 num_proto.constructor = global.Number
 
-global.Number.isFinite = function(this, obj)
-  return arg ~= math.huge and arg ~= -math.huge and global.isNaN(this, arg)
+global.Number.isFinite = function(this, arg)
+  if type(arg) == 'number' then
+    return arg ~= math.huge and arg ~= -math.huge and not global.isNaN(this, arg)
+  else
+    return false
+  end
 end
 
 -- Object
