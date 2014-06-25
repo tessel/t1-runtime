@@ -881,6 +881,136 @@ static int l_tm_itoa (lua_State* L)
 }
 
 /**
+ * deflate / inflate
+ */
+
+static int l_tm_deflate_start (lua_State *L)
+{
+  uint8_t type = (uint8_t) lua_tonumber(L, 1);
+  size_t level = (size_t) lua_tonumber(L, 2);
+
+  tm_deflate_t deflate = (tm_deflate_t) lua_newuserdata(L, tm_deflate_alloc_size());
+
+  // Need minimum 32kb dictionary size
+  size_t out_len = 64*1024, out_total = 0;
+  colony_createbuffer(L, out_len);
+
+  int status = tm_deflate_start(deflate, type, level);
+  lua_pushnumber(L, out_total);
+
+  lua_pushnumber(L, status);
+  return 4;
+}
+
+static int l_tm_deflate_write (lua_State *L)
+{
+  tm_deflate_t deflate = (tm_deflate_t) lua_touserdata(L, 1);
+  size_t out_len = 0;
+  uint8_t* out = colony_tobuffer(L, 2, &out_len);
+  size_t out_total = (size_t) lua_tonumber(L, 3);
+
+  size_t in_len = 0;
+  const uint8_t* in = colony_toconstdata(L, 4, &in_len);
+  size_t in_total = (size_t) lua_tonumber(L, 5);
+
+  // TODO check for < half of buffer available
+
+  size_t out_written = 0, in_written = 0;
+  int status = tm_deflate_write(deflate, &in[in_total], in_len - in_total, &in_written, &out[out_total], out_len - out_total, &out_written);
+
+  lua_pushvalue(L, 2);
+  lua_pushnumber(L, out_total + out_written);
+
+  lua_pushvalue(L, 4);
+  lua_pushnumber(L, in_total + in_written);
+
+  lua_pushnumber(L, status);
+  return 5;
+}
+
+static int l_tm_deflate_end (lua_State *L)
+{
+  tm_deflate_t deflate = (tm_deflate_t) lua_touserdata(L, 1);
+  size_t out_len = 0;
+  uint8_t* out = colony_tobuffer(L, 2, &out_len);
+  size_t out_total = (size_t) lua_tonumber(L, 3);
+
+  // TODO check for < half of buffer available
+
+  size_t out_written = 0;
+  int status = tm_deflate_end(deflate, &out[out_total], out_len - out_total, &out_written);
+
+  lua_pushvalue(L, 2);
+  lua_pushnumber(L, out_total + out_written);
+
+  lua_pushnumber(L, status);
+  return 3;
+}
+
+static int l_tm_inflate_start (lua_State *L)
+{
+  uint8_t type = (uint8_t) lua_tonumber(L, 1);
+
+  tm_inflate_t inflate = (tm_inflate_t) lua_newuserdata(L, tm_inflate_alloc_size());
+
+  // Need minimum 32kb dictionary size
+  size_t out_len = 64*1024, out_total = 0;
+  colony_createbuffer(L, out_len);
+
+  int status = tm_inflate_start(inflate, type);
+  lua_pushnumber(L, out_total);
+
+  lua_pushnumber(L, status);
+  return 4;
+}
+
+static int l_tm_inflate_write (lua_State *L)
+{
+ tm_inflate_t inflate = (tm_inflate_t) lua_touserdata(L, 1);
+ size_t out_len = 0;
+ uint8_t* out = colony_tobuffer(L, 2, &out_len);
+ size_t out_total = (size_t) lua_tonumber(L, 3);
+
+ size_t in_len = 0;
+ const uint8_t* in = colony_toconstdata(L, 4, &in_len);
+ size_t in_total = (size_t) lua_tonumber(L, 5);
+
+ // TODO check for < half of buffer available
+
+ size_t out_written = 0, in_written = 0;
+ int status = tm_inflate_write(inflate, &in[in_total], in_len - in_total, &in_written, &out[out_total], out_len - out_total, &out_written);
+
+ lua_pushvalue(L, 2);
+ lua_pushnumber(L, out_total + out_written);
+
+ lua_pushvalue(L, 4);
+ lua_pushnumber(L, in_total + in_written);
+
+ lua_pushnumber(L, status);
+ return 5;
+}
+
+static int l_tm_inflate_end (lua_State *L)
+{
+ tm_inflate_t inflate = (tm_inflate_t) lua_touserdata(L, 1);
+ size_t out_len = 0;
+ uint8_t* out = colony_tobuffer(L, 2, &out_len);
+ size_t out_total = (size_t) lua_tonumber(L, 3);
+
+ // TODO check for < half of buffer available
+
+ size_t out_written = 0;
+ int status = tm_inflate_end(inflate, &out[out_total], out_len - out_total, &out_written);
+
+ lua_pushvalue(L, 2);
+ lua_pushnumber(L, out_total + out_written);
+
+ lua_pushnumber(L, status);
+ return 3;
+}
+
+
+/**
  * Random
  */
 
@@ -1100,6 +1230,16 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "fs_dir_read", l_tm_fs_dir_read },
     { "fs_dir_close", l_tm_fs_dir_close },
 
+    // deflate
+    { "deflate_start", l_tm_deflate_start },
+    { "deflate_write", l_tm_deflate_write },
+    { "deflate_end", l_tm_deflate_end },
+
+    // inflate
+    { "inflate_start", l_tm_inflate_start },
+    { "inflate_write", l_tm_inflate_write },
+    { "inflate_end", l_tm_inflate_end },
+
     // random
     { "random_bytes", l_tm_random_bytes },
     { "hmac_sha1", l_tm_hmac_sha1 },
@@ -1121,6 +1261,10 @@ LUALIB_API int luaopen_tm (lua_State *L)
 
     { NULL, NULL }
   });
+
+  luaL_setfieldnumber(L, "RAW", TM_RAW);
+  luaL_setfieldnumber(L, "ZLIB", TM_ZLIB);
+  luaL_setfieldnumber(L, "GZIP", TM_GZIP);
 
   luaL_setfieldnumber(L, "FS_TYPE_INVALID", TM_FS_TYPE_INVALID);
   luaL_setfieldnumber(L, "FS_TYPE_FILE", TM_FS_TYPE_FILE);

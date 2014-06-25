@@ -13,6 +13,8 @@
     "fortuna_inc_path": "./deps/fortuna-inc",
     "dlmalloc_path": "./deps/dlmalloc",
     "utf8proc_path": "./deps/utf8proc",
+    "miniz_path": "./deps/miniz",
+    "miniz_inc_path": "./deps/miniz-inc",
     'enable_ssl%': 0,
   },
 

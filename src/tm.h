@@ -19,7 +19,7 @@ extern "C" {
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>  
+#include <errno.h>
 #include <time.h>
 #include <stdbool.h>
 
@@ -140,6 +140,29 @@ int tm_entropy_seed (void);
 int tm_entropy_add (const uint8_t* buf, size_t buf_size);
 int tm_random_bytes (uint8_t* buf, size_t buf_size, size_t* read);
 
+// deflate
+
+typedef void* tm_deflate_t;
+typedef void* tm_inflate_t;
+
+enum {
+  TM_RAW = 0,
+  TM_ZLIB = 1,
+  TM_GZIP = 2
+} tm_flate_t;
+
+size_t tm_deflate_alloc_size ();
+int tm_deflate_alloc (tm_deflate_t* deflator);
+int tm_deflate_start (tm_deflate_t deflator, uint8_t type, size_t level);
+int tm_deflate_write (tm_deflate_t deflator, const uint8_t* in, size_t in_len, size_t* in_total, uint8_t* out, size_t out_len, size_t* out_total);
+int tm_deflate_end (tm_deflate_t deflator, uint8_t* out, size_t out_len, size_t* out_total);
+
+size_t tm_inflate_alloc_size ();
+int tm_inflate_alloc (tm_inflate_t* inflator);
+int tm_inflate_start (tm_inflate_t inflator, uint8_t type);
+int tm_inflate_write (tm_inflate_t inflator, const uint8_t* in, size_t in_len, size_t* in_total, uint8_t* out, size_t out_len, size_t* out_total);
+int tm_inflate_end (tm_inflate_t _inflator, uint8_t* out, size_t out_len, size_t* out_total);
+
 // SSL
 
 #define SSL_SESSION_ID_SIZE                     32
@@ -198,7 +221,7 @@ typedef enum {
   TM_FS_TYPE_MOUNT_FAT,
 } tm_fs_type_t;
 
-#include <sys/stat.h> 
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <dirent.h>
 

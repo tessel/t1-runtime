@@ -338,7 +338,7 @@
       "product_name": "fortuna",
       "type": "static_library",
       "defines": [
-        "C_H", 
+        "C_H",
       ],
       "cflags": [
         "-fno-strict-aliasing",
@@ -394,6 +394,33 @@
           "<(utf8proc_path)/"
         ],
       },
+    },
+
+    {
+      "target_name": "miniz",
+      "product_name": "miniz",
+      "type": "static_library",
+      "defines": [
+        "MINIZ_NO_ARCHIVE_APIS",
+        "MINIZ_NO_ZLIB_APIS",
+        "MINIZ_NO_MALLOC",
+      ],
+      "sources": [
+        "<(miniz_path)/miniz.c"
+      ],
+      "include_dirs": [
+        "<(miniz_inc_path)"
+      ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          '<(miniz_inc_path)'
+        ],
+        "defines": [
+          "MINIZ_NO_ARCHIVE_APIS",
+          "MINIZ_NO_ZLIB_APIS",
+          "MINIZ_NO_MALLOC",
+        ],
+      }
     },
 
 
@@ -453,6 +480,7 @@
         'src/tm_itoa.c',
         'src/tm_log.c',
         'src/tm_random.c',
+        'src/tm_deflate.c',
       ],
       "include_dirs": [
         'src/',
@@ -466,6 +494,7 @@
         "fortuna",
         "dlmalloc",
         "utf8proc",
+        "miniz",
       ],
       'direct_dependent_settings': {
         'include_dirs': [
