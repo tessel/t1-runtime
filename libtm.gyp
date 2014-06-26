@@ -411,6 +411,9 @@
       "include_dirs": [
         "<(miniz_inc_path)"
       ],
+      "cflags": [
+        "-Wno-strict-aliasing",
+      ],
       'direct_dependent_settings': {
         'include_dirs': [
           '<(miniz_inc_path)'
