@@ -161,9 +161,19 @@ str_proto.indexOf = function (str, needle)
   if ret == null then return -1; else return ret - 1; end
 end
 
-str_proto.lastIndexOf = function (str, needle)
-  local ret = string.find(string.reverse(str), tostring(needle), 1, true)
-  if ret == null then return -1; else return str.length - ret; end
+str_proto.lastIndexOf = function (str, needle, fromIndex)
+  local len = string.len(str)
+
+  if fromIndex ~= nil then
+    if fromIndex < 0 or fromIndex >= len then return -1; end
+    fromIndex = -fromIndex - 1
+  else
+    fromIndex = 1
+  end
+
+  local ret = string.find(string.reverse(str), tostring(needle), fromIndex, true)
+  
+  if ret == null then return -1; else return len - ret; end
 end
 
 str_proto.toString = function (this)
