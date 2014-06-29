@@ -156,8 +156,18 @@ str_proto.toUpperCase = function (str)
   return string.upper(str)
 end
 
-str_proto.indexOf = function (str, needle)
-  local ret = string.find(str, tostring(needle), 1, true)
+str_proto.indexOf = function (str, needle, fromIndex)
+
+  if needle == '' then
+    if fromIndex < str.length then return fromIndex; else return str.length; end
+  end
+
+  if fromIndex == nil or fromIndex < 0 then
+    fromIndex = 1
+  elseif fromIndex > str.length then return -1;
+  end
+
+  local ret = string.find(str, tostring(needle), fromIndex, true)
   if ret == null then return -1; else return ret - 1; end
 end
 
