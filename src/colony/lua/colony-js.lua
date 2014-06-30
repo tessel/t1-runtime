@@ -588,6 +588,8 @@ bool_proto.constructor = global.Boolean
 
 -- Number
 
+global.NaN = 0/0
+
 global.Number = function (ths, n)
   return tonumber(n)
 end
@@ -600,6 +602,38 @@ global.Number.isFinite = function(this, arg)
   else
     return false
   end
+end
+
+global.Number.isNaN = function (this, arg)
+  if type(arg) == 'number' then
+    return global.isNaN(this, arg)
+  else
+    return false
+  end
+end
+
+global.Number.isSafeInteger = function (this, arg)
+  if type(arg) == 'number' then
+    if global.Number.isFinite(this, arg) then
+      if math.floor(arg) == arg then
+        return math.abs(arg) <= 9007199254740991
+      else
+        return false
+      end
+    else
+      return false
+    end
+  else
+    return false
+  end
+end
+
+global.Number.parseInt = function (this, str, radix)
+  return global.parseInt(this, str, radix)
+end
+
+global.Number.parseFloat = function (this, str)
+  return global.parseFloat(this, str)
 end
 
 -- Object
