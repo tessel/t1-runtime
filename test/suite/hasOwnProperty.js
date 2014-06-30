@@ -16,3 +16,7 @@ var b = new Buffer(1);
 b.foo = 1;
 ok(b.hasOwnProperty('foo') === true, 'buffer hasOwnProperty positive')
 ok(b.hasOwnProperty('bar') === false, 'buffer hasOwnProperty negative')
+
+var s = 'string';
+ok(s.hasOwnProperty('length') === true, 'string hasOwnProperty positive')
+ok(s.hasOwnProperty('bar') === false, 'string hasOwnProperty negative')

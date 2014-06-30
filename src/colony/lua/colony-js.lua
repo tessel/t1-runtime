@@ -274,6 +274,10 @@ obj_proto.hasInstance = function (ths, p)
 end
 
 obj_proto.hasOwnProperty = function (ths, p)
+  if type(ths) == 'string' then
+    return p == 'length'
+  end
+
   if type(ths) == 'function' then
     ths = js_func_proxy(ths)
   end
