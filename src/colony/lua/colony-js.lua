@@ -182,7 +182,7 @@ str_proto.lastIndexOf = function (str, needle, fromIndex)
   end
 
   local ret = string.find(string.reverse(str), tostring(needle), fromIndex, true)
-  
+
   if ret == null then return -1; else return len - ret; end
 end
 
@@ -258,6 +258,8 @@ obj_proto.toString = function (this)
     return '[object Array]'
   elseif type(this) == 'function' then
     return '[object Function]'
+  elseif type(this) == 'string' then
+    return '[object String]'
   elseif a and a.constructor and a.constructor.name then
     return '[object ' .. a.constructor.name .. ']'
   else
