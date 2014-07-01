@@ -337,12 +337,8 @@ end
 
 -- array prototype
 
-arr_proto.toString = function (ths)
-  local str = ''
-  for i=0,(ths.length or 0)-1 do
-    str = str .. tostring(ths[i]) .. (i == ths.length-1 and '' or ',')
-  end
-  return str
+arr_proto.toString = function (this)
+  return arr_proto.join(this, ',')
 end
 
 arr_proto.push = function (this, ...)
@@ -1345,6 +1341,27 @@ if type(hs) == 'table' then
       error(js_new(global.TypeError, 'Cannot call RegExp::match on non-regex'))
     end
 
+    if string.find(regex.flags or '', "g") then
+      local data = tostring(this)
+      local ret, count, idx = {}, 0, 1
+      while true do
+        local rc = hs.re_exec(cre, string.sub(data, idx), nil, hsmatchc, hsmatch, 0)
+        if rc ~= 0 then
+          break
+        end
+
+        local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
+        if so == -1 or eo == -1 then
+          break
+        end
+
+        rawset(ret, count, string.sub(data, idx + so, idx + eo - 1))
+        count = count + 1
+        idx = idx + eo
+      end
+      return js_arr(ret, count)
+    end
+
     local data = tostring(this)
     local rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
     if rc ~= 0 then
@@ -1357,6 +1374,7 @@ if type(hs) == 'table' then
       table.insert(ret, pos, string.sub(data, so + 1, eo))
       pos = pos + 1
     end
+    print('--->', pos)
     return js_arr(ret, pos)
   end
 
