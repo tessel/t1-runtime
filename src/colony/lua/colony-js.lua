@@ -467,7 +467,7 @@ arr_proto.sort = function (this, fn)
   return this
 end
 
-arr_proto.join = function (ths, ...)
+arr_proto.join = function (this, ...)
   local args = table.pack(...)
   local str = ','
   if args.length >= 1 then
@@ -479,9 +479,12 @@ arr_proto.join = function (ths, ...)
   end
 
   local _r = ''
-  for i=0,ths.length-1 do
-    if not ths[i] or ths[i] == _null then _r = _r .. str
-    else _r = _r .. ths[i] .. str end
+  for i=0,this.length-1 do
+    if this[i] == nil or this[i] == _null then
+      _r = _r .. str
+    else
+      _r = _r .. this[i] .. str
+      end
   end
   return string.sub(_r, 1, string.len(_r) - string.len(str))
 end

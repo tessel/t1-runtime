@@ -1,4 +1,4 @@
-/* test rig */ var t = 1, tmax = 10
+/* test rig */ var t = 1, tmax = 44
 function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + ' -', d); }
 console.log(t + '..' + tmax);
 ok(process.versions.colony, 'running in colony')
@@ -128,3 +128,8 @@ ok(sum == 12, 'Array::reduce called on non-array object succeeds');
 // Array creation
 var a = Array(1,2,3)
 ok(arreq(a, [1,2,3]), 'Array(1,2,3) == [1,2,3]')
+
+// Array join
+ok([1,2,3].join(',') == '1,2,3');
+ok([1].join(',') == '1');
+ok([null, null, null].join(',') == ',,');
