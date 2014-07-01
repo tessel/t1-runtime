@@ -1145,7 +1145,12 @@ global.isNaN = function (this, arg)
 end
 
 global.parseFloat = function (ths, str)
-  return tonumber(tostring(str), 10) or (0/0)
+  v = tonumber(tostring(str), 10)
+  if v == nil then
+    return (0/0)
+  else
+    return v
+  end
 end
 
 global.parseInt = function (ths, str, radix)
@@ -1158,7 +1163,12 @@ global.parseInt = function (ths, str, radix)
   if type(str) ~= 'number' then
     str = tostring(str or 'null')
   end
-  return math.floor(tonumber(str, radix) or (0/0))
+  v = tonumber(str, radix)
+  if v == nil then
+    return (0/0)
+  else
+    return math.floor(v)
+  end
 end
 
 -- Date
