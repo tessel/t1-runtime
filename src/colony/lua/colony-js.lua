@@ -1145,7 +1145,7 @@ global.isNaN = function (this, arg)
 end
 
 global.parseFloat = function (ths, str)
-  return tonumber(tostring(str), 10) or 0
+  return tonumber(tostring(str), 10) or (0/0)
 end
 
 global.parseInt = function (ths, str, radix)
