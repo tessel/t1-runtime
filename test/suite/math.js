@@ -99,3 +99,7 @@ ok((Math.round(1.005*100)/100) == 1, 'Math.round(1.005*100)/100');
 
 // etc
 ok(Math.pow(2, 2) == 4, 'Math.pow')
+
+// nan
+console.log('#', String(0/0))
+ok(String(0/0) == 'NaN', 'NaN is NaN and not nan');
