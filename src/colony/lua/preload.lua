@@ -17,7 +17,7 @@ local colony = require('colony')
 -- This is temporary until we can do global._arr in C extension methods
 _G._colony = colony
 
--- "Precache" builtin library code as functions. 
+-- "Precache" builtin library code as functions.
 -- This gets moved into colony.cache when run, as do all modules.
 colony.precache = {}
 for k, v in pairs(_builtin) do
@@ -56,7 +56,10 @@ if not _G.COLONY_EMBED then
   -- This is temporary until we have proper compilation in C.
   colony._load = function (file)
     -- Compile JS script before running.
-    os.execute('colony-compiler -m ' .. file .. ' > /tmp/colonyunique')
+    local status = os.execute('colony-compiler -m ' .. file .. ' > /tmp/colonyunique')
+    if status ~= 0 then
+      os.exit(status)
+    end
     local file = io.open('/tmp/colonyunique', 'r')
     local output = file:read('*all')
     file:close()
@@ -65,7 +68,7 @@ if not _G.COLONY_EMBED then
 end
 
 -- Set up builtin dependencies
-do 
+do
   local Readable = colony.run('stream').Readable
   local Writable = colony.run('stream').Writable
 
