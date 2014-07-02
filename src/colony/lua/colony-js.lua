@@ -1183,6 +1183,9 @@ global.Date = function (this, time)
   elseif time == 'Jan 01 1900 GMT' then
     getmetatable(this).date = -2208988800000000
 
+  elseif type(time) == 'string' then
+    getmetatable(this).date = tm.approxidate_milli(time)*1000
+
   else
     getmetatable(this).date = tm.timestamp()
   end

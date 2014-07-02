@@ -15,6 +15,7 @@
     "utf8proc_path": "./deps/utf8proc",
     "miniz_path": "./deps/miniz",
     "miniz_inc_path": "./deps/miniz-inc",
+    "approxidate_path": "./deps/approxidate",
     'enable_ssl%': 0,
   },
 
