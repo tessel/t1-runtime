@@ -7,6 +7,8 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+// Portions Copyright Joyent, Inc. and other Node contributors
+
 /**
  * util.inherits
  */
@@ -94,6 +96,18 @@ function inspect(object) {
   console.log(object);
 }
 
+function extend(origin, add) {
+  // Don't do anything if add isn't an object
+  if (!add || typeof add !== 'object') return origin;
+
+  var keys = Object.keys(add);
+  var i = keys.length;
+  while (i--) {
+    origin[keys[i]] = add[keys[i]];
+  }
+  return origin;
+}
+
 /**
  * Public API
  */
@@ -113,3 +127,9 @@ exports.isRegExp = isRegExp;
 exports.dir = exports.inspect = inspect;
 exports.isNullOrUndefined = isNullOrUndefined;
 exports.debuglog = debuglog;
+
+/**
+ * Non-public API (but that doesn't stop some people)
+ */
+
+exports._extend = extend;
