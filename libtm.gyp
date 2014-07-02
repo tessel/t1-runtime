@@ -426,6 +426,29 @@
       }
     },
 
+    ##
+    #Approxidate
+    ##
+
+    {
+      "target_name": "approxidate",
+      "product_name": "approxidate",
+      "type": "static_library",
+      "sources": [
+        "<(approxidate_path)/approxidate.c",
+        "<(approxidate_path)/approxidate.h",
+      ],
+      "include_dirs": [
+        "<(approxidate_path)/"
+      ],
+
+      "direct_dependent_settings": {
+        "include_dirs": [
+          "<(approxidate_path)/"
+        ],
+      },
+    },
+
 
     ###
     # TM WRAPPER LIBRARIES
@@ -498,6 +521,7 @@
         "dlmalloc",
         "utf8proc",
         "miniz",
+        "approxidate",
       ],
       'direct_dependent_settings': {
         'include_dirs': [

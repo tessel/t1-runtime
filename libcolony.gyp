@@ -205,7 +205,8 @@
         'libtm.gyp:fortuna',
         'libtm.gyp:dlmalloc',
         'libtm.gyp:yajl',
-        'libtm.gyp:libtm'
+        'libtm.gyp:libtm',
+        'libtm.gyp:approxidate'
       ],
       "direct_dependent_settings": {
         "include_dirs": [

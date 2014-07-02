@@ -1,0 +1,7 @@
+This code was taken from git's source. Permission has been explicitly given by its author (David Woodhouse) for use in LGPL and BSD-licensed projects[1][2][3]. Any modifications carry the original license of the file.
+
+[1] David Woodhouse: http://www.gelato.unsw.edu.au/archives/git/0610/29021.html
+[2] Linus Torvalds: http://www.gelato.unsw.edu.au/archives/git/0610/28969.html
+[3] Junio C Hamano: http://www.gelato.unsw.edu.au/archives/git/0610/28978.html
+
+See: https://github.com/git/git/blob/master/COPYING

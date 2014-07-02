@@ -10,6 +10,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+#include <math.h>
 
 #include "tm.h"
 #include "colony.h"
@@ -1009,6 +1010,28 @@ static int l_tm_inflate_end (lua_State *L)
  return 3;
 }
 
+/*Approxidate*/
+
+#include <approxidate.h>
+
+static int l_tm_approxidate_milli (lua_State *L) 
+{
+  char* date_string = (char*)lua_tostring(L, 1);
+
+  struct timeval tv;
+  approxidate(date_string, &tv);
+
+  double sec = (double)tv.tv_sec;
+  double usec = (double)tv.tv_usec;
+
+  double millisec = sec * 1000;
+  double micro_milli = floor(usec/1000);
+  double since_epoch = millisec+micro_milli;
+
+  lua_pushnumber(L, since_epoch);
+  return 1;
+}
+
 
 /**
  * Random
@@ -1239,6 +1262,9 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "inflate_start", l_tm_inflate_start },
     { "inflate_write", l_tm_inflate_write },
     { "inflate_end", l_tm_inflate_end },
+
+    // Approxidate
+    {"approxidate_milli", l_tm_approxidate_milli },
 
     // random
     { "random_bytes", l_tm_random_bytes },
