@@ -23,6 +23,10 @@ clean:
 nuke:
 	rm -rf out build
 
+update:
+	git submodule update --init --recursive
+	npm install
+
 
 # Targets
 
