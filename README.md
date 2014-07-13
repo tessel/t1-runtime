@@ -3,19 +3,44 @@
 This is the runtime and JavaScript engine that runs on Tessel, built on Lua's VM. It can be run independently on PC or embedded.
 
 ```
-git clone update --init --recursive https://github.com/tessel/runtime.git
+git clone --recursive https://github.com/tessel/runtime.git
 ```
 
 Building the firmware requires [gcc-arm-embedded](https://launchpad.net/gcc-arm-embedded), [gyp](https://code.google.com/p/gyp/), and [ninja](http://martine.github.io/ninja/).
 
 #### OS X
 
-To install quickly on a Mac with Brew:
+To install quickly on a Mac with [Brew](http://brew.sh):
 
 ```
 brew tap tessel/tools
 brew install gcc-arm gyp ninja
 ```
+
+If you get an error that looks like this:
+
+```
+==> Checking out http://gyp.googlecode.com/svn/trunk/
+==> python setup.py install
+
+  http://peak.telecommunity.com/EasyInstall.html
+
+Please make the appropriate changes for your system and try again.
+
+
+READ THIS: https://github.com/Homebrew/homebrew/wiki/troubleshooting
+If reporting this issue please do so at (not Homebrew/homebrew):
+  https://github.com/tessel/homebrew-tools/issues
+```
+
+Then try running this:
+
+```
+brew uninstall gyp
+brew install python gyp ninja
+```
+
+And if that doesn't work, you could try `brew install -vd gyp` to get more information.
 
 #### Ubuntu 14.04
 
@@ -35,7 +60,7 @@ npm link --local
 npm test
 ```
 
-You can now run code on your PC using `colony` from your command line. For building firmware, please see the [firmware building instructions](https://github.com/tessel/firmware).
+You can now run code on your PC using `colony` from your command line (e.g. `colony hello-world.js`). For building firmware, please see the [firmware building instructions](https://github.com/tessel/firmware).
 
 ## Documentation
 
