@@ -755,8 +755,10 @@ end
 
 -- Function
 
-global.Function = function (this)
-  -- TODO
+global.Function = function (this, arg)
+  if arg then
+    error(js_new(global.Error, 'Function() constructor not supported'))
+  end
   return function () end
 end
 
