@@ -1392,7 +1392,6 @@ if type(hs) == 'table' then
       table.insert(ret, pos, string.sub(data, so + 1, eo))
       pos = pos + 1
     end
-    print('--->', pos)
     return js_arr(ret, pos)
   end
 
