@@ -168,7 +168,9 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       }
 
       self.__listen();
+      self.connected = true;
       self.emit('connect');
+      self.__send();
     }
   });
 };
@@ -247,7 +249,7 @@ TCPSocket.prototype._write = function (buf, encoding, cb) {
 };
 
 TCPSocket.prototype.__send = function () {
-  if (this._sending || !this._outgoing.length) {
+  if (this._sending || !this._outgoing.length || !this.connected) {
     return false;
   }
   this._sending = true;
