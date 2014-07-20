@@ -677,7 +677,7 @@ global.Object.defineProperty = function (this, obj, prop, config)
   if config.set then
     js_define_setter(obj, prop, config.set)
   end
-  -- todo configurable, writeable, enumerable
+  -- todo configurable, writable, enumerable
   return obj
 end
 
@@ -746,7 +746,7 @@ global.Object.getOwnPropertyDescriptor = function (this, obj, key)
       value = rawget(obj, key),
       get = mt and mt.getters and mt.getters[key],
       set = mt and mt.setters and mt.setters[key],
-      writeable = true,
+      writable = true,
       configurable = true,
       enumerable = true
     })
