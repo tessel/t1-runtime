@@ -30,7 +30,7 @@ exports.platform = function () {
 }
 
 exports.arch = function () {
-	return 'thumb2'
+	return 'arm'
 }
 
 exports.release = function () {
