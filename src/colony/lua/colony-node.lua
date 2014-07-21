@@ -896,7 +896,7 @@ local function require_resolve (origname, root)
       end
       if not root then
         -- no node_modules folder found
-        return root .. name, false
+        return name, false
       end
       root = root .. 'node_modules/'
       if string.find(fullname, '/') then
