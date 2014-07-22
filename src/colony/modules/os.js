@@ -30,7 +30,7 @@ exports.platform = function () {
 }
 
 exports.arch = function () {
-	return 'arm'
+	return 'armv7-m'
 }
 
 exports.release = function () {

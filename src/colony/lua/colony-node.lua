@@ -687,7 +687,7 @@ global.process.memoryUsage = function (ths)
   });
 end
 global.process.platform = "tessel"
-global.process.arch = "arm"
+global.process.arch = "armv7-m"
 global.process.versions = js_obj({
   node = "0.10.0",
   colony = "0.10.0"
