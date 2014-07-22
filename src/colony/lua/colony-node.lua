@@ -686,7 +686,8 @@ global.process.memoryUsage = function (ths)
     heapUsed=collectgarbage('count')*1024
   });
 end
-global.process.platform = "colony"
+global.process.platform = "tessel"
+global.process.arch = "armv7-m"
 global.process.versions = js_obj({
   node = "0.10.0",
   colony = "0.10.0"
