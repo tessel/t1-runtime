@@ -115,12 +115,29 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         doConnect(ips[0]);
       })
     }
-
+    var retries = 0;
     function doConnect(ip) {
+      var unsplitIp = ip;
       ip = ip.split('.').map(Number);
+
       var ret = tm.tcp_connect(self.socket, ip[0], ip[1], ip[2], ip[3], Number(port));
+      if (ret == 1) {
+        // we're not connected to the internet
+        throw new Error("Lost connection");
+      }
       if (ret < 0) {
-        throw new Error('ENOENT Cannot connect to ' + ip.join('.'));
+        tm.tcp_close(self.socket); // -57
+        if (retries > 3) {
+          throw new Error('ENOENT Cannot connect to ' + ip.join('.') + ' Got: err'+ret);
+        } else {
+          retries++;
+          setTimeout(function(){
+            // wait for tcp socket to actually close
+            self.socket = tm.tcp_open();
+            doConnect(unsplitIp);
+          }, 100);
+          return;
+        }
       }
 
       if (self._secure) {
