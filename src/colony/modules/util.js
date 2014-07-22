@@ -96,6 +96,37 @@ function inspect(object) {
   console.log(object);
 }
 
+// NOTE: this is currently just a placeholder within `format` (`inspect` above doesn't even return a string!)
+// TODO: make it even more like Node's inspect
+function _inspect(obj, opts) {
+  if (typeof obj === 'string') return obj;
+  else if (typeof obj === 'object' && typeof obj.inspect === 'function') return obj.inspect();
+  else return JSON.stringify(obj);
+}
+
+function format(fmt) {
+  var rev_vals = Array.prototype.slice.call(arguments, 1).reverse();   // (reversed so we can push/pop instead of shift/unshift)
+  if (typeof fmt !== 'string') {
+    rev_vals.push(fmt);
+    fmt = null;
+  }
+  var str = fmt && fmt.replace(/%[sdj%]/g, function (m) {
+    if (!rev_vals.length) return (m[1] === '%') ? '%' : m;
+    else switch (m[1]) {
+      case '%': return "%";
+      case 's': return rev_vals.pop();
+      case 'd': return Number(rev_vals.pop());
+      case 'j': return JSON.stringify(rev_vals.pop());
+    }
+  });
+  if (rev_vals.length) {
+    rev_vals = rev_vals.map(_inspect);
+    if (fmt !== null) rev_vals.push(str);
+    str = rev_vals.reverse().join(' ');
+  }
+  return str;
+}
+
 function extend(origin, add) {
   // Don't do anything if add isn't an object
   if (!add || typeof add !== 'object') return origin;
@@ -125,6 +156,7 @@ exports.isFunction = isFunction;
 exports.isDate = isDate;
 exports.isRegExp = isRegExp;
 exports.dir = exports.inspect = inspect;
+exports.format = format;
 exports.isNullOrUndefined = isNullOrUndefined;
 exports.debuglog = debuglog;
 
