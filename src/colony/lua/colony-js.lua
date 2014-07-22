@@ -499,18 +499,38 @@ arr_proto.indexOf = function (this, val)
   return -1
 end
 
-arr_proto.map = function (ths, fn)
+arr_proto.map = function (this, fn, ...)
   local a = js_arr({}, 0)
-  for i=0,ths.length-1 do
-    a:push(fn(ths, ths[i], i))
+  local args = table.pack(...)
+  -- t _should_ be set to undefined, per spec.
+  -- Since there is no notion of strict mode,
+  -- setting to global has the same observable semantics.
+  local t = global
+
+  if args.length > 0 then
+    t = args[1]
+  end
+
+  for i=0,this.length-1 do
+    a:push(fn(t, this[i], i, this))
   end
   return a
 end
 
-arr_proto.filter = function (this, fn)
+arr_proto.filter = function (this, fn, ...)
   local a = js_arr({}, 0)
+  local args = table.pack(...)
+  -- t _should_ be set to undefined, per spec.
+  -- Since there is no notion of strict mode,
+  -- setting to global has the same observable semantics.
+  local t = global
+
+  if args.length > 0 then
+    t = args[1]
+  end
+
   for i=0,this.length-1 do
-    if fn(this, this[i], i) then
+    if fn(t, this[i], i, this) then
       a:push(this[i])
     end
   end
@@ -554,23 +574,23 @@ end
 
 arr_proto.forEach = arr_proto_forEach
 
-arr_proto.some = function (ths, fn)
-  for i=0,ths.length-1 do
-    if fn(ths, ths[i], i) then
+arr_proto.some = function (this, fn, ...)
+  local args = table.pack(...)
+  -- t _should_ be set to undefined, per spec.
+  -- Since there is no notion of strict mode,
+  -- setting to global has the same observable semantics.
+  local t = global
+
+  if args.length > 0 then
+    t = args[1]
+  end
+
+  for i=0,this.length-1 do
+    if fn(t, this[i], i, this) then
       return true
     end
   end
   return false
-end
-
-arr_proto.filter = function (ths, fn)
-  local a = js_arr({}, 0)
-  for i=0,ths.length-1 do
-    if global._truthy(fn(ths, ths[i], i)) then
-      a:push(ths[i])
-    end
-  end
-  return a
 end
 
 --[[
