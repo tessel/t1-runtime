@@ -105,11 +105,16 @@ function inspect(obj, opts) {
     if (~opts._.seen.indexOf(obj)) return shortString(obj, 'Circular');
     else opts._.seen.push(obj);
     ++opts._.depth;
-    try {
-      return inspect(obj, opts);
-    } finally {
-      --opts._.depth;
-    }
+//    try {
+//      return inspect(obj, opts);
+//    } finally {
+//      --opts._.depth;
+//    }
+    // WORKAROUND: https://github.com/tessel/runtime/issues/304
+    obj = inspect(obj, opts);
+    --opts._.depth;
+    return obj;
+    
   }
   function indent(n, s) {
     var t = '\n';
@@ -132,6 +137,11 @@ function inspect(obj, opts) {
   }
   
   var typeName = objectToString(obj).slice('[object '.length, -1);
+  if (typeName === 'Object') {    // WORKAROUND: https://github.com/tessel/runtime/issues/302
+    if (obj instanceof Date) typeName = 'Date';
+    //else if (obj instanceof RegExp) typeName = 'RegExp';    // WORKAROUND: https://github.com/tessel/runtime/issues/295
+    else typeName = (typeof obj).replace(/^./, function (m) { return m.toUpperCase(); });
+  }
   if (opts._.depth > opts.depth || isNullOrUndefined(obj)) return shortString(obj, typeName);
   else if (opts.customInspect && typeof obj.inspect === 'function') return obj.inspect();
   else {
