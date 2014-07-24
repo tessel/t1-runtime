@@ -8,3 +8,5 @@
 // except according to those terms.
 
 exports.Buffer = Buffer;
+
+exports.INSPECT_MAX_BYTES = 50;

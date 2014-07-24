@@ -78,29 +78,8 @@ end
 --]]
 
 local function objtostring (obj, sset)
-  -- Special function for buffers
-  if getmetatable(obj) and getmetatable(obj).buffer then
-    local sourceBuffer = getmetatable(obj).buffer
-    local sourceBufferLength = getmetatable(obj).bufferlen
-
-    if type(strtype) == 'string' and string.lower(strtype) == 'utf8' then
-      local str = ''
-      for i=0,sourceBufferLength-1 do
-        str = str .. string.char(obj[i])
-      end
-      return str
-    end
-
-    local out = {'<Buffer'}
-    for i=0,math.min(sourceBufferLength or 0, 51)-1 do
-      table.insert(out, string.format("%02x", obj[i]))
-    end
-    if sourceBufferLength > 51 then
-      table.insert(out, '...')
-    end
-    return table.concat(out, ' ') + '>'
-  end
-
+  -- TODO: this is old code, currently unused. port it to util.inspect!
+  
   if getmetatable(obj) and getmetatable(obj).date then
     return obj:toString()
   end
@@ -146,35 +125,6 @@ local function objtostring (obj, sset)
     return "{ " + table.concat(vals, ", ") + " }"
   end
 end
-
-local function logger (level, ...)
-  local parts = {}
-  for i=1,select('#',...) do
-    local x = select(i,...)
-    if js_typeof(x) == 'object' and x ~= nil then
-      parts[#parts+1] = objtostring(x, {})
-    else
-      parts[#parts+1] = tostring(x)
-    end
-  end
-  tm.log(level, table.concat(parts, ' '))
-end
-
--- TODO: move `objtostring` into Buffer.prototype.inspect / util.inspect, get rid of this
-global.__old__console = js_obj({
-  log = function (self, ...)
-    logger(10, ...)
-  end,
-  info = function (self, ...)
-    logger(11, ...)
-  end,
-  warn = function (self, ...)
-    logger(12, ...)
-  end,
-  error = function (self, ...)
-    logger(13, ...)
-  end
-});
 
 --[[
 --|| Lua Timers
@@ -408,6 +358,21 @@ local buffer_proto = js_obj({
       arr[i] = this[i]
     end
     return js_arr(arr, len)
+  end,
+  inspect = function (this)
+    local sourceBuffer = getmetatable(this).buffer
+    local sourceBufferLength = getmetatable(this).bufferlen
+
+    local out = {'<Buffer'}
+    local maxbytes = colony.run('buffer').INSPECT_MAX_BYTES    -- HACK: need *module* object
+    -- NOTE: we differ from current node.js, see https://github.com/joyent/node/issues/7995
+    for i=0,math.min(sourceBufferLength or 0, maxbytes)-1 do
+      table.insert(out, string.format("%02x", this[i]))
+    end
+    if sourceBufferLength > maxbytes then
+      table.insert(out, '...')
+    end
+    return table.concat(out, ' ') + '>'
   end,
 
   -- Internal use only

@@ -1,4 +1,4 @@
-/* test rig */ var t = 1, tmax = 2
+/* test rig */ var t = 1, tmax = 68
 function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + ' -', d); }
 console.log(t + '..' + tmax);
 ok(process.versions.colony, 'running in colony')
@@ -167,3 +167,8 @@ var len = buf.write('\u00bd + \u00bc = \u00be', 4);
 console.log('#', len + " bytes: " + buf.toString('utf8', 4, 4 + len));
 ok(len == 12, 'written length is 12 byes')
 ok(buf.slice(4, 4 + 12).toString() == '\u00bd + \u00bc = \u00be', 'result was written')
+
+// inspecting
+ok(require('buffer').INSPECT_MAX_BYTES === 50, 'default INSPECT_MAX_BYTES is 50')
+require('buffer').INSPECT_MAX_BYTES = 2;
+ok(Buffer([1,2,3]).inspect() === '<Buffer 01 02 ...>', 'inspect follows custom limit')
