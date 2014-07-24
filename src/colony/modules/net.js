@@ -221,7 +221,6 @@ TCPSocket.prototype.__listen = function () {
 
     // Check error condition.
     if (flag < 0) {
-      console.log('DESTROY socket', self.socket);
       // self.emit('error', new Error('Socket closed.'));
       self.destroy();
       return;
@@ -261,19 +260,15 @@ TCPSocket.prototype._write = function (buf, encoding, cb) {
   } else {
     this._outgoing.push(buf);
   }
-  console.log("calling send with outgoing", this._outgoing.length);
   this.__send(cb);
   // cb();
 };
 
 TCPSocket.prototype.__send = function (cb) {
-  console.log("outgoing", this._outgoing.length, this._sending);
   if (this._sending || !this._outgoing.length || !this.connected) {
-    console.log("returning from send");
     if (this._queueEnd) {
       // close socket now that we're done writing
       this._queueEnd = false;
-      console.log("ending for real");
       this.__close();
     }
     return cb ? cb() : false;
@@ -287,7 +282,6 @@ TCPSocket.prototype.__send = function (cb) {
       // most likely we ran out of memory or needed to send an EWOULDBLOCK / EAGAIN
       // however res.end got called before we successfully recovered
       // so now the socket is closed, gg
-      console.log("socket is null. tried to write", buf, buf.toString());
       return cb();
     }
 
@@ -302,24 +296,19 @@ TCPSocket.prototype.__send = function (cb) {
       throw new Error('Never sent data over socket');
     } else if (ret == -2) {
       // ran out of memory
-      console.log("out of memory");
-      // we need to clear up some mem by calling recv
       setTimeout(function() {
-        // call select
-        console.log("is readable", tm.tcp_readable(self.socket));
+        // call select to listen for CC3k clearing mem
+        tm.tcp_readable(self.socket);
         send();
       }, 100);
     } else if (ret == -11) {
-      console.log('sending ret error', buf.toString());
       // EWOULDBLOCK / EAGAIN
       setTimeout(send, 100);
     } else if (ret < 0) {
       // Error.
-      console.log('sending ret throw error', ret);
       throw new Error(-ret);
     } else {
       // Next buffer.
-      console.log("sent", buf.toString(), "got", ret, "length", buf.length);
       self._sending = false;
       self.__send(cb);
     }
@@ -329,7 +318,6 @@ TCPSocket.prototype.__send = function (cb) {
 TCPSocket.prototype.__close = function () {
   var self = this;
   process.removeListener('tcp-close', self._closehandler);
-  console.log("closing socket", self.socket);
   tm.tcp_close(self.socket);
   self.socket = null;
   self.emit('close');
@@ -346,7 +334,6 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
 
       // if there is still data left, wait until its sent before we end
       if (self._outgoing.length || self._sending) {
-        console.log("setting queueEnd");
         self._queueEnd = true;
       } else {
         self.__close();
@@ -395,17 +382,12 @@ TCPServer.prototype.listen = function (port, ip) {
   self._port = port;
   self._address = ip;
 
-  // setInterval(function () {
   function poll(){
      var _ = tm.tcp_accept(self.socket)
       , client = _[0]
       , ip = _[1];
 
-    if (client == -1) {
-      console.log("client error -1");
-    }
     if (client >= 0) {
-      console.log("got an inbound");
       var clientsocket = new TCPSocket(client);
       clientsocket.connected = true;
       clientsocket.__listen();
@@ -416,7 +398,6 @@ TCPServer.prototype.listen = function (port, ip) {
   }
    
   poll();
-  // }, 10);
 };
 
 function createServer (onsocket) {
