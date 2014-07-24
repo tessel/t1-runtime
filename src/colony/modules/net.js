@@ -122,7 +122,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       ip = ip.split('.').map(Number);
 
       var ret = tm.tcp_connect(self.socket, ip[0], ip[1], ip[2], ip[3], Number(port));
-      if (ret == 1) {
+      if (ret >= 1) {
         // we're not connected to the internet
         throw new Error("Lost connection");
       }
@@ -261,13 +261,12 @@ TCPSocket.prototype._write = function (buf, encoding, cb) {
     this._outgoing.push(buf);
   }
   this.__send(cb);
-  // cb();
 };
 
 TCPSocket.prototype.__send = function (cb) {
   if (this._sending || !this._outgoing.length || !this.connected) {
     if (this._queueEnd) {
-      // close socket now that we're done writing
+      // close actual socket
       this._queueEnd = false;
       this.__close();
     }
@@ -285,17 +284,17 @@ TCPSocket.prototype.__send = function (cb) {
       return cb();
     }
 
-    var ret = -3;
+    var ret = null;
     if (self._ssl) {
       ret = tm.ssl_write(self._ssl, buf, buf.length);
     } else {
       ret = tm.tcp_write(self.socket, buf, buf.length);
     }
 
-    if (ret == -3) {
+    if (ret == null) {
       throw new Error('Never sent data over socket');
     } else if (ret == -2) {
-      // ran out of memory
+      // cc3000 ran out of buffers. wait until a buffer clears up to send this packet.
       setTimeout(function() {
         // call select to listen for CC3k clearing mem
         tm.tcp_readable(self.socket);

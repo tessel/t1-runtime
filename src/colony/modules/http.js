@@ -88,8 +88,10 @@ ServerResponse.prototype._write = function (chunk, encoding, callback) {
     // concatting buffer
     var buf = null;
     if (Buffer.isBuffer(chunk)) {
-      buf = new Buffer(Number(chunk.length).toString(16) + '\r\n');
-      buf = Buffer.concat([buf, chunk, new Buffer('\r\n')]);
+      buf = Buffer.concat([
+        new Buffer(Number(chunk.length).toString(16) + '\r\n'), 
+        chunk, 
+        new Buffer('\r\n')]);
     } else {
       buf = new Buffer(Number(chunk.length).toString(16) + '\r\n' + chunk + '\r\n');
     }
@@ -115,7 +117,8 @@ ServerResponse.prototype.end = function (data) {
   }
   this._closed = true;
   if (!this._usesContentType) {
-    this._usesContentType = true; // force it to write just this ending chunk
+    // force it to write ending chunk without a unique chunk header
+    this._usesContentType = true; 
     this.write('0\r\n\r\n');
   }
 
