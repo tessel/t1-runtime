@@ -70,6 +70,7 @@ ServerResponse.prototype.writeHead = function (status, headers) {
     if (key.toLowerCase() == 'content-length') {
       this._usesContentType = true;
     }
+    console.log("writing content-length");
     this.connection.write(key + ': ' + this.headers[key] + '\r\n');
   }
   if (!this._usesContentType) {
@@ -86,6 +87,7 @@ ServerResponse.prototype._write = function (chunk, encoding, callback) {
   }
 
   if (!this._usesContentType) {
+    console.log("chunk length", Number(chunk.length), chunk);
     this.connection.write(Number(chunk.length).toString(16));
     this.connection.write('\r\n');
     this.connection.write(chunk);
@@ -101,18 +103,27 @@ ServerResponse.prototype.getHeader = function (key) {
 };
 
 ServerResponse.prototype.end = function (data) {
+  var self = this;
   if (!this._header) {
     this.writeHead(200);
   }
 
   if (data != null) {
+    console.log("writing something", data);
     this.write(data);
   }
   this._closed = true;
   if (!this._usesContentType) {
-    this.connection.write('0\r\n\r\n');
+    console.log("writing no content type");
+    this._usesContentType = true; // force it to write just this ending chunk
+    this.write('0\r\n\r\n');
   }
-  this.connection.close();
+  // this.connection.close();
+  this.once('finish', function () { 
+    self.connection.close();
+  });
+
+  Writable.prototype.end.call(self);
 };
 
 

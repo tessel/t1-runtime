@@ -205,8 +205,9 @@ static int l_tm_tcp_write (lua_State* L)
   size_t len;
   const uint8_t* buf = colony_toconstdata(L, 2, &len);
 
-  tm_tcp_write(socket, buf, len);
-  return 0;
+  lua_pushnumber(L, tm_tcp_write(socket, buf, len));
+  
+  return 1;
 }
 
 

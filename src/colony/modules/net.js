@@ -43,6 +43,7 @@ function TCPSocket (socket, _secure) {
   this._secure = _secure;
   this._outgoing = [];
   this._sending = false;
+  this._queueEnd = false;
 
   var self = this;
   self._closehandler = function (buf) {
@@ -220,7 +221,7 @@ TCPSocket.prototype.__listen = function () {
 
     // Check error condition.
     if (flag < 0) {
-      // console.log('DESTROY');
+      console.log('DESTROY socket', self.socket);
       // self.emit('error', new Error('Socket closed.'));
       self.destroy();
       return;
@@ -260,38 +261,78 @@ TCPSocket.prototype._write = function (buf, encoding, cb) {
   } else {
     this._outgoing.push(buf);
   }
-
-  this.__send();
-  cb(); // TODO: only once it actually sends
+  console.log("calling send with outgoing", this._outgoing.length);
+  this.__send(cb);
+  // cb();
 };
 
-TCPSocket.prototype.__send = function () {
+TCPSocket.prototype.__send = function (cb) {
+  console.log("outgoing", this._outgoing.length, this._sending);
   if (this._sending || !this._outgoing.length || !this.connected) {
-    return false;
+    console.log("returning from send");
+    if (this._queueEnd) {
+      // close socket now that we're done writing
+      this._queueEnd = false;
+      console.log("ending for real");
+      this.__close();
+    }
+    return cb ? cb() : false;
   }
   this._sending = true;
 
   var self = this;
   var buf = this._outgoing.shift();
   (function send () {
-    if (self._ssl) {
-      var ret = tm.ssl_write(self._ssl, buf, buf.length);
-    } else {
-      var ret = tm.tcp_write(self.socket, buf, buf.length);
+    if (self.socket == null) {
+      // most likely we ran out of memory or needed to send an EWOULDBLOCK / EAGAIN
+      // however res.end got called before we successfully recovered
+      // so now the socket is closed, gg
+      console.log("socket is null. tried to write", buf, buf.toString());
+      return cb();
     }
 
-    if (ret == -11) {
+    var ret = -3;
+    if (self._ssl) {
+      ret = tm.ssl_write(self._ssl, buf, buf.length);
+    } else {
+      ret = tm.tcp_write(self.socket, buf, buf.length);
+    }
+
+    if (ret == -3) {
+      throw new Error('Never sent data over socket');
+    } else if (ret == -2) {
+      // ran out of memory
+      console.log("out of memory");
+      // we need to clear up some mem by calling recv
+      setTimeout(function() {
+        // call select
+        console.log("is readable", tm.tcp_readable(self.socket));
+        send();
+      }, 100);
+    } else if (ret == -11) {
+      console.log('sending ret error', buf.toString());
       // EWOULDBLOCK / EAGAIN
-      setImmediate(send);
+      setTimeout(send, 100);
     } else if (ret < 0) {
       // Error.
+      console.log('sending ret throw error', ret);
       throw new Error(-ret);
     } else {
       // Next buffer.
+      console.log("sent", buf.toString(), "got", ret, "length", buf.length);
       self._sending = false;
-      self.__send();
+      self.__send(cb);
     }
   })();
+}
+
+TCPSocket.prototype.__close = function () {
+  var self = this;
+  process.removeListener('tcp-close', self._closehandler);
+  console.log("closing socket", self.socket);
+  tm.tcp_close(self.socket);
+  self.socket = null;
+  self.emit('close');
 }
 
 TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
@@ -302,10 +343,15 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
       self.__listenid = null
     }
     if (self.socket != null) {
-      process.removeListener('tcp-close', self._closehandler);
-      tm.tcp_close(self.socket);
-      self.socket = null;
-      self.emit('close');
+
+      // if there is still data left, wait until its sent before we end
+      if (self._outgoing.length || self._sending) {
+        console.log("setting queueEnd");
+        self._queueEnd = true;
+      } else {
+        self.__close();
+      }
+      
     }
   });
 };
@@ -349,17 +395,28 @@ TCPServer.prototype.listen = function (port, ip) {
   self._port = port;
   self._address = ip;
 
-  setInterval(function () {
-    var _ = tm.tcp_accept(self.socket)
+  // setInterval(function () {
+  function poll(){
+     var _ = tm.tcp_accept(self.socket)
       , client = _[0]
       , ip = _[1];
 
+    if (client == -1) {
+      console.log("client error -1");
+    }
     if (client >= 0) {
+      console.log("got an inbound");
       var clientsocket = new TCPSocket(client);
+      clientsocket.connected = true;
       clientsocket.__listen();
       self.emit('socket', clientsocket);
     }
-  }, 10);
+
+    setTimeout(poll, 10);
+  }
+   
+  poll();
+  // }, 10);
 };
 
 function createServer (onsocket) {
