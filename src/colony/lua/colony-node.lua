@@ -629,7 +629,9 @@ EventEmitter.prototype.removeAllListeners = function (this, type)
 
     -- Remove each of them
     for k in pairs(listeners) do
-      this:removeListener(type, listeners[k]);
+      if listeners[k] then
+        this:removeListener(type, listeners[k]);
+      end
     end
     return this;
   end
