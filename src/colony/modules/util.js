@@ -114,7 +114,6 @@ function inspect(obj, opts) {
     obj = inspect(obj, opts);
     --opts._.depth;
     return obj;
-    
   }
   function indent(n, s) {
     var t = '\n';
