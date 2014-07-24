@@ -49,5 +49,25 @@ test('object inspection', function (t) {
   t.ok(fmt, "inspect function available")
   t.equal(fmt({}), "{}");
   
+  // TODO: convert this manually-verified sample to actual tests…
+  var ref = {};
+  ref.ref = ref;
+  fmt({
+    a: {
+      b: {c:3,d:[1,2,3],fn:fmt},
+      2: 1
+    },
+    z: [
+      {inspect:function () { return "VALUE"; }},
+      function fn() { return ref; },
+      Buffer([1,2,3]),
+      new Date(),
+      /abc/g,
+      true,
+      null,
+      ref
+    ]
+  });
+  
   t.end();
 });
