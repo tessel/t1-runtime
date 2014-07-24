@@ -1,10 +1,10 @@
 //var test = require('ttt');
 // WORKAROUND: https://github.com/tessel/runtime/issues/276
-var test = require("../../node_modules/ttt/ttt.js"),
-    fmt = require('util').format;
+var test = require("../../node_modules/ttt/ttt.js");
 
 test('string formatting', function (t) {
   // basic checks
+  var fmt = require('util').format;
   t.ok(fmt, "format function available")
   t.equal(fmt("%s, %s!", "Hello", "world"), "Hello, world!");
   
@@ -39,6 +39,15 @@ test('string formatting', function (t) {
   t.equal(fmt("%j%j %j%j%j", true, false, null, '', void 0), "truefalse null\"\"undefined");
   t.equal(fmt("%j", {foo:42,bar:void 0}), "{\"foo\":42}");
   t.equal(fmt("%j", new Date(0x42)), "\"1970-01-01T00:00:00.066Z\""); // FAILS: https://github.com/tessel/runtime/issues/299
+  
+  t.end();
+});
+
+test('object inspection', function (t) {
+  // basic checks
+  var fmt = require('util').inspect;
+  t.ok(fmt, "inspect function available")
+  t.equal(fmt({}), "{}");
   
   t.end();
 });

@@ -91,14 +91,8 @@ function debuglog(set) {
   return debugs[set];
 };
 
-// TODO: Make it work like Node's inspect
-function inspect(object) {
-  console.log(object);
-}
-
-// NOTE: this is currently just a placeholder within `format` (`inspect` above doesn't even return a string!)
 // TODO: make it even more like Node's inspect
-function _inspect(obj, opts) {
+function inspect(obj, opts) {
   if (typeof obj === 'string') return obj;
   else if (typeof obj === 'object' && typeof obj.inspect === 'function') return obj.inspect();
   else return JSON.stringify(obj);
@@ -120,7 +114,7 @@ function format(fmt) {
     }
   });
   if (rev_vals.length) {
-    rev_vals = rev_vals.map(_inspect);
+    rev_vals = rev_vals.map(inspect);
     if (fmt !== null) rev_vals.push(str);
     str = rev_vals.reverse().join(' ');
   }
@@ -155,7 +149,7 @@ exports.isArray = isArray;
 exports.isFunction = isFunction;
 exports.isDate = isDate;
 exports.isRegExp = isRegExp;
-exports.dir = exports.inspect = inspect;
+exports.inspect = inspect;
 exports.format = format;
 exports.isNullOrUndefined = isNullOrUndefined;
 exports.debuglog = debuglog;
