@@ -584,6 +584,11 @@ end
 
 EventEmitter.prototype.removeListener = function (this, type, f)
 
+  type = tostring(type) or ''
+  if not f then
+    error(js_new(global.TypeError, 'Supplied listener is not a function.'))
+  end
+
   local i = this:listeners(type):indexOf(f);
   local callback = f;
 
