@@ -158,6 +158,9 @@ static int builtin_loader (lua_State* L)
 int colony_runtime_open ()
 {
   lua_State* L = tm_lua_state = luaL_newstate ();
+  if (L == NULL) {
+    printf("Error creating Lua state.\n");
+  }
   lua_atpanic(L, &runtime_panic);
   // luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
   // lua_gc(L, LUA_GCSETPAUSE, 90);

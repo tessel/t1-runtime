@@ -27,13 +27,15 @@ packageFolder(infiles, varname, function (file, buf, next) {
   buf = buf.toString('utf-8');
   if (file.match(/\.js$/)) {
     try {
-      colonyCompiler.toBytecode(colonyCompiler.colonize(String(buf)), '[T]:' + file, next);
+      // colonyCompiler.toBytecode(colonyCompiler.colonize(String(buf)), '[T]:' + file, next);
+      next(null, colonyCompiler.colonize(String(buf)).source);
     } catch (e) {
       throw new Error('Bytecode compilation of ' + file + ' failed.');
     }
   } else if (file.match(/\.lua$/)) {
     try {
-      colonyCompiler.toBytecode({ source: String(buf) }, '[T]: ' + file, next);
+      // colonyCompiler.toBytecode({ source: String(buf) }, '[T]: ' + file, next);
+      next(null, buf);
     } catch (e) {
       throw new Error('Bytecode compilation of ' + file + ' failed.');
     }

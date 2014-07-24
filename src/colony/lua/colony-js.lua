@@ -468,7 +468,7 @@ arr_proto.slice = function (this, start, len)
     len = this.length or 0
   end
   local j = 0
-  for i=start or 0,len-1 do
+  for i=tonumber(start) or 0,len-1 do
     a[j] = this[i]
     j = j + 1
   end

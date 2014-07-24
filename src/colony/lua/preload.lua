@@ -56,7 +56,7 @@ if not _G.COLONY_EMBED then
   -- This is temporary until we have proper compilation in C.
   colony._load = function (file)
     -- Compile JS script before running.
-    local status = os.execute('colony-compiler -m ' .. file .. ' > /tmp/colonyunique')
+    local status = os.execute('colony-compiler ' .. file .. ' > /tmp/colonyunique')
     if status ~= 0 then
       os.exit(status)
     end
