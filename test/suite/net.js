@@ -11,7 +11,7 @@ test('addresses', function (t) {
   // some samples from http://publib.boulder.ibm.com/infocenter/ts3500tl/v1r0/index.jsp?topic=%2Fcom.ibm.storage.ts3500.doc%2Fopg_3584_IPv4_IPv6_addresses.html
   // c.f. http://tools.ietf.org/id/draft-main-ipaddr-text-rep-02.txt for some grammar discussion
   
-  var validIPv4 = ["0.0.0.0", "127.0.0.1", "255.255.255.255", "1.2.3.4"/*, "01.102.103.104"*/],
+  var validIPv4 = ["0.0.0.0", "127.0.0.1", "255.255.255.255", "1.2.3.4", "101.203.111.200"/*, "01.102.103.104"*/],
       validIPv6 = [
         "2001:db8:3333:4444:5555:6666:7777:8888", "2001:db8:3333:4444:CCCC:DDDD:EEEE:FFFF",
         "::", "2001:db8::", "::1234:5678", "2001:db8::1234:5678",
@@ -21,7 +21,7 @@ test('addresses', function (t) {
       ],
       totalBunk = [
         "255.255.255.256", "0xFF.0xFF.0xFF.0xFF", "0.0.A.0", "-1.0.0.0", "123.45.67.89zzz", "01.102.103.104",
-        "::255.255.255.256", "::FG", "hello world", void 0, 42, ""
+        "::11.22.33.044", "::255.255.255.256", "::FG", "hello world", void 0, 42, ""
       ];
   
   // isIP
