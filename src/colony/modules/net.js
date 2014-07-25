@@ -61,7 +61,7 @@ function TCPSocket (socket, _secure) {
 util.inherits(TCPSocket, Stream.Duplex);
 
 function isIP (host) {
-  return host.match(/^[0-9.]+$/);
+  return (typeof host === 'string') ? host.match(/^[0-9.]+$/) : false;
 }
 
 function isPipeName(s) {
