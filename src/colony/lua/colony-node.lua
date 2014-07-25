@@ -891,20 +891,24 @@ local function require_resolve (origname, root)
     if colony.precache[name] or colony.cache[name] then
       root = ''
     else
-      -- TODO climb hierarchy for node_modules
+      -- climb hierarchy for node_modules
       local fullname = name
       while string.find(name, '/') do
         name = path_dirname(name)
       end
       while not fs_exists(root .. 'node_modules/' .. name .. '/package.json') do
-        root = path_dirname(root) .. '/'
-        if path_dirname(root) == path_dirname(path_dirname(root)) then
+        local next_root = path_dirname(root) .. '/'
+        if next_root == root then
+          -- we've searched all the way up through available path
+          root = nil
           break
+        else
+          root = next_root
         end
       end
       if not root then
         -- no node_modules folder found
-        return root .. name, false
+        return name, false
       end
       root = root .. 'node_modules/'
       if string.find(fullname, '/') then
