@@ -60,8 +60,18 @@ function TCPSocket (socket, _secure) {
 
 util.inherits(TCPSocket, Stream.Duplex);
 
-function isIP (host) {
+function isIPv4 (host) {
   return (typeof host === 'string') ? host.match(/^[0-9.]+$/) : false;
+}
+
+function isIPv6 (host) {
+  return false;
+}
+
+function isIP (host) {
+  if (isIPv6(host)) return 6;
+  else if (isIPv4(host)) return 4;
+  else return 0;
 }
 
 function isPipeName(s) {
@@ -412,6 +422,8 @@ function createServer (onsocket) {
  */
 
 exports.isIP = isIP;
+exports.isIPv4 = isIPv4;
+exports.isIPv6 = isIPv6;
 exports.connect = exports.createConnection = connect;
 exports.createServer = createServer;
 exports.Socket = TCPSocket;
