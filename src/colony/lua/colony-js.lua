@@ -800,7 +800,11 @@ end
 global.String.prototype = str_proto
 str_proto.constructor = global.String
 global.String.fromCharCode = function (ths, ord)
-  return string.char(ord or 0)
+  local n = tonumber(ord or 0) or 0
+  if n > 255 or n < 0 then
+    return string.char(0xFF)
+  end
+  return string.char(n)
 end
 
 -- Math
@@ -1307,7 +1311,15 @@ if type(hs) == 'table' then
   _G._HSMATCH = hsmatch
 
   global.RegExp = function (this, patt, flags)
-    -- hsrude requires special flags handling
+    -- unescape \x and \u escapes explicitly
+    patt = string.gsub(patt, "\\x(%x%x)", function (x)
+      return string.char(tonumber(x, 16))
+    end)
+    patt = string.gsub(patt, "\\u(%x%x%x%x)", function (x)
+      return string.char(bit.band(bit.rshift(tonumber(x, 16), 8), 0xFF)) .. string.char(bit.band(tonumber(x, 16), 0xFF))
+    end)
+
+    -- hsregex requires special flags handling
     if flags and string.find(flags, "i") then
       patt = '(?i)' .. patt
     end
