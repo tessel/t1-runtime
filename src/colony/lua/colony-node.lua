@@ -584,6 +584,11 @@ end
 
 EventEmitter.prototype.removeListener = function (this, type, f)
 
+  type = tostring(type) or ''
+  if not f then
+    error(js_new(global.TypeError, 'Supplied listener is not a function.'))
+  end
+
   local i = this:listeners(type):indexOf(f);
   local callback = f;
 
@@ -624,7 +629,9 @@ EventEmitter.prototype.removeAllListeners = function (this, type)
 
     -- Remove each of them
     for k in pairs(listeners) do
-      this:removeListener(type, listeners[k]);
+      if listeners[k] then
+        this:removeListener(type, listeners[k]);
+      end
     end
     return this;
   end
@@ -686,7 +693,8 @@ global.process.memoryUsage = function (ths)
     heapUsed=collectgarbage('count')*1024
   });
 end
-global.process.platform = "colony"
+global.process.platform = "tessel"
+global.process.arch = "armv7-m"
 global.process.versions = js_obj({
   node = "0.10.0",
   colony = "0.10.0"
@@ -883,20 +891,24 @@ local function require_resolve (origname, root)
     if colony.precache[name] or colony.cache[name] then
       root = ''
     else
-      -- TODO climb hierarchy for node_modules
+      -- climb hierarchy for node_modules
       local fullname = name
       while string.find(name, '/') do
         name = path_dirname(name)
       end
       while not fs_exists(root .. 'node_modules/' .. name .. '/package.json') do
-        root = path_dirname(root) .. '/'
-        if path_dirname(root) == path_dirname(path_dirname(root)) then
+        local next_root = path_dirname(root) .. '/'
+        if next_root == root then
+          -- we've searched all the way up through available path
+          root = nil
           break
+        else
+          root = next_root
         end
       end
       if not root then
         -- no node_modules folder found
-        return root .. name, false
+        return name, false
       end
       root = root .. 'node_modules/'
       if string.find(fullname, '/') then

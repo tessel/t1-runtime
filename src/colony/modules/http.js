@@ -82,7 +82,6 @@ ServerResponse.prototype.writeHead = function (status, headers) {
   }
   this.connection.write('\r\n');
   this._header = true;
-  // console.log('writing headers', headers);
 };
 
 ServerResponse.prototype._write = function (chunk, encoding, callback) {
@@ -93,14 +92,21 @@ ServerResponse.prototype._write = function (chunk, encoding, callback) {
   console.log('chunk', chunk);
 
   if (!this._usesContentType) {
-    this.connection.write(Number(chunk.length).toString(16));
-    this.connection.write('\r\n');
-    this.connection.write(chunk);
-    this.connection.write('\r\n');
+    // concatting buffer
+    var buf = null;
+    if (Buffer.isBuffer(chunk)) {
+      buf = Buffer.concat([
+        new Buffer(Number(chunk.length).toString(16) + '\r\n'), 
+        chunk, 
+        new Buffer('\r\n')]);
+    } else {
+      buf = new Buffer(Number(chunk.length).toString(16) + '\r\n' + chunk + '\r\n');
+    }
+
+    this.connection.write(buf, encoding, callback);
   } else {
-    this.connection.write(chunk);
+    this.connection.write(chunk, encoding, callback);
   }
-  callback();
 }
 
 ServerResponse.prototype.getHeader = function (key) {
@@ -109,7 +115,11 @@ ServerResponse.prototype.getHeader = function (key) {
 };
 
 ServerResponse.prototype.end = function (data) {
+<<<<<<< HEAD
   console.log('you hit http end');
+=======
+  var self = this;
+>>>>>>> 3419d09ce27eac8804c0141ccfe3722c6de2d224
   if (!this._header) {
     this.writeHead(200);
   }
@@ -119,9 +129,16 @@ ServerResponse.prototype.end = function (data) {
   }
   this._closed = true;
   if (!this._usesContentType) {
-    this.connection.write('0\r\n\r\n');
+    // force it to write ending chunk without a unique chunk header
+    this._usesContentType = true; 
+    this.write('0\r\n\r\n');
   }
-  this.connection.close();
+
+  this.once('finish', function () { 
+    self.connection.close();
+  });
+
+  Writable.prototype.end.call(self);
 };
 
 

@@ -45,6 +45,7 @@ function TCPSocket (socket, _secure) {
   this._secure = _secure;
   this._outgoing = [];
   this._sending = false;
+  this._queueEnd = false;
 
   var self = this;
   self._closehandler = function (buf) {
@@ -123,12 +124,29 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         doConnect(ips[0]);
       })
     }
-
+    var retries = 0;
     function doConnect(ip) {
+      var unsplitIp = ip;
       ip = ip.split('.').map(Number);
+
       var ret = tm.tcp_connect(self.socket, ip[0], ip[1], ip[2], ip[3], Number(port));
+      if (ret >= 1) {
+        // we're not connected to the internet
+        throw new Error("Lost connection");
+      }
       if (ret < 0) {
-        throw new Error('ENOENT Cannot connect to ' + ip.join('.'));
+        tm.tcp_close(self.socket); // -57
+        if (retries > 3) {
+          throw new Error('ENOENT Cannot connect to ' + ip.join('.') + ' Got: err'+ret);
+        } else {
+          retries++;
+          setTimeout(function(){
+            // wait for tcp socket to actually close
+            self.socket = tm.tcp_open();
+            doConnect(unsplitIp);
+          }, 100);
+          return;
+        }
       }
 
       if (self._secure) {
@@ -176,7 +194,9 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       }
 
       self.__listen();
+      self.connected = true;
       self.emit('connect');
+      self.__send();
     }
   });
 };
@@ -210,7 +230,6 @@ TCPSocket.prototype.__listen = function () {
 
     // Check error condition.
     if (flag < 0) {
-      // console.log('DESTROY');
       // self.emit('error', new Error('Socket closed.'));
       self.destroy();
       return;
@@ -253,15 +272,18 @@ TCPSocket.prototype._write = function (buf, encoding, cb) {
   } else {
     this._outgoing.push(buf);
   }
-
-  this.__send();
-  cb(); // TODO: only once it actually sends
+  this.__send(cb);
 };
 
-TCPSocket.prototype.__send = function () {
+TCPSocket.prototype.__send = function (cb) {
   console.log('you hit TCPSocket __send');
-  if (this._sending || !this._outgoing.length) {
-    return false;
+  if (this._sending || !this._outgoing.length || !this.connected) {
+    if (this._queueEnd) {
+      // close actual socket
+      this._queueEnd = false;
+      this.__close();
+    }
+    return cb ? cb() : false;
   }
   this._sending = true;
 
@@ -270,16 +292,32 @@ TCPSocket.prototype.__send = function () {
   var buf = this._outgoing.shift();
   console.log('buffer in TCP Socket __send', buf.toString());
   (function send () {
-    if (self._ssl) {
-      var ret = tm.ssl_write(self._ssl, buf, buf.length);
-    } else {
-      console.log('hello');
-      var ret = tm.tcp_write(self.socket, buf, buf.length);
+    if (self.socket == null) {
+      // most likely we ran out of memory or needed to send an EWOULDBLOCK / EAGAIN
+      // however res.end got called before we successfully recovered
+      // so now the socket is closed, gg
+      return cb();
     }
-    console.log('ret:', ret);
-    if (ret == -11) {
+
+    var ret = null;
+    if (self._ssl) {
+      ret = tm.ssl_write(self._ssl, buf, buf.length);
+    } else {
+      ret = tm.tcp_write(self.socket, buf, buf.length);
+    }
+
+    if (ret == null) {
+      throw new Error('Never sent data over socket');
+    } else if (ret == -2) {
+      // cc3000 ran out of buffers. wait until a buffer clears up to send this packet.
+      setTimeout(function() {
+        // call select to listen for CC3k clearing mem
+        tm.tcp_readable(self.socket);
+        send();
+      }, 100);
+    } else if (ret == -11) {
       // EWOULDBLOCK / EAGAIN
-      setImmediate(send);
+      setTimeout(send, 100);
     } else if (ret < 0) {
       // Error.
       throw new Error(-ret);
@@ -287,9 +325,17 @@ TCPSocket.prototype.__send = function () {
       console.log('whop')
       // Next buffer.
       self._sending = false;
-      self.__send();
+      self.__send(cb);
     }
   })();
+}
+
+TCPSocket.prototype.__close = function () {
+  var self = this;
+  process.removeListener('tcp-close', self._closehandler);
+  tm.tcp_close(self.socket);
+  self.socket = null;
+  self.emit('close');
 }
 
 TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
@@ -300,10 +346,14 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
       self.__listenid = null
     }
     if (self.socket != null) {
-      process.removeListener('tcp-close', self._closehandler);
-      tm.tcp_close(self.socket);
-      self.socket = null;
-      self.emit('close');
+
+      // if there is still data left, wait until its sent before we end
+      if (self._outgoing.length || self._sending) {
+        self._queueEnd = true;
+      } else {
+        self.__close();
+      }
+      
     }
   });
 };
@@ -347,17 +397,22 @@ TCPServer.prototype.listen = function (port, ip) {
   self._port = port;
   self._address = ip;
 
-  setInterval(function () {
-    var _ = tm.tcp_accept(self.socket)
+  function poll(){
+     var _ = tm.tcp_accept(self.socket)
       , client = _[0]
       , ip = _[1];
 
     if (client >= 0) {
       var clientsocket = new TCPSocket(client);
+      clientsocket.connected = true;
       clientsocket.__listen();
       self.emit('socket', clientsocket);
     }
-  }, 10);
+
+    setTimeout(poll, 10);
+  }
+   
+  poll();
 };
 
 function createServer (onsocket) {
