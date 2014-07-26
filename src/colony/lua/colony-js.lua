@@ -563,6 +563,37 @@ arr_proto.some = function (ths, fn)
   return false
 end
 
+arr_proto.every = function (this, callbackfn, ...)
+  if this == nil then
+    error(js_new(global.TypeError, 'Array.prototype.every called on null or undefined'))
+  end
+  if type(callbackfn) ~= 'function' then
+    error(js_new(global.TypeError, callbackfn + ' is not a function'))
+  end
+
+  local args = table.pack(...)
+  local index = 0
+  local len = this.length
+  -- t _should_ be set to undefined, per spec.
+  -- Since there is no notion of strict mode,
+  -- setting to global has the same observable semantics.
+  local t = global
+
+  if args.length > 0 then
+    t = args[1]
+  end
+
+  while index < len do
+    if this:hasOwnProperty(index) then
+      if not callbackfn(t, this[index], index, this) then
+        return false
+      end
+    end
+    index = index + 1
+  end
+  return true
+end
+
 arr_proto.filter = function (ths, fn)
   local a = js_arr({}, 0)
   for i=0,ths.length-1 do
