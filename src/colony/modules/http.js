@@ -24,6 +24,7 @@ var Writable = require('stream').Writable;
  */
 
 function ServerResponse (req, connection) {
+  console.log('you hit http ServerResponse');
   Writable.call(this);
   this.req = req;
   this.connection = connection;
@@ -44,6 +45,7 @@ function ServerResponse (req, connection) {
 util.inherits(ServerResponse, Writable);
 
 ServerResponse.prototype.setHeader = function (name, value) {
+  console.log('you hit http setHeader');
   if (this._header) {
     throw "Already wrote HEAD";
   }
@@ -51,12 +53,15 @@ ServerResponse.prototype.setHeader = function (name, value) {
 };
 
 ServerResponse.prototype.setHeaders = function (headers) {
+  console.log('you hit http setHeaders');
   for (var key in headers) {
     this.setHeader(key, headers[key]);
   }
 };
 
 ServerResponse.prototype.writeHead = function (status, headers) {
+  console.log('you hit http writeHead');
+
   if (this._header) {
     throw "Already wrote HEAD";
   }
@@ -81,9 +86,11 @@ ServerResponse.prototype.writeHead = function (status, headers) {
 };
 
 ServerResponse.prototype._write = function (chunk, encoding, callback) {
+  console.log('you hit http _write');
   if (!this._header) {
     this.writeHead(200);
   }
+  console.log('chunk', chunk);
 
   if (!this._usesContentType) {
     this.connection.write(Number(chunk.length).toString(16));
@@ -97,10 +104,12 @@ ServerResponse.prototype._write = function (chunk, encoding, callback) {
 }
 
 ServerResponse.prototype.getHeader = function (key) {
+  console.log('you hit http getHeader');
   return this.headers[key.toLowerCase()];
 };
 
 ServerResponse.prototype.end = function (data) {
+  console.log('you hit http end');
   if (!this._header) {
     this.writeHead(200);
   }
@@ -121,6 +130,7 @@ ServerResponse.prototype.end = function (data) {
  */
 
 function ServerRequest (connection) {
+  console.log('you hit http ServerRequest');
   Readable.call(this);
   var self = this;
 
@@ -176,6 +186,7 @@ util.inherits(ServerRequest, Readable);
 
 
 function HTTPServer () {
+  console.log('you hit HTTPServer')
   var self = this;
   this.connection = net.createServer(function (connection) {
     var request = new ServerRequest(connection);
@@ -189,6 +200,7 @@ function HTTPServer () {
 util.inherits(HTTPServer, EventEmitter);
 
 HTTPServer.prototype.listen = function (port, ip) {
+  console.log('you hit http listen');
   this.connection.listen(port, ip);
 };
 
@@ -198,6 +210,7 @@ HTTPServer.prototype.listen = function (port, ip) {
  */
 
 function HTTPIncomingResponse (connection) {
+  console.log('you hit HTTPIncomingResponse');
   Readable.call(this);
   this.headers = {};
   this.connection = connection;
@@ -210,6 +223,7 @@ HTTPIncomingResponse.prototype._read = function () {
 };
 
 HTTPIncomingResponse.prototype.setEncoding = function (encoding) {
+  console.log('you hit http setEncoding');
   this.encoding = encoding;
 };
 
@@ -223,6 +237,12 @@ function isIP (host) {
 }
 
 function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
+  console.log('you hit HTTPOutgoingRequest');
+  console.log('path:', path);
+  console.log('method:', method);
+  console.log('headers:', headers);
+  console.log('headers.host:', headers.Host);
+
   var self = this;
 
   if (path[0] != '/') {
@@ -271,6 +291,7 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
   })
 
   function js_wrap_function (fn) {
+    console.log('you hit js_wrap_functiomn');
     return function () {
       return fn.apply(null, [this].concat(arguments));
     }
@@ -334,6 +355,7 @@ function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
 util.inherits(HTTPOutgoingRequest, EventEmitter);
 
 HTTPOutgoingRequest.prototype.write = function (data) {
+  console.log('you hit http write');
   this._contentLength += data.length;
   if (this._connected) {
     this.connection.write(data);
@@ -370,17 +392,22 @@ function ensureSecure (secure) {
 }
 
 exports.request = function (opts, onresponse) {
+  console.log('you hit http request');
   ensureSecure(this._secure);
   if (opts.agent) {
     throw new Error('Agent not yet implemented.');
   }
+  console.log('this is opts:',opts);
+  console.log('opts path:', opts.path);
   var host = opts.hostname || opts.host || 'localhost';
   var req = new HTTPOutgoingRequest(opts.port || (this._secure ? 443 : 80), host, opts.path || '', opts.method || 'GET', opts.headers || {}, this._secure);
   onresponse && req.on('response', onresponse);
+  console.log('req');
   return req;
 };
 
 exports.get = function (opts, onresponse) {
+  console.log('you hit http get');
   if (typeof opts == 'string') {
     opts = url.parse(opts);
   }

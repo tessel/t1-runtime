@@ -24,6 +24,7 @@ var tls = require('tls');
 var ssl_ctx = null;
 
 function ensureSSLCtx () {
+  console.log('you hit ensureSSLCtx');
   if (!tm.ssl_context_create) {
     throw new Error("SSL/TLS is not supported in this version.");
   }
@@ -38,6 +39,7 @@ function ensureSSLCtx () {
  */
 
 function TCPSocket (socket, _secure) {
+  console.log('you hit TCPSocket');
   Stream.Duplex.call(this);
   this.socket = socket;
   this._secure = _secure;
@@ -47,8 +49,10 @@ function TCPSocket (socket, _secure) {
   var self = this;
   self._closehandler = function (buf) {
     var socket = buf.readUInt32LE(0);
+    console.log('this is TCPSockets socket',socket);
     if (socket == self.socket) {
       setImmediate(function () {
+        console.log('socket is self.socket');
         // console.log('closing', socket, 'against', self.socket)
         self.close();
       });
@@ -60,16 +64,19 @@ function TCPSocket (socket, _secure) {
 util.inherits(TCPSocket, Stream.Duplex);
 
 function isIP (host) {
+  console.log('you hit isIP');
   return host.match(/^[0-9.]+$/);
 }
 
 function isPipeName(s) {
+  console.log('you hit isPipeName');
   return util.isString(s) && toNumber(s) === false;
 }
 
 function toNumber(x) { return (x = Number(x)) >= 0 ? x : false; }
 
 function normalizeConnectArgs(args) {
+  console.log('you hit normalizeConnectArgs');
   var options = {};
 
   if (util.isObject(args[0])) {
@@ -91,6 +98,7 @@ function normalizeConnectArgs(args) {
 }
 
 TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
+  console.log('you hit TCPSocket connect');
   var self = this;
   var args = normalizeConnectArgs(arguments);
   var port = args[0].port;
@@ -178,6 +186,7 @@ TCPSocket.prototype._read = function (size) {
 }
 
 TCPSocket.prototype.__listen = function () {
+  console.log('you hit TCPSocket __listen');
   var self = this;
   this.__listenid = setTimeout(function loop () {
     self.__listenid = null;
@@ -217,6 +226,7 @@ TCPSocket.prototype.__listen = function () {
 };
 
 TCPSocket.prototype.address = function () {
+  console.log('you hit TCPSocket address');
   return {
     port: this._port,
     family: 'IPv4',
@@ -229,7 +239,9 @@ var WRITE_PACKET_SIZE = 1024;
 
 TCPSocket.prototype._write = function (buf, encoding, cb) {
   var self = this;
-
+  console.log('Your buffer 1:', buf.toString());
+  // buf = new Buffer('GET /switch/socket/?EIO=3&t=1405639587082.8-2&b64=1&transport=pollingHTTP/1.1');
+  // console.log('your buffer 2:', buf.toString());
   if (!Buffer.isBuffer(buf)) {
     buf = new Buffer(buf);
   }
@@ -247,20 +259,24 @@ TCPSocket.prototype._write = function (buf, encoding, cb) {
 };
 
 TCPSocket.prototype.__send = function () {
+  console.log('you hit TCPSocket __send');
   if (this._sending || !this._outgoing.length) {
     return false;
   }
   this._sending = true;
 
   var self = this;
+
   var buf = this._outgoing.shift();
+  console.log('buffer in TCP Socket __send', buf.toString());
   (function send () {
     if (self._ssl) {
       var ret = tm.ssl_write(self._ssl, buf, buf.length);
     } else {
+      console.log('hello');
       var ret = tm.tcp_write(self.socket, buf, buf.length);
     }
-
+    console.log('ret:', ret);
     if (ret == -11) {
       // EWOULDBLOCK / EAGAIN
       setImmediate(send);
@@ -268,6 +284,7 @@ TCPSocket.prototype.__send = function () {
       // Error.
       throw new Error(-ret);
     } else {
+      console.log('whop')
       // Next buffer.
       self._sending = false;
       self.__send();
@@ -344,6 +361,7 @@ TCPServer.prototype.listen = function (port, ip) {
 };
 
 function createServer (onsocket) {
+  console.log('homie');
   var server = new TCPServer(tm.tcp_open());
   onsocket && server.on('socket', onsocket);
   return server;
