@@ -191,7 +191,11 @@ static int arr_proto_forEach (lua_State* L)
 
 		// i
 		lua_pushnumber(L, i);
-		lua_call(L, 3, 0);
+
+		// third "object" argument to callbackfn
+		lua_pushvalue(L, 1);
+
+		lua_call(L, 4, 0);
 	}
 
 	lua_settop(L, 1);
