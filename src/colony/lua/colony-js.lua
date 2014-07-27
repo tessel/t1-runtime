@@ -572,7 +572,22 @@ arr_proto.reduce = function (this, callback, ...)
   return value
 end
 
-arr_proto.forEach = arr_proto_forEach
+arr_proto.forEach = function (this, fn, ...)
+  local args = table.pack(...)
+  -- t _should_ be set to undefined, per spec.
+  -- Since there is no notion of strict mode,
+  -- setting to global has the same observable semantics.
+  local t = global
+
+  if args.length > 0 then
+    t = args[1]
+  end
+
+  local len = this.length-1
+  for i=0, len do
+    fn(t, rawget(this, i) or this[i], i, this)
+  end
+end
 
 arr_proto.some = function (this, fn, ...)
   local args = table.pack(...)
