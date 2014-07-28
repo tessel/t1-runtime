@@ -456,9 +456,13 @@ static int l_tm_buffer_set (lua_State *L)
 {
   uint8_t *ud = (uint8_t *) lua_touserdata(L, 1);
   size_t index = (size_t) lua_tonumber(L, 2);
-  uint8_t newvalue = (uint8_t) lua_tonumber(L, 3);
-
-  ud[index] = newvalue;
+  double newvalue = (double) lua_tonumber(L, 3);
+  
+  if (newvalue < 0) {
+    ud[index] = 0x100 - (((uint32_t) -newvalue) % 0x100);
+  } else {
+    ud[index] = (((uint32_t) newvalue) % 0x100);
+  }
   return 0;
 }
 
