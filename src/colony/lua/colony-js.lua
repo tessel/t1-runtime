@@ -678,7 +678,7 @@ bool_proto.constructor = global.Boolean
 global.NaN = 0/0
 
 global.Number = function (ths, n)
-  return tonumber(n)
+  return tonumbervalue(n)
 end
 global.Number.prototype = num_proto
 num_proto.constructor = global.Number
