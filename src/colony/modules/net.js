@@ -428,7 +428,7 @@ TCPServer.prototype.listen = function (port, ip) {
       var clientsocket = new TCPSocket(client);
       clientsocket.connected = true;
       clientsocket.__listen();
-      self.emit('socket', clientsocket);
+      self.emit('connection', clientsocket);
     }
 
     setTimeout(poll, 10);
@@ -439,7 +439,7 @@ TCPServer.prototype.listen = function (port, ip) {
 
 function createServer (onsocket) {
   var server = new TCPServer(tm.tcp_open());
-  onsocket && server.on('socket', onsocket);
+  onsocket && server.on('connection', onsocket);
   return server;
 };
 
