@@ -119,7 +119,9 @@ test('server-basic', function (t) {
     c.end("«§»");
   });
   function testConnection(port) {
-    net.connect(port).on('data', function (d) {
+    //net.connect(port).on('data', function (d) {
+    // WORKAROUND: https://github.com/tessel/runtime/issues/311
+    net.connect(port, "localhost").on('data', function (d) {
       t.equal(d.toString(), "«§»");
       t.end();
     });
