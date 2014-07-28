@@ -4,6 +4,7 @@
   "private": true,
   "bin": {
     "colony": "./out/Release/colony",
+    "colony-compiler": "./node_modules/colony-compiler/bin/colony-compiler.js",
     "colony-profile": "./bin/colony-profile.js"
   },
   "directories": {
