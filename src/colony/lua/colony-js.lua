@@ -1481,8 +1481,11 @@ if type(hs) == 'table' then
     local ret, pos = {}, 0
     for i=0,hs.regex_nsub(cre) do
       local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
-      -- print('match', i, '=> start:', so, ', end:', eo)
-      table.insert(ret, pos, string.sub(data, so + 1, eo))
+      if so == -1 or eo == -1 then
+        table.insert(ret, pos, nil)
+      else
+        table.insert(ret, pos, string.sub(data, so + 1, eo))
+      end
       pos = pos + 1
     end
     return js_arr(ret, pos)
@@ -1504,7 +1507,11 @@ if type(hs) == 'table' then
     local ret, len = {}, 0
     for i=0,hs.regex_nsub(cre) do
       local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
-      ret[len] = string.sub(data, so + 1, eo)
+      if so == -1 or eo == -1 then
+        table.insert(ret, len, nil)
+      else
+        table.insert(ret, len, string.sub(data, so + 1, eo))
+      end
       len = len + 1
     end
     return js_arr(ret, len)
