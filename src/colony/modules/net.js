@@ -82,6 +82,11 @@ function TCPSocket (socket, _secure) {
   this._queueEnd = false;
 
   var self = this;
+  self.on('finish', function () {
+    // this is called when writing is ended
+    // TODO: support allowHalfOpen (if firmware can?)
+    self.close();
+  })
   self._closehandler = function (buf) {
     var socket = buf.readUInt32LE(0);
     if (socket == self.socket) {
@@ -227,6 +232,10 @@ TCPSocket.prototype.__listen = function () {
   var self = this;
   this.__listenid = setTimeout(function loop () {
     self.__listenid = null;
+    // ~HACK: set a watchdog to fire end event if not re-polled
+    var failsafeEnd = setImmediate(function () {
+      self.emit('end');
+    });
 
     if (self._sending) {
       return;
@@ -258,6 +267,7 @@ TCPSocket.prototype.__listen = function () {
     }
 
     self.__listenid = setTimeout(loop, 10);
+    clearImmediate(failsafeEnd);
   }, 10);
 };
 
@@ -354,6 +364,7 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
     if (self.__listenid != null) {
       clearInterval(self.__listenid);
       self.__listenid = null
+      self.emit('end')
     }
     if (self.socket != null) {
 
