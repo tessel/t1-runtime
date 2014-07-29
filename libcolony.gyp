@@ -94,6 +94,7 @@
         {
           'action_name': '<(_target_name)_compile',
           'inputs': [
+            'src/colony/modules/_http_agent.js',
             'src/colony/modules/_stream_duplex.js',
             'src/colony/modules/_stream_passthrough.js',
             'src/colony/modules/_stream_readable.js',
