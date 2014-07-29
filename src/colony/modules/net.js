@@ -430,6 +430,8 @@ TCPServer.prototype.listen = function (port, host, backlog, cb) {
     cb = backlog;
   }
   
+  if (cb) this.once('listening', cb);
+  
   var self = this;
   var res = tm.tcp_listen(this.socket, port);
   if (res < 0) {
@@ -438,7 +440,9 @@ TCPServer.prototype.listen = function (port, host, backlog, cb) {
 
   self._port = port;
   self._address = host;
-  self.emit('listening');
+  setImmediate(function () {
+    self.emit('listening');
+  });
 
   function poll(){
      if(self.socket == null){ return false; }
