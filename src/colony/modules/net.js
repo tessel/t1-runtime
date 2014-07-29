@@ -408,7 +408,28 @@ function TCPServer (socket) {
 
 util.inherits(TCPServer, TCPSocket);
 
-TCPServer.prototype.listen = function (port, ip) {
+TCPServer.prototype.listen = function (port, host, backlog, cb) {
+  if (typeof port === 'string') {
+    throw Error("UNIX sockets not supported");
+  } else if (port === 0) {
+    // TODO: actually fix https://github.com/tessel/runtime/issues/329
+    port = 1024 + Math.round(64311*Math.random());
+  }
+  
+  if (typeof host === 'function') {
+    cb = host;
+    host = null;    // NOTE: would be INADDR_ANY, but we ignore…
+    backlog = 511;  // NOTE: also ignored
+  } else if (typeof host === 'number') {
+    backlog = host;
+    host = null;
+  }
+  
+  if (typeof backlog === 'function') {
+    backlog = 511;
+    cb = backlog;
+  }
+  
   var self = this;
   var res = tm.tcp_listen(this.socket, port);
   if (res < 0) {
@@ -416,7 +437,8 @@ TCPServer.prototype.listen = function (port, ip) {
   }
 
   self._port = port;
-  self._address = ip;
+  self._address = host;
+  self.emit('listening');
 
   function poll(){
      if(self.socket == null){ return false; }
