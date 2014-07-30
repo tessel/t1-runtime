@@ -127,3 +127,23 @@ test('server-basic', function (t) {
     });
   }
 });
+
+test('server-binding', function (t) {
+  var firstServer = net.createServer(),
+      otherServer = net.createServer(),
+      conflicting = net.createServer();
+  firstServer.listen(0, function () {
+    var firstPort = firstServer.address().port;
+    t.ok(firstPort, "assigned a port");
+    otherServer.listen(0, function () {
+      t.notEqual(otherServer.address().port, firstPort, "assigned a different port");
+    });
+    conflicting.listen(firstPort, function () {
+      t.fail("this should not be called!");
+    });
+    conflicting.on('error', function (e) {
+      t.ok(e, "got error as expected");
+      t.end();
+    });
+  });
+});
