@@ -149,11 +149,11 @@ function normalizeConnectArgs(args) {
 TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   var self = this;
   var args = normalizeConnectArgs(arguments);
-  var port = args[0].port;
-  var host = args[0].host;
+  var port = +args[0].port;
+  var host = args[0].host || "127.0.0.1";
   var cb = args[1];
 
-  self._port = +port;
+  self._port = port;
   self._address = host;
 
   if (cb) {
@@ -176,7 +176,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       var unsplitIp = ip;
       ip = ip.split('.').map(Number);
 
-      var ret = tm.tcp_connect(self.socket, ip[0], ip[1], ip[2], ip[3], self._port);
+      var ret = tm.tcp_connect(self.socket, ip[0], ip[1], ip[2], ip[3], port);
       if (ret >= 1) {
         // we're not connected to the internet
         return self.emit('error', new Error("Lost connection"));
