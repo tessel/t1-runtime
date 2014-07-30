@@ -147,3 +147,10 @@ test('server-binding', function (t) {
     });
   });
 });
+
+test('client-errors', function (t) {
+  net.connect(1, "0.0.0.0").on('error', function (e) {
+    t.ok(e, "got expected error");
+    t.end();
+  });
+});

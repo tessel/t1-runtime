@@ -75,13 +75,25 @@ function ensureSSLCtx () {
 
 function TCPSocket (socket, _secure) {
   Stream.Duplex.call(this);
-  this.socket = socket;
+  
+  if (socket === null) {
+    if (_secure) ensureSSLCtx();
+    this.socket = tm.tcp_open();
+  } else {
+    this.socket = socket;
+  }
   this._secure = _secure;
   this._outgoing = [];
   this._sending = false;
   this._queueEnd = false;
 
   var self = this;
+  if (this.socket < 0) {
+    setImmediate(function () {
+      self.emit('error', new Error("ENOENT: Cannot open another socket."));
+    });
+    return;
+  }
   self.on('finish', function () {
     // this is called when writing is ended
     // TODO: support allowHalfOpen (if firmware can?)
@@ -167,12 +179,12 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       var ret = tm.tcp_connect(self.socket, ip[0], ip[1], ip[2], ip[3], self._port);
       if (ret >= 1) {
         // we're not connected to the internet
-        throw new Error("Lost connection");
+        return self.emit('error', new Error("Lost connection"));
       }
       if (ret < 0) {
         tm.tcp_close(self.socket); // -57
         if (retries > 3) {
-          throw new Error('ENOENT Cannot connect to ' + ip.join('.') + ' Got: err'+ret);
+          return self.emit('error', new Error('ENOENT Cannot connect to ' + ip.join('.') + ' Got: err'+ret));
         } else {
           retries++;
           setTimeout(function(){
@@ -194,11 +206,11 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
           , ret = _[1]
         if (ret != 0) {
           if (ret == -517) {
-            throw new Error('CERT_HAS_EXPIRED');
+            return self.emit('error', new Error('CERT_HAS_EXPIRED'));
           } else if (ret == -516) {
-            throw new Error('CERT_NOT_YET_VALID');
+            return self.emit('error', new Error('CERT_NOT_YET_VALID'));
           } else {
-            throw new Error('Could not validate SSL request (error ' + ret + ')');
+            return self.emit('error', new Error('Could not validate SSL request (error ' + ret + ')'));
           }
         }
 
@@ -222,7 +234,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         }
 
         if (!tls.checkServerIdentity(host, cert)) {
-          throw new Error('Hostname/IP doesn\'t match certificate\'s altnames');
+          return self.emit('error', new Error('Hostname/IP doesn\'t match certificate\'s altnames'));
         }
 
         self._ssl = ssl;
@@ -340,7 +352,7 @@ TCPSocket.prototype.__send = function (cb) {
     }
 
     if (ret == null) {
-      throw new Error('Never sent data over socket');
+      return self.emit('error', new Error('Never sent data over socket'));
     } else if (ret == -2) {
       // cc3000 ran out of buffers. wait until a buffer clears up to send this packet.
       setTimeout(function() {
@@ -352,8 +364,7 @@ TCPSocket.prototype.__send = function (cb) {
       // EWOULDBLOCK / EAGAIN
       setTimeout(send, 100);
     } else if (ret < 0) {
-      // Error.
-      throw new Error(-ret);
+      return self.emit('error', new Error("Socket write failed unexpectedly! ("+ret+")"));
     } else {
       // Next buffer.
       self._sending = false;
@@ -395,16 +406,7 @@ TCPSocket.prototype.setTimeout = function () { /* noop */ };
 TCPSocket.prototype.setNoDelay = function () { /* noop */ };
 
 function connect (port, host, callback, _secure) {
-  if (_secure) {
-    ensureSSLCtx();
-  }
-
-  var sock = tm.tcp_open();
-  if (sock == -1) {
-    throw 'ENOENT: Cannot connect to new socket.'
-  }
-
-  var client = new TCPSocket(sock, _secure);
+  var client = new TCPSocket(null, _secure);
   client.connect(port, host, callback);
   return client;
 };
