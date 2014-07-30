@@ -101,6 +101,18 @@ function TCPSocket (socket, _secure) {
 
 util.inherits(TCPSocket, Stream.Duplex);
 
+TCPSocket._portsUsed = Object.create(null);
+
+TCPSocket._requestPort = function (port) {
+  // NOTE: only supports _automatic_ port assignment; we track (but not *check*) manually requested ports
+  if (port === 0) {
+    port = 1024;    // NOTE: could optimize, e.g. by starting from last-granted or assuming only 7 sockets…
+    while (port in TCPSocket._portsUsed) ++port;
+  }
+  TCPSocket._portsUsed[port] = true;
+  return port;
+};
+
 function normalizeConnectArgs(args) {
   var options = {};
 
@@ -129,7 +141,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   var host = args[0].host;
   var cb = args[1];
 
-  self._port = port;
+  self._port = +port;
   self._address = host;
 
   if (cb) {
@@ -152,7 +164,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       var unsplitIp = ip;
       ip = ip.split('.').map(Number);
 
-      var ret = tm.tcp_connect(self.socket, ip[0], ip[1], ip[2], ip[3], Number(port));
+      var ret = tm.tcp_connect(self.socket, ip[0], ip[1], ip[2], ip[3], self._port);
       if (ret >= 1) {
         // we're not connected to the internet
         throw new Error("Lost connection");
@@ -411,9 +423,6 @@ util.inherits(TCPServer, TCPSocket);
 TCPServer.prototype.listen = function (port, host, backlog, cb) {
   if (typeof port === 'string') {
     throw Error("UNIX sockets not supported");
-  } else if (port === 0) {
-    // TODO: actually fix https://github.com/tessel/runtime/issues/329
-    port = 1024 + Math.round(64311*Math.random());
   }
   
   if (typeof host === 'function') {
@@ -430,16 +439,16 @@ TCPServer.prototype.listen = function (port, host, backlog, cb) {
     cb = backlog;
   }
   
+  this._port = TCPSocket._requestPort(port);
+  this._address = host;
   if (cb) this.once('listening', cb);
   
-  var self = this;
-  var res = tm.tcp_listen(this.socket, port);
+  var res = tm.tcp_listen(this.socket, this._port);
   if (res < 0) {
-    throw "Error listening on TCP socket (port " + port + ", ip " + ip + ")"
+    throw "Error listening on TCP socket (port " + this._port + ", ip " + host + ")"
   }
-
-  self._port = port;
-  self._address = host;
+  
+  var self = this;
   setImmediate(function () {
     self.emit('listening');
   });
