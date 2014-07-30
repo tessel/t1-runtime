@@ -443,16 +443,15 @@ TCPServer.prototype.listen = function (port, host, backlog, cb) {
   this._address = host;
   if (cb) this.once('listening', cb);
   
-  var res = tm.tcp_listen(this.socket, this._port);
-  if (res < 0) {
-    throw "Error listening on TCP socket (port " + this._port + ", ip " + host + ")"
-  }
-  
-  var self = this;
-  setImmediate(function () {
+  var self = this,
+      res = tm.tcp_listen(this.socket, this._port);
+  if (res < 0) setImmediate(function () {
+    self.emit('error', new Error("Listen on TCP socket failed ("+res+")"));
+  }); else setImmediate(function () {
     self.emit('listening');
+    poll();
   });
-
+  
   function poll(){
      if(self.socket == null){ return false; }
      var _ = tm.tcp_accept(self.socket)
@@ -468,8 +467,6 @@ TCPServer.prototype.listen = function (port, host, backlog, cb) {
 
     setTimeout(poll, 10);
   }
-   
-  poll();
 };
 
 function createServer (onsocket) {
