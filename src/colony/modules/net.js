@@ -76,7 +76,11 @@ function ensureSSLCtx () {
 function TCPSocket (socket, _secure) {
   Stream.Duplex.call(this);
   
-  if (socket === null) {
+  if (typeof socket === 'object') {
+    this.socket = socket.fd;
+    // TODO: respect readable/writable flags
+    if (socket.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
+  } else if (socket == null) {
     if (_secure) ensureSSLCtx();
     this.socket = tm.tcp_open();
   } else {
