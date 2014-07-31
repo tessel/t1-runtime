@@ -13,7 +13,7 @@ var http = require('http');
 // Could be done better.
 
 for (var key in http) {
-  exports[key] = http[key];
+  exports[key] = http[key].bind(exports);
 }
 
 exports._secure = true;
