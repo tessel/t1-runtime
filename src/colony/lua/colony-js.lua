@@ -678,7 +678,7 @@ bool_proto.constructor = global.Boolean
 global.NaN = 0/0
 
 global.Number = function (ths, n)
-  return tonumber(n)
+  return tonumbervalue(n)
 end
 global.Number.prototype = num_proto
 num_proto.constructor = global.Number
@@ -885,8 +885,15 @@ global.String = function (ths, str)
 end
 global.String.prototype = str_proto
 str_proto.constructor = global.String
-global.String.fromCharCode = function (ths, ord)
-  return string.char(ord or 0)
+global.String.fromCharCode = function (this, ...)
+  -- http://es5.github.io/x15.5.html#x15.5.3.2
+  local args = table.pack(...)
+  local str = ''
+  for i=1,args.length do
+    local uint16 = math.floor(math.abs(tonumbervalue(args[i]))) % (2^16)
+    str = str .. string.char(uint16)
+  end
+  return str
 end
 
 -- Math
@@ -1474,8 +1481,11 @@ if type(hs) == 'table' then
     local ret, pos = {}, 0
     for i=0,hs.regex_nsub(cre) do
       local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
-      -- print('match', i, '=> start:', so, ', end:', eo)
-      table.insert(ret, pos, string.sub(data, so + 1, eo))
+      if so == -1 or eo == -1 then
+        table.insert(ret, pos, nil)
+      else
+        table.insert(ret, pos, string.sub(data, so + 1, eo))
+      end
       pos = pos + 1
     end
     return js_arr(ret, pos)
@@ -1497,7 +1507,11 @@ if type(hs) == 'table' then
     local ret, len = {}, 0
     for i=0,hs.regex_nsub(cre) do
       local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
-      ret[len] = string.sub(data, so + 1, eo)
+      if so == -1 or eo == -1 then
+        table.insert(ret, len, nil)
+      else
+        table.insert(ret, len, string.sub(data, so + 1, eo))
+      end
       len = len + 1
     end
     return js_arr(ret, len)

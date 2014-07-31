@@ -25,6 +25,16 @@ local bit = require('bit32')
 
 -- lua methods
 
+-- tonumber that returns NaN instead of nil
+_G.tonumbervalue = function (val)
+  val = tonumber(val)
+  if val == nil then
+    return 0/0
+  else
+    return val
+  end
+end
+
 function table.augment (t1,t2)
   for i=1,#t2 do
     t1[#t1+1] = t2[i]

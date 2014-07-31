@@ -4,6 +4,7 @@
   "private": true,
   "bin": {
     "colony": "./out/Release/colony",
+    "colony-compiler": "./node_modules/colony-compiler/bin/colony-compiler.js",
     "colony-profile": "./bin/colony-profile.js"
   },
   "directories": {
@@ -21,7 +22,7 @@
   },
   "dependencies": {
     "async": "~0.2.9",
-    "colony-compiler": "~0.6.12",
+    "colony-compiler": "~0.6.15",
     "mkdirp": "~0.3.5",
     "bindings": "~1.2.0"
   },

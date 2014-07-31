@@ -1,11 +1,13 @@
+console.log('1..4')
+
 var test = /^(?::(\d*))?/
 var a = ('WRONG'.match(test))
-for (var i = 0; i < a.length; i++) {
-    console.log(JSON.stringify(a[i]));
-}
+
+console.log(a[0] == "" ? 'ok' : 'not ok');
+console.log(a[1] == undefined ? 'ok' : 'not ok');
 
 var test = /^(?::(\d*))?/
 var a = (':5'.match(test))
-for (var i = 0; i < a.length; i++) {
-    console.log(JSON.stringify(a[i]));
-}
+
+console.log(a[0] == ":5" ? 'ok' : 'not ok');
+console.log(a[1] == "5" ? 'ok' : 'not ok');
