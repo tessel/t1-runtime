@@ -159,8 +159,11 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   var host = opts.host || "127.0.0.1";
   var cb = args[1];
 
-  self._port = port;
-  self._address = host;
+  self.remotePort = port;
+  self.remoteAddress = host;
+  // TODO: proper value for these?
+  self.localPort = 0;
+  self.localAddress = "0.0.0.0";
 
   if (cb) {
     self.once('connect', cb);
@@ -176,15 +179,16 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
           return self.emit('error', err);
         }
         self._restartTimeout();
-        doConnect(ips[0]);
+        self.remoteAddress = ips[0];
+        doConnect(self.remoteAddress);
       })
     }
     var retries = 0;
     function doConnect(ip) {
-      var unsplitIp = ip;
-      ip = ip.split('.').map(Number);
+      var addr = ip.split('.').map(Number);
+      addr = (addr[0] << 24) + (addr[1] << 16) + (addr[2] << 8) + addr[3];
 
-      var ret = tm.tcp_connect(self.socket, ip[0], ip[1], ip[2], ip[3], port);
+      var ret = tm.tcp_connect(self.socket, addr, port);
       if (ret >= 1) {
         // we're not connected to the internet
         return self.emit('error', new Error("Lost connection"));
@@ -192,13 +196,13 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       if (ret < 0) {
         tm.tcp_close(self.socket); // -57
         if (retries > 3) {
-          return self.emit('error', new Error('ENOENT Cannot connect to ' + ip.join('.') + ' Got: err'+ret));
+          return self.emit('error', new Error('ENOENT Cannot connect to ' + ip + ' Got: err'+ret));
         } else {
           retries++;
           setTimeout(function(){
             // wait for tcp socket to actually close
             self.socket = tm.tcp_open();
-            doConnect(unsplitIp);
+            doConnect(ip);
           }, 100);
           return;
         }
@@ -305,13 +309,8 @@ TCPSocket.prototype.__listen = function () {
   }, 10);
 };
 
-TCPSocket.prototype.address = function () {
-  return {
-    port: this._port,
-    family: 'IPv4',
-    address: this._address
-  };
-};
+TCPSocket.prototype.localFamily = 'IPv4';
+TCPSocket.prototype.remoteFamily = 'IPv4';
 
 // Maximum packet size CC can handle.
 var WRITE_PACKET_SIZE = 1024;
@@ -471,12 +470,12 @@ TCPServer.prototype.listen = function (port, host, backlog, cb) {
     cb = backlog;
   }
   
-  this._port = TCPSocket._requestPort(port);
-  this._address = host;
+  this.localPort = TCPSocket._requestPort(port);
+  this.localAddress = host || "0.0.0.0";
   if (cb) this.once('listening', cb);
   
   var self = this,
-      res = tm.tcp_listen(this.socket, this._port);
+      res = tm.tcp_listen(this.socket, this.localPort);
   if (res < 0) setImmediate(function () {
     self.emit('error', new Error("Listen on TCP socket failed ("+res+")"));
   }); else setImmediate(function () {
@@ -490,17 +489,30 @@ TCPServer.prototype.listen = function (port, host, backlog, cb) {
     
     var _ = tm.tcp_accept(self.socket)
       , client = _[0]
-      , ip = _[1];
+      , addr = _[1]
+      , port = _[2];
 
     if (client >= 0) {
       var clientsocket = new TCPSocket(client);
       clientsocket.connected = true;
+      clientsocket.localAddress = self.localAddress;    // TODO: https://forums.tessel.io/t/get-ip-address-of-tessel-in-code/203
+      clientsocket.localPort = self.localPort;
+      clientsocket.remoteAddress = [addr >>> 24, (addr >>> 16) & 0xFF, (addr >>> 8) & 0xFF, addr & 0xFF].join('.');
+      clientsocket.remotePort = port;
       clientsocket.__listen();
       self.emit('connection', clientsocket);
     }
 
     setTimeout(poll, 10);
   }
+};
+
+TCPServer.prototype.address = function () {
+  return {
+    port: this.localPort,
+    family: this.localFamily,
+    address: this.localAddress
+  };
 };
 
 function createServer (opts, onsocket) {
