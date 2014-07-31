@@ -149,8 +149,10 @@ function normalizeConnectArgs(args) {
 TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   var self = this;
   var args = normalizeConnectArgs(arguments);
-  var port = +args[0].port;
-  var host = args[0].host || "127.0.0.1";
+  var opts = args[0];
+  if (opts.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
+  var port = +opts.port;
+  var host = opts.host || "127.0.0.1";
   var cb = args[1];
 
   self._port = port;
@@ -497,7 +499,12 @@ TCPServer.prototype.listen = function (port, host, backlog, cb) {
   }
 };
 
-function createServer (onsocket) {
+function createServer (opts, onsocket) {
+  if (typeof opts === 'function') {
+    onsocket = opts;
+    opts = null;
+  }
+  if (opts && opts.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
   var server = new TCPServer(tm.tcp_open());
   onsocket && server.on('connection', onsocket);
   return server;
