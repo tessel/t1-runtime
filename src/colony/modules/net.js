@@ -423,7 +423,11 @@ TCPSocket.prototype._restartTimeout = function () {
   }, self._timeout) : null;
 }
 
-TCPSocket.prototype.setNoDelay = function () { /* noop */ };
+
+// NOTE: CC3K may not support? http://e2e.ti.com/support/wireless_connectivity/f/851/p/349461/1223801.aspx#1223801
+TCPSocket.prototype.setNoDelay = function (val) {
+  if (val) console.warn("Ignoring call to setNoDelay. TCP_NODELAY socket option not supported.");
+};
 
 function connect (port, host, callback, _secure) {
   var client = new TCPSocket(null, _secure);
