@@ -152,3 +152,16 @@ test('client-errors', function (t) {
     t.end();
   });
 });
+
+test('client-timeout', function (t) {
+  var client = net.connect(80, "ipcalf.com", function () {
+    client.setTimeout(100, function () {
+      t.pass("timeout callback called");
+    });
+    client.on('timeout', function () {
+      t.pass("timeout event fired");
+      client.destroy();
+      t.end();
+    });
+  });
+});

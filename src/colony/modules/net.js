@@ -161,6 +161,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   }
 
   setImmediate(function () {
+    self._restartTimeout();
     if (isIP(host)) {
       doConnect(host);
     } else {
@@ -168,6 +169,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         if (err) {
           return self.emit('error', err);
         }
+        self._restartTimeout();
         doConnect(ips[0]);
       })
     }
@@ -240,6 +242,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         self._ssl = ssl;
       }
 
+      self._restartTimeout();
       self.__listen();
       self.connected = true;
       self.emit('connect');
@@ -286,6 +289,7 @@ TCPSocket.prototype.__listen = function () {
     }
 
     if (buf.length) {
+      self._restartTimeout();
       self.push(buf);
       // TODO: stop polling if this returns false
     }
@@ -308,7 +312,7 @@ var WRITE_PACKET_SIZE = 1024;
 
 TCPSocket.prototype._write = function (buf, encoding, cb) {
   var self = this;
-
+  
   if (!Buffer.isBuffer(buf)) {
     buf = new Buffer(buf);
   }
@@ -366,6 +370,7 @@ TCPSocket.prototype.__send = function (cb) {
     } else if (ret < 0) {
       return self.emit('error', new Error("Socket write failed unexpectedly! ("+ret+")"));
     } else {
+      self._restartTimeout();
       // Next buffer.
       self._sending = false;
       self.__send(cb);
@@ -402,7 +407,22 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
   });
 };
 
-TCPSocket.prototype.setTimeout = function () { /* noop */ };
+TCPSocket.prototype.setTimeout = function (msecs, cb) {
+  this._timeout = msecs;
+  this._restartTimeout();
+  if (cb) {
+    if (msecs) this.once('timeout', cb);
+    else this.removeListener('timeout', cb);   // not documented, but node.js does this
+  }
+};
+TCPSocket.prototype._restartTimeout = function () {
+  var self = this;
+  clearTimeout(self._timeoutWatchdog);
+  this._timeoutWatchdog = (self._timeout) ? setTimeout(function () {
+    self.emit('timeout');
+  }, self._timeout) : null;
+}
+
 TCPSocket.prototype.setNoDelay = function () { /* noop */ };
 
 function connect (port, host, callback, _secure) {
