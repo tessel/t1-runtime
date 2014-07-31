@@ -212,7 +212,7 @@ HTTPServer.prototype.close = function(callback){
     if(callback){
         callback();
     }
-}
+};
 
 
 /**
