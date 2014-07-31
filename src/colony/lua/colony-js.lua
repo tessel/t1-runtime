@@ -489,17 +489,40 @@ arr_proto.join = function (this, ...)
   return string.sub(_r, 1, string.len(_r) - string.len(str))
 end
 
-arr_proto.indexOf = function (this, val, fromIndex)
-  if fromIndex == nil then 
-    fromIndex = 0 
+arr_proto.indexOf = function (this, searchElement, fromIndex)
+  local len = this.length
+  local start
+
+  if len == 0 then 
+    return -1
   end
-  
-  local len = this.length - 1
-  for i=tonumber(fromIndex), len do
-    if this[i] == val then
+
+  if fromIndex ~= nil then
+    fromIndex = tonumber(fromIndex)
+  else
+    fromIndex = 0
+  end
+
+  if fromIndex >= len then
+    return -1
+  end
+
+  if fromIndex >= 0 then
+    start = fromIndex
+  else
+    start = len + fromIndex
+
+    if start < 0 then
+      start = 0
+    end
+  end
+
+  for i=start, len - 1 do
+    if this[i] == searchElement then
       return i
     end
   end
+
   return -1
 end
 
