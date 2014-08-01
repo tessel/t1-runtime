@@ -382,7 +382,7 @@ TCPServer.prototype.listen = function (port, ip) {
   self._address = ip;
 
   function poll(){
-     if(self.socket == null){ retun false; }
+     if(!self.socket){ retun false; }
      var _ = tm.tcp_accept(self.socket)
       , client = _[0]
       , ip = _[1];
