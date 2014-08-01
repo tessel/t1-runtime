@@ -194,7 +194,7 @@ function HTTPServer () {
   this.connection = net.createServer(function (connection) {
     var request = new ServerRequest(connection);
     var response = new ServerResponse(request, connection);
-    request.on('request', function () {
+    request.once('request', function () {
       self.emit('request', request, response)
     });
   });
