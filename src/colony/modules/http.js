@@ -65,14 +65,14 @@ ServerResponse.prototype.writeHead = function (status, headers) {
     this.setHeaders(headers);
   }
   this.connection.write('HTTP/1.1 ' + status + ' OK\r\n');
-  this._usesContentType = false;
+  this._usesContentLength = false;
   for (var key in this.headers) {
     if (key.toLowerCase() == 'content-length') {
-      this._usesContentType = true;
+      this._usesContentLength = true;
     }
     this.connection.write(key + ': ' + this.headers[key] + '\r\n');
   }
-  if (!this._usesContentType) {
+  if (!this._usesContentLength) {
     this.connection.write('Transfer-Encoding: chunked\r\n');
   }
   this.connection.write('\r\n');
@@ -84,7 +84,7 @@ ServerResponse.prototype._write = function (chunk, encoding, callback) {
     this.writeHead(200);
   }
 
-  if (!this._usesContentType) {
+  if (!this._usesContentLength) {
     // concatting buffer
     var buf = null;
     if (Buffer.isBuffer(chunk)) {
@@ -116,10 +116,10 @@ ServerResponse.prototype.end = function (data) {
     this.write(data);
   }
   this._closed = true;
-  if (!this._usesContentType) {
-    // force it to write ending chunk without a unique chunk header
-    this._usesContentType = true; 
-    this.write('0\r\n\r\n');
+  
+  if (!this._usesContentLength) {
+    // writes the ("0/r/n/r/n")
+    this.write('');
   }
 
   this.once('finish', function () { 
