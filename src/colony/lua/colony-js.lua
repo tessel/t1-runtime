@@ -261,7 +261,7 @@ end
 str_proto.concat = function (this, ...)
   local args1 = table.pack(...)
   local ret = tostring(this)
-  for i=1,args1.length do
+  for i=1,args1.n do
     ret = ret .. args1[i]
   end
   return ret
@@ -346,7 +346,7 @@ func_proto.call = function (func, ths, ...)
 end
 
 function augmentargs (t1, offn, t2)
-  for i=1,t2.length do
+  for i=1,t2.n do
     t1[offn+i] = t2[i]
   end
   return t1
@@ -357,8 +357,8 @@ func_proto.bind = function (func, ths1, ...)
   return function (ths2, ...)
     local argset, args2 = {}, table.pack(...)
     augmentargs(argset, 0, args1)
-    augmentargs(argset, args1.length, args2)
-    return func(ths1, unpack(argset, 1, args1.length + args2.length))
+    augmentargs(argset, args1.n, args2)
+    return func(ths1, unpack(argset, 1, args1.n + args2.n))
   end
 end
 
@@ -384,7 +384,7 @@ end
 arr_proto.push = function (this, ...)
   local args = table.pack(...)
   local len = tonumber(rawget(this, 'length'))
-  for i=1,args.length do
+  for i=1,args.n do
     rawset(this, len, args[i])
     len = len + 1
   end
@@ -481,7 +481,7 @@ arr_proto.concat = function (this, ...)
     arr:push(this[i])
   end
   local args1 = table.pack(...)
-  for i=1,args1.length do
+  for i=1,args1.n do
     if global.Array:isArray(args1[i]) then
       for j=0,(args1[i].length or 0)-1 do
         arr:push(args1[i][j])
@@ -519,7 +519,7 @@ end
 arr_proto.join = function (this, ...)
   local args = table.pack(...)
   local str = ','
-  if args.length >= 1 then
+  if args.n >= 1 then
     if args[1] == nil then
       str = 'null'
     else
@@ -583,7 +583,7 @@ arr_proto.map = function (this, fn, ...)
   -- setting to global has the same observable semantics.
   local t = global
 
-  if args.length > 0 then
+  if args.n > 0 then
     t = args[1]
   end
 
@@ -601,7 +601,7 @@ arr_proto.filter = function (this, fn, ...)
   -- setting to global has the same observable semantics.
   local t = global
 
-  if args.length > 0 then
+  if args.n > 0 then
     t = args[1]
   end
 
@@ -626,7 +626,7 @@ arr_proto.reduce = function (this, callback, ...)
   local isValueSet = false
 
   local args = table.pack(...)
-  if args.length > 0 then
+  if args.n > 0 then
     value = args[1]
     isValueSet = true
   end
@@ -660,7 +660,7 @@ arr_proto.forEach = function (this, fn, ...)
   -- setting to global has the same observable semantics.
   local t = global
 
-  if args.length > 0 then
+  if args.n > 0 then
     t = args[1]
   end
 
@@ -690,7 +690,7 @@ arr_proto.some = function (this, fn, ...)
   -- setting to global has the same observable semantics.
   local t = global
 
-  if args.length > 0 then
+  if args.n > 0 then
     t = args[1]
   end
 
@@ -718,7 +718,7 @@ arr_proto.every = function (this, callbackfn, ...)
   -- setting to global has the same observable semantics.
   local t = global
 
-  if args.length > 0 then
+  if args.n > 0 then
     t = args[1]
   end
 
@@ -741,7 +741,7 @@ arr_proto.filter = function (this, fn, ...)
   -- setting to global has the same observable semantics.
   local t = global
 
-  if args.length > 0 then
+  if args.n > 0 then
     t = args[1]
   end
 
@@ -957,8 +957,8 @@ func_proto.constructor = global.Function
 
 global.Array = function (ths, ...)
   local a = table.pack(...)
-  local len = a.length
-  a.length = nil
+  local len = a.n
+  a.n = nil
   if len == 1 and type(a[1]) == 'number' then
     local len = tonumber(a[1])
     return js_arr({}, len)
@@ -991,7 +991,7 @@ global.String.fromCharCode = function (this, ...)
   -- http://es5.github.io/x15.5.html#x15.5.3.2
   local args = table.pack(...)
   local str = ''
-  for i=1,args.length do
+  for i=1,args.n do
     local uint16 = math.floor(math.abs(tonumbervalue(args[i]))) % (2^16)
     str = str .. string.char(uint16)
   end
@@ -1042,8 +1042,7 @@ global.Math = js_obj({
   ceil = luafunctor(math.ceil),
   clz32 = function (this, x)
     -- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/clz32
-    x = tonumber(x) or 0
-    local value = bit.tobit(math.floor(x))
+    local value = bit.rshift(tointegervalue(x) or 0, 0)
     if value then
       return 32 - #(tm.itoa(value, 2) or '')
     else
@@ -1072,7 +1071,7 @@ global.Math = js_obj({
   hypot = function (this, ...)
     -- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/hypot
     local y, args = 0, table.pack(...)
-    for i=1,args.length do
+    for i=1,args.n do
       local arg = tonumber(args[i])
       if type(arg) ~= 'number' then
         return 0/0 -- NaN

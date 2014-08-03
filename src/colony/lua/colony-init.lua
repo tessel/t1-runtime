@@ -35,17 +35,20 @@ _G.tonumbervalue = function (val)
   end
 end
 
+_G.tointegervalue = function (val)
+  val = tonumber(val)
+  if val == nil then
+    return 0/0
+  else
+    return math.floor(val)
+  end
+end
+
 function table.augment (t1,t2)
   for i=1,#t2 do
     t1[#t1+1] = t2[i]
   end
   return t1
-end
-
-if not table.pack then
-  function table.pack(...)
-    return { length = select("#", ...), ... }
-  end
 end
 
 if not setfenv then -- Lua 5.2
