@@ -10,7 +10,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-// #include <luajit.h>
+#include <luajit.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -162,7 +162,7 @@ int colony_runtime_open ()
     printf("Error creating Lua state.\n");
   }
   lua_atpanic(L, &runtime_panic);
-  // luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
+  luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_OFF);
   // lua_gc(L, LUA_GCSETPAUSE, 90);
   // lua_gc(L, LUA_GCSETSTEPMUL, 200);
 
