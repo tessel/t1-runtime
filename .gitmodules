@@ -4,9 +4,6 @@
 [submodule "deps/http-parser"]
 	path = deps/http-parser
 	url = https://github.com/joyent/http-parser.git
-[submodule "deps/lua-5.1"]
-	path = deps/colony-lua
-	url = https://github.com/tessel/colony-lua.git
 [submodule "deps/yajl"]
 	path = deps/yajl
 	url = https://github.com/lloyd/yajl.git
@@ -19,3 +16,6 @@
 [submodule "deps/miniz"]
 	path = deps/miniz
 	url = https://github.com/tessel/miniz
+[submodule "deps/colony-luajit"]
+	path = deps/colony-luajit
+	url = https://github.com/tcr/luajit.git
