@@ -584,8 +584,14 @@ arr_proto.forEach = function (this, fn, ...)
   end
 
   local len = this.length-1
-  for i=0, len do
-    fn(t, rawget(this, i) or this[i], i, this)
+  if type(this) == 'table' then
+    for i=0, len do
+      fn(t, rawget(this, i) or this[i], i, this)
+    end
+  else
+    for i=0, len do
+      fn(t, this[i], i, this)
+    end
   end
 end
 
