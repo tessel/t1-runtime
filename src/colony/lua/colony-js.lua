@@ -498,14 +498,14 @@ arr_proto.sort = function (this, fn)
   table.insert(this, 1, this[0])
   rawset(this, 0, nil)
   table.sort(this, function (a, b)
-    if not b then
+    if b == nil then
       return 0
     end
     local ret
     if not fn then
       ret = a < b
     else
-      ret = fn(this, a, b)
+      ret = fn(this, a, b) <= 0
     end
     return ret
   end)

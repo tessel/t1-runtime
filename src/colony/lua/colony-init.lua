@@ -25,25 +25,6 @@ local bit = require('bit32')
 
 -- lua methods
 
--- tonumber that returns NaN instead of nil
-_G.tonumbervalue = function (val)
-  val = tonumber(val)
-  if val == nil then
-    return 0/0
-  else
-    return val
-  end
-end
-
-_G.tointegervalue = function (val)
-  val = tonumber(val)
-  if val == nil then
-    return 0/0
-  else
-    return math.floor(val)
-  end
-end
-
 function table.augment (t1,t2)
   for i=1,#t2 do
     t1[#t1+1] = t2[i]
@@ -134,6 +115,35 @@ end
 
 local function js_valueof (this)
   return this:valueOf()
+end
+
+local function js_toprimitive (val)
+  if type(val) == 'table' then
+    val = val:valueOf()
+    if type(val) == 'table' then
+      val = tostring(val)
+    end
+  end
+  return val
+end
+
+-- tonumber that returns NaN instead of nil
+_G.tonumbervalue = function (val)
+  val = tonumber(js_toprimitive(val))
+  if val == nil then
+    return 0/0
+  else
+    return val
+  end
+end
+
+_G.tointegervalue = function (val)
+  val = tonumber(js_toprimitive(val))
+  if val == nil then
+    return 0/0
+  else
+    return math.floor(val)
+  end
 end
 
 -- introduce metatables to built-in types using debug library:
@@ -261,6 +271,12 @@ local js_obj_mt = {
   __newindex = js_obj_newindex,
   __tostring = js_tostring,
   __tovalue = js_valueof,
+  __lt = function (a, b)
+    return js_toprimitive(a) < js_toprimitive(b)
+  end,
+  __sub = function (a, b)
+    return js_toprimitive(a) + js_toprimitive(b)
+  end,
   proto = obj_proto,
   shared = true
 };
@@ -506,6 +522,9 @@ function js_new (f, ...)
     end,
     __tostring = js_tostring,
     __tovalue = js_valueof,
+    __sub = function (a, b)
+      return js_toprimitive(a) - js_toprimitive(b)
+    end,
     proto = f.prototype
   }
   setmetatable(o, mt)
