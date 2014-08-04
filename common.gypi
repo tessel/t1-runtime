@@ -121,11 +121,11 @@
           }],
           [ 'OS!="arm"', {
             'cflags': [
-              '-O3'
+              '-Ofast'
             ],
             'xcode_settings': {
               'OTHER_CFLAGS': [
-                '-O3'
+                '-Ofast'
               ]
             },
             'msvs_settings': {
