@@ -7,7 +7,7 @@
     "axtls_path": "./deps/axtls",
     "axtls_inc_path": "./deps/axtls-inc",
     "c_ares_path": "./deps/c-ares",
-    "colony_lua_path": "./deps/colony-lua",
+    "colony_lua_path": "./deps/luajit",
     "lua_bitop_path": "./deps/luabitop-1.0",
     "fortuna_path": "./deps/fortuna",
     "fortuna_inc_path": "./deps/fortuna-inc",
