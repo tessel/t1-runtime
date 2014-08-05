@@ -1,5 +1,5 @@
-// TODO: require('tinytap') when https://github.com/tcr/tinytap/issues/4 and https://github.com/tessel/runtime/pull/279 resolved
-var test = require("../../node_modules/ttt/ttt.js" || 'ttt'),
+// NOTE: see https://github.com/tcr/tinytap/issues/4 — not all tests get applied?!
+var test = require('tinytap'),
     net = require('net');
 
 test('addresses', function (t) {
