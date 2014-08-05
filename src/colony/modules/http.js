@@ -204,6 +204,14 @@ util.inherits(HTTPServer, EventEmitter);
 
 HTTPServer.prototype.listen = function (port, ip) {
   this.connection.listen(port, ip);
+  return this;
+};
+
+HTTPServer.prototype.close = function(callback){
+    this.connection.destroy();
+    if(callback){
+        callback();
+    }
 };
 
 
