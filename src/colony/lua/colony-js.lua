@@ -786,6 +786,11 @@ global.Object.keys = function (this, obj)
   if type(obj) == 'function' then
     obj = js_func_proxy(obj)
   end
+
+  if type(obj) ~= 'table' then
+    error(js_new(global.TypeError, 'Object.keys called on non-object'))
+  end
+
   local i = 0
   for k,v in js_pairs(obj) do
     a[i] = k
