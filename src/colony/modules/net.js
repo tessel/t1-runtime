@@ -17,6 +17,42 @@ var dns = require('dns');
 var Stream = require('stream');
 var tls = require('tls');
 
+
+/**
+ * ip/helpers
+ */
+function isIPv4 (host) {
+  // via http://stackoverflow.com/a/5284410/179583 + modified to disallow leading 0s
+  return /^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(\.|$)){4}/.test(host);
+}
+
+function isIPv6 (host) {
+  // via http://stackoverflow.com/a/17871737/179583
+  var itIs = /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]).){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]).){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/.test(host);
+  if (!itIs && typeof host === 'string') {
+    // HACK: regex above doesn't handle all IPv4-suffixed-IPv6 addresses, and, well…do you really blame me for not fixing it?
+    var parts = host.split(':');
+    if (isIPv4(parts[parts.length-1])) {
+      parts.pop();
+      parts.push('FFFF:FFFF');
+      itIs = isIPv6(parts.join(':'));
+    }
+  }
+  return itIs;
+}
+
+function isIP (host) {
+  if (isIPv6(host)) return 6;
+  else if (isIPv4(host)) return 4;
+  else return 0;
+}
+
+function isPipeName(s) {
+  return util.isString(s) && toNumber(s) === false;
+}
+
+function toNumber(x) { return (x = Number(x)) >= 0 ? x : false; }
+
 /**
  * ssl
  */
@@ -39,13 +75,34 @@ function ensureSSLCtx () {
 
 function TCPSocket (socket, _secure) {
   Stream.Duplex.call(this);
-  this.socket = socket;
+  
+  if (typeof socket === 'object') {
+    this.socket = socket.fd;
+    // TODO: respect readable/writable flags
+    if (socket.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
+  } else if (socket == null) {
+    if (_secure) ensureSSLCtx();
+    this.socket = tm.tcp_open();
+  } else {
+    this.socket = socket;
+  }
   this._secure = _secure;
   this._outgoing = [];
   this._sending = false;
   this._queueEnd = false;
 
   var self = this;
+  if (this.socket < 0) {
+    setImmediate(function () {
+      self.emit('error', new Error("ENOENT: Cannot open another socket."));
+    });
+    return;
+  }
+  self.on('finish', function () {
+    // this is called when writing is ended
+    // TODO: support allowHalfOpen (if firmware can?)
+    self.close();
+  })
   self._closehandler = function (buf) {
     var socket = buf.readUInt32LE(0);
     if (socket == self.socket) {
@@ -60,15 +117,17 @@ function TCPSocket (socket, _secure) {
 
 util.inherits(TCPSocket, Stream.Duplex);
 
-function isIP (host) {
-  return host.match(/^[0-9.]+$/);
-}
+TCPSocket._portsUsed = Object.create(null);
 
-function isPipeName(s) {
-  return util.isString(s) && toNumber(s) === false;
-}
-
-function toNumber(x) { return (x = Number(x)) >= 0 ? x : false; }
+TCPSocket._requestPort = function (port) {
+  // NOTE: only supports _automatic_ port assignment; we track (but not *check*) manually requested ports
+  if (port === 0) {
+    port = 1024;    // NOTE: could optimize, e.g. by starting from last-granted or assuming only 7 sockets…
+    while (port in TCPSocket._portsUsed) ++port;
+  }
+  TCPSocket._portsUsed[port] = true;
+  return port;
+};
 
 function normalizeConnectArgs(args) {
   var options = {};
@@ -94,18 +153,24 @@ function normalizeConnectArgs(args) {
 TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   var self = this;
   var args = normalizeConnectArgs(arguments);
-  var port = args[0].port;
-  var host = args[0].host;
+  var opts = args[0];
+  if (opts.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
+  var port = +opts.port;
+  var host = opts.host || "127.0.0.1";
   var cb = args[1];
 
-  self._port = port;
-  self._address = host;
+  self.remotePort = port;
+  self.remoteAddress = host;
+  // TODO: proper value for these?
+  self.localPort = 0;
+  self.localAddress = "0.0.0.0";
 
   if (cb) {
     self.once('connect', cb);
   }
 
   setImmediate(function () {
+    self._restartTimeout();
     if (isIP(host)) {
       doConnect(host);
     } else {
@@ -113,29 +178,31 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         if (err) {
           return self.emit('error', err);
         }
-        doConnect(ips[0]);
+        self._restartTimeout();
+        self.remoteAddress = ips[0];
+        doConnect(self.remoteAddress);
       })
     }
     var retries = 0;
     function doConnect(ip) {
-      var unsplitIp = ip;
-      ip = ip.split('.').map(Number);
+      var addr = ip.split('.').map(Number);
+      addr = (addr[0] << 24) + (addr[1] << 16) + (addr[2] << 8) + addr[3];
 
-      var ret = tm.tcp_connect(self.socket, ip[0], ip[1], ip[2], ip[3], Number(port));
+      var ret = tm.tcp_connect(self.socket, addr, port);
       if (ret >= 1) {
         // we're not connected to the internet
-        throw new Error("Lost connection");
+        return self.emit('error', new Error("Lost connection"));
       }
       if (ret < 0) {
         tm.tcp_close(self.socket); // -57
         if (retries > 3) {
-          throw new Error('ENOENT Cannot connect to ' + ip.join('.') + ' Got: err'+ret);
+          return self.emit('error', new Error('ENOENT Cannot connect to ' + ip + ' Got: err'+ret));
         } else {
           retries++;
           setTimeout(function(){
             // wait for tcp socket to actually close
             self.socket = tm.tcp_open();
-            doConnect(unsplitIp);
+            doConnect(ip);
           }, 100);
           return;
         }
@@ -151,11 +218,11 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
           , ret = _[1]
         if (ret != 0) {
           if (ret == -517) {
-            throw new Error('CERT_HAS_EXPIRED');
+            return self.emit('error', new Error('CERT_HAS_EXPIRED'));
           } else if (ret == -516) {
-            throw new Error('CERT_NOT_YET_VALID');
+            return self.emit('error', new Error('CERT_NOT_YET_VALID'));
           } else {
-            throw new Error('Could not validate SSL request (error ' + ret + ')');
+            return self.emit('error', new Error('Could not validate SSL request (error ' + ret + ')'));
           }
         }
 
@@ -179,12 +246,13 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         }
 
         if (!tls.checkServerIdentity(host, cert)) {
-          throw new Error('Hostname/IP doesn\'t match certificate\'s altnames');
+          return self.emit('error', new Error('Hostname/IP doesn\'t match certificate\'s altnames'));
         }
 
         self._ssl = ssl;
       }
 
+      self._restartTimeout();
       self.__listen();
       self.connected = true;
       self.emit('connect');
@@ -201,6 +269,10 @@ TCPSocket.prototype.__listen = function () {
   var self = this;
   this.__listenid = setTimeout(function loop () {
     self.__listenid = null;
+    // ~HACK: set a watchdog to fire end event if not re-polled
+    var failsafeEnd = setImmediate(function () {
+      self.emit('end');
+    });
 
     if (self._sending) {
       return;
@@ -227,28 +299,25 @@ TCPSocket.prototype.__listen = function () {
     }
 
     if (buf.length) {
+      self._restartTimeout();
       self.push(buf);
       // TODO: stop polling if this returns false
     }
 
     self.__listenid = setTimeout(loop, 10);
+    clearImmediate(failsafeEnd);
   }, 10);
 };
 
-TCPSocket.prototype.address = function () {
-  return {
-    port: this._port,
-    family: 'IPv4',
-    address: this._address
-  };
-};
+TCPSocket.prototype.localFamily = 'IPv4';
+TCPSocket.prototype.remoteFamily = 'IPv4';
 
 // Maximum packet size CC can handle.
 var WRITE_PACKET_SIZE = 1024;
 
 TCPSocket.prototype._write = function (buf, encoding, cb) {
   var self = this;
-
+  
   if (!Buffer.isBuffer(buf)) {
     buf = new Buffer(buf);
   }
@@ -292,7 +361,7 @@ TCPSocket.prototype.__send = function (cb) {
     }
 
     if (ret == null) {
-      throw new Error('Never sent data over socket');
+      return self.emit('error', new Error('Never sent data over socket'));
     } else if (ret == -2) {
       // cc3000 ran out of buffers. wait until a buffer clears up to send this packet.
       setTimeout(function() {
@@ -304,9 +373,9 @@ TCPSocket.prototype.__send = function (cb) {
       // EWOULDBLOCK / EAGAIN
       setTimeout(send, 100);
     } else if (ret < 0) {
-      // Error.
-      throw new Error(-ret);
+      return self.emit('error', new Error("Socket write failed unexpectedly! ("+ret+")"));
     } else {
+      self._restartTimeout();
       // Next buffer.
       self._sending = false;
       self.__send(cb);
@@ -328,6 +397,7 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
     if (self.__listenid != null) {
       clearInterval(self.__listenid);
       self.__listenid = null
+      self.emit('end')
     }
     if (self.socket != null) {
 
@@ -342,20 +412,30 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
   });
 };
 
-TCPSocket.prototype.setTimeout = function () { /* noop */ };
-TCPSocket.prototype.setNoDelay = function () { /* noop */ };
+TCPSocket.prototype.setTimeout = function (msecs, cb) {
+  this._timeout = msecs;
+  this._restartTimeout();
+  if (cb) {
+    if (msecs) this.once('timeout', cb);
+    else this.removeListener('timeout', cb);   // not documented, but node.js does this
+  }
+};
+TCPSocket.prototype._restartTimeout = function () {
+  var self = this;
+  clearTimeout(self._timeoutWatchdog);
+  this._timeoutWatchdog = (self._timeout) ? setTimeout(function () {
+    self.emit('timeout');
+  }, self._timeout) : null;
+}
+
+
+// NOTE: CC3K may not support? http://e2e.ti.com/support/wireless_connectivity/f/851/p/349461/1223801.aspx#1223801
+TCPSocket.prototype.setNoDelay = function (val) {
+  if (val) console.warn("Ignoring call to setNoDelay. TCP_NODELAY socket option not supported.");
+};
 
 function connect (port, host, callback, _secure) {
-  if (_secure) {
-    ensureSSLCtx();
-  }
-
-  var sock = tm.tcp_open();
-  if (sock == -1) {
-    throw 'ENOENT: Cannot connect to new socket.'
-  }
-
-  var client = new TCPSocket(sock, _secure);
+  var client = new TCPSocket(null, _secure);
   client.connect(port, host, callback);
   return client;
 };
@@ -371,38 +451,78 @@ function TCPServer (socket) {
 
 util.inherits(TCPServer, TCPSocket);
 
-TCPServer.prototype.listen = function (port, ip) {
-  var self = this;
-  var res = tm.tcp_listen(this.socket, port);
-  if (res < 0) {
-    throw "Error listening on TCP socket (port " + port + ", ip " + ip + ")"
+TCPServer.prototype.listen = function (port, host, backlog, cb) {
+  if (typeof port === 'string') {
+    throw Error("UNIX sockets not supported");
   }
-
-  self._port = port;
-  self._address = ip;
-
+  
+  if (typeof host === 'function') {
+    cb = host;
+    host = null;    // NOTE: would be INADDR_ANY, but we ignore…
+    backlog = 511;  // NOTE: also ignored
+  } else if (typeof host === 'number') {
+    backlog = host;
+    host = null;
+  }
+  
+  if (typeof backlog === 'function') {
+    backlog = 511;
+    cb = backlog;
+  }
+  
+  this.localPort = TCPSocket._requestPort(port);
+  this.localAddress = host || "0.0.0.0";
+  if (cb) this.once('listening', cb);
+  
+  var self = this,
+      res = tm.tcp_listen(this.socket, this.localPort);
+  if (res < 0) setImmediate(function () {
+    self.emit('error', new Error("Listen on TCP socket failed ("+res+")"));
+  }); else setImmediate(function () {
+    self.emit('listening');
+    poll();
+  });
+  
   function poll(){
-     if(self.socket == null){ return false; }
-     var _ = tm.tcp_accept(self.socket)
+    // stop polling if we get closed
+    if (self.socket === null) return;
+    
+    var _ = tm.tcp_accept(self.socket)
       , client = _[0]
-      , ip = _[1];
+      , addr = _[1]
+      , port = _[2];
 
     if (client >= 0) {
       var clientsocket = new TCPSocket(client);
       clientsocket.connected = true;
+      clientsocket.localAddress = self.localAddress;    // TODO: https://forums.tessel.io/t/get-ip-address-of-tessel-in-code/203
+      clientsocket.localPort = self.localPort;
+      clientsocket.remoteAddress = [addr >>> 24, (addr >>> 16) & 0xFF, (addr >>> 8) & 0xFF, addr & 0xFF].join('.');
+      clientsocket.remotePort = port;
       clientsocket.__listen();
-      self.emit('socket', clientsocket);
+      self.emit('connection', clientsocket);
     }
 
     setTimeout(poll, 10);
   }
-   
-  poll();
 };
 
-function createServer (onsocket) {
+TCPServer.prototype.address = function () {
+  return {
+    port: this.localPort,
+    family: this.localFamily,
+    address: this.localAddress
+  };
+};
+
+function createServer (opts, onsocket) {
+  if (typeof opts === 'function') {
+    onsocket = opts;
+    opts = null;
+  }
+  if (opts && opts.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
   var server = new TCPServer(tm.tcp_open());
-  onsocket && server.on('socket', onsocket);
+  onsocket && server.on('connection', onsocket);
   return server;
 };
 
@@ -412,6 +532,8 @@ function createServer (onsocket) {
  */
 
 exports.isIP = isIP;
+exports.isIPv4 = isIPv4;
+exports.isIPv6 = isIPv6;
 exports.connect = exports.createConnection = connect;
 exports.createServer = createServer;
 exports.Socket = TCPSocket;

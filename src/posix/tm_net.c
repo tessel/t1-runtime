@@ -125,11 +125,11 @@ int tm_tcp_close (tm_socket_t sock)
     // return close(sock);
 }
 
-int tm_tcp_connect (tm_socket_t sock, uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3, uint16_t port)
+int tm_tcp_connect (tm_socket_t sock, uint32_t addr, uint16_t port)
 {
     struct sockaddr_in server;
-    server.sin_addr.s_addr = htonl(ip0 << 24 | ip1 << 16 | ip2 << 8 | ip3); // inet_addr("74.125.235.20");
     server.sin_family = AF_INET;
+    server.sin_addr.s_addr = htonl(addr);
     server.sin_port = htons(port);
     // printf("server: %p, %d, %d\n", server.sin_addr.s_addr, server.sin_family, server.sin_port);
     return connect(sock, (struct sockaddr *) &server, sizeof(server));
@@ -166,19 +166,15 @@ int tm_tcp_listen (tm_socket_t sock, uint16_t port)
 {
   // CC3000_START;
 
-  struct sockaddr localSocketAddr;
-  localSocketAddr.sa_family = AF_INET;
-  localSocketAddr.sa_data[0] = (port & 0xFF00) >> 8; //ascii_to_char(0x01, 0x01);
-  localSocketAddr.sa_data[1] = (port & 0x00FF); //ascii_to_char(0x05, 0x0c);
-  localSocketAddr.sa_data[2] = 0;
-  localSocketAddr.sa_data[3] = 0;
-  localSocketAddr.sa_data[4] = 0;
-  localSocketAddr.sa_data[5] = 0;
+  struct sockaddr_in localSocketAddr;
+  localSocketAddr.sin_family = AF_INET;
+  localSocketAddr.sin_port = htons(port);
+  localSocketAddr.sin_addr.s_addr = 0;
 
   // Bind socket
   // TM_COMMAND('w', "Binding local socket...");
   int sockStatus;
-  if ((sockStatus = bind(sock, &localSocketAddr, sizeof(struct sockaddr))) != 0) {
+  if ((sockStatus = bind(sock, (struct sockaddr *) &localSocketAddr, sizeof(localSocketAddr))) != 0) {
     // TM_COMMAND('w', "binding failed: %d", sockStatus);
     // CC3000_END;
     return -1;
@@ -204,11 +200,12 @@ int tm_tcp_listen (tm_socket_t sock, uint16_t port)
 // Returns -1 on error or no socket.
 // Returns -2 on pending connection.
 // Returns >= 0 for socket descriptor.
-tm_socket_t tm_tcp_accept (tm_socket_t sock, uint32_t *ip)
+tm_socket_t tm_tcp_accept (tm_socket_t sock, uint32_t *addr, uint16_t *port)
 {
-  struct sockaddr addrClient;
-  socklen_t addrlen;
-  int res = accept(sock, &addrClient, &addrlen);
-  *ip = ((struct sockaddr_in *) &addrClient)->sin_addr.s_addr;
+  struct sockaddr_in addrClient;
+  socklen_t addrlen = sizeof(addrClient);
+  int res = accept(sock, (struct sockaddr *) &addrClient, &addrlen);
+  *addr = ntohl(addrClient.sin_addr.s_addr);
+  *port = ntohs(addrClient.sin_addr.s_addr);
   return res;
 }
