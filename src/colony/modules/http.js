@@ -241,10 +241,6 @@ HTTPIncomingResponse.prototype.setEncoding = function (encoding) {
  * HTTPOutgoingRequest
  */
 
-function isIP (host) {
-  return host.match(/^[0-9.]+$/);
-}
-
 function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
   var self = this;
 
