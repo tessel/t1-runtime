@@ -155,6 +155,12 @@ static int builtin_loader (lua_State* L)
   return 1;
 }
 
+int lj_err_unwind_arm(int state, void *ucb, void *ctx)
+{
+  (void) state; (void) ucb; (void) ctx;
+  return -1;
+}
+
 int colony_runtime_open ()
 {
   lua_State* L = tm_lua_state = luaL_newstate ();

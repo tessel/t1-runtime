@@ -22,7 +22,7 @@
           'outputs': [
             '<(INTERMEDIATE_DIR)/libluajit.o',
           ],
-          'action': ['tools/luajit-build.sh', '<@(_outputs)'],
+          'action': ['tools/luajit-build.sh', '<(OS)', '<@(_outputs)'],
         },
       ],
 

@@ -12,9 +12,6 @@
       "sources": [
         'src/colony/cli.c',
       ],
-      'ldflags': [
-        '-pagezero_size', '10000', '-image_base', '100000000'
-      ],
       'xcode_settings': {
         'OTHER_LDFLAGS': [
           '-pagezero_size', '10000', '-image_base', '100000000'
