@@ -896,6 +896,12 @@ local function require_resolve (origname, root)
       while string.find(name, '/') do
         name = path_dirname(name)
       end
+      
+      -- On PC, we want to support node_modules from any folder. (Crudely.)
+      if not COLONY_EMBED and string.sub(root, 1, 1) == '.' then
+        root = path_normalize(path_normalize(os.getenv("PWD")) .. '/' .. root)
+      end
+
       while not fs_exists(root .. 'node_modules/' .. name .. '/package.json') do
         local next_root = path_dirname(root) .. '/'
         if next_root == root then
