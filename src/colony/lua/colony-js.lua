@@ -798,9 +798,11 @@ global.Object.freeze = function (this, obj)
   return obj
 end
 
+-- http://es5.github.io/#x15.2.3.14
 global.Object.keys = function (this, obj)
   local a = {}
-  -- TODO debug this one:
+
+  -- Use function proxy for object variables.
   if type(obj) == 'function' then
     obj = js_func_proxy(obj)
   end
@@ -808,10 +810,11 @@ global.Object.keys = function (this, obj)
   if type(obj) ~= 'table' then
     error(js_new(global.TypeError, 'Object.keys called on non-object'))
   end
-
+  
+  -- Iterate objects using internal representation (in js_pairs).
   local i = 0
   for k,v in js_pairs(obj) do
-    a[i] = k
+    a[i] = tostring(k) or ''
     i = i + 1
   end
   return js_arr(a, i)
