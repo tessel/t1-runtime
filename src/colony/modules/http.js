@@ -18,6 +18,235 @@ var dns = require('dns');
 var Readable = require('stream').Readable;
 var Writable = require('stream').Writable;
 
+// NOTE: from https://github.com/joyent/node/blob/73343d5ceef7cb4ddee1ed0ddd2c51d1958e3bb1/lib/_http_server.js#L40
+var STATUS_CODES = {
+  100 : 'Continue',
+  101 : 'Switching Protocols',
+  102 : 'Processing',                 // RFC 2518, obsoleted by RFC 4918
+  200 : 'OK',
+  201 : 'Created',
+  202 : 'Accepted',
+  203 : 'Non-Authoritative Information',
+  204 : 'No Content',
+  205 : 'Reset Content',
+  206 : 'Partial Content',
+  207 : 'Multi-Status',               // RFC 4918
+  300 : 'Multiple Choices',
+  301 : 'Moved Permanently',
+  302 : 'Moved Temporarily',
+  303 : 'See Other',
+  304 : 'Not Modified',
+  305 : 'Use Proxy',
+  307 : 'Temporary Redirect',
+  308 : 'Permanent Redirect',         // RFC 7238
+  400 : 'Bad Request',
+  401 : 'Unauthorized',
+  402 : 'Payment Required',
+  403 : 'Forbidden',
+  404 : 'Not Found',
+  405 : 'Method Not Allowed',
+  406 : 'Not Acceptable',
+  407 : 'Proxy Authentication Required',
+  408 : 'Request Time-out',
+  409 : 'Conflict',
+  410 : 'Gone',
+  411 : 'Length Required',
+  412 : 'Precondition Failed',
+  413 : 'Request Entity Too Large',
+  414 : 'Request-URI Too Large',
+  415 : 'Unsupported Media Type',
+  416 : 'Requested Range Not Satisfiable',
+  417 : 'Expectation Failed',
+  418 : 'I\'m a teapot',              // RFC 2324
+  422 : 'Unprocessable Entity',       // RFC 4918
+  423 : 'Locked',                     // RFC 4918
+  424 : 'Failed Dependency',          // RFC 4918
+  425 : 'Unordered Collection',       // RFC 4918
+  426 : 'Upgrade Required',           // RFC 2817
+  428 : 'Precondition Required',      // RFC 6585
+  429 : 'Too Many Requests',          // RFC 6585
+  431 : 'Request Header Fields Too Large',// RFC 6585
+  500 : 'Internal Server Error',
+  501 : 'Not Implemented',
+  502 : 'Bad Gateway',
+  503 : 'Service Unavailable',
+  504 : 'Gateway Time-out',
+  505 : 'HTTP Version Not Supported',
+  506 : 'Variant Also Negotiates',    // RFC 2295
+  507 : 'Insufficient Storage',       // RFC 4918
+  509 : 'Bandwidth Limit Exceeded',
+  510 : 'Not Extended',               // RFC 2774
+  511 : 'Network Authentication Required' // RFC 6585
+};
+
+
+/**
+ * IncomingMessage
+ */
+ 
+function IncomingMessage (type, connection) {     // type is 'request' or 'response', connection is socket
+  Readable.call(this);
+
+  this.headers = {};
+  this.trailers = {};
+  this.socket = this.connection = connection;
+  this.setTimeout = this.socket.setTimeout.bind(this.socket);
+
+  function js_wrap_function (fn) {
+    return function () {
+      return fn.apply(null, [this].concat(arguments));
+    }
+  }
+
+  var self = this;
+  var _key;   // (records state between events)
+  var parser = http_parser.new('request', {
+    onMessageBegin: js_wrap_function(function () {
+      self.emit('_messageBegin');
+    }),
+    onUrl: js_wrap_function(function (url) {
+      self.url = url;
+    }),
+    onHeaderField: js_wrap_function(function (field) {
+      _key = field.toLowerCase();
+    }),
+    onHeaderValue: js_wrap_function(function (value) {
+      // TODO: will http_parser actually emit this for trailers?
+      var dest = (self._complete) ? self.trailers : self.headers;
+      IncomingMessage._addHeaderLine(_key, value, dest);
+    }),
+    onHeadersComplete: js_wrap_function(function (info) {
+      self.method = info.method;
+      self.statusCode = info.status_code;
+      self.httpVersionMajor = info.version_major;
+      self.httpVersionMinor = info.version_minor;
+      self.httpVersion = [self.httpVersionMajor, self.httpVersionMinor].join('.');
+      self.emit('_headersComplete');
+    }),
+    onBody: js_wrap_function(function (body) {
+      self.push(body);
+    }),
+    onMessageComplete: js_wrap_function(function () {
+      self._complete = true;
+      self.push(null);
+    }),
+    onError: js_wrap_function(function (err) {
+      self.emit('error', err);
+    })
+  });
+  this.connection.on('data', function (data) {
+    data = data.toString('utf8');     // TODO: this is almost certainly wrong! ('binary' or fix wrapper)
+    // console.log('received', data.length, data.substr(0, 15));
+    parser.execute(data, 0, data.length);
+  });
+}
+
+util.inherits(IncomingMessage, Readable);
+
+// TODO: IncomingMessage is kind of a Transform on net.Socket, could we leverage that somehow?
+//       Otherwise we need to either pause/resume net socket, or this.connection.read instead let flow.
+//       [Put differently: we need to get some clarity as to what is streams1 vs. streams2 here and in net!]
+IncomingMessage.prototype._read = function () {};
+
+
+// NOTE: from https://github.com/joyent/node/blob/a454063ea17f94a5d456bb2666502076c0d51795/lib/_http_incoming.js#L143
+IncomingMessage._addHeaderLine = function(field, value, dest) {
+  field = field.toLowerCase();
+  switch (field) {
+    // Array headers:
+    case 'set-cookie':
+      if (!util.isUndefined(dest[field])) {
+        dest[field].push(value);
+      } else {
+        dest[field] = [value];
+      }
+      break;
+
+    // list is taken from:
+    // https://mxr.mozilla.org/mozilla/source/netwerk/protocol/http/src/nsHttpHeaderArray.cpp
+    case 'content-type':
+    case 'content-length':
+    case 'user-agent':
+    case 'referer':
+    case 'host':
+    case 'authorization':
+    case 'proxy-authorization':
+    case 'if-modified-since':
+    case 'if-unmodified-since':
+    case 'from':
+    case 'location':
+    case 'max-forwards':
+      // drop duplicates
+      if (util.isUndefined(dest[field]))
+        dest[field] = value;
+      break;
+
+    default:
+      // make comma-separated list
+      if (!util.isUndefined(dest[field]))
+        dest[field] += ', ' + value;
+      else {
+        dest[field] = value;
+      }
+  }
+};
+
+
+/**
+ * OutgoingMessage
+ */
+
+function OutgoingMessage (type, connection) {     // type is 'request' or 'response', connection is socket
+  Writable.call(this);
+  
+  this._connection = connection;
+  this._headers = {};
+  this._headerNames = {};   // store original case
+}
+
+util.inherits(OutgoingMessage, Writable);
+
+OutgoingMessage.prototype.getHeader = function (name) {
+  var k = name.toLowerCase();
+  return this._headers[k];
+};
+OutgoingMessage.prototype.setHeader = function (name, value) {
+  if (this._headersSent) throw Error("Can't setHeader after they've been sent!");
+  var k = name.toLowerCase();
+  this._headerNames[k] = name;
+  this._headers[k] = value;
+};
+OutgoingMessage.prototype.removeHeader = function (name) {
+  if (this._headersSent) throw Error("Can't removeHeader after they've been sent!");
+  var k = name.toLowerCase();
+  delete this._headerNames[k];
+  delete this._headers[k];
+};
+
+OutgoingMessage.prototype._sendHeaders = function () {
+  var lines = [];
+  if (this._request) lines.push(this._request);
+  else lines.push(['HTTP/1.1', this.statusCode, this.statusMessage || STATUS_CODES[this.statusCode] || ''].join(' '));
+  Object.keys(this._headers).forEach(function (k) {
+    var key = this._headerNames[k],
+        val = this._headers[k];
+    if (Array.isArray(val)) val = val.join(', ');
+    lines.push(key+': '+val);
+  }, this);
+  lines.push('');
+  
+  function clean(str) { return str.replace(/\r\n/g, ''); }    // avoid response splitting
+  this._connection.write(lines.map(clean).join('\r\n'));
+  this._headersSent = true;
+};
+
+OutgoingMessage.prototype._write = function (chunk, enc, cb) {
+  if (!this._headersSent) this._sendHeaders();
+  // TODO: frame in chunk if necessary
+  this._connection.write(chunk, enc);
+  cb();     // TODO: support backpressure!
+};
+
 
 /**
  * ServerResponse
@@ -424,3 +653,4 @@ exports.Agent = Agent;
 exports.ServerResponse = ServerResponse;
 exports.ServerRequest = ServerRequest;
 exports.IncomingMessage = ServerRequest;
+exports.STATUS_CODES = STATUS_CODES;
