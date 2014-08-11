@@ -1452,8 +1452,9 @@ if type(hs) == 'table' then
 
   _G._HSMATCH = hsmatch
 
-  global.RegExp = function (this, patt, flags)
-    -- hsrude requires special flags handling
+  global.RegExp = function (this, source, flags)
+    -- hsregex requires special flags handling
+    local patt = source
     if flags and string.find(flags, "i") then
       patt = '(?i)' .. patt
     end
@@ -1467,7 +1468,13 @@ if type(hs) == 'table' then
       error(js_new(global.Error, 'Too many capturing subgroups (max ' .. hsmatchc .. ', compiled ' .. hs.regex_nsub(cre) .. ')'))
     end
 
-    local o = {pattern=patt, flags=flags}
+    local o = {source=source}
+    o.global = (flags and string.find(flags, "g") and true)
+    o.ignoreCase = (flags and string.find(flags, "i") and true)
+    o.multiline = (flags and string.find(flags, "m") and true)
+    o.unicode = (flags and string.find(flags, "u") and true)
+    o.sticky = (flags and string.find(flags, "y") and true)
+
     setmetatable(o, {
       __index=global.RegExp.prototype,
       __tostring=js_tostring,
@@ -1484,7 +1491,7 @@ if type(hs) == 'table' then
 
   str_regex_split = function (this, input)
     if not js_instanceof(input, global.RegExp) then
-      error(js_new(global.Error, 'Cannot call String::split on non-regex'))
+      error(js_new(global.Error, 'Cannot call String.prototype.split on non-regex'))
     end
     local arr, len = hs.regex_split(this, input)
     return js_arr(arr, len)
@@ -1492,7 +1499,7 @@ if type(hs) == 'table' then
 
   str_regex_replace = function (this, regex, out)
     if not js_instanceof(regex, global.RegExp) then
-      error(js_new(global.Error, 'Cannot call String::replace on non-regex'))
+      error(js_new(global.Error, 'Cannot call String.prototype.replace on non-regex'))
     end
     return hs.regex_replace(this, regex, out)
   end
@@ -1502,10 +1509,10 @@ if type(hs) == 'table' then
     local cre = getmetatable(regex).cre
     local crestr = getmetatable(regex).crestr
     if type(cre) ~= 'userdata' then
-      error(js_new(global.TypeError, 'Cannot call RegExp::match on non-regex'))
+      error(js_new(global.TypeError, 'Cannot call RegExp.prototype.match on non-regex'))
     end
 
-    if string.find(regex.flags or '', "g") then
+    if rawget(regex, 'global') then
       local data = tostring(this)
       local ret, count, idx = {}, 0, 1
       while true do
@@ -1549,7 +1556,7 @@ if type(hs) == 'table' then
     local cre = getmetatable(regex).cre
     local crestr = getmetatable(regex).crestr
     if type(cre) ~= 'userdata' then
-      error(js_new(global.TypeError, 'Cannot call RegExp::match on non-regex'))
+      error(js_new(global.TypeError, 'Cannot call RegExp.prototype.match on non-regex'))
     end
 
     local data = tostring(subj)
@@ -1573,12 +1580,28 @@ if type(hs) == 'table' then
   global.RegExp.prototype.test = function (this, subj)
     local cre = getmetatable(this).cre
     if type(cre) ~= 'userdata' then
-      error(js_new(global.TypeError, 'Cannot call RegExp::match on non-regex'))
+      error(js_new(global.TypeError, 'Cannot call RegExp.prototype.match on non-regex'))
     end
 
     -- TODO optimize by capturing no subgroups?
     local rc = hs.re_exec(cre, tostring(subj), nil, hsmatchc, hsmatch, 0)
     return rc == 0
+  end
+
+  -- https://people.mozilla.org/~jorendorff/es6-draft.html#sec-regexp.prototype.tostring
+  global.RegExp.prototype.toString = function (this)
+    if type(this) ~= 'table' or not getmetatable(this).cre then
+      error(js_new(global.TypeError, 'Cannot call Regex.prototype.toString on non-regex'))
+    end
+
+    local flags = ''
+    if rawget(this, 'global') then flags = flags .. 'g' end
+    if rawget(this, 'ignoreCase') then flags = flags .. 'i' end
+    if rawget(this, 'multiline') then flags = flags .. 'm' end
+    if rawget(this, 'unicode') then flags = flags .. 'u' end
+    if rawget(this, 'sticky') then flags = flags .. 'y' end
+
+    return '/' .. tostring(this.source) .. '/' .. flags
   end
 end
 
