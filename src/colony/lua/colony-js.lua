@@ -572,7 +572,12 @@ arr_proto.reduce = function (this, callback, ...)
   return value
 end
 
+-- http://es5.github.io/#x15.4.4.18
 arr_proto.forEach = function (this, fn, ...)
+  if this == nil then
+    error(js_new(global.TypeError, "Array.prototype.forEach called on null or undefined"))
+  end
+
   local args = table.pack(...)
   -- t _should_ be set to undefined, per spec.
   -- Since there is no notion of strict mode,
@@ -584,8 +589,21 @@ arr_proto.forEach = function (this, fn, ...)
   end
 
   local len = this.length-1
-  for i=0, len do
-    fn(t, rawget(this, i) or this[i], i, this)
+  if type(this) == 'table' then
+    for i=0, len do
+      local value = rawget(this, i)
+      if value == nil then
+        value = this[i] -- getters
+      end
+      -- TODO: existence check for sparse arrays
+      -- if value ~= nil then
+        fn(t, value, i, this)
+      -- end
+    end
+  else
+    for i=0, len do
+      fn(t, this[i], i, this)
+    end
   end
 end
 

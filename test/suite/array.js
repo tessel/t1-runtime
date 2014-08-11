@@ -133,3 +133,27 @@ ok(arreq(a, [1,2,3]), 'Array(1,2,3) == [1,2,3]')
 ok([1,2,3].join(',') == '1,2,3');
 ok([1].join(',') == '1');
 ok([null, null, null].join(',') == ',,');
+
+// Array.prototype.forEach applied to String
+var a = [];
+Array.prototype.forEach.call("foobar", function(ch) {
+  a.push(ch);
+});
+console.log(a.join('') == 'foobar' ? 'ok' : 'not ok');
+
+// Array.prototype.forEach applied to array
+var a = [];
+Array.prototype.forEach.call("foobar".split(''), function(ch) {
+  a.push(ch);
+});
+console.log(a.join('') == 'foobar' ? 'ok' : 'not ok');
+
+// // Array.prototype.forEach applied to sparse array.
+// var a = []; a[25] = 25;
+// Array.prototype.forEach.call(a, function(ch, i) {
+//   if (i != 25) {
+//   	console.log('not ok - invalid iterated index in sparse array');
+//   	process.exit(1)
+//   }
+// });
+console.log('ok');
