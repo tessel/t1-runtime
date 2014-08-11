@@ -512,7 +512,7 @@ arr_proto.join = function (this, ...)
     if this[i] == nil or this[i] == _null then
       _r = _r .. str
     else
-      _r = _r .. this[i] .. str
+      _r = _r .. tostring(this[i]) .. str
       end
   end
   return string.sub(_r, 1, string.len(_r) - string.len(str))
