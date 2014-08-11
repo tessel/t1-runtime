@@ -411,21 +411,30 @@ end
 
 arr_proto.splice = function (this, i, del, ...)
   local del_len = (tonumber(del) or 0)
+  local original_len = tonumber(rawget(this, 'length'))
   local ret = {}
   for j=1,del_len do
     ret[j-1] = rawget(this, i)
     if i == 0 then
       rawset(this, 0, rawget(this, i))
     end
-    table.remove(this, i)
+    if i == 0 then
+      arr_proto.shift(this)
+    else
+      table.remove(this, i)
+    end
   end
 
   local args = table.pack(...)
   for j=1,args.length do
-    rawset(this, i, args[j])
+    if i == 0 then
+      arr_proto.unshift(this, args[j])
+    else
+      table.insert(this, i, args[j])
+    end
     i = i + 1
   end
-  rawset(this, 'length', tonumber(rawget(this, 'length')) - del_len + args.length)
+  rawset(this, 'length', original_len - del_len + args.length)
   return js_arr(ret, del_len)
 end
 
