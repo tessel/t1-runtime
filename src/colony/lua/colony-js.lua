@@ -1338,7 +1338,7 @@ global.Date = function (this, time)
     return os.date('!%a %h %d %Y %H:%M:%S GMT%z (%Z)')
   end
   if type(time) == 'number' then
-    getmetatable(this).date = time
+    getmetatable(this).date = time*1000
 
   -- temporary hardcode for ntp-client
   elseif time == 'Jan 01 1900 GMT' then
@@ -1412,7 +1412,7 @@ end
 
 global.Date.prototype.toISOString = function (this)
   -- TODO don't hardcode microseconds
-  return os.date('!%Y-%m-%dT%H:%M:%S.000Z', getmetatable(this).date/1e6)
+  return os.date('!%Y-%m-%dT%H:%M:%S.', getmetatable(this).date/1e6) .. string.format('%03dZ', (getmetatable(this).date/1e3)%1e3)
 end
 global.Date.prototype.toJSON = global.Date.prototype.toISOString
 global.Date.prototype.valueOf = global.Date.prototype.getTime
