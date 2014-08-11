@@ -69,7 +69,20 @@ global._in = js_in
 global._break = js_break
 global._cont = js_cont
 global._with = js_with
-global._G = _G
+global._G = {}
+
+-- Hack for exposed _G object until it can be removed.
+setmetatable(global._G, {
+  __index = function (this, key)
+    if type(_G[key]) ~= 'userdata' then
+      return _G[key]
+    end
+    return nil
+  end,
+  __newindex = function (this, key, value)
+    _G[key] = value
+  end
+})
 
 -- in-code modules
 
