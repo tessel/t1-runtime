@@ -266,15 +266,31 @@ end
 
 -- object prototype
 
+-- https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring
 obj_proto.toString = function (this)
-  if getmetatable(this) and getmetatable(this).proto == arr_proto then
+  if this == nil then
+    return '[object Undefined]'
+  -- TODO null
+  elseif getmetatable(this) and getmetatable(this).proto == arr_proto then
     return '[object Array]'
-  elseif type(this) == 'function' then
-    return '[object Function]'
   elseif type(this) == 'string' then
     return '[object String]'
-  elseif a and a.constructor and a.constructor.name then
-    return '[object ' .. a.constructor.name .. ']'
+  elseif getmetatable(this) and getmetatable(this).arguments then
+    return '[object Arguments]'
+  elseif type(this) == 'function' then
+    return '[object Function]'
+
+  elseif getmetatable(this) and getmetatable(this).error_stack ~= nil then
+    return '[object Error]'
+  elseif type(this) == 'boolean' then
+    return '[object Boolean]'
+    elseif type(this) == 'number' then
+    return '[object Number]'
+  -- TODO date_proto
+  elseif getmetatable(this) and getmetatable(this).proto == global.Date.prototype then
+    return '[object Date]'
+  elseif getmetatable(this) and getmetatable(this).cre then
+    return '[object RegExp]'
   else
     return '[object Object]'
   end
@@ -1143,17 +1159,20 @@ global.Math = js_obj({
 -- Error
 
 local function error_constructor (this, str)
+  local stack = tostring(debug.traceback())
+  if not global.process.debug then
+    stack = string.gsub(stack, "\t%[[TC]%].-\n", '')
+  end
+
   getmetatable(this).__tostring = function (this)
     return this.message
   end
+  getmetatable(this).error_stack = stack
+
   this.name = 'Error'
   this.type = 'Error'
   this.message = str
-  this.stack = tostring(debug.traceback())
-
-  if not global.process.debug then
-    this.stack = string.gsub(this.stack, "\t%[[TC]%].-\n", '')
-  end
+  this.stack = stack
 end
 
 error_constructor.prototype.captureStackTrace = function ()
@@ -1178,6 +1197,7 @@ local function error_class (name)
     this.name = name
     this.type = name
   end
+  constructor.name = name
 
   constructor.prototype = error_constructor.prototype
   return constructor

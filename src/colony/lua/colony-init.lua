@@ -517,6 +517,7 @@ function js_arguments (...)
 
   local obj = global._obj(a);
   obj.length = len
+  get_unique_metatable(obj).arguments = true
   return obj
 end
 
