@@ -194,9 +194,8 @@ static int l_regex_replace (lua_State *L)
   lua_getfield(L, -1, "cre");
   regex_t* cre = (regex_t*) lua_touserdata(L, -1);
 
-  lua_getfield(L, 2, "flags");
-  const char* regex_flags = lua_tostring(L, -1);
-  int repeat_flag = strstr(regex_flags, "g") == NULL;
+  lua_getfield(L, 2, "global");
+  int repeat_flag = lua_toboolean(L, -1);
 
   // matches
   int pmatch_len = 100;
@@ -312,7 +311,7 @@ static int l_regex_replace (lua_State *L)
     input_len -= pmatch[0].rm_eo;
     w_input = &w_input[pmatch[0].rm_eo];
     w_input_len -= pmatch[0].rm_eo;
-  } while (!repeat_flag);
+  } while (repeat_flag);
 
   stringbuilder_append(&b, input, input_len);
   lua_pushlstring(L, (const char*) b.string, b.len);
