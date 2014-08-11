@@ -84,11 +84,13 @@ var STATUS_CODES = {
  * IncomingMessage
  */
  
-function IncomingMessage (type, connection) {     // type is 'request' or 'response', connection is socket
+function IncomingMessage (type, connection) {     // type is 'request' or 'response'
   Readable.call(this);
 
   this.headers = {};
   this.trailers = {};
+  this.rawHeaders = [];
+  this.rawTrailers = [];
   this.socket = this.connection = connection;
   this.setTimeout = this.socket.setTimeout.bind(this.socket);
 
@@ -99,7 +101,6 @@ function IncomingMessage (type, connection) {     // type is 'request' or 'respo
   }
 
   var self = this;
-  var _key;   // (records state between events)
   var parser = http_parser.new('request', {
     onMessageBegin: js_wrap_function(function () {
       self.emit('_messageBegin');
@@ -108,12 +109,16 @@ function IncomingMessage (type, connection) {     // type is 'request' or 'respo
       self.url = url;
     }),
     onHeaderField: js_wrap_function(function (field) {
-      _key = field.toLowerCase();
+      // TODO: will http_parser actually emit this for trailers?
+      var arr = (self._complete) ? self.rawTrailers : self.rawHeaders;
+      arr.push(field);
     }),
     onHeaderValue: js_wrap_function(function (value) {
-      // TODO: will http_parser actually emit this for trailers?
-      var dest = (self._complete) ? self.trailers : self.headers;
-      IncomingMessage._addHeaderLine(_key, value, dest);
+      var arr = (self._complete) ? self.rawTrailers : self.rawHeaders,
+          key = arr[arr.length - 1].toLowerCase();
+      arr.push(value);
+      var obj = (self._complete) ? self.trailers : self.headers;
+      IncomingMessage._addHeaderLine(_key, value, obj);
     }),
     onHeadersComplete: js_wrap_function(function (info) {
       self.method = info.method;
@@ -136,6 +141,7 @@ function IncomingMessage (type, connection) {     // type is 'request' or 'respo
   });
   this.connection.on('data', function (data) {
     data = data.toString('utf8');     // TODO: this is almost certainly wrong! ('binary' or fix wrapper)
+console.log("RECEIVED:", data);
     // console.log('received', data.length, data.substr(0, 15));
     parser.execute(data, 0, data.length);
   });
@@ -196,15 +202,26 @@ IncomingMessage._addHeaderLine = function(field, value, dest) {
  * OutgoingMessage
  */
 
-function OutgoingMessage (type, connection) {     // type is 'request' or 'response', connection is socket
+function OutgoingMessage (type) {     // type is 'request' or 'response', connection is socket
   Writable.call(this);
-  
-  this._connection = connection;
+  this._connection = null;
   this._headers = {};
   this._headerNames = {};   // store original case
+  
+  var self = this;
+  this.once('finish', function () {
+    if (!self._headersSent) self.flush();
+  });
 }
 
 util.inherits(OutgoingMessage, Writable);
+
+OutgoingMessage.prototype._assignSocket = function (socket) {
+  this._connection = socket;
+  this.emit('socket', socket);
+  
+  // TODO: setTimeout/setNoDelay/setSocketKeepAlive
+};
 
 OutgoingMessage.prototype.getHeader = function (name) {
   var k = name.toLowerCase();
@@ -223,7 +240,16 @@ OutgoingMessage.prototype.removeHeader = function (name) {
   delete this._headers[k];
 };
 
-OutgoingMessage.prototype._sendHeaders = function () {
+// wraps `fn` and queues up calls until after socket event
+OutgoingMessage._postConnect = function (fn) {
+  return function () {
+    var _fn = Function.prototype.apply.bind(fn, this, arguments);
+    if (!this._connection) this.once('socket', _fn);
+    else _fn();
+  }
+}
+
+OutgoingMessage.prototype.flush = OutgoingMessage._postConnect(function () {
   var lines = [];
   if (this._request) lines.push(this._request);
   else lines.push(['HTTP/1.1', this.statusCode, this.statusMessage || STATUS_CODES[this.statusCode] || ''].join(' '));
@@ -233,19 +259,139 @@ OutgoingMessage.prototype._sendHeaders = function () {
     if (Array.isArray(val)) val = val.join(', ');
     lines.push(key+': '+val);
   }, this);
-  lines.push('');
+  lines.push('','');
   
   function clean(str) { return str.replace(/\r\n/g, ''); }    // avoid response splitting
   this._connection.write(lines.map(clean).join('\r\n'));
   this._headersSent = true;
-};
+});
 
-OutgoingMessage.prototype._write = function (chunk, enc, cb) {
-  if (!this._headersSent) this._sendHeaders();
+OutgoingMessage.prototype._write = OutgoingMessage._postConnect(function (chunk, enc, cb) {
+  if (!this._headersSent) this.flush();
   // TODO: frame in chunk if necessary
   this._connection.write(chunk, enc);
   cb();     // TODO: support backpressure!
+});
+
+/**
+  * Agent
+  */
+
+function Agent (opts) {
+  opts = util._extend({
+    keepAlive: false,
+    keepAliveMsecs: 1000,
+    maxSockets: Infinity,
+    maxFreeSockets: 256
+  }, opts);
+  
+  this.maxSockets = opts.maxSockets;
+  this.maxFreeSockets = opts.maxFreeSockets;
+  this.sockets = {};
+  this.freeSockets = {};
+  this.requests = {};
+}
+
+Agent.prototype.destroy = function () {};
+
+Agent.prototype.getName = Agent.prototype._getHost = function (opts) {
+  // NOTE: this differs from node (omits localAddress)
+  return opts.host+':'+opts.port;
 };
+
+Agent.prototype._hostQueues = function (host) {
+  return {
+    sockets: this.sockets[host] || (this.sockets[host] = []),
+    freeSockets: this.freeSockets[host] || (this.freeSockets[host] = []),
+    requests: this.requests[host] || (this.requests[host] = [])
+  };
+};
+
+Agent.prototype._enqueueRequest = function (req, opts) {
+  var host = this._getHost(opts);
+  var socket = net.createConnection(opts, function () {
+    req._assignSocket(socket);
+  });
+  return {host:host, release:function () {}};
+  
+  // TODO: finish actual implementation!
+  var socket = null,
+      host = this._getHost(opts),
+      info = this._hostQueues(host);
+  if (info.freeSockets.length) {
+    socket = info.freeSockets.pop();
+  } else if (info.sockets.length < this.maxSockets) {
+    socket = net.createConnection(opts);
+  }
+  if (socket) {
+    info.sockets.push(socket);
+    req._assignSocket(socket);
+  } else info.requests.push(req);
+  return {release:function () {}};
+};
+
+exports.globalAgent = new Agent();
+
+
+/**
+  * ClientRequest
+  */
+
+function ClientRequest (opts) {
+  if (typeof opts === 'string') opts = url.parse(opts);
+  opts = util._extend({
+    host: 'localhost',
+    port: 80,
+    method: 'GET',
+    path: '/',
+    headers: {},
+    auth: null,
+    agent: (void 0),
+    keepAlive: false,
+    keepAliveMsecs: 1000
+  }, opts);
+  if ('hostname' in opts) opts.host = opts.hostname;
+  if (0 && opts.agent === false) ;    // TODO: "auto-close" agent?
+  else if (!opts.agent) opts.agent = exports.globalAgent;
+  
+  OutgoingMessage.call(this, 'request');
+  this._agent = opts.agent._enqueueRequest(this, opts);
+  this._request = [opts.method, opts.path, 'HTTP/1.1'].join(' ');
+  
+  this.setHeader('Host', this._agent.host);
+  Object.keys(opts.headers).forEach(function (k) {
+    this.setHeader(k, opts.headers[v]);
+  });
+  
+  var self = this;
+  this.once('socket', function (socket) {
+    var response = new IncomingMessage('response', socket);
+    response.once('_headersComplete', function () {
+        var handled = self.emit('response', response);
+        if (!handled) response.resume();    // dump it
+    });
+    response.once('end', function () {
+      self._agent.release();
+    });
+  });
+}
+
+util.inherits(ClientRequest, OutgoingMessage);
+
+ClientRequest.prototype.abort = function () {};
+
+exports.request = function (opts, cb) {
+  var req = new ClientRequest(opts);
+  if (cb) req.once('response', cb);
+  return req;
+};
+
+exports.get = function (opts, cb) {
+  var req = exports.request(opts, cb);
+  req.end();
+  return req;
+};
+
 
 
 /**
@@ -351,7 +497,7 @@ ServerResponse.prototype.end = function (data) {
     this.write('');
   }
 
-  this.once('finish', function () { 
+  this.once('finish', function () {
     self.connection.close();
   });
 
@@ -595,16 +741,6 @@ HTTPOutgoingRequest.prototype.end = function () {
   // console.log('end');
 };
 
-
-/**
- * Agent
- */
-
-function Agent () {
-  // NYI
-}
-
-
 /**
  * Public API
  */
@@ -617,7 +753,7 @@ function ensureSecure (secure) {
   }
 }
 
-exports.request = function (opts, onresponse) {
+exports._request_old = function (opts, onresponse) {
   ensureSecure(this._secure);
   if (opts.agent) {
     throw new Error('Agent not yet implemented.');
@@ -628,7 +764,7 @@ exports.request = function (opts, onresponse) {
   return req;
 };
 
-exports.get = function (opts, onresponse) {
+exports._get_old = function (opts, onresponse) {
   if (typeof opts == 'string') {
     opts = url.parse(opts);
   }
