@@ -531,7 +531,7 @@ arr_proto.indexOf = function (this, searchElement, fromIndex)
   local len = this.length
   local start
 
-  if len == 0 then 
+  if len == 0 then
     return -1
   end
 
@@ -875,7 +875,7 @@ global.Object.keys = function (this, obj)
   if type(obj) ~= 'table' then
     error(js_new(global.TypeError, 'Object.keys called on non-object'))
   end
-  
+
   -- Iterate objects using internal representation (in js_pairs).
   local i = 0
   for k,v in js_pairs(obj) do
@@ -1420,7 +1420,7 @@ global.Date.prototype.getSeconds = function (this)
 end
 
 global.Date.prototype.getTime = function (this)
-  return tonumber(getmetatable(this).date/1e3) or 0
+  return math.floor(tonumber(getmetatable(this).date/1e3)) or 0
 end
 
 global.Date.prototype.getTimezoneOffset = function ()
@@ -1475,7 +1475,7 @@ global.Date.prototype.toTimeString = function () return ''; end
 global.Date.prototype.toUTCString = function () return ''; end
 
 global.Date.now = function ()
-  return tonumber(tm.timestamp()/1e3) or 0
+  return math.floor(tonumber(tm.timestamp()/1e3)) or 0
 end
 
 global.Date.parse = function (this, date)
