@@ -211,9 +211,6 @@ function OutgoingMessage (type) {     // type is 'request' or 'response', connec
   this._headers = {};
   this._headerNames = {};   // store original case
   
-this._outbox.pipe(process.stdout);
-  
-  
   var self = this;
   this.once('finish', function () {
     if (!self.headersSent) {
