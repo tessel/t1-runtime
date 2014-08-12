@@ -205,13 +205,22 @@ IncomingMessage._addHeaderLine = function(field, value, dest) {
 function OutgoingMessage (type) {     // type is 'request' or 'response', connection is socket
   Writable.call(this);
   
+  this.sendDate = true;
+  this._chunked = true;
   this._outbox = new PassThrough();   // buffer w/backpressure
   this._headers = {};
   this._headerNames = {};   // store original case
   
+this._outbox.pipe(process.stdout);
+  
+  
   var self = this;
   this.once('finish', function () {
-    if (!self.headersSent) self.flush();
+    if (!self.headersSent) {
+      self._chunked = false;
+      self.flush();
+    }
+    if (this._chunked) self._outbox.write('0\r\n');
   });
 }
 
@@ -249,7 +258,14 @@ OutgoingMessage.prototype.flush = function () {
         val = this._headers[k];
     if (Array.isArray(val)) val = val.join(', ');
     lines.push(key+': '+val);
+    if (k === 'date') this.sendDate = +this.sendDate;
+    else if (k === 'content-length') this._chunked = false;
+    else if (k === 'transfer-encoding') this._chunked = 'explicit';
   }, this);
+  if (this._chunked === true) lines.push('Transfer-Encoding: chunked');
+  // NOTE: will be broken until https://github.com/tessel/runtime/issues/388
+  if (this.sendDate === true) lines.push('Date: '+new Date().toUTCString());
+  else this.sendDate = !!this.sendDate;   // HACK: don't expose signal above
   lines.push('','');
   
   function clean(str) { return str.replace(/\r\n/g, ''); }    // avoid response splitting
@@ -259,7 +275,7 @@ OutgoingMessage.prototype.flush = function () {
 
 OutgoingMessage.prototype._write = function (chunk, enc, cb) {
   if (!this.headersSent) this.flush();
-  // TODO: frame in chunk if necessary
+  if (this._chunked) this._outbox.write(chunk.length.toString(16)+'\r\n');
   this._outbox.write(chunk, enc, cb);
 };
 
