@@ -3,9 +3,11 @@ console.log('1..1')
 var http = require('http');
 
 // Temporary tessel catchall
+
+// This is a hardcoded IP for google.com.
 try {
 	http.request({
-		hostname: '74.125.224.72',
+		hostname: '64.233.167.99',
 		port: 80,
 		path: '/index.html',
 		method: 'GET'
