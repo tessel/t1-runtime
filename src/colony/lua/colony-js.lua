@@ -1478,8 +1478,8 @@ global.Date.now = function ()
   return tonumber(tm.timestamp()/1e3) or 0
 end
 
-global.Date.parse = function ()
-  return tonumber(tm.timestamp()/1e3) or 0
+global.Date.parse = function (this, date)
+  return math.floor((tm.approxidate_milli(tostring(date)) or 0))
 end
 
 global.Date.UTC = function ()
