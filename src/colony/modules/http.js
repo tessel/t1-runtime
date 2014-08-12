@@ -211,7 +211,7 @@ function OutgoingMessage (type) {     // type is 'request' or 'response', connec
   
   var self = this;
   this.once('finish', function () {
-    if (!self._headersSent) self.flush();
+    if (!self.headersSent) self.flush();
   });
 }
 
@@ -228,13 +228,13 @@ OutgoingMessage.prototype.getHeader = function (name) {
   return this._headers[k];
 };
 OutgoingMessage.prototype.setHeader = function (name, value) {
-  if (this._headersSent) throw Error("Can't setHeader after they've been sent!");
+  if (this.headersSent) throw Error("Can't setHeader after they've been sent!");
   var k = name.toLowerCase();
   this._headerNames[k] = name;
   this._headers[k] = value;
 };
 OutgoingMessage.prototype.removeHeader = function (name) {
-  if (this._headersSent) throw Error("Can't removeHeader after they've been sent!");
+  if (this.headersSent) throw Error("Can't removeHeader after they've been sent!");
   var k = name.toLowerCase();
   delete this._headerNames[k];
   delete this._headers[k];
@@ -254,11 +254,11 @@ OutgoingMessage.prototype.flush = function () {
   
   function clean(str) { return str.replace(/\r\n/g, ''); }    // avoid response splitting
   this._outbox.write(lines.map(clean).join('\r\n'));
-  this._headersSent = true;
+  this.headersSent = true;
 };
 
 OutgoingMessage.prototype._write = function (chunk, enc, cb) {
-  if (!this._headersSent) this.flush();
+  if (!this.headersSent) this.flush();
   // TODO: frame in chunk if necessary
   this._outbox.write(chunk, enc, cb);
 };
