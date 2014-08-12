@@ -151,9 +151,8 @@ function IncomingMessage (connection) {
     })
   });
   this.connection.on('data', function (data) {
-    data = data.toString('utf8');     // TODO: this is almost certainly wrong! ('binary' or fix wrapper)
     // console.log('received', data.length, data.substr(0, 15));
-    parser.execute(data, 0, data.length);
+    parser.execute(data.toString('binary'), 0, data.length);
   });
 }
 
