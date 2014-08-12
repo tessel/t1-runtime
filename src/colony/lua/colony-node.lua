@@ -509,7 +509,7 @@ end
 
 Buffer.concat = function (this, args, len)
   -- Proper usage
-  if not args then
+  if not global.Array.isArray(nil, args) then
     error(js_new(global.TypeError, 'Usage: Buffer.concat(list, [length])'))
   end
 
