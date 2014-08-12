@@ -43,6 +43,7 @@ local func_proto = colony.func_proto
 local str_proto = colony.str_proto
 local arr_proto = colony.arr_proto
 local regex_proto = colony.regex_proto
+local date_proto = colony.date_proto
 
 local global = colony.global
 

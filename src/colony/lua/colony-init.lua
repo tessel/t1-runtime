@@ -68,7 +68,7 @@ end
 
 -- built-in prototypes
 
-local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_proto = {}, {}, {}, {}, {}, {}, {}
+local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_proto, date_proto = {}, {}, {}, {}, {}, {}, {}, {}
 funcproxies = {}
 
 _G.funcproxies = funcproxies
@@ -281,6 +281,8 @@ js_obj(num_proto)
 js_obj(bool_proto)
 js_obj(str_proto)
 js_obj(arr_proto)
+js_obj(regex_proto)
+js_obj(date_proto)
 
 
 --[[
@@ -616,3 +618,4 @@ colony.func_proto = func_proto
 colony.str_proto = str_proto
 colony.arr_proto = arr_proto
 colony.regex_proto = regex_proto
+colony.date_proto = date_proto
