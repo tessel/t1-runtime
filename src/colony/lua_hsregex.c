@@ -273,7 +273,13 @@ static int l_regex_replace (lua_State *L)
       const char* sect = NULL;
       if (lua_isnil(L, -1)) {
         sect = "undefined";
-        sect_len = 9;
+        sect_len = strlen("undefined");
+      } else if (lua_isboolean(L, -1) && lua_toboolean(L, -1) == 1) {
+        sect = "true";
+        sect_len = strlen("true");
+      } else if (lua_isboolean(L, -1) && lua_toboolean(L, -1) == 0) {
+        sect = "false";
+        sect_len = strlen("false");
       } else {
         sect = lua_tolstring(L, -1, &sect_len);
       }
