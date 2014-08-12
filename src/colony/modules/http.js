@@ -17,6 +17,7 @@ var net = require('net');
 var dns = require('dns');
 var Readable = require('stream').Readable;
 var Writable = require('stream').Writable;
+var PassThrough = require('stream').PassThrough;
 
 // NOTE: from https://github.com/joyent/node/blob/73343d5ceef7cb4ddee1ed0ddd2c51d1958e3bb1/lib/_http_server.js#L40
 var STATUS_CODES = {
@@ -197,14 +198,14 @@ IncomingMessage._addHeaderLine = function(field, value, dest) {
   }
 };
 
-
 /**
  * OutgoingMessage
  */
 
 function OutgoingMessage (type) {     // type is 'request' or 'response', connection is socket
   Writable.call(this);
-  this._connection = null;
+  
+  this._outbox = new PassThrough();   // buffer w/backpressure
   this._headers = {};
   this._headerNames = {};   // store original case
   
@@ -217,9 +218,8 @@ function OutgoingMessage (type) {     // type is 'request' or 'response', connec
 util.inherits(OutgoingMessage, Writable);
 
 OutgoingMessage.prototype._assignSocket = function (socket) {
-  this._connection = socket;
+  this._outbox.pipe(socket);
   this.emit('socket', socket);
-  
   // TODO: setTimeout/setNoDelay/setSocketKeepAlive
 };
 
@@ -240,16 +240,7 @@ OutgoingMessage.prototype.removeHeader = function (name) {
   delete this._headers[k];
 };
 
-// wraps `fn` and queues up calls until after socket event
-OutgoingMessage._postConnect = function (fn) {
-  return function () {
-    var _fn = Function.prototype.apply.bind(fn, this, arguments);
-    if (!this._connection) this.once('socket', _fn);
-    else _fn();
-  }
-}
-
-OutgoingMessage.prototype.flush = OutgoingMessage._postConnect(function () {
+OutgoingMessage.prototype.flush = function () {
   var lines = [];
   if (this._request) lines.push(this._request);
   else lines.push(['HTTP/1.1', this.statusCode, this.statusMessage || STATUS_CODES[this.statusCode] || ''].join(' '));
@@ -262,16 +253,15 @@ OutgoingMessage.prototype.flush = OutgoingMessage._postConnect(function () {
   lines.push('','');
   
   function clean(str) { return str.replace(/\r\n/g, ''); }    // avoid response splitting
-  this._connection.write(lines.map(clean).join('\r\n'));
+  this._outbox.write(lines.map(clean).join('\r\n'));
   this._headersSent = true;
-});
+};
 
-OutgoingMessage.prototype._write = OutgoingMessage._postConnect(function (chunk, enc, cb) {
+OutgoingMessage.prototype._write = function (chunk, enc, cb) {
   if (!this._headersSent) this.flush();
   // TODO: frame in chunk if necessary
-  this._connection.write(chunk, enc);
-  cb();     // TODO: support backpressure!
-});
+  this._outbox.write(chunk, enc, cb);
+};
 
 /**
   * Agent
