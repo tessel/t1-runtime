@@ -151,7 +151,6 @@ function IncomingMessage (type, connection) {
     })
   });
   this.connection.on('data', function (data) {
-    // console.log('received', data.length, data.substr(0, 15));
     parser.execute(data.toString('binary'), 0, data.length);
   });
 }
