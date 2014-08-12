@@ -821,45 +821,48 @@ end
 global.Number.prototype = num_proto
 num_proto.constructor = global.Number
 
-global.Number.isFinite = function(this, arg)
-  if type(arg) == 'number' then
-    return arg ~= math.huge and arg ~= -math.huge and not global.isNaN(this, arg)
-  else
-    return false
-  end
+-- https://people.mozilla.org/~jorendorff/es6-draft.html#sec-properties-of-the-number-constructor
+-- note that isNaN: arg ~= arg
+
+global.Number.EPSILON = 2.220446049250313e-16
+
+global.Number.isFinite = function (this, arg)
+  return type(arg) == 'number' and arg == arg and math.abs(arg) ~= math.huge
+end
+
+global.Number.isInteger = function (this, arg)
+  return type(arg) == 'number' and arg == arg and math.abs(arg) ~= math.huge and math.floor(arg) == arg
 end
 
 global.Number.isNaN = function (this, arg)
-  if type(arg) == 'number' then
-    return global.isNaN(this, arg)
-  else
-    return false
-  end
+  return type(arg) == 'number' and arg ~= arg
 end
 
 global.Number.isSafeInteger = function (this, arg)
-  if type(arg) == 'number' then
-    if global.Number.isFinite(this, arg) then
-      if math.floor(arg) == arg then
-        return math.abs(arg) <= 9007199254740991
-      else
-        return false
-      end
-    else
-      return false
-    end
-  else
-    return false
-  end
+  return type(arg) == 'number' and arg == arg and math.abs(arg) ~= math.huge and math.floor(arg) == arg and math.abs(arg) <= 9007199254740991
+end
+
+global.Number.MAX_SAFE_INTEGER = 9007199254740991
+
+global.Number.MAX_VALUE = 1.7976931348623157e+308
+
+global.Number.NaN = 0/0
+
+global.Number.NEGATIVE_INFINITY = -math.huge
+
+global.Number.MIN_SAFE_INTEGER = -9007199254740991
+
+global.Number.MIN_VALUE = 5e-322
+
+global.Number.parseFloat = function (this, str)
+  return global.parseFloat(this, str)
 end
 
 global.Number.parseInt = function (this, str, radix)
   return global.parseInt(this, str, radix)
 end
 
-global.Number.parseFloat = function (this, str)
-  return global.parseFloat(this, str)
-end
+global.Number.POSITIVE_INFINITY = -math.huge
 
 -- Object
 
