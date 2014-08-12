@@ -315,7 +315,10 @@ Agent.prototype._enqueueRequest = function (req, opts) {
   var socket = net.createConnection(opts, function () {
     req._assignSocket(socket);
   });
-  return {host:host, release:function () {}};
+  return {
+    host: host,
+    release: function () { socket.end(); }
+  };
   
   // TODO: finish actual implementation!
   var socket = null,
