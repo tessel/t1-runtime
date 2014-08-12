@@ -95,7 +95,7 @@ var STATUS_CODES = {
  * IncomingMessage
  */
  
-function IncomingMessage (connection) {
+function IncomingMessage (type, connection) {
   Readable.call(this);
 
   this.headers = {};
@@ -112,7 +112,7 @@ function IncomingMessage (connection) {
   }
 
   var self = this;
-  var parser = http_parser.new('request', {
+  var parser = http_parser.new(type, {
     onMessageBegin: js_wrap_function(function () {
       self.emit('_messageBegin');
     }),
@@ -239,7 +239,7 @@ OutgoingMessage.prototype._assignSocket = function (socket) {
 
 OutgoingMessage.prototype._addHeaders = function (obj) {
   Object.keys(obj).forEach(function (k) {
-    this.setHeader(k, obj[v]);
+    this.setHeader(k, obj[k]);
   }, this);
 };
 
@@ -384,7 +384,7 @@ function ClientRequest (opts) {
   
   var self = this;
   this.once('socket', function (socket) {
-    var response = new IncomingMessage(socket);
+    var response = new IncomingMessage('response', socket);
     response.once('_headersComplete', function () {
         var handled = self.emit('response', response);
         if (!handled) response.resume();    // dump it
@@ -437,7 +437,7 @@ function Server() {
   
   var self = this;
   this.on('connection', function (socket) {
-    var req = new IncomingMessage(socket),
+    var req = new IncomingMessage('request', socket),
         res = new ServerResponse(socket);
     req.on('_headersComplete', function () {
       self.emit('request', req, res);
