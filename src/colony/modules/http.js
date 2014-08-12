@@ -277,6 +277,7 @@ OutgoingMessage.prototype.flush = function () {
   // NOTE: will be broken until https://github.com/tessel/runtime/issues/388
   if (this.sendDate === true) lines.push('Date: '+new Date().toUTCString());
   else this.sendDate = !!this.sendDate;   // HACK: don't expose signal above
+  if (1) lines.push('Connection: close');     // HACK: currently, we don't support keep-alive
   lines.push('','');
   
   function clean(str) { return str.replace(/\r\n/g, ''); }    // avoid response splitting
