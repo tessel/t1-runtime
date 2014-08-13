@@ -145,12 +145,19 @@ function IncomingMessage (type, connection) {
     onMessageComplete: js_wrap_function(function () {
       self.push(null);
     }),
-    onError: js_wrap_function(function (err) {
-      self.emit('error', err);
+    onError: js_wrap_function(function (e) {
+      // NOTE: becomes ClientRequest 'error' or Server 'clientError'
+      self.emit('_error', e);
     })
+  });
+  this.connection.on('error', function (e) {
+    self.emit('_error', e);
   });
   this.connection.on('data', function (data) {
     parser.execute(data.toString('binary'), 0, data.length);
+  });
+  this.connection.on('end', function () {
+    self.push(null);
   });
 }
 
@@ -399,6 +406,9 @@ function ClientRequest (opts) {
   var self = this;
   this.once('socket', function (socket) {
     var response = new IncomingMessage('response', socket);
+    response.once('_error', function (e) {
+      self.emit('error', e);
+    });
     response.once('_headersComplete', function () {
         var handled = self.emit('response', response);
         if (!handled) response.resume();    // dump it
@@ -465,10 +475,13 @@ Server._commonSetup = function () {       // also used by 'https'
   this.on('connection', function (socket) {
     var req = new IncomingMessage('request', socket),
         res = new ServerResponse(socket);
-    req.on('_headersComplete', function () {
+    req.once('_error', function (e) {
+      self.emit('clientError', e, socket);
+    });
+    req.once('_headersComplete', function () {
       self.emit('request', req, res);
     });
-    res.on('finish', function () {
+    res.once('finish', function () {
       socket.end();
     });
   });
