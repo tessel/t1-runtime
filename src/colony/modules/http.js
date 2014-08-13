@@ -326,9 +326,13 @@ Agent.prototype._hostQueues = function (host) {
   };
 };
 
+Agent.prototype._createConnection = function (opts, cb) {
+  return net.createConnection(opts, cb);
+};
+
 Agent.prototype._enqueueRequest = function (req, opts) {
   var host = this._getHost(opts);
-  var socket = net.createConnection(opts, function () {
+  var socket = this._createConnection(opts, function () {
     req._assignSocket(socket);
   });
   return {
@@ -372,8 +376,8 @@ function ClientRequest (opts) {
     keepAliveMsecs: 1000
   }, opts);
   if ('hostname' in opts) opts.host = opts.hostname;
-  if (0 && opts.agent === false) ;    // TODO: "auto-close" agent?
-  else if (!opts.agent) opts.agent = globalAgent;
+  if (opts.agent === false) opts.agent = this._getAgent('single');
+  else if (!opts.agent) opts.agent = this._getAgent('global');
   
   OutgoingMessage.call(this);
   this._agent = opts.agent._enqueueRequest(this, opts);
@@ -396,7 +400,14 @@ function ClientRequest (opts) {
 
 util.inherits(ClientRequest, OutgoingMessage);
 
-ClientRequest.prototype.abort = function () {};
+ClientRequest.prototype.abort = function () {
+  // TODO: implement
+};
+
+ClientRequest.prototype._getAgent = function () {
+  return globalAgent;
+};
+
 
 /*
  * ServerResponse
@@ -433,7 +444,12 @@ ServerResponse.prototype.flush = function () {
 
 function Server() {
   net.Server.call(this);
-  
+  Server._commonSetup.call(this);
+}
+
+util.inherits(Server, net.Server);
+
+Server._commonSetup = function () {       // also used by 'https'
   var self = this;
   this.on('connection', function (socket) {
     var req = new IncomingMessage('request', socket),
@@ -448,9 +464,7 @@ function Server() {
   this.on('clientError', function (e, socket) {
     socket.destroy(e);
   });
-}
-
-util.inherits(Server, net.Server);
+};
 
 
 /**
@@ -466,7 +480,6 @@ exports.ServerResponse = ServerResponse;
 exports.IncomingMessage = IncomingMessage;
 exports.Agent = Agent;
 exports.ClientRequest = ClientRequest;
-
 exports.globalAgent = globalAgent;
 
 exports.createServer = function (cb) {

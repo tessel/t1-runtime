@@ -7,13 +7,76 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+
+var util = require('util');
 var http = require('http');
+var tls = require('tls');
 
-// This reuses the http module, setting a private "_secure" flag.
-// Could be done better.
-
-for (var key in http) {
-  exports[key] = http[key].bind(exports);
+/**
+ * Server
+ */
+ 
+function Server() {
+  tls.Server.call(this);
+  http.Server._commonSetup.call(this);
 }
 
-exports._secure = true;
+util.inherits(Server, tls.Server);
+
+/**
+ * Agent
+ */
+
+function Agent() {
+  http.Agent.call(this);
+}
+
+util.inherits(Agent, http.Agent);
+
+Agent.prototype._createConnection = function (opts, cb) {
+  return tls.connect(opts, cb);
+};
+
+var globalAgent = new Agent();
+
+/**
+ * ClientRequest
+ */
+
+function ClientRequest() {
+  http.ClientRequest.call(this);
+}
+
+util.inherits(ClientRequest, http.ClientRequest);
+
+ClientRequest.prototype._getAgent = function () {
+  return globalAgent;
+};
+
+
+/**
+ * Public API
+ */
+
+exports.Server = Server;
+exports.Agent = Agent;
+exports.ClientRequest = ClientRequest;
+exports.globalAgent = globalAgent;
+
+exports.createServer = function (cb) {
+  var server = new Server();
+  if (cb) server.on('request', cb);
+  return server;
+};
+
+exports.request = function (opts, cb) {
+  var req = new ClientRequest(opts);
+  if (cb) req.once('response', cb);
+  return req;
+};
+
+exports.get = function (opts, cb) {
+  var req = exports.request(opts, cb);
+  req.end();
+  return req;
+};
