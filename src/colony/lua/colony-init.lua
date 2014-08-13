@@ -25,6 +25,16 @@ local bit = require('bit32')
 
 -- lua methods
 
+-- tonumber that returns NaN instead of nil
+_G.tonumbervalue = function (val)
+  val = tonumber(val)
+  if val == nil then
+    return 0/0
+  else
+    return val
+  end
+end
+
 function table.augment (t1,t2)
   for i=1,#t2 do
     t1[#t1+1] = t2[i]
@@ -58,7 +68,7 @@ end
 
 -- built-in prototypes
 
-local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_proto = {}, {}, {}, {}, {}, {}, {}
+local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_proto, date_proto = {}, {}, {}, {}, {}, {}, {}, {}
 funcproxies = {}
 
 _G.funcproxies = funcproxies
@@ -271,6 +281,8 @@ js_obj(num_proto)
 js_obj(bool_proto)
 js_obj(str_proto)
 js_obj(arr_proto)
+js_obj(regex_proto)
+js_obj(date_proto)
 
 
 --[[
@@ -507,6 +519,7 @@ function js_arguments (...)
 
   local obj = global._obj(a);
   obj.length = len
+  get_unique_metatable(obj).arguments = true
   return obj
 end
 
@@ -605,3 +618,4 @@ colony.func_proto = func_proto
 colony.str_proto = str_proto
 colony.arr_proto = arr_proto
 colony.regex_proto = regex_proto
+colony.date_proto = date_proto

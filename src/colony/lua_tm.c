@@ -188,13 +188,10 @@ static int l_tm_tcp_close (lua_State* L)
 static int l_tm_tcp_connect (lua_State* L)
 {
   tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
-  uint8_t ip0 = (uint8_t) lua_tonumber(L, 2);
-  uint8_t ip1 = (uint8_t) lua_tonumber(L, 3);
-  uint8_t ip2 = (uint8_t) lua_tonumber(L, 4);
-  uint8_t ip3 = (uint8_t) lua_tonumber(L, 5);
-  uint16_t port = (uint16_t) lua_tonumber(L, 6);
+  uint32_t addr = (uint32_t) lua_tonumber(L, 2);
+  uint16_t port = (uint16_t) lua_tonumber(L, 3);
 
-  lua_pushnumber(L, tm_tcp_connect(socket, ip0, ip1, ip2, ip3, port));
+  lua_pushnumber(L, tm_tcp_connect(socket, addr, port));
   return 1;
 }
 
@@ -204,9 +201,12 @@ static int l_tm_tcp_write (lua_State* L)
   tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
   size_t len;
   const uint8_t* buf = colony_toconstdata(L, 2, &len);
+  
+  if (buf == NULL) return -1;
 
-  tm_tcp_write(socket, buf, len);
-  return 0;
+  lua_pushnumber(L, tm_tcp_write(socket, buf, len));
+  
+  return 1;
 }
 
 
@@ -244,11 +244,13 @@ static int l_tm_tcp_listen (lua_State* L)
 static int l_tm_tcp_accept (lua_State* L)
 {
   uint32_t addr;
+  uint16_t port;
   tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
 
-  lua_pushnumber(L, tm_tcp_accept(socket, &addr));
+  lua_pushnumber(L, tm_tcp_accept(socket, &addr, &port));
   lua_pushnumber(L, addr);
-  return 2;
+  lua_pushnumber(L, port);
+  return 3;
 }
 
 #ifdef ENABLE_TLS
@@ -453,9 +455,13 @@ static int l_tm_buffer_set (lua_State *L)
 {
   uint8_t *ud = (uint8_t *) lua_touserdata(L, 1);
   size_t index = (size_t) lua_tonumber(L, 2);
-  uint8_t newvalue = (uint8_t) lua_tonumber(L, 3);
-
-  ud[index] = newvalue;
+  double newvalue = (double) lua_tonumber(L, 3);
+  
+  if (newvalue < 0) {
+    ud[index] = 0x100 - (((uint32_t) -newvalue) % 0x100);
+  } else {
+    ud[index] = (((uint32_t) newvalue) % 0x100);
+  }
   return 0;
 }
 

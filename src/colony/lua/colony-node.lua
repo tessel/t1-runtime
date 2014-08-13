@@ -43,6 +43,7 @@ local func_proto = colony.func_proto
 local str_proto = colony.str_proto
 local arr_proto = colony.arr_proto
 local regex_proto = colony.regex_proto
+local date_proto = colony.date_proto
 
 local global = colony.global
 
@@ -524,7 +525,7 @@ end
 
 Buffer.concat = function (this, args, len)
   -- Proper usage
-  if not args then
+  if not global.Array.isArray(nil, args) then
     error(js_new(global.TypeError, 'Usage: Buffer.concat(list, [length])'))
   end
 
@@ -599,6 +600,11 @@ end
 
 EventEmitter.prototype.removeListener = function (this, type, f)
 
+  type = tostring(type) or ''
+  if not f then
+    error(js_new(global.TypeError, 'Supplied listener is not a function.'))
+  end
+
   local i = this:listeners(type):indexOf(f);
   local callback = f;
 
@@ -639,7 +645,9 @@ EventEmitter.prototype.removeAllListeners = function (this, type)
 
     -- Remove each of them
     for k in pairs(listeners) do
-      this:removeListener(type, listeners[k]);
+      if listeners[k] then
+        this:removeListener(type, listeners[k]);
+      end
     end
     return this;
   end
@@ -900,20 +908,30 @@ local function require_resolve (origname, root)
     if colony.precache[name] or colony.cache[name] then
       root = ''
     else
-      -- TODO climb hierarchy for node_modules
+      -- climb hierarchy for node_modules
       local fullname = name
       while string.find(name, '/') do
         name = path_dirname(name)
       end
+      
+      -- On PC, we want to support node_modules from any folder. (Crudely.)
+      if not COLONY_EMBED and string.sub(root, 1, 1) == '.' then
+        root = path_normalize(path_normalize(os.getenv("PWD")) .. '/' .. root)
+      end
+
       while not fs_exists(root .. 'node_modules/' .. name .. '/package.json') do
-        root = path_dirname(root) .. '/'
-        if path_dirname(root) == path_dirname(path_dirname(root)) then
+        local next_root = path_dirname(root) .. '/'
+        if next_root == root then
+          -- we've searched all the way up through available path
+          root = nil
           break
+        else
+          root = next_root
         end
       end
       if not root then
         -- no node_modules folder found
-        return root .. name, false
+        return name, false
       end
       root = root .. 'node_modules/'
       if string.find(fullname, '/') then

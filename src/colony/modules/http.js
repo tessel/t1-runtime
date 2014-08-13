@@ -65,19 +65,18 @@ ServerResponse.prototype.writeHead = function (status, headers) {
     this.setHeaders(headers);
   }
   this.connection.write('HTTP/1.1 ' + status + ' OK\r\n');
-  this._usesContentType = false;
+  this._usesContentLength = false;
   for (var key in this.headers) {
     if (key.toLowerCase() == 'content-length') {
-      this._usesContentType = true;
+      this._usesContentLength = true;
     }
     this.connection.write(key + ': ' + this.headers[key] + '\r\n');
   }
-  if (!this._usesContentType) {
+  if (!this._usesContentLength) {
     this.connection.write('Transfer-Encoding: chunked\r\n');
   }
   this.connection.write('\r\n');
   this._header = true;
-  // console.log('writing headers', headers);
 };
 
 ServerResponse.prototype._write = function (chunk, encoding, callback) {
@@ -85,15 +84,22 @@ ServerResponse.prototype._write = function (chunk, encoding, callback) {
     this.writeHead(200);
   }
 
-  if (!this._usesContentType) {
-    this.connection.write(Number(chunk.length).toString(16));
-    this.connection.write('\r\n');
-    this.connection.write(chunk);
-    this.connection.write('\r\n');
+  if (!this._usesContentLength) {
+    // concatting buffer
+    var buf = null;
+    if (Buffer.isBuffer(chunk)) {
+      buf = Buffer.concat([
+        new Buffer(Number(chunk.length).toString(16) + '\r\n'), 
+        chunk, 
+        new Buffer('\r\n')]);
+    } else {
+      buf = new Buffer(Number(chunk.length).toString(16) + '\r\n' + chunk + '\r\n');
+    }
+
+    this.connection.write(buf, encoding, callback);
   } else {
-    this.connection.write(chunk);
+    this.connection.write(chunk, encoding, callback);
   }
-  callback();
 }
 
 ServerResponse.prototype.getHeader = function (key) {
@@ -101,6 +107,7 @@ ServerResponse.prototype.getHeader = function (key) {
 };
 
 ServerResponse.prototype.end = function (data) {
+  var self = this;
   if (!this._header) {
     this.writeHead(200);
   }
@@ -109,10 +116,17 @@ ServerResponse.prototype.end = function (data) {
     this.write(data);
   }
   this._closed = true;
-  if (!this._usesContentType) {
-    this.connection.write('0\r\n\r\n');
+  
+  if (!this._usesContentLength) {
+    // writes the ("0/r/n/r/n")
+    this.write('');
   }
-  this.connection.close();
+
+  this.once('finish', function () { 
+    self.connection.close();
+  });
+
+  Writable.prototype.end.call(self);
 };
 
 
@@ -180,7 +194,7 @@ function HTTPServer () {
   this.connection = net.createServer(function (connection) {
     var request = new ServerRequest(connection);
     var response = new ServerResponse(request, connection);
-    request.on('request', function () {
+    request.once('request', function () {
       self.emit('request', request, response)
     });
   });
@@ -190,6 +204,14 @@ util.inherits(HTTPServer, EventEmitter);
 
 HTTPServer.prototype.listen = function (port, ip) {
   this.connection.listen(port, ip);
+  return this;
+};
+
+HTTPServer.prototype.close = function(callback){
+    this.connection.destroy();
+    if(callback){
+        callback();
+    }
 };
 
 

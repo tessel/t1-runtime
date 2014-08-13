@@ -160,45 +160,6 @@ static int js_getter_index (lua_State* L)
 }
 
 
-/*
-function (this, fn)
-	local len = this.length-1
-	for i=0, len do
-		fn(this, rawget(this, i) or this[i], i)
-	end
-	return this
-end
-*/
-
-static int arr_proto_forEach (lua_State* L)
-{
-	// stack: this fn
-	lua_getfield(L, 1, "length");
-	long length_value = lua_tonumber(L, -1);
-	size_t len = length_value < 0 ? 0 : (size_t) length_value;
-
-	for (size_t i = 0; i < len; i++) {
-		lua_pushvalue(L, 2);
-		lua_pushvalue(L, 1);
-
-		// rawget(this, i) ...
-		lua_rawgeti(L, 1, i);
-		if (lua_isnil(L, -1)) {
-			lua_remove(L, -1);
-			lua_pushnumber(L, i);
-			lua_gettable(L, 1);
-		}
-
-		// i
-		lua_pushnumber(L, i);
-		lua_call(L, 3, 0);
-	}
-
-	lua_settop(L, 1);
-	return 1;
-}
-
-
 void colony_init (lua_State* L)
 {
 	lua_pushcfunction(L, js_proto_get);
@@ -206,7 +167,4 @@ void colony_init (lua_State* L)
 
 	lua_pushcfunction(L, js_getter_index);
 	lua_setglobal(L, "js_getter_index");
-
-	lua_pushcfunction(L, arr_proto_forEach);
-	lua_setglobal(L, "arr_proto_forEach");
 }

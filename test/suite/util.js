@@ -1,6 +1,4 @@
-//var test = require('ttt');
-// WORKAROUND: https://github.com/tessel/runtime/issues/276
-var test = require("../../node_modules/ttt/ttt.js");
+var test = require('tinytap');
 
 test('string formatting', function (t) {
   // basic checks

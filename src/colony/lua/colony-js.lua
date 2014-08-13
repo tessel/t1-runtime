@@ -47,6 +47,7 @@ local func_proto = colony.func_proto
 local str_proto = colony.str_proto
 local arr_proto = colony.arr_proto
 local regex_proto = colony.regex_proto
+local date_proto = colony.date_proto
 
 -- Shorthand for helper functions in compiled code.
 
@@ -69,7 +70,20 @@ global._in = js_in
 global._break = js_break
 global._cont = js_cont
 global._with = js_with
-global._G = _G
+global._G = {}
+
+-- Hack for exposed _G object until it can be removed.
+setmetatable(global._G, {
+  __index = function (this, key)
+    if type(_G[key]) ~= 'userdata' then
+      return _G[key]
+    end
+    return nil
+  end,
+  __newindex = function (this, key, value)
+    _G[key] = value
+  end
+})
 
 -- in-code modules
 
@@ -253,15 +267,31 @@ end
 
 -- object prototype
 
+-- https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring
 obj_proto.toString = function (this)
-  if getmetatable(this) and getmetatable(this).proto == arr_proto then
+  if this == nil then
+    return '[object Undefined]'
+  -- TODO null
+  elseif getmetatable(this) and getmetatable(this).proto == arr_proto then
     return '[object Array]'
-  elseif type(this) == 'function' then
-    return '[object Function]'
   elseif type(this) == 'string' then
     return '[object String]'
-  elseif a and a.constructor and a.constructor.name then
-    return '[object ' .. a.constructor.name .. ']'
+  elseif getmetatable(this) and getmetatable(this).arguments then
+    return '[object Arguments]'
+  elseif type(this) == 'function' then
+    return '[object Function]'
+
+  elseif getmetatable(this) and getmetatable(this).error_stack ~= nil then
+    return '[object Error]'
+  elseif type(this) == 'boolean' then
+    return '[object Boolean]'
+    elseif type(this) == 'number' then
+    return '[object Number]'
+  -- TODO date_proto
+  elseif getmetatable(this) and getmetatable(this).proto == date_proto then
+    return '[object Date]'
+  elseif getmetatable(this) and getmetatable(this).cre then
+    return '[object RegExp]'
   else
     return '[object Object]'
   end
@@ -382,21 +412,30 @@ end
 
 arr_proto.splice = function (this, i, del, ...)
   local del_len = (tonumber(del) or 0)
+  local original_len = tonumber(rawget(this, 'length'))
   local ret = {}
   for j=1,del_len do
     ret[j-1] = rawget(this, i)
     if i == 0 then
       rawset(this, 0, rawget(this, i))
     end
-    table.remove(this, i)
+    if i == 0 then
+      arr_proto.shift(this)
+    else
+      table.remove(this, i)
+    end
   end
 
   local args = table.pack(...)
   for j=1,args.length do
-    rawset(this, i, args[j])
+    if i == 0 then
+      arr_proto.unshift(this, args[j])
+    else
+      table.insert(this, i, args[j])
+    end
     i = i + 1
   end
-  rawset(this, 'length', tonumber(rawget(this, 'length')) - del_len + args.length)
+  rawset(this, 'length', original_len - del_len + args.length)
   return js_arr(ret, del_len)
 end
 
@@ -483,34 +522,81 @@ arr_proto.join = function (this, ...)
     if this[i] == nil or this[i] == _null then
       _r = _r .. str
     else
-      _r = _r .. this[i] .. str
+      _r = _r .. tostring(this[i]) .. str
       end
   end
   return string.sub(_r, 1, string.len(_r) - string.len(str))
 end
 
-arr_proto.indexOf = function (this, val)
-  local len = this.length - 1
-  for i=0, len do
-    if this[i] == val then
+arr_proto.indexOf = function (this, searchElement, fromIndex)
+  local len = this.length
+  local start
+
+  if len == 0 then
+    return -1
+  end
+
+  if fromIndex ~= nil then
+    fromIndex = tonumber(fromIndex)
+  else
+    fromIndex = 0
+  end
+
+  if fromIndex >= len then
+    return -1
+  end
+
+  if fromIndex >= 0 then
+    start = fromIndex
+  else
+    start = len + fromIndex
+
+    if start < 0 then
+      start = 0
+    end
+  end
+
+  for i=start, len - 1 do
+    if this[i] == searchElement then
       return i
     end
   end
+
   return -1
 end
 
-arr_proto.map = function (ths, fn)
+arr_proto.map = function (this, fn, ...)
   local a = js_arr({}, 0)
-  for i=0,ths.length-1 do
-    a:push(fn(ths, ths[i], i))
+  local args = table.pack(...)
+  -- t _should_ be set to undefined, per spec.
+  -- Since there is no notion of strict mode,
+  -- setting to global has the same observable semantics.
+  local t = global
+
+  if args.length > 0 then
+    t = args[1]
+  end
+
+  for i=0,this.length-1 do
+    a:push(fn(t, this[i], i, this))
   end
   return a
 end
 
-arr_proto.filter = function (this, fn)
+arr_proto.filter = function (this, fn, ...)
   local a = js_arr({}, 0)
+  local args = table.pack(...)
+  -- t _should_ be set to undefined, per spec.
+  -- Since there is no notion of strict mode,
+  -- setting to global has the same observable semantics.
+  local t = global
+
+  if args.length > 0 then
+    t = args[1]
+  end
+
   for i=0,this.length-1 do
-    if fn(this, this[i], i) then
+    if fn(t, this[i], i, this) then
       a:push(this[i])
     end
   end
@@ -552,22 +638,106 @@ arr_proto.reduce = function (this, callback, ...)
   return value
 end
 
-arr_proto.forEach = arr_proto_forEach
+-- http://es5.github.io/#x15.4.4.18
+arr_proto.forEach = function (this, fn, ...)
+  if this == nil then
+    error(js_new(global.TypeError, "Array.prototype.forEach called on null or undefined"))
+  end
 
-arr_proto.some = function (ths, fn)
-  for i=0,ths.length-1 do
-    if fn(ths, ths[i], i) then
+  local args = table.pack(...)
+  -- t _should_ be set to undefined, per spec.
+  -- Since there is no notion of strict mode,
+  -- setting to global has the same observable semantics.
+  local t = global
+
+  if args.length > 0 then
+    t = args[1]
+  end
+
+  local len = this.length-1
+  if type(this) == 'table' then
+    for i=0, len do
+      local value = rawget(this, i)
+      if value == nil then
+        value = this[i] -- getters
+      end
+      -- TODO: existence check for sparse arrays
+      -- if value ~= nil then
+        fn(t, value, i, this)
+      -- end
+    end
+  else
+    for i=0, len do
+      fn(t, this[i], i, this)
+    end
+  end
+end
+
+arr_proto.some = function (this, fn, ...)
+  local args = table.pack(...)
+  -- t _should_ be set to undefined, per spec.
+  -- Since there is no notion of strict mode,
+  -- setting to global has the same observable semantics.
+  local t = global
+
+  if args.length > 0 then
+    t = args[1]
+  end
+
+  for i=0,this.length-1 do
+    if fn(t, this[i], i, this) then
       return true
     end
   end
   return false
 end
 
-arr_proto.filter = function (ths, fn)
+arr_proto.every = function (this, callbackfn, ...)
+  if this == nil then
+    error(js_new(global.TypeError, 'Array.prototype.every called on null or undefined'))
+  end
+  if type(callbackfn) ~= 'function' then
+    error(js_new(global.TypeError, callbackfn + ' is not a function'))
+  end
+
+  local args = table.pack(...)
+  local index = 0
+  local len = this.length
+  -- t _should_ be set to undefined, per spec.
+  -- Since there is no notion of strict mode,
+  -- setting to global has the same observable semantics.
+  local t = global
+
+  if args.length > 0 then
+    t = args[1]
+  end
+
+  while index < len do
+    if this:hasOwnProperty(index) then
+      if not callbackfn(t, this[index], index, this) then
+        return false
+      end
+    end
+    index = index + 1
+  end
+  return true
+end
+
+arr_proto.filter = function (this, fn, ...)
   local a = js_arr({}, 0)
-  for i=0,ths.length-1 do
-    if global._truthy(fn(ths, ths[i], i)) then
-      a:push(ths[i])
+  local args = table.pack(...)
+  -- t _should_ be set to undefined, per spec.
+  -- Since there is no notion of strict mode,
+  -- setting to global has the same observable semantics.
+  local t = global
+
+  if args.length > 0 then
+    t = args[1]
+  end
+
+  for i=0,this.length-1 do
+    if fn(t, this[i], i, this) then
+      a:push(this[i])
     end
   end
   return a
@@ -592,7 +762,7 @@ bool_proto.constructor = global.Boolean
 global.NaN = 0/0
 
 global.Number = function (ths, n)
-  return tonumber(n)
+  return tonumbervalue(n)
 end
 global.Number.prototype = num_proto
 num_proto.constructor = global.Number
@@ -694,15 +864,23 @@ global.Object.freeze = function (this, obj)
   return obj
 end
 
+-- http://es5.github.io/#x15.2.3.14
 global.Object.keys = function (this, obj)
   local a = {}
-  -- TODO debug this one:
+
+  -- Use function proxy for object variables.
   if type(obj) == 'function' then
     obj = js_func_proxy(obj)
   end
+
+  if type(obj) ~= 'table' then
+    error(js_new(global.TypeError, 'Object.keys called on non-object'))
+  end
+
+  -- Iterate objects using internal representation (in js_pairs).
   local i = 0
   for k,v in js_pairs(obj) do
-    a[i] = k
+    a[i] = tostring(k) or ''
     i = i + 1
   end
   return js_arr(a, i)
@@ -799,8 +977,15 @@ global.String = function (ths, str)
 end
 global.String.prototype = str_proto
 str_proto.constructor = global.String
-global.String.fromCharCode = function (ths, ord)
-  return string.char(ord or 0)
+global.String.fromCharCode = function (this, ...)
+  -- http://es5.github.io/x15.5.html#x15.5.3.2
+  local args = table.pack(...)
+  local str = ''
+  for i=1,args.length do
+    local uint16 = math.floor(math.abs(tonumbervalue(args[i]))) % (2^16)
+    str = str .. string.char(uint16)
+  end
+  return str
 end
 
 -- Math
@@ -984,17 +1169,20 @@ global.Math = js_obj({
 -- Error
 
 local function error_constructor (this, str)
+  local stack = tostring(debug.traceback())
+  if not global.process.debug then
+    stack = string.gsub(stack, "\t%[[TC]%].-\n", '')
+  end
+
   getmetatable(this).__tostring = function (this)
     return this.message
   end
+  getmetatable(this).error_stack = stack
+
   this.name = 'Error'
   this.type = 'Error'
   this.message = str
-  this.stack = tostring(debug.traceback())
-
-  if not global.process.debug then
-    this.stack = string.gsub(this.stack, "\t%[[TC]%].-\n", '')
-  end
+  this.stack = stack
 end
 
 error_constructor.prototype.captureStackTrace = function ()
@@ -1019,6 +1207,7 @@ local function error_class (name)
     this.name = name
     this.type = name
   end
+  constructor.name = name
 
   constructor.prototype = error_constructor.prototype
   return constructor
@@ -1079,7 +1268,7 @@ global.Date = function (this, time)
     return os.date('!%a %h %d %Y %H:%M:%S GMT%z (%Z)')
   end
   if type(time) == 'number' then
-    getmetatable(this).date = time
+    getmetatable(this).date = time*1000
 
   -- temporary hardcode for ntp-client
   elseif time == 'Jan 01 1900 GMT' then
@@ -1094,104 +1283,106 @@ global.Date = function (this, time)
   return this
 end
 
-global.Date.prototype.toString = function (this)
+global.Date.prototype = date_proto
+
+date_proto.toString = function (this)
   -- e.g. Mon Sep 28 1998 14:36:22 GMT-0700 (Pacific Daylight Time)
   return os.date('!%a %h %d %Y %H:%M:%S GMT%z (%Z)', getmetatable(this).date/1e6)
 end
 
-global.Date.prototype.getDate = function (this)
+date_proto.getDate = function (this)
   return os.date('*t', getmetatable(this).date/1e6).day
 end
 
-global.Date.prototype.getDay = function (this)
+date_proto.getDay = function (this)
   return os.date('*t', getmetatable(this).date/1e6).wday - 1
 end
 
-global.Date.prototype.getFullYear = function (this)
+date_proto.getFullYear = function (this)
   return os.date('*t', getmetatable(this).date/1e6).year
 end
 
-global.Date.prototype.getHours = function (this)
+date_proto.getHours = function (this)
   return os.date('*t', getmetatable(this).date/1e6).hour
 end
 
-global.Date.prototype.getMilliseconds = function (this)
+date_proto.getMilliseconds = function (this)
   return math.floor((getmetatable(this).date/1e3)%1e3)
 end
 
-global.Date.prototype.getMinutes = function (this)
+date_proto.getMinutes = function (this)
   return os.date('*t', getmetatable(this).date/1e6).min
 end
 
-global.Date.prototype.getMonth = function (this)
+date_proto.getMonth = function (this)
   return os.date('*t', getmetatable(this).date/1e6).month - 1
 end
 
-global.Date.prototype.getSeconds = function (this)
+date_proto.getSeconds = function (this)
   return os.date('*t', getmetatable(this).date/1e6).sec
 end
 
-global.Date.prototype.getTime = function (this)
-  return tonumber(getmetatable(this).date/1e3) or 0
+date_proto.getTime = function (this)
+  return math.floor(tonumber(getmetatable(this).date/1e3)) or 0
 end
 
-global.Date.prototype.getTimezoneOffset = function ()
+date_proto.getTimezoneOffset = function ()
   return 0
 end
 
-global.Date.prototype.getUTCDate = global.Date.prototype.getDate
-global.Date.prototype.getUTCDay = global.Date.prototype.getDay
-global.Date.prototype.getUTCFullYear = global.Date.prototype.getFullYear
-global.Date.prototype.getUTCHours = global.Date.prototype.getHours
-global.Date.prototype.getUTCMilliseconds = global.Date.prototype.getMilliseconds
-global.Date.prototype.getUTCMinutes = global.Date.prototype.getMinutes
-global.Date.prototype.getUTCSeconds = global.Date.prototype.getSeconds
+date_proto.getUTCDate = date_proto.getDate
+date_proto.getUTCDay = date_proto.getDay
+date_proto.getUTCFullYear = date_proto.getFullYear
+date_proto.getUTCHours = date_proto.getHours
+date_proto.getUTCMilliseconds = date_proto.getMilliseconds
+date_proto.getUTCMinutes = date_proto.getMinutes
+date_proto.getUTCSeconds = date_proto.getSeconds
 
-global.Date.prototype.getYear = function (this)
+date_proto.getYear = function (this)
   return os.date('*t', getmetatable(this).date/1e6).year - 1900
 end
 
-global.Date.prototype.toISOString = function (this)
+date_proto.toISOString = function (this)
   -- TODO don't hardcode microseconds
-  return os.date('!%Y-%m-%dT%H:%M:%S.000Z', getmetatable(this).date/1e6)
+  return os.date('!%Y-%m-%dT%H:%M:%S.', getmetatable(this).date/1e6) .. string.format('%03dZ', (getmetatable(this).date/1e3)%1e3)
 end
-global.Date.prototype.toJSON = global.Date.prototype.toISOString
-global.Date.prototype.valueOf = global.Date.prototype.getTime
+date_proto.toJSON = date_proto.toISOString
+date_proto.valueOf = date_proto.getTime
 
-global.Date.prototype.setDate = function () end
-global.Date.prototype.setFullYear = function () end
-global.Date.prototype.setHours = function () end
-global.Date.prototype.setMilliseconds = function () end
-global.Date.prototype.setMinutes = function () end
-global.Date.prototype.setMonth = function () end
-global.Date.prototype.setSeconds = function () end
-global.Date.prototype.setTime = function () end
-global.Date.prototype.setUTCDate = function () end
-global.Date.prototype.setUTCFullYear = function () end
-global.Date.prototype.setUTCHours = function () end
-global.Date.prototype.setUTCMinutes = function () end
-global.Date.prototype.setUTCMonth = function () end
-global.Date.prototype.setUTCSeconds = function () end
-global.Date.prototype.setYear = function () end
+date_proto.setDate = function () end
+date_proto.setFullYear = function () end
+date_proto.setHours = function () end
+date_proto.setMilliseconds = function () end
+date_proto.setMinutes = function () end
+date_proto.setMonth = function () end
+date_proto.setSeconds = function () end
+date_proto.setTime = function () end
+date_proto.setUTCDate = function () end
+date_proto.setUTCFullYear = function () end
+date_proto.setUTCHours = function () end
+date_proto.setUTCMinutes = function () end
+date_proto.setUTCMonth = function () end
+date_proto.setUTCSeconds = function () end
+date_proto.setYear = function () end
 
-global.Date.prototype.setUTCMilliseconds = function (this, sec)
+date_proto.setUTCMilliseconds = function (this, sec)
   getmetatable(this).date = getmetatable(this).date + (sec*1000)
 end
 
-global.Date.prototype.toDateString = function () return ''; end
-global.Date.prototype.toGMTString = function () return ''; end
-global.Date.prototype.toLocaleDateString = function () return ''; end
-global.Date.prototype.toLocaleString = function () return ''; end
-global.Date.prototype.toLocaleTimeString = function () return ''; end
-global.Date.prototype.toTimeString = function () return ''; end
-global.Date.prototype.toUTCString = function () return ''; end
+date_proto.toDateString = function () return ''; end
+date_proto.toGMTString = function () return ''; end
+date_proto.toLocaleDateString = function () return ''; end
+date_proto.toLocaleString = function () return ''; end
+date_proto.toLocaleTimeString = function () return ''; end
+date_proto.toTimeString = function () return ''; end
+date_proto.toUTCString = function () return ''; end
 
 global.Date.now = function ()
-  return tonumber(tm.timestamp()/1e3) or 0
+  return math.floor(tonumber(tm.timestamp()/1e3)) or 0
 end
 
-global.Date.parse = function ()
-  return tonumber(tm.timestamp()/1e3) or 0
+global.Date.parse = function (this, date)
+  return math.floor((tm.approxidate_milli(tostring(date)) or 0))
 end
 
 global.Date.UTC = function ()
@@ -1206,8 +1397,9 @@ if type(hs) == 'table' then
 
   _G._HSMATCH = hsmatch
 
-  global.RegExp = function (this, patt, flags)
-    -- hsrude requires special flags handling
+  global.RegExp = function (this, source, flags)
+    -- hsregex requires special flags handling
+    local patt = source
     if flags and string.find(flags, "i") then
       patt = '(?i)' .. patt
     end
@@ -1221,7 +1413,13 @@ if type(hs) == 'table' then
       error(js_new(global.Error, 'Too many capturing subgroups (max ' .. hsmatchc .. ', compiled ' .. hs.regex_nsub(cre) .. ')'))
     end
 
-    local o = {pattern=patt, flags=flags}
+    local o = {source=source}
+    o.global = (flags and string.find(flags, "g") and true)
+    o.ignoreCase = (flags and string.find(flags, "i") and true)
+    o.multiline = (flags and string.find(flags, "m") and true)
+    o.unicode = (flags and string.find(flags, "u") and true)
+    o.sticky = (flags and string.find(flags, "y") and true)
+
     setmetatable(o, {
       __index=global.RegExp.prototype,
       __tostring=js_tostring,
@@ -1238,7 +1436,7 @@ if type(hs) == 'table' then
 
   str_regex_split = function (this, input)
     if not js_instanceof(input, global.RegExp) then
-      error(js_new(global.Error, 'Cannot call String::split on non-regex'))
+      error(js_new(global.Error, 'Cannot call String.prototype.split on non-regex'))
     end
     local arr, len = hs.regex_split(this, input)
     return js_arr(arr, len)
@@ -1246,7 +1444,7 @@ if type(hs) == 'table' then
 
   str_regex_replace = function (this, regex, out)
     if not js_instanceof(regex, global.RegExp) then
-      error(js_new(global.Error, 'Cannot call String::replace on non-regex'))
+      error(js_new(global.Error, 'Cannot call String.prototype.replace on non-regex'))
     end
     return hs.regex_replace(this, regex, out)
   end
@@ -1256,10 +1454,10 @@ if type(hs) == 'table' then
     local cre = getmetatable(regex).cre
     local crestr = getmetatable(regex).crestr
     if type(cre) ~= 'userdata' then
-      error(js_new(global.TypeError, 'Cannot call RegExp::match on non-regex'))
+      error(js_new(global.TypeError, 'Cannot call RegExp.prototype.match on non-regex'))
     end
 
-    if string.find(regex.flags or '', "g") then
+    if rawget(regex, 'global') then
       local data = tostring(this)
       local ret, count, idx = {}, 0, 1
       while true do
@@ -1288,8 +1486,11 @@ if type(hs) == 'table' then
     local ret, pos = {}, 0
     for i=0,hs.regex_nsub(cre) do
       local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
-      -- print('match', i, '=> start:', so, ', end:', eo)
-      table.insert(ret, pos, string.sub(data, so + 1, eo))
+      if so == -1 or eo == -1 then
+        table.insert(ret, pos, nil)
+      else
+        table.insert(ret, pos, string.sub(data, so + 1, eo))
+      end
       pos = pos + 1
     end
     return js_arr(ret, pos)
@@ -1300,7 +1501,7 @@ if type(hs) == 'table' then
     local cre = getmetatable(regex).cre
     local crestr = getmetatable(regex).crestr
     if type(cre) ~= 'userdata' then
-      error(js_new(global.TypeError, 'Cannot call RegExp::match on non-regex'))
+      error(js_new(global.TypeError, 'Cannot call RegExp.prototype.match on non-regex'))
     end
 
     local data = tostring(subj)
@@ -1311,7 +1512,11 @@ if type(hs) == 'table' then
     local ret, len = {}, 0
     for i=0,hs.regex_nsub(cre) do
       local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
-      ret[len] = string.sub(data, so + 1, eo)
+      if so == -1 or eo == -1 then
+        table.insert(ret, len, nil)
+      else
+        table.insert(ret, len, string.sub(data, so + 1, eo))
+      end
       len = len + 1
     end
     return js_arr(ret, len)
@@ -1320,12 +1525,28 @@ if type(hs) == 'table' then
   global.RegExp.prototype.test = function (this, subj)
     local cre = getmetatable(this).cre
     if type(cre) ~= 'userdata' then
-      error(js_new(global.TypeError, 'Cannot call RegExp::match on non-regex'))
+      error(js_new(global.TypeError, 'Cannot call RegExp.prototype.match on non-regex'))
     end
 
     -- TODO optimize by capturing no subgroups?
     local rc = hs.re_exec(cre, tostring(subj), nil, hsmatchc, hsmatch, 0)
     return rc == 0
+  end
+
+  -- https://people.mozilla.org/~jorendorff/es6-draft.html#sec-regexp.prototype.tostring
+  global.RegExp.prototype.toString = function (this)
+    if type(this) ~= 'table' or not getmetatable(this).cre then
+      error(js_new(global.TypeError, 'Cannot call Regex.prototype.toString on non-regex'))
+    end
+
+    local flags = ''
+    if rawget(this, 'global') then flags = flags .. 'g' end
+    if rawget(this, 'ignoreCase') then flags = flags .. 'i' end
+    if rawget(this, 'multiline') then flags = flags .. 'm' end
+    if rawget(this, 'unicode') then flags = flags .. 'u' end
+    if rawget(this, 'sticky') then flags = flags .. 'y' end
+
+    return '/' .. tostring(this.source) .. '/' .. flags
   end
 end
 
@@ -1373,63 +1594,6 @@ end
 
 global.encodeURIComponent = encodeURIComponent
 global.decodeURIComponent = decodeURIComponent
-
-
---[[
---|| Fake Event Loop
---]]
-
-local _eventQueue = {}
-
-colony.runEventLoop = function ()
-  while #_eventQueue > 0 do
-    local queue = _eventQueue
-    _eventQueue = {}
-    for i=1,#queue do
-      local val = queue[i]()
-      if val ~= 0 then
-        table.insert(_eventQueue, queue[i])
-      end
-    end
-  end
-end
-
-
---[[
---|| Fake Timers
---]]
-
-global.setTimeout = function (this, fn, timeout)
-  local start = os.clock()
-  table.insert(_eventQueue, function ()
-    local now = os.clock()
-    if now - start < (timeout/1000) then
-      return 1
-    end
-    fn()
-    return 0
-  end)
-end
-
-global.setInterval = function (this, fn, timeout)
-  local start = os.clock()
-  table.insert(_eventQueue, function ()
-    local now = os.clock()
-    if now - start < (timeout/1000) then
-      return 1
-    end
-    fn()
-    start = os.clock() -- fixed time delay *between* calls
-    return 1
-  end)
-end
-
-global.setImmediate = function (this, fn, timeout)
-  table.insert(_eventQueue, function ()
-    fn()
-    return 0
-  end)
-end
 
 
 --[[
