@@ -137,13 +137,13 @@ function inspect(obj, opts) {
   
   var typeName = objectToString(obj).slice('[object '.length, -1);
   if (typeof obj === 'userdata') {       // HACK: avoid https://github.com/tessel/runtime/issues/305
-    typeName = 'Lua';
+    typeName = 'Userdata';
   } else if (typeName === 'Object') {    // WORKAROUND: https://github.com/tessel/runtime/issues/302
     if (obj instanceof Date) typeName = 'Date';
     //else if (obj instanceof RegExp) typeName = 'RegExp';    // WORKAROUND: https://github.com/tessel/runtime/issues/295
     else typeName = (typeof obj).replace(/^./, function (m) { return m.toUpperCase(); });
   }
-  if (opts._.depth > opts.depth || isNullOrUndefined(obj) || typeName === 'Lua') return shortString(obj, typeName);
+  if (opts._.depth > opts.depth || isNullOrUndefined(obj) || typeName === 'Userdata') return shortString(obj, typeName);
   else if (opts.customInspect && typeof obj.inspect === 'function') return obj.inspect();
   else {
     if (typeName === 'Array') return '[ '+obj.map(recurse).join(', ')+' ]';
