@@ -216,6 +216,7 @@ function OutgoingMessage () {
   this._outbox = new PassThrough();   // buffer w/backpressure
   this._headers = {};
   this._headerNames = {};   // store original case
+  this._trailer = '';
   
   var self = this;
   this.once('finish', function () {
@@ -223,7 +224,7 @@ function OutgoingMessage () {
       self._chunked = false;
       self.flush();
     }
-    if (this._chunked) self._outbox.write('0\r\n\r\n');   // TODO: trailers belong between CRLFs
+    if (this._chunked) self._outbox.write('0\r\n'+this._trailer+'\r\n');
   });
 }
 
@@ -258,6 +259,9 @@ OutgoingMessage.prototype.removeHeader = function (name) {
   delete this._headers[k];
 };
 
+// helper used to avoid response splitting
+function _stripCRLF(str) { return str.replace(/\r\n/g, ''); }
+
 OutgoingMessage.prototype.flush = function () {
   var lines = [];
   lines.push(this._mainline);
@@ -276,13 +280,21 @@ OutgoingMessage.prototype.flush = function () {
   else this.sendDate = !!this.sendDate;   // HACK: don't expose signal above
   //if (1) lines.push('Connection: close');     // HACK: currently, we don't support keep-alive
   lines.push('','');
-  
-  function clean(str) { return str.replace(/\r\n/g, ''); }    // avoid response splitting
-  this._outbox.write(lines.map(clean).join('\r\n'));
+  this._outbox.write(lines.map(_stripCRLF).join('\r\n'));
   this.headersSent = true;
 };
 
-// TODO: OutgoingMessage.prototype.addTrailers
+OutgoingMessage.prototype.addTrailers = function (obj) {
+  var lines = [];
+  Object.keys(obj).forEach(function (k) {
+    var key = k,
+        val = obj[k];
+    if (Array.isArray(val)) val = val.join(', ');
+    lines.push(key+': '+val);
+  });
+  lines.push('');
+  this._trailer = lines.map(_stripCRLF).join('\r\n');
+};
 
 OutgoingMessage.prototype._write = function (chunk, enc, cb) {
   if (!this.headersSent) this.flush();
