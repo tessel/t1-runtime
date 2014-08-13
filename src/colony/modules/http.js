@@ -120,15 +120,14 @@ function IncomingMessage (type, connection) {
       self.url = url;
     }),
     onHeaderField: js_wrap_function(function (field) {
-      // TODO: will http_parser actually emit this for trailers?
-      var arr = (self._complete) ? self.rawTrailers : self.rawHeaders;
+      var arr = (self._headersComplete) ? self.rawTrailers : self.rawHeaders;
       arr.push(field);
     }),
     onHeaderValue: js_wrap_function(function (value) {
-      var arr = (self._complete) ? self.rawTrailers : self.rawHeaders,
+      var arr = (self._headersComplete) ? self.rawTrailers : self.rawHeaders,
           key = arr[arr.length - 1].toLowerCase();
       arr.push(value);
-      var obj = (self._complete) ? self.trailers : self.headers;
+      var obj = (self._headersComplete) ? self.trailers : self.headers;
       IncomingMessage._addHeaderLine(key, value, obj);
     }),
     onHeadersComplete: js_wrap_function(function (info) {
@@ -137,13 +136,13 @@ function IncomingMessage (type, connection) {
       self.httpVersionMajor = info.version_major;
       self.httpVersionMinor = info.version_minor;
       self.httpVersion = [self.httpVersionMajor, self.httpVersionMinor].join('.');
+      self._headersComplete = true;
       self.emit('_headersComplete');
     }),
     onBody: js_wrap_function(function (body) {
       self.push(body);
     }),
     onMessageComplete: js_wrap_function(function () {
-      self._complete = true;
       self.push(null);
     }),
     onError: js_wrap_function(function (err) {
