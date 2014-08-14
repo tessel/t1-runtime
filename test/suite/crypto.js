@@ -86,4 +86,11 @@ console.log(hash == hash_output ? 'ok' : 'not ok', 'hmac key > 64 bytes');
   hash.end();
 })();
 
+// Make sure ending w/o callback works
+(function () {
+  sha1 = crypto.createHash("sha1")
+  sha1.end(this.key+"258EAFA5-E914-47DA-95CA-C5AB0DC85B11")
+})();
+
+
 console.log('ok');
