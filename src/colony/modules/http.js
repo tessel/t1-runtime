@@ -144,20 +144,19 @@ function IncomingMessage (type, connection) {
     }),
     onMessageComplete: js_wrap_function(function () {
       self.push(null);
-    }),
-    onError: js_wrap_function(function (e) {
-      // NOTE: becomes ClientRequest 'error' or Server 'clientError'
-      self.emit('_error', e);
     })
   });
   this.connection.on('error', function (e) {
     self.emit('_error', e);
   });
   this.connection.on('data', function (data) {
-    parser.execute(data.toString('binary'), 0, data.length);
+    var msg = parser.execute(data.toString('binary'), 0, data.length);
+    if (msg) self.emit('_error', new Error(msg));   // NOTE: '_error' becomes ClientRequest 'error' or Server 'clientError'
   });
   this.connection.on('end', function () {
-    self.push(null);
+    var msg = parser.finish();
+    if (msg) self.emit('_error', new Error(msg));
+    else self.push(null);
   });
 }
 
