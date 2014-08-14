@@ -117,7 +117,9 @@ Hash.prototype.update = function (buf) {
 
 Hash.prototype._write = function (chunk, encoding, callback) {
 	this.update(chunk);
-	callback();
+	if (callback) {
+		callback();
+	}
 }
 
 Hash.prototype._read = function (size) {

@@ -466,8 +466,8 @@ TCPServer.prototype.listen = function (port, host, backlog, cb) {
   }
   
   if (typeof backlog === 'function') {
-    backlog = 511;
     cb = backlog;
+    backlog = 511;
   }
   
   this.localPort = TCPSocket._requestPort(port);
