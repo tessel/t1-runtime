@@ -95,15 +95,16 @@ var STATUS_CODES = {
  * IncomingMessage
  */
  
-function IncomingMessage (type, connection) {
+function IncomingMessage (type, socket) {
   Readable.call(this);
 
   this.headers = {};
   this.trailers = {};
   this.rawHeaders = [];
   this.rawTrailers = [];
-  this.socket = this.connection = connection;
-  this.setTimeout = this.socket.setTimeout.bind(this.socket);
+  this.socket = this.connection = socket;
+  // TODO: finish timeout forwarding/handling/cleanup! (and implement other occurences)
+  this.setTimeout = socket.setTimeout.bind(socket);
 
   function js_wrap_function (fn) {
     return function () {
@@ -137,29 +138,45 @@ function IncomingMessage (type, connection) {
       self.httpVersionMinor = info.version_minor;
       self.httpVersion = [self.httpVersionMajor, self.httpVersionMinor].join('.');
       self._headersComplete = true;
-      self.emit('_headersComplete');
+      self._upgrade = info.upgrade;
+      if (!self._upgrade) self.emit('_headersComplete');
+      else self._unplug();
     }),
     onBody: js_wrap_function(function (body) {
       self.push(body);
     }),
     onMessageComplete: js_wrap_function(function () {
       self.push(null);
+      self._unplug();
     })
   });
-  this.connection.on('error', function (e) {
+  function _emitError(e) {
+    // NOTE: '_error' becomes ClientRequest 'error' or Server 'clientError'
+    if (!e) e = new Error(parser.getErrorString());
     self.emit('_error', e);
-  });
-  this.connection.on('data', function (data) {
-    var msg = parser.execute(data.toString('binary'), 0, data.length);
-    if (msg) self.emit('_error', new Error(msg));   // NOTE: '_error' becomes ClientRequest 'error' or Server 'clientError'
-  });
-  this.connection.on('end', function () {
-    var msg = parser.finish();
-    if (msg) self.emit('_error', new Error(msg));
+  }
+  function _handleData(d) {
+    var nparsed = parser.execute(d.toString('binary'), 0, d.length);
+    if (self._upgrade) self.emit('_upgrade', d.slice(nparsed));
+    else if (nparsed !== d.length) _emitError();
+  }
+  function _handleEnd() {
+    if (parser.finish() !== 0) _emitError();
     else self.push(null);
-  });
+  }
+  socket.on('error', _emitError);
+  socket.on('data', _handleData);
+  socket.on('finish', _handleEnd);
+  
+  // couple methods that are cleaner sharing closure
   this._restartParser = function () {
     parser.reinitialize(type);
+  };
+  this._unplug = function () {
+    self.socket = self.connection = null;
+    socket.removeListener('error', _emitError);
+    socket.removeListener('data', _handleData);
+    socket.removeListener('finish', _handleEnd);
   };
 }
 
@@ -488,6 +505,11 @@ Server._commonSetup = function () {       // also used by 'https'
         res = new ServerResponse(socket);
     req.once('_error', function (e) {
       self.emit('clientError', e, socket);
+    });
+    req.once('_upgrade', function (head) {
+      var event = (req.method === 'CONNECT') ? 'connect' : 'upgrade',
+          handled = self.emit(event, req, socket, head);
+      if (!handled) socket.destroy();
     });
     req.once('_headersComplete', function () {
       if (/100-continue/i.test(req.headers['expect'])) {

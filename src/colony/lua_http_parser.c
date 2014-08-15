@@ -285,26 +285,18 @@ static int lhttp_parser_execute (lua_State *L) {
   luaL_argcheck(L, offset + length <= chunk_len, 4,  "Length extends beyond end of chunk");
 
   nparsed = http_parser_execute(parser, &lhttp_parser_settings, chunk + offset, length);
-  
-  if (nparsed != length) {
-    lua_pushstring(L, http_errno_description(HTTP_PARSER_ERRNO(parser)));
-    return 1;
-  }
-  
-  return 0;
+  lua_pushnumber(L, nparsed);
+  return 1;
 }
 
 static int lhttp_parser_finish (lua_State *L) {
   http_parser* parser = (http_parser *)luaL_checkudata(L, 1, "lhttp_parser");
+  size_t nparsed;
+  
+  nparsed = http_parser_execute(parser, &lhttp_parser_settings, NULL, 0);
+  lua_pushnumber(L, nparsed);
+  return 1;
 
-  int rv = http_parser_execute(parser, &lhttp_parser_settings, NULL, 0);
-
-  if (rv != 0) {
-    lua_pushstring(L, http_errno_description(HTTP_PARSER_ERRNO(parser)));
-    return 1;
-  }
-
-  return 0;
 }
 
 static int lhttp_parser_reinitialize (lua_State *L) {
@@ -322,6 +314,13 @@ static int lhttp_parser_reinitialize (lua_State *L) {
 
   return 0;
 }
+
+static int lhttp_parser_getErrorString (lua_State *L) {
+  http_parser* parser = (http_parser *)luaL_checkudata(L, 1, "lhttp_parser");
+  lua_pushstring(L, http_errno_description(HTTP_PARSER_ERRNO(parser)));
+  return 1;
+}
+
 
 static int lhttp_parser_parse_url (lua_State *L) {
   size_t len;
@@ -369,6 +368,7 @@ static const luaL_reg lhttp_parser_m[] = {
   {"execute", lhttp_parser_execute},
   {"finish", lhttp_parser_finish},
   {"reinitialize", lhttp_parser_reinitialize},
+  {"getErrorString", lhttp_parser_getErrorString},
   {NULL, NULL}
 };
 
