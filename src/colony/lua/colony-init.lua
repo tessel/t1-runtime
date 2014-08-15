@@ -445,8 +445,9 @@ end
 
 function js_pairs (arg)
   if type(arg) == 'function' then
-    return pairs({})
-  elseif type(arg) == 'string' then
+    arg = js_func_proxy(arg)
+  end
+  if type(arg) == 'string' then
     -- todo what
     return js_next, {}
   else
