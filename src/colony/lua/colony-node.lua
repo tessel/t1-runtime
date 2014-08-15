@@ -13,7 +13,6 @@
 
 local bit = require('bit32')
 local tm = require('tm')
-local http_parser = require('http_parser')
 
 -- locals
 
