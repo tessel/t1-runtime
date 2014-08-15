@@ -158,6 +158,9 @@ function IncomingMessage (type, connection) {
     if (msg) self.emit('_error', new Error(msg));
     else self.push(null);
   });
+  this._restartParser = function () {
+    parser.reinitialize(type);
+  };
 }
 
 util.inherits(IncomingMessage, Readable);
@@ -408,9 +411,14 @@ function ClientRequest (opts) {
     response.once('_error', function (e) {
       self.emit('error', e);
     });
-    response.once('_headersComplete', function () {
-        var handled = self.emit('response', response);
-        if (!handled) response.resume();    // dump it
+    response.on('_headersComplete', function () {
+      if (response.statusCode === 100) {
+        response._restartParser();
+        self.emit('continue');
+        return;
+      }
+      var handled = self.emit('response', response);
+      if (!handled) response.resume();    // dump it
     });
     response.once('end', function () {
       self._agent.release();
