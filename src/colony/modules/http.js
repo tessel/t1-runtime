@@ -442,6 +442,10 @@ function ServerResponse(socket) {
 
 util.inherits(ServerResponse, OutgoingMessage);
 
+ServerResponse.prototype.writeContinue = function () {
+  this._outbox.write("HTTP/1.1 100 Continue\r\n\r\n");
+};
+
 ServerResponse.prototype.writeHead = function (code, reason, headers) {
   if (typeof reason !== 'string') {
     headers = reason;
@@ -478,6 +482,11 @@ Server._commonSetup = function () {       // also used by 'https'
       self.emit('clientError', e, socket);
     });
     req.once('_headersComplete', function () {
+      if (/100-continue/i.test(req.headers['expect'])) {
+        var handled = self.emit('checkContinue', req, res);
+        if (handled) return;
+        else res.writeContinue();
+      }
       self.emit('request', req, res);
     });
     res.once('finish', function () {
