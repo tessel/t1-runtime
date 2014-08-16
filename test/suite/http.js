@@ -12,7 +12,7 @@ test('client-basic', function (t) {
     t.ok(res.headers, "has headers");
     t.equal(res.statusCode, 200, "got expected status");
     
-    res.setEncoding('utf8');
+    //res.setEncoding('utf8');
     res.on('data', function (chunk) {
       // WORKAROUND: https://github.com/tessel/runtime/issues/363
       if (typeof chunk !== 'string') chunk = chunk.toString();
