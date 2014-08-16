@@ -138,7 +138,7 @@ function IncomingMessage (type, socket) {
       self.httpVersionMinor = info.version_minor;
       self.httpVersion = [self.httpVersionMajor, self.httpVersionMinor].join('.');
       self._headersComplete = true;
-      self._upgrade = info.upgrade;
+      self._upgrade = info.upgrade || self._upgrade;
       if (!self._upgrade) self.emit('_headersComplete');
       else self._unplug();
     }),
@@ -415,6 +415,7 @@ function ClientRequest (opts) {
   if ('hostname' in opts) opts.host = opts.hostname;
   if (opts.agent === false) opts.agent = this._getAgent('single');
   else if (!opts.agent) opts.agent = this._getAgent('global');
+  opts.method = opts.method.toUpperCase();
   
   OutgoingMessage.call(this);
   this._agent = opts.agent._enqueueRequest(this, opts);
@@ -427,6 +428,12 @@ function ClientRequest (opts) {
     var response = new IncomingMessage('response', socket);
     response.once('_error', function (e) {
       self.emit('error', e);
+    });
+    if (opts.method === 'CONNECT') response._upgrade = true;      // parser can't detect (2xx vs. 101)
+    response.once('_upgrade', function (head) {
+      var event = (opts.method === 'CONNECT') ? 'connect' : 'upgrade',
+          handled = self.emit(event, response, socket, head);
+      if (!handled) socket.destroy();
     });
     response.on('_headersComplete', function () {
       if (response.statusCode === 100) {
