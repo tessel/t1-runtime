@@ -94,7 +94,9 @@ global._bit = bit
 
 -- global globals
 
-global.this, global.global = global, global
+global.this = global
+global.global = global
+global._global = global
 
 --[[
 Standard Library
