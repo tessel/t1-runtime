@@ -1,6 +1,9 @@
-console.log('1..1');
+var tap = require('../tap');
+
+tap.count(1);
+
 var b = new Date()
 var a = +b
-console.log(a == b.valueOf() ? 'ok' : 'not ok', 1);
+tap.eq(a, b.valueOf());
 console.log('#', a)
 console.log('#', b.valueOf())

@@ -1,6 +1,9 @@
-console.log('1..2');
+var tap = require('../tap')
+
+tap.count(2)
+
 var a = [];
-console.log(a.length == 0 ? 'ok' : 'not ok');
+tap.eq(a.length, 0);
 a.sort(function(a, b) {return a.foo - b.foo});
 console.log('#', a);
-console.log(a.length == 0 ? 'ok' : 'not ok');
+tap.eq(a.length, 0);

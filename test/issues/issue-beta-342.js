@@ -1,35 +1,37 @@
-console.log('1..6');
+var tap = require('../tap');
+
+tap.count(6);
 
 var arg = "Hello Friends";
 var ret = Buffer.concat( [ arg ] );
-console.log(arg === ret ? 'ok' : 'not ok');
+tap.eq(arg, ret);
 
 try { 
 	Buffer.concat( [ arg, arg ] );
-	console.log('not ok');
+	tap.ok(false);
 } catch (e) {
-	console.log('ok');
+	tap.ok(e);
 }
 
 var a = new Buffer(16);
 var b = new Buffer(16);
 a.copy(b, 256, 0, 0);
-console.log('ok');
+tap.ok(true);
 
 var rando = new Buffer(16);
 Buffer.concat([rando, rando], 32);
 Buffer.concat([rando, rando], 31);
 Buffer.concat([rando, rando], 128);
-console.log('ok')
+tap.ok(true);
 try {
 	Buffer.concat([rando, rando], 8)
-	console.log('not ok');
+	tap.ok(false);
 } catch (e) {
-	console.log('ok');
+	tap.ok(e);
 }
 
 try {
 	Buffer.concat()
 } catch (e) {
-	console.log('ok -', String(e));
+	tap.ok(e);
 }

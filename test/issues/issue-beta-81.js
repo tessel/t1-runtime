@@ -1,14 +1,12 @@
-/* test rig */ var t = 1, tmax = 2
-function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + ' -', d); }
-console.log(t + '..' + tmax);
-ok(process.versions.colony, 'running in colony')
+var tap = require('../tap');
 
+tap.count(2);
 
 var actions = ["a", "b", "c", "d", "e", "f", "g"];
 var _n = 1;
-ok(actions[_n] == 'b', 'underscores in member properties not undefined');
+tap.ok(actions[_n] == 'b', 'underscores in member properties not undefined');
 var _j = {_k: 5}
-ok(actions[_j._k] == 'f', 'underscores in member properties in member properties not undefined');
+tap.ok(actions[_j._k] == 'f', 'underscores in member properties in member properties not undefined');
 
 // var actions = ["a", "b", "c", "d", "e", "f", "g"];
 // for (_n in actions) {

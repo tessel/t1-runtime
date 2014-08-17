@@ -1,12 +1,14 @@
 // Strings should not automatically be coerced to numbers in arithmetic
 // but tonumber() should continue to coerce strings
 
-console.log('1..2')
+var tap = require('../tap');
+
+tap.count(2);
 
 var elem = "2";
-console.log(("0" + elem) == '02' ? 'ok' : 'not ok', 1)
+tap.eq("0" + elem, '02');
 console.log('#', '0' + elem)
 
 var n = Number("55");
-console.log(n == 55 ? 'ok' : 'not ok', 2);
+tap.eq(n, 55);
 console.log('#', n);
