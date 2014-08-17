@@ -171,6 +171,11 @@ int tm_tcp_listen (tm_socket_t sock, uint16_t port)
   localSocketAddr.sin_port = htons(port);
   localSocketAddr.sin_addr.s_addr = 0;
 
+  // Allow port to be re-bound even in TIME_WAIT state.
+  // http://stackoverflow.com/questions/3229860/what-is-the-meaning-of-so-reuseaddr-setsockopt-option-linux
+  int optval = 1;
+  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
+
   // Bind socket
   // TM_COMMAND('w', "Binding local socket...");
   int sockStatus;
