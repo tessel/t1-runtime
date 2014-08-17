@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap(2);
+tap.count(2);
 
 var a = Date.now();
 var b = new Date(a);
