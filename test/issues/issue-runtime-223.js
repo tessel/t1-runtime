@@ -1,8 +1,5 @@
-/* test rig */ var t = 1, tmax = 3;
-function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + ' -', d); }
-console.log(t + '..' + tmax);
-ok(process.versions.colony, 'running in colony');
-
+/* test rig */ 
+var tap = require('../tap');
 var util = require('util');
 var events = require('events');
 
@@ -12,16 +9,20 @@ util.inherits(Test, events.EventEmitter);
 
 var i = new Test();
 
+tap.count(3);
+
+tap.ok(process.versions.colony, 'running in colony');
+
 try {
    i.once('event', undefined);
-   ok(false);
+   tap.ok(false, 'once');
 } catch(e) {
-   ok(true)
+   tap.ok(true, 'once');
 }
 
 try {
    i.on('event', undefined);
-   ok(false);
+   tap.ok(false, 'on');
 } catch(e) {
-   ok(true);
+   tap.ok(true, 'on');
 }
