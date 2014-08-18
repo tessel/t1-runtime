@@ -1,13 +1,15 @@
-console.log('1..4')
+var tap = require('../tap');
+
+tap.count(4);
 
 var test = /^(?::(\d*))?/
 var a = ('WRONG'.match(test))
 
-console.log(a[0] == "" ? 'ok' : 'not ok');
-console.log(a[1] == undefined ? 'ok' : 'not ok');
+tap.eq(a[0], "");
+tap.eq(a[1], undefined);
 
 var test = /^(?::(\d*))?/
 var a = (':5'.match(test))
 
-console.log(a[0] == ":5" ? 'ok' : 'not ok');
-console.log(a[1] == "5" ? 'ok' : 'not ok');
+tap.eq(a[0], ":5")
+tap.eq(a[1], "5");

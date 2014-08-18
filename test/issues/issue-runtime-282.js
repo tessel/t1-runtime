@@ -1,3 +1,7 @@
+var tap = require('../tap')
+
+tap.count(1)
+
 var a = [1];
 var s = new Array(1);
 var o = {};
@@ -104,7 +108,4 @@ var count = 0;
 });
 result += count;
 
-console.log('1..1');
-console.log( result === 8 ? 'ok' : 'not ok' );
-
-
+tap.eq(result, 8);

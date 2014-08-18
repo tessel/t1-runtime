@@ -1,4 +1,8 @@
+var tap = require('../tap')
+
+tap.count(1)
+
 var str = "x".replace(/x/, function () {
   return true;
 });
-console.log(JSON.stringify(str));
+tap.eq(str, 'true');

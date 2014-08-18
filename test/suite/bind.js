@@ -1,7 +1,6 @@
-/* test rig */ var t = 1, tmax = 2
-function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + ' -', d); }
-console.log(t + '..' + tmax);
-ok(process.versions.colony, 'running in colony')
+var tap = require('../tap');
+
+tap.count(4);
 
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
@@ -17,11 +16,11 @@ function Test() {
 
 var i = 1;
 Test.prototype.parseIncoming = function(data, _, _, _, _, c) {
-    ok(data == i, 'test ' + i + ' bound arguments correctly');
+    tap.ok(data == i, 'test ' + i + ' bound arguments correctly');
     console.log('#', arguments)
     i++
     if (i == 4) {
-    	ok(c != null, 'last numerical value included');
+    	tap.ok(c != null, 'last numerical value included');
     }
 }
 

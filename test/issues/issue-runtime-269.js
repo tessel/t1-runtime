@@ -1,3 +1,7 @@
+var tap = require('../tap')
+
+tap.count(1)
+
 var o = { foo: 1 };
 var descriptor = Object.getOwnPropertyDescriptor(o, 'foo');
 var fields = [ 'writable', 'enumerable', 'configurable' ];
@@ -8,4 +12,4 @@ for (var i = 0; i < fields.length; i++) {
     break;
   }
 }
-console.log(result ? 'ok' : 'not ok');
+tap.ok(result);

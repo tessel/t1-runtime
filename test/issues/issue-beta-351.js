@@ -1,5 +1,7 @@
-console.log('1..1');
+var tap = require('../tap');
+
+tap.count(1);
 
 var a = [];
 a.push('foo');
-console.log(a.pop() == 'foo' ? 'ok' : 'not ok');
+tap.eq(a.pop(), 'foo');

@@ -1,8 +1,11 @@
-console.log('1..7');
-console.log(Number.isFinite('5') == false ? 'ok' : 'not ok');
-console.log(Number.isFinite(NaN) == false ? 'ok' : 'not ok');
-console.log(Number.isFinite(Infinity) == false ? 'ok' : 'not ok');
-console.log(Number.isFinite(-Infinity) == false ? 'ok' : 'not ok');
-console.log(Number.isFinite(1.7976931348623157E+10308) == false ? 'ok' : 'not ok');
-console.log(Number.isFinite(1.7976931348623157E+10308 - 1) == true ? 'ok' : 'not ok');
-console.log(Number.isFinite(5) == true ? 'ok' : 'not ok');
+var tap = require('../tap')
+
+tap.count(7)
+
+tap.eq(Number.isFinite('5'), false);
+tap.eq(Number.isFinite(NaN), false);
+tap.eq(Number.isFinite(Infinity), false);
+tap.eq(Number.isFinite(-Infinity), false);
+tap.eq(Number.isFinite(1.7976931348623157E+10308), false);
+tap.eq(Number.isFinite(1.7976931348623157E+10308 - 1), true);
+tap.eq(Number.isFinite(5), true);

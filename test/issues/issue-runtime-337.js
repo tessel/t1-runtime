@@ -1,4 +1,6 @@
-console.log('1..1');
+var tap = require('../tap');
+
+tap.count(1);
 
 var a = {
   test : function() { console.log('test');}
@@ -10,7 +12,7 @@ B.test = a.test;
 
 for (var prop in B) {
   if (prop == 'test') {
-  	console.log('ok');
+  	tap.ok(true, 'only function object prop should be "test"')
   } else {
   	throw new Error('Unexpected key.');
   }
