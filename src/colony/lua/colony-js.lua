@@ -314,6 +314,10 @@ obj_proto.hasOwnProperty = function (ths, p)
     return false
   end
 
+  if type(ths) == 'boolean' then
+    return false
+  end
+
   if type(ths) == 'function' then
     ths = js_func_proxy(ths)
   end
