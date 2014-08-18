@@ -742,6 +742,11 @@ global.process.unref = function ()
   end
 end
 
+global.process.umask = function(ths, value)
+  -- Return standard octal 0022
+  return 18;
+end
+
 
 --[[
 --|| global variables
