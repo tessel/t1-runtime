@@ -1,4 +1,3 @@
-/* test rig */ 
 var tap = require('../tap');
 var util = require('util');
 var events = require('events');
