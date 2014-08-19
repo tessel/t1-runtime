@@ -513,8 +513,14 @@ Server._commonSetup = function () {       // also used by 'https'
     socket.on('close', _emitClose);
     res.once('finish', function () {
       socket.removeListener('close', _emitClose);
-      if (res._keepAlive) res.emit('_doneWithSocket');
-      else socket.end();
+      if (res._keepAlive) {
+        var handled = res.emit('_doneWithSocket');
+        if (!handled) {
+          // responded without consuming request
+          req.resume();     // make sure it ends
+          res = null;       // [see 'end' logic]
+        }
+      } else socket.end();
     });
     if (prevRes) prevRes.once('_doneWithSocket', function () {
       res._assignSocket(socket);
@@ -543,7 +549,7 @@ Server._commonSetup = function () {       // also used by 'https'
       self.emit('request', req, res);
     });
     req.once('end', function () {
-      if (res._keepAlive) handleNextRequest(socket, res);
+      if (!res || res._keepAlive) handleNextRequest(socket, res);
     });
   }
   this.on('connection', function (socket) {
