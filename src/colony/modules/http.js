@@ -543,6 +543,9 @@ Server._commonSetup = function () {       // also used by 'https'
       if (/close/i.test(req.headers['connection'])) {
         res._keepAlive = false;
       }
+      if (req.httpVersionMajor < 1 || (req.httpVersionMajor === 1 && req.httpVersionMinor < 1)) {
+        res._keepAlive = false;
+      }
       //if (/\b100-continue\b/i.test(req.headers['expect'])) {
       if (/100-continue/i.test(req.headers['expect'])) {
         var handled = self.emit('checkContinue', req, res);
