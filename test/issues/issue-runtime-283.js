@@ -1,3 +1,7 @@
+var tap = require('../tap')
+
+tap.count(3)
+
 var a = [1];
 var o = {};
 var g = global || this;
@@ -119,10 +123,9 @@ a.filter(function(value, index, object) {
   }
 });
 
-console.log('1..3');
 // This will pass when forEach thisArg is implemented
 // and default this is corrected. The value of `result`
 // is currently 18.
-console.log(result === 20 ? 'ok' : 'not ok');
-console.log(mapped[0] === 1 ? 'ok' : 'not ok');
-console.log(filtered[0] === 1 ? 'ok' : 'not ok');
+tap.eq(result, 20);
+tap.eq(mapped[0], 1);
+tap.eq(filtered[0], 1);

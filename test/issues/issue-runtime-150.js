@@ -1,5 +1,7 @@
-console.log('1..3')
+var tap = require('../tap')
+
+tap.count(3)
 console.log('#', JSON.stringify("/".slice(0, -1)))
-console.log("/".slice(0, -1) == '' ? 'ok' : 'not ok')
-console.log("12345".slice(0, -3) == '12' ? 'ok' : 'not ok')
-console.log("12345".slice(0, -100) == '' ? 'ok' : 'not ok')
+tap.eq("/".slice(0, -1), '');
+tap.eq("12345".slice(0, -3), '12');
+tap.eq("12345".slice(0, -100), '');

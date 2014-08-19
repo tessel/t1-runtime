@@ -165,9 +165,7 @@
       "sources": [
         'src/tm_event.c',
         'src/tm_timer.c',
-        'src/colony/lua_cares.c',
         'src/colony/lua_hsregex.c',
-        'src/colony/lua_http_parser.c',
         'src/colony/lua_tm.c',
         'src/colony/lua_yajl.c',
         'src/colony/colony.c',
@@ -176,6 +174,27 @@
         '<(SHARED_INTERMEDIATE_DIR)/dir_builtin.c',
         '<(SHARED_INTERMEDIATE_DIR)/dir_runtime_lib.c',
       ],
+      "include_dirs": [
+        'src/',
+        'src/colony/',
+        "<(colony_lua_path)/src",
+      ],
+      "dependencies": [
+        'dir_builtin',
+        'dir_runtime_lib',
+        'colony-lua',
+        'libtm.gyp:hsregex',
+        'libtm.gyp:fortuna',
+        'libtm.gyp:dlmalloc',
+        'libtm.gyp:yajl',
+        'libtm.gyp:libtm',
+        'libtm.gyp:approxidate'
+      ],
+      "direct_dependent_settings": {
+        "include_dirs": [
+          'src/colony/'
+        ]
+      },
       'conditions': [
         ['OS!="arm"', {
           "sources": [
@@ -189,30 +208,17 @@
             "libtm.gyp:tm-ssl",
           ],
         }],
+        ['enable_net==1', {
+          'sources': [
+            'src/colony/lua_cares.c',
+            'src/colony/lua_http_parser.c',
+          ],
+          'dependencies': [
+            'libtm.gyp:c-ares',
+            'libtm.gyp:http_parser',
+          ],
+        }],
       ],
-      "include_dirs": [
-        'src/',
-        'src/colony/',
-        "<(colony_lua_path)/src",
-      ],
-      "dependencies": [
-        'dir_builtin',
-        'dir_runtime_lib',
-        'colony-lua',
-        'libtm.gyp:c-ares',
-        'libtm.gyp:http_parser',
-        'libtm.gyp:hsregex',
-        'libtm.gyp:fortuna',
-        'libtm.gyp:dlmalloc',
-        'libtm.gyp:yajl',
-        'libtm.gyp:libtm',
-        'libtm.gyp:approxidate'
-      ],
-      "direct_dependent_settings": {
-        "include_dirs": [
-          'src/colony/'
-        ]
-      }
     }
   ]
 }

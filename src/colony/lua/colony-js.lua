@@ -94,7 +94,9 @@ global._bit = bit
 
 -- global globals
 
-global.this, global.global = global, global
+global.this = global
+global.global = global
+global._global = global
 
 --[[
 Standard Library
@@ -308,6 +310,14 @@ end
 obj_proto.hasOwnProperty = function (ths, p)
   if type(ths) == 'string' then
     return p == 'length'
+  end
+
+  if type(ths) == 'number' then
+    return false
+  end
+
+  if type(ths) == 'boolean' then
+    return false
   end
 
   if type(ths) == 'function' then

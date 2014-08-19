@@ -1,11 +1,13 @@
-console.log('1..2');
+var tap = require('../tap');
+
+tap.count(2);
 
 var a = function () {
 	var fake = Array.prototype.slice(arguments);
-	console.log(fake && fake.length == 0 ? 'ok' : 'not ok');
+	tap.eq(fake && fake.length, 0, '.slice with improper arguments does nothing.');
 
     var args = Array.prototype.slice.apply(arguments);
-    console.log(args && args.length == 3 ? 'ok' : 'not ok');
+    tap.eq(args && args.length, 3, '.slice with arguments as call object returns proper array.');
 }
 
 a(1, 2, 3);

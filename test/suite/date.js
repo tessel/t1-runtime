@@ -1,13 +1,10 @@
-/* TAP rig */
-function tap (max) { tap.t = 1; console.log(tap.t + '..' + max); };
-function ok (a, d) { console.log((a ? '' : 'not ') + 'ok', tap.t++, '-', d); }
-function eq (a, b, c) { ok(a == b, String(c) + ': ' + String(a) + ' == ' + String(b)); }
+var tap = require('../tap');
 
-tap(16);
+tap.count(16);
 
-eq(typeof Date.now(), 'number');
+tap.eq(typeof Date.now(), 'number');
 console.log('# typeof Date.now', typeof Date.now())
-eq(typeof Date(),'string');
+tap.eq(typeof Date(),'string');
 console.log(typeof (new Date) == 'object');
 
 if (!(Date.now() > 0)) {
@@ -15,33 +12,33 @@ if (!(Date.now() > 0)) {
 }
 
 var d = new Date();
-eq(d.toString(), Date());
+tap.eq(d.toString(), Date());
 console.log('# toString', d.toString())
-ok(d.getDate() >= 1 && d.getDate() <= 31);
+tap.ok(d.getDate() >= 1 && d.getDate() <= 31);
 console.log('# getDate', d.getDate())
-ok(d.getDay() >= 0 && d.getDay() <= 6);
+tap.ok(d.getDay() >= 0 && d.getDay() <= 6);
 console.log('# getDay', d.getDay())
-ok(d.getFullYear() >= 1);
+tap.ok(d.getFullYear() >= 1);
 console.log('# getFullYear', d.getFullYear())
-ok(d.getHours() >= 0 && d.getHours() <= 23);
+tap.ok(d.getHours() >= 0 && d.getHours() <= 23);
 console.log('# getHours', d.getHours())
-ok(d.getMilliseconds() >= 0 && d.getMilliseconds() <= 999);
+tap.ok(d.getMilliseconds() >= 0 && d.getMilliseconds() <= 999);
 console.log('# getMilliseconds', d.getMilliseconds())
-ok(d.getMinutes() >= 0 && d.getMinutes() <= 59);
+tap.ok(d.getMinutes() >= 0 && d.getMinutes() <= 59);
 console.log('# getMinutes', d.getMinutes())
-ok(d.getMonth() >= 0 && d.getMonth() <= 11);
+tap.ok(d.getMonth() >= 0 && d.getMonth() <= 11);
 console.log('# getMonth', d.getMonth())
-ok(d.getSeconds() >= 0 && d.getSeconds() <= 59);
+tap.ok(d.getSeconds() >= 0 && d.getSeconds() <= 59);
 console.log('# getSeconds', d.getSeconds())
-ok(d.getTime() >= 0);
+tap.ok(d.getTime() >= 0);
 console.log('# getTime', d.getTime())
-ok(d.getYear() >= 0 && d.getYear() <= 200);
+tap.ok(d.getYear() >= 0 && d.getYear() <= 200);
 console.log('# getYear', d.getYear())
 
 var d0 = new Date(0);
-eq(d0.toISOString(), '1970-01-01T00:00:00.000Z');
+tap.eq(d0.toISOString(), '1970-01-01T00:00:00.000Z');
 console.log('# toISOString', d0.toISOString());
-eq(d0.toJSON(), '1970-01-01T00:00:00.000Z');
+tap.eq(d0.toJSON(), '1970-01-01T00:00:00.000Z');
 console.log('# toJSON', d0.toJSON());
 
-eq(new Date("10/Mar/2012:05:00:07 +0000").valueOf(), 1331355607000);
+tap.eq(new Date("10/Mar/2012:05:00:07 +0000").valueOf(), 1331355607000);

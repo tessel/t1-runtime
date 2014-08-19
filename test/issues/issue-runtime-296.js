@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap(3)
+tap.count(3)
 
 var d = new Date(42);
 tap.eq(d.valueOf(), 42, 'valueOf');

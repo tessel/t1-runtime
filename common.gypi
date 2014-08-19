@@ -74,6 +74,11 @@
           "ENABLE_TLS",
         ],
       }],
+      ['enable_net==1', {
+        'defines': [
+          "ENABLE_NET",
+        ],
+      }],
     ],
 
     'default_configuration': 'Release',

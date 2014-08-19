@@ -1,4 +1,6 @@
-console.log('1..2');
+var tap = require('../tap');
+
+tap.count(2);
 
 var str = 'DNS:*.github.com, DNS:github.com';
 
@@ -10,6 +12,6 @@ var a = /a(b)|c/g;
 'abc'.replace(a, function (all, sub) {
 	console.log('#', all, sub);
 	if (all == 'c') {
-		console.log(sub == null ? 'ok' : 'not ok')
+		tap.eq(sub, null);
 	}
 })

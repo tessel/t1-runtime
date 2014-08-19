@@ -1,7 +1,10 @@
+var tap = require('../tap');
+
+tap.count(1);
+
 function MyObject(name){
   this.name = name;
 }
 var o = new MyObject("adrian");
 var a = [].concat(o);
-console.log(a);
-console.log('ok')
+tap.eq(String(a), '[object Object]');

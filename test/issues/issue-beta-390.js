@@ -1,6 +1,8 @@
-var test = {};
+var tap = require('../tap');
 
-console.log('1..1');
+tap.count(3);
+
+var test = {};
 
 test['A'] = 0;
 Object.defineProperty(test, 'a', {
@@ -9,6 +11,6 @@ Object.defineProperty(test, 'a', {
 
 test['B'] = 1;
 console.log('# test', test);
-console.log(Object.keys(test).indexOf('B') > -1 ? 'ok' : 'not ok');
-console.log('B' in test ? 'ok' : 'not ok')
-console.log(test.a == 0 ? 'ok' : 'not ok')
+tap.ok(Object.keys(test).indexOf('B') > -1);
+tap.ok('B' in test);
+tap.eq(test.a, 0);

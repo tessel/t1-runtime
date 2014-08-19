@@ -1,7 +1,6 @@
-/* test rig */ var t = 1, tmax = 3
-function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + ' -', d); }
-console.log(t + '..' + tmax);
-ok(process.versions.colony, 'running in colony')
+var tap = require('../tap');
+
+tap.count(3);
 
 function arreq (a, b) {
 	if (a.length != b.length) {
@@ -15,12 +14,11 @@ function arreq (a, b) {
 	return true;
 }
 
-
 var header = [0x02, 0x02, 0x00];
 var data = new Array(0x02);
-ok(header.concat(data).length == 5, 'array concat length')
+tap.ok(header.concat(data).length == 5, 'array concat length')
 console.log('# -->', header.concat(data).length)
-ok(arreq(header.concat(data), [2, 2, 0, undefined, undefined]), 'array concat')
+tap.ok(arreq(header.concat(data), [2, 2, 0, undefined, undefined]), 'array concat')
 console.log('#', header.concat(data))
-ok([2, 2, 0, undefined, undefined].length == 5, 'array length');
+tap.ok([2, 2, 0, undefined, undefined].length == 5, 'array length');
 console.log('#', [2, 2, 0, undefined, undefined].length);

@@ -1,3 +1,7 @@
+var tap = require('../tap');
+
+tap.count(1);
+
 var result = 0;
 
 if (NaN) {
@@ -5,5 +9,4 @@ if (NaN) {
   result++;
 }
 
-console.log('1..1');
-console.log(!result ? 'ok' : 'not ok');
+tap.ok(!result, 'NaN should be a falsy value in if () {} block.');

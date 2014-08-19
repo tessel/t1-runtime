@@ -187,7 +187,6 @@ util.inherits(IncomingMessage, Readable);
 //       [Put differently: we need to get some clarity as to what is streams1 vs. streams2 here and in net!]
 IncomingMessage.prototype._read = function () {};
 
-
 // NOTE: from https://github.com/joyent/node/blob/a454063ea17f94a5d456bb2666502076c0d51795/lib/_http_incoming.js#L143
 IncomingMessage._addHeaderLine = function(field, value, dest) {
   field = field.toLowerCase();

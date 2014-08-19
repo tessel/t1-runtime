@@ -1,9 +1,12 @@
+var tap = require('../tap');
+
+tap.count(1);
+
 var arr = [];
 
-console.log('1..1')
 for (var i in arr) {
-	console.log('#', i);
-	console.log('not ok', '- Array should not have found index', i)
+  console.log('#', i);
+  tap.ok(false, 'Array should not have found index');
   process.exit(1);
 }
-console.log('ok')
+tap.ok(true);
