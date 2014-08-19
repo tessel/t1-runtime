@@ -166,7 +166,7 @@ function IncomingMessage (type, socket) {
   }
   socket.on('error', _emitError);
   socket.on('data', _handleData);
-  socket.on('finish', _handleEnd);    // TODO: shouldn't this be 'end' (also below…)
+  socket.on('end', _handleEnd);
   
   // couple methods that are cleaner sharing closure
   this._restartParser = function () {
@@ -176,7 +176,7 @@ function IncomingMessage (type, socket) {
     self.socket = self.connection = null;
     socket.removeListener('error', _emitError);
     socket.removeListener('data', _handleData);
-    socket.removeListener('finish', _handleEnd);
+    socket.removeListener('end', _handleEnd);
   };
 }
 
