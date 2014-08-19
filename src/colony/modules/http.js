@@ -166,7 +166,7 @@ function IncomingMessage (type, socket) {
   }
   socket.on('error', _emitError);
   socket.on('data', _handleData);
-  socket.on('finish', _handleEnd);
+  socket.on('finish', _handleEnd);    // TODO: shouldn't this be 'end' (also below…)
   
   // couple methods that are cleaner sharing closure
   this._restartParser = function () {
@@ -337,10 +337,12 @@ function Agent (opts) {
   opts = util._extend({
     keepAlive: false,
     keepAliveMsecs: 1000,
-    maxSockets: Infinity,
-    maxFreeSockets: 256
+    maxSockets: 2,      // NOTE: node has `Infinity`
+    maxFreeSockets: 1   // NOTE: node has `256`
   }, opts);
   
+  this._keepAlive = opts.keepAlive;
+this._keepAlive = true;
   this.maxSockets = opts.maxSockets;
   this.maxFreeSockets = opts.maxFreeSockets;
   this.sockets = {};
@@ -363,34 +365,47 @@ Agent.prototype._hostQueues = function (host) {
   };
 };
 
-Agent.prototype._createConnection = function (opts, cb) {
-  return net.createConnection(opts, cb);
-};
+Agent.prototype._createConnection = net.createConnection;
 
 Agent.prototype._enqueueRequest = function (req, opts) {
-  var host = this._getHost(opts);
-  var socket = this._createConnection(opts, function () {
-    req._assignSocket(socket);
-  });
-  return {
-    host: host,
-    release: function () { socket.end(); }
-  };
-  
-  // TODO: finish actual implementation!
   var socket = null,
       host = this._getHost(opts),
-      info = this._hostQueues(host);
-  if (info.freeSockets.length) {
-    socket = info.freeSockets.pop();
-  } else if (info.sockets.length < this.maxSockets) {
-    socket = net.createConnection(opts);
+      pool = this._hostQueues(host);
+  if (pool.freeSockets.length) {
+    socket = pool.freeSockets.shift();    // get LRU
+  } else if (pool.sockets.length < this.maxSockets) {
+    socket = this._createConnection(opts).on('close', unpool).on('agentRemove', unpool);
   }
+  
   if (socket) {
-    info.sockets.push(socket);
-    req._assignSocket(socket);
-  } else info.requests.push(req);
-  return {release:function () {}};
+    pool.sockets.push(socket);
+    setImmediate(function () {
+      req._assignSocket(socket);
+    });
+  } else {
+    pool.requests.push(req);
+  }
+  
+  var self = this;
+  function unpool() {
+    var socketIdx = pool.sockets.indexOf(socket);
+    pool.sockets.splice(socketIdx, 1);
+  }
+  function release() {
+    if (!socket) {
+      var reqIdx = pool.requests.indexOf(req);
+      pool.requests.splice(reqIdx, 1);
+    } else if (pool.requests.length) {
+      var nextReq = pool.requests.shift();
+      nextReq._assignSocket(socket);
+    } else {
+      unpool();
+      if (self._keepAlive && pool.freeSockets.length < self.maxFreeSockets) {
+        pool.freeSockets.push(socket);
+      } else socket.destroy();
+    }
+  }
+  return {release:release};
 };
 
 var globalAgent = new Agent();
@@ -434,6 +449,7 @@ function ClientRequest (opts) {
       var event = (opts.method === 'CONNECT') ? 'connect' : 'upgrade',
           handled = self.emit(event, response, socket, head);
       if (!handled) socket.destroy();
+      socket.emit('agentRemove');
     });
     response.on('_headersComplete', function () {
       if (response.statusCode === 100) {
@@ -524,7 +540,8 @@ Server._commonSetup = function () {       // also used by 'https'
     });
     if (prevRes) prevRes.once('_doneWithSocket', function () {
       res._assignSocket(socket);
-    }); else res._outbox = socket;
+    });
+    else res._assignSocket(socket);
     function _emitClose() {
       res.emit('close');
     }

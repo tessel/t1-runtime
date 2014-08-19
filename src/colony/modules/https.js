@@ -33,9 +33,7 @@ function Agent() {
 
 util.inherits(Agent, http.Agent);
 
-Agent.prototype._createConnection = function (opts, cb) {
-  return tls.connect(opts, cb);
-};
+Agent.prototype._createConnection = tls.connect;
 
 var globalAgent = new Agent();
 
