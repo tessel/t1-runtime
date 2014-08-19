@@ -538,10 +538,13 @@ Server._commonSetup = function () {       // also used by 'https'
       if (!handled) socket.destroy();
     });
     req.once('_headersComplete', function () {
-      if (/\bclose\b/i.test(req.headers['connection'])) {
+      // WORKAROUND: https://github.com/tessel/runtime/issues/426
+      //if (/\bclose\b/i.test(req.headers['connection'])) {
+      if (/close/i.test(req.headers['connection'])) {
         res._keepAlive = false;
       }
-      if (/\b100-continue\b/i.test(req.headers['expect'])) {
+      //if (/\b100-continue\b/i.test(req.headers['expect'])) {
+      if (/100-continue/i.test(req.headers['expect'])) {
         var handled = self.emit('checkContinue', req, res);
         if (handled) return;
         else res.writeContinue();
