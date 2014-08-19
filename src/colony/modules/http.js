@@ -236,6 +236,7 @@ IncomingMessage._addHeaderLine = function(field, value, dest) {
 function OutgoingMessage () {
   Writable.call(this);
   
+  this._keepAlive = true;
   this.sendDate = false;        // NOTE: ServerResponse changes default to true
   this._chunked = true;
   this._outbox = new PassThrough();   // buffer w/backpressure
@@ -464,9 +465,8 @@ ClientRequest.prototype._getAgent = function () {
  * ServerResponse
  */
 
-function ServerResponse(socket) {
+function ServerResponse() {
   OutgoingMessage.call(this);
-  this._outbox = socket;
   this.statusCode = 200;
   this.sendDate = true;
 }
@@ -506,9 +506,23 @@ util.inherits(Server, net.Server);
 
 Server._commonSetup = function () {       // also used by 'https'
   var self = this;
-  this.on('connection', function (socket) {
+  function handleNextRequest(socket, prevRes) {
     var req = new IncomingMessage('request', socket),
-        res = new ServerResponse(socket);
+        res = new ServerResponse();
+    
+    socket.on('close', _emitClose);
+    res.once('finish', function () {
+      socket.removeListener('close', _emitClose);
+      if (res._keepAlive) res.emit('_doneWithSocket');
+      else socket.end();
+    });
+    if (prevRes) prevRes.once('_doneWithSocket', function () {
+      res._assignSocket(socket);
+    }); else res._outbox = socket;
+    function _emitClose() {
+      res.emit('close');
+    }
+    
     req.once('_error', function (e) {
       self.emit('clientError', e, socket);
     });
@@ -518,16 +532,22 @@ Server._commonSetup = function () {       // also used by 'https'
       if (!handled) socket.destroy();
     });
     req.once('_headersComplete', function () {
-      if (/100-continue/i.test(req.headers['expect'])) {
+      if (/\bclose\b/i.test(req.headers['connection'])) {
+        res._keepAlive = false;
+      }
+      if (/\b100-continue\b/i.test(req.headers['expect'])) {
         var handled = self.emit('checkContinue', req, res);
         if (handled) return;
         else res.writeContinue();
       }
       self.emit('request', req, res);
     });
-    res.once('finish', function () {
-      socket.end();
+    req.once('end', function () {
+      if (res._keepAlive) handleNextRequest(socket, res);
     });
+  }
+  this.on('connection', function (socket) {
+    handleNextRequest(socket, null);
   });
   this.on('clientError', function (e, socket) {
     socket.destroy(e);
