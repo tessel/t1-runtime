@@ -90,6 +90,10 @@ var STATUS_CODES = {
   511 : 'Network Authentication Required' // RFC 6585
 };
 
+// WORKAROUND: https://github.com/tessel/runtime/issues/426
+//var _closeRE = /\bclose\b/i;
+var _closeRE = /close/i;
+
 
 /**
  * IncomingMessage
@@ -304,7 +308,6 @@ OutgoingMessage.prototype.flush = function () {
   // NOTE: will be broken until https://github.com/tessel/runtime/issues/388
   if (this.sendDate === true) lines.push('Date: '+new Date().toUTCString());
   else this.sendDate = !!this.sendDate;   // HACK: don't expose signal above
-  //if (1) lines.push('Connection: close');     // HACK: currently, we don't support keep-alive
   lines.push('','');
   this._outbox.write(lines.map(_stripCRLF).join('\r\n'));
   this.headersSent = true;
@@ -489,7 +492,11 @@ function ClientRequest (opts) {
       if (!handled) response.resume();    // dump it
     });
     response.once('end', function () {
-      socket.emit('_free');
+      var close = _closeRE.test(self._headers['connection']) || _closeRE.test(response.headers['connection']);
+      if (close) {
+        socket.emit('agentRemove');
+        socket.end();
+      } else socket.emit('_free');
     });
     self.on('error', function () {
       socket.emit('agentRemove');
@@ -587,14 +594,13 @@ Server._commonSetup = function () {       // also used by 'https'
       if (!handled) socket.destroy();
     });
     req.once('_headersComplete', function () {
-      // WORKAROUND: https://github.com/tessel/runtime/issues/426
-      //if (/\bclose\b/i.test(req.headers['connection'])) {
-      if (/close/i.test(req.headers['connection'])) {
+      if (_closeRE.test(req.headers['connection'])) {
         res._keepAlive = false;
       }
       if (req.httpVersionMajor < 1 || (req.httpVersionMajor === 1 && req.httpVersionMinor < 1)) {
         res._keepAlive = false;
       }
+      // WORKAROUND: https://github.com/tessel/runtime/issues/426
       //if (/\b100-continue\b/i.test(req.headers['expect'])) {
       if (/100-continue/i.test(req.headers['expect'])) {
         var handled = self.emit('checkContinue', req, res);
