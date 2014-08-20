@@ -142,7 +142,7 @@ function IncomingMessage (type, connection) {     // type is 'request' or 'respo
   });
   this.connection.on('data', function (data) {
     data = data.toString('utf8');     // TODO: this is almost certainly wrong! ('binary' or fix wrapper)
-console.log("RECEIVED:", data);
+// console.log("RECEIVED:", data);
     // console.log('received', data.length, data.substr(0, 15));
     parser.execute(data, 0, data.length);
   });
@@ -346,6 +346,7 @@ exports.globalAgent = new Agent();
 
 function ClientRequest (opts) {
   if (typeof opts === 'string') opts = url.parse(opts);
+  var err = new Error();
   opts = util._extend({
     host: 'localhost',
     port: 80,
@@ -364,13 +365,15 @@ function ClientRequest (opts) {
   OutgoingMessage.call(this, 'request');
   this._agent = opts.agent._enqueueRequest(this, opts);
   this._request = [opts.method, opts.path, 'HTTP/1.1'].join(' ');
+
+  var self = this;
   
   this.setHeader('Host', this._agent.host);
   Object.keys(opts.headers).forEach(function (k) {
-    this.setHeader(k, opts.headers[v]);
+    self.setHeader(k, opts.headers[v]);
   });
   
-  var self = this;
+  
   this.once('socket', function (socket) {
     var response = new IncomingMessage('response', socket);
     response.once('_headersComplete', function () {

@@ -13,7 +13,12 @@ var http = require('http');
 // Could be done better.
 
 for (var key in http) {
-  exports[key] = http[key].bind(exports);
+  if (http[key].bind) {
+    exports[key] = http[key].bind(exports);
+  } 
+  else {
+    exports[key] = http[key];
+  }
 }
 
 exports._secure = true;
