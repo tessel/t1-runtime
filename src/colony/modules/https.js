@@ -47,8 +47,8 @@ function ClientRequest() {
 
 util.inherits(ClientRequest, http.ClientRequest);
 
-ClientRequest.prototype._getAgent = function () {
-  return globalAgent;
+ClientRequest.prototype._getAgent = function (type) {
+  return (type === 'global') ? globalAgent : new Agent();
 };
 
 
