@@ -342,71 +342,99 @@ function Agent (opts) {
   }, opts);
   
   this._keepAlive = opts.keepAlive;
-this._keepAlive = true;
   this.maxSockets = opts.maxSockets;
   this.maxFreeSockets = opts.maxFreeSockets;
   this.sockets = {};
   this.freeSockets = {};
   this.requests = {};
+  this._pools = {};
+  
 }
 
-Agent.prototype.destroy = function () {};
+Agent.prototype.destroy = function () {
+  // TODO: implement
+};
 
-Agent.prototype.getName = Agent.prototype._getHost = function (opts) {
+Agent.prototype.getName = function (opts) {
   // NOTE: this differs from node (omits localAddress)
   return opts.host+':'+opts.port;
 };
 
-Agent.prototype._hostQueues = function (host) {
-  return {
-    sockets: this.sockets[host] || (this.sockets[host] = []),
-    freeSockets: this.freeSockets[host] || (this.freeSockets[host] = []),
-    requests: this.requests[host] || (this.requests[host] = [])
+function _getPool(agent, opts) {
+  var host = agent.getName(opts);
+  if (agent._pools[host]) return agent._pools[host];
+  // ~HACK: turn the frustrating way node exposes internal state to a cleaner abstraction
+  var pool = agent._pools[host] = {},
+      sockets = agent.sockets[host] = [],
+      freeSockets = agent.freeSockets[host] = [],
+      requests = agent.requests[host] = [];
+  
+  function collectGarbage() {
+    if (sockets.length || requests.length || freeSockets.length) return;
+    // otherwise we're done; cleanup and force new pool instance
+    delete agent.sockets[host];
+    delete agent.freeSockets[host];
+    delete agent.requests[host];
+    delete agent._pools[host];
+  }
+  
+  function addSocket() {
+    var socket = agent._createConnection(opts);
+    socket.on('close', handleDead);
+    socket.on('_free', handleFree);
+    socket.once('agentRemove', function () {
+      socket.removeListener('close', handleDead);
+      socket.removeListener('_free', handleFree);
+      removeSocket(socket);
+    });
+    function handleDead() { removeSocket(socket); }
+    function handleFree() { updateSocket(socket); }
+    return socket;
+  }
+  
+  function updateSocket(socket) {
+    if (requests.length) {
+      var nextReq = requests.shift();   // FIFO
+      nextReq._assignSocket(socket);
+    } else {
+      if (agent._keepAlive && freeSockets.length < agent.maxFreeSockets) {
+        freeSockets.push(socket);
+      } else socket.end();
+      removeSocket(socket);
+    }
+  }
+  
+  function removeSocket(socket) {
+    sockets.splice(sockets.indexOf(socket), 1);
+    if (requests.length && sockets.length < agent.maxSockets) {
+      addSocket().emit('_free');
+    }
+    collectGarbage();
+  }
+  
+  pool.enqueueRequest = function (req) {
+    var socket;
+    if (freeSockets.length) {
+      socket = freeSockets.shift();    // LRU
+    } else if (sockets.length < agent.maxSockets) {
+      socket = addSocket();
+    }
+    if (socket) {
+      sockets.push(socket);
+      setImmediate(function () {
+        req._assignSocket(socket);
+      });
+    } else requests.push(req);
   };
+  
+  return pool;
+}
+
+Agent.prototype._enqueueRequest = function (req, opts) {
+  _getPool(this, opts).enqueueRequest(req);
 };
 
 Agent.prototype._createConnection = net.createConnection;
-
-Agent.prototype._enqueueRequest = function (req, opts) {
-  var socket = null,
-      host = this._getHost(opts),
-      pool = this._hostQueues(host);
-  if (pool.freeSockets.length) {
-    socket = pool.freeSockets.shift();    // get LRU
-  } else if (pool.sockets.length < this.maxSockets) {
-    socket = this._createConnection(opts).on('close', unpool).on('agentRemove', unpool);
-  }
-  
-  if (socket) {
-    pool.sockets.push(socket);
-    setImmediate(function () {
-      req._assignSocket(socket);
-    });
-  } else {
-    pool.requests.push(req);
-  }
-  
-  var self = this;
-  function unpool() {
-    var socketIdx = pool.sockets.indexOf(socket);
-    pool.sockets.splice(socketIdx, 1);
-  }
-  function release() {
-    if (!socket) {
-      var reqIdx = pool.requests.indexOf(req);
-      pool.requests.splice(reqIdx, 1);
-    } else if (pool.requests.length) {
-      var nextReq = pool.requests.shift();
-      nextReq._assignSocket(socket);
-    } else {
-      unpool();
-      if (self._keepAlive && pool.freeSockets.length < self.maxFreeSockets) {
-        pool.freeSockets.push(socket);
-      } else socket.destroy();
-    }
-  }
-  return {release:release};
-};
 
 var globalAgent = new Agent();
 
@@ -433,9 +461,9 @@ function ClientRequest (opts) {
   opts.method = opts.method.toUpperCase();
   
   OutgoingMessage.call(this);
-  this._agent = opts.agent._enqueueRequest(this, opts);
+  opts.agent._enqueueRequest(this, opts);
   this._mainline = [opts.method, opts.path, 'HTTP/1.1'].join(' ');
-  this.setHeader('Host', this._agent.host);
+  this.setHeader('Host', [opts.host, opts.port].join(':'));
   this._addHeaders(opts.headers);
   
   var self = this;
@@ -461,7 +489,11 @@ function ClientRequest (opts) {
       if (!handled) response.resume();    // dump it
     });
     response.once('end', function () {
-      self._agent.release();
+      socket.emit('_free');
+    });
+    self.on('error', function () {
+      socket.emit('agentRemove');
+      socket.destroy();
     });
   });
 }
