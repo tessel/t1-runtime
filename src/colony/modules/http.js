@@ -147,7 +147,8 @@ function IncomingMessage (type, socket) {
       else self._unplug();
     }),
     onBody: js_wrap_function(function (body) {
-      self.push(body);
+      var glad = self.push(body);
+      if (!glad) socket.pause();
     }),
     onMessageComplete: js_wrap_function(function () {
       self.push(null);
@@ -182,14 +183,14 @@ function IncomingMessage (type, socket) {
     socket.removeListener('data', _handleData);
     socket.removeListener('end', _handleEnd);
   };
+  this._socket = socket;
 }
 
 util.inherits(IncomingMessage, Readable);
 
-// TODO: IncomingMessage is kind of a Transform on net.Socket, could we leverage that somehow?
-//       Otherwise we need to either pause/resume net socket, or this.connection.read instead let flow.
-//       [Put differently: we need to get some clarity as to what is streams1 vs. streams2 here and in net!]
-IncomingMessage.prototype._read = function () {};
+IncomingMessage.prototype._read = function () {
+  this._socket.resume();
+};
 
 // NOTE: from https://github.com/joyent/node/blob/a454063ea17f94a5d456bb2666502076c0d51795/lib/_http_incoming.js#L143
 IncomingMessage._addHeaderLine = function(field, value, dest) {
