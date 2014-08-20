@@ -471,6 +471,12 @@ function ClientRequest (opts) {
   
   var self = this;
   this.once('socket', function (socket) {
+    if (self._aborted) return socket.emit('agentRemove');
+    else self.abort = function () {
+      socket.emit('agentRemove');
+      socket.destroy();
+    };
+    
     var response = new IncomingMessage('response', socket);
     response.once('_error', function (e) {
       self.emit('error', e);
@@ -498,17 +504,14 @@ function ClientRequest (opts) {
         socket.end();
       } else socket.emit('_free');
     });
-    self.on('error', function () {
-      socket.emit('agentRemove');
-      socket.destroy();
-    });
+    self.on('error', self.abort);
   });
 }
 
 util.inherits(ClientRequest, OutgoingMessage);
 
-ClientRequest.prototype.abort = function () {
-  // TODO: implement
+ClientRequest.prototype.abort = function () {     // NOTE: post-socket, replaced w/logic above
+  this._aborted = true;
 };
 
 ClientRequest.prototype._getAgent = function (type) {
