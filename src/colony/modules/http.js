@@ -355,7 +355,9 @@ function Agent (opts) {
 }
 
 Agent.prototype.destroy = function () {
-  // TODO: implement
+  Object.keys(this._pools).forEach(function (k) {
+    this._pools[k].destroy();
+  }, this);
 };
 
 Agent.prototype.getName = function (opts) {
@@ -428,6 +430,11 @@ function _getPool(agent, opts) {
         req._assignSocket(socket);
       });
     } else requests.push(req);
+  };
+  
+  pool.destroy = function () {
+    sockets.forEach(function (s) { s.destroy(); });
+    freeSockets.forEach(function (s) { s.destroy(); });
   };
   
   return pool;
