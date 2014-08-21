@@ -107,22 +107,19 @@ test('server-errors', function (t) {
 });
 
 test('continue', function (t) {
-return t.end();  // TODO: troubleshoot hang
-  var expect = 3;
-  http.createServer(function (req, res) {
-    res.setHeader('X-Things', [1,2]);
-    res.end("DATA");
-  }).on('checkContinue', function (req,res) {
+  http.createServer().on('checkContinue', function (req,res) {
     t.ok(req && res, "expected params");
-    if (!--expect) t.end();
     res.writeContinue();
+    res.setHeader('X-Things', [1,2]);
+    res.end();
   }).listen(0, function () {
     http.request({port:this.address().port, headers: {expect:'100-continue'}}, function (res) {
       t.ok(res, "got response");
-      if (!--expect) t.end();
+      t.equal(res.statusCode, 200, "correct status");
+      t.equal(res.headers['x-things'], "1, 2", "proper headers");
+      t.end();
     }).on('continue', function () {
       t.pass("got continue");
-      if (!--expect) t.end();
       this.end();
     });
   });
