@@ -126,11 +126,13 @@ function IncomingMessage (type, socket) {
     }),
     onHeaderField: js_wrap_function(function (field) {
       var arr = (self._headersComplete) ? self.rawTrailers : self.rawHeaders;
+      if (arr.length + 1 > self._maxRawHeaders) return;
       arr.push(field);
     }),
     onHeaderValue: js_wrap_function(function (value) {
       var arr = (self._headersComplete) ? self.rawTrailers : self.rawHeaders,
           key = arr[arr.length - 1].toLowerCase();
+      if (arr.length + 1 > self._maxRawHeaders) return;
       arr.push(value);
       var obj = (self._headersComplete) ? self.trailers : self.headers;
       IncomingMessage._addHeaderLine(key, value, obj);
@@ -513,6 +515,7 @@ function ClientRequest (opts) {
     });
     
     var response = new IncomingMessage('response', socket);
+    response._maxRawHeaders = 2000;   // also use for responses
     if (opts.method === 'HEAD') response._noContent = true;
     response.once('_error', function (e) {
       self.emit('error', e);
@@ -600,6 +603,8 @@ function Server() {
 util.inherits(Server, net.Server);
 
 Server._commonSetup = function () {       // also used by 'https'
+  this.maxHeadersCount = 1000;
+  
   var self = this;
   function handleNextRequest(socket, prevRes) {
     var req = new IncomingMessage('request', socket),
@@ -625,6 +630,7 @@ Server._commonSetup = function () {       // also used by 'https'
       res.emit('close');
     }
     
+    req._maxRawHeaders = self.maxHeadersCount * 2;
     req.once('_error', function (e) {
       self.emit('clientError', e, socket);
     });

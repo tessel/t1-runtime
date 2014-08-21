@@ -106,6 +106,17 @@ test('server-errors', function (t) {
   }
 });
 
+test('server-limit', function (t) {
+  http.createServer(function (req, res) {
+    res.end();
+    t.equal(Object.keys(req.headers).length, 1, "headers limited");
+    t.end();
+  }).listen(0, function () {
+    this.maxHeadersCount = 1;
+    http.get({port:this.address().port, headers:{'x-a':1, 'x-b':2, 'x-c':3}});
+  })
+});
+
 test('client-auth', function (t) {
     http.get({
       host: "httpbin.org",
