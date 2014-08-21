@@ -106,6 +106,17 @@ test('server-errors', function (t) {
   }
 });
 
+test('client-auth', function (t) {
+    http.get({
+      host: "httpbin.org",
+      path: "/basic-auth/user/passwd",      // will 401 if not matched
+      auth: "user:passwd"
+    }, function (res) {
+      t.equal(res.statusCode, 200);
+      t.end();
+    });
+});
+
 test('continue', function (t) {
   http.createServer().on('checkContinue', function (req,res) {
     t.ok(req && res, "expected params");

@@ -494,6 +494,7 @@ function ClientRequest (opts) {
   OutgoingMessage.call(this);
   this._mainline = [opts.method, opts.path, 'HTTP/1.1'].join(' ');
   this.setHeader('Host', [opts.host, opts.port].join(':'));
+  if (opts.auth) this.setHeader('Authorization', 'Basic ' + Buffer(opts.auth).toString('base64'));
   this._addHeaders(opts.headers);
   if ('expect' in this._headers) this.flush();
   
