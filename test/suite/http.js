@@ -65,7 +65,6 @@ test('server-basic', function (t) {
 });
 
 test('client-errors', function (t) {
-return t.end();   // TODO: file/fix DNS exception
   var expect = 2;
   http.get("http://example.invalid").on('error', function (e) {
     t.ok(e, "expected error");

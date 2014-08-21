@@ -160,6 +160,9 @@ function IncomingMessage (type, socket) {
     if (!e) e = new Error(parser.getErrorString());
     self.emit('_error', e);
   }
+  function _emitClose() {
+    self.emit('close');
+  }
   function _handleData(d) {
     var nparsed = parser.execute(d.toString('binary'), 0, d.length);
     if (self._upgrade) self.emit('_upgrade', d.slice(nparsed));
@@ -170,6 +173,7 @@ function IncomingMessage (type, socket) {
     else self.push(null);
   }
   socket.on('error', _emitError);
+  socket.on('close', _emitClose);
   socket.on('data', _handleData);
   socket.on('end', _handleEnd);
   
@@ -180,6 +184,7 @@ function IncomingMessage (type, socket) {
   this._unplug = function () {
     self.socket = self.connection = null;
     socket.removeListener('error', _emitError);
+    socket.removeListener('close', _emitClose);
     socket.removeListener('data', _handleData);
     socket.removeListener('end', _handleEnd);
   };
@@ -262,8 +267,11 @@ function OutgoingMessage () {
 util.inherits(OutgoingMessage, Writable);
 
 OutgoingMessage.prototype._assignSocket = function (socket) {
+  // NOTE: so that error listeners can be registered immediately,
+  //       new/idle sockets get assigned syncronously by Agent.
+  //       ClientRequest re-emits a public event asyncronously.
+  this.emit('_socket-SYNC', socket);
   this._outbox.pipe(socket);
-  this.emit('socket', socket);
   // TODO: setTimeout/setNoDelay/setSocketKeepAlive
 };
 
@@ -384,6 +392,16 @@ function _getPool(agent, opts) {
     delete agent._pools[host];
   }
   
+  function handleIdleError() {
+    // no-op; just avoid an uncaught event
+    // (socket will fire close next and be)
+    
+    // NOTE: when sockets are in-use by client (or a server)
+    //       the error is _always_ handled via the IncomingMessage!
+    //       OutgoingMessage doesn't really get feedback on trouble.
+  }
+  
+  
   function addSocket() {
     var socket = agent._createConnection(opts);
     socket.on('close', handleDead);
@@ -393,6 +411,7 @@ function _getPool(agent, opts) {
       socket.removeListener('_free', handleFree);
       removeSocket(socket);
     });
+    
     function handleDead() { removeSocket(socket); }
     function handleFree() { updateSocket(socket); }
     return socket;
@@ -404,6 +423,7 @@ function _getPool(agent, opts) {
       nextReq._assignSocket(socket);
     } else {
       if (agent._keepAlive && freeSockets.length < agent.maxFreeSockets) {
+        socket.on('error', handleIdleError);
         freeSockets.push(socket);
       } else socket.end();
       removeSocket(socket);
@@ -422,14 +442,13 @@ function _getPool(agent, opts) {
     var socket;
     if (freeSockets.length) {
       socket = freeSockets.shift();    // LRU
+      socket.removeListener('error', handleIdleError);
     } else if (sockets.length < agent.maxSockets) {
       socket = addSocket();
     }
     if (socket) {
       sockets.push(socket);
-      setImmediate(function () {
-        req._assignSocket(socket);
-      });
+      req._assignSocket(socket);
     } else requests.push(req);
   };
   
@@ -472,19 +491,23 @@ function ClientRequest (opts) {
   opts.method = opts.method.toUpperCase();
   
   OutgoingMessage.call(this);
-  opts.agent._enqueueRequest(this, opts);
   this._mainline = [opts.method, opts.path, 'HTTP/1.1'].join(' ');
   this.setHeader('Host', [opts.host, opts.port].join(':'));
   this._addHeaders(opts.headers);
   if ('expect' in this._headers) this.flush();
   
   var self = this;
-  this.once('socket', function (socket) {
+  this.once('_socket-SYNC', function (socket) {   // NOTE: sometimes called before _enqueueRequest returns
     if (self._aborted) return socket.emit('agentRemove');
     else self.abort = function () {
       socket.emit('agentRemove');
       socket.destroy();
     };
+    
+    // public event is always async
+    setImmediate(function () {
+      self.emit('socket', socket);
+    });
     
     var response = new IncomingMessage('response', socket);
     response.once('_error', function (e) {
@@ -515,6 +538,7 @@ function ClientRequest (opts) {
     });
     self.on('error', self.abort);
   });
+  opts.agent._enqueueRequest(this, opts);
 }
 
 util.inherits(ClientRequest, OutgoingMessage);
