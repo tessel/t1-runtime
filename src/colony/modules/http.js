@@ -145,6 +145,7 @@ function IncomingMessage (type, socket) {
       self._upgrade = info.upgrade || self._upgrade;
       if (!self._upgrade) self.emit('_headersComplete');
       else self._unplug();
+      return (self._noContent) ? 1 : 0;
     }),
     onBody: js_wrap_function(function (body) {
       var glad = self.push(body);
@@ -512,6 +513,7 @@ function ClientRequest (opts) {
     });
     
     var response = new IncomingMessage('response', socket);
+    if (opts.method === 'HEAD') response._noContent = true;
     response.once('_error', function (e) {
       self.emit('error', e);
     });

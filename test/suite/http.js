@@ -117,6 +117,21 @@ test('client-auth', function (t) {
     });
 });
 
+test('client-head', function (t) {
+  http.request({
+      method: 'HEAD',
+      host: "ipcalf.com"
+    }, function (res) {
+      t.ok(res.headers['content-length']);
+      res.on('data', function () {
+        t.fail("should not get content");
+      });
+      res.on('end', function () {
+        t.end();
+      });
+    }).end();
+});
+
 test('continue', function (t) {
   http.createServer().on('checkContinue', function (req,res) {
     t.ok(req && res, "expected params");
