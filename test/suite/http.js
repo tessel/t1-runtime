@@ -243,12 +243,15 @@ test('agent', function (t) {
         sockets = [];
     http.get({port:port, agent:agent}).on('socket', function (s) {
       sockets[0] = s;
+      s.on('close', function () { sockets.CLOSED = true; });
     });
     http.get({port:port, agent:agent}).on('socket', function (s) {
       sockets[1] = s;
+      s.on('close', function () { sockets.CLOSED = true; });
     });
     http.get({port:port, agent:agent}).on('socket', function (s) {
-      t.ok(~sockets.indexOf(s), "reused a socket");
+      if (sockets.CLOSED) t.pass("needed new socket");
+      else t.ok(~sockets.indexOf(s), "reused a socket");
     }).on('response', function (res) {
       res.resume();
       res.on('end', function () {
