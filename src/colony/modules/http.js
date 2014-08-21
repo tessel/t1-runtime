@@ -476,11 +476,11 @@ var globalAgent = new Agent();
   * ClientRequest
   */
 
-function ClientRequest (opts) {
+function ClientRequest (opts, _https) {
   if (typeof opts === 'string') opts = url.parse(opts);
   opts = util._extend({
     host: 'localhost',
-    port: 80,
+    port: (_https) ? 443 : 80,
     method: 'GET',
     path: '/',
     headers: {},
