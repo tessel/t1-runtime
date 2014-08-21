@@ -238,3 +238,65 @@ return t.end();  // TODO: troubleshoot hang
     });
   });
 });
+
+test('agent', function (t) {
+  http.createServer(function (req, res) {
+    res.end('okay');
+  }).listen(0, function () {
+    test(this.address().port);
+  });
+  function test(port) {
+    var agent = new http.Agent({keepAlive:false, maxSockets:2}),
+        sockets = [];
+    http.get({port:port, agent:agent}).on('socket', function (s) {
+      sockets[0] = s;
+    });
+    http.get({port:port, agent:agent}).on('socket', function (s) {
+      sockets[1] = s;
+    });
+    http.get({port:port, agent:agent}).on('socket', function (s) {
+      t.ok(~sockets.indexOf(s), "reused a socket");
+    }).on('response', function (res) {
+      res.resume();
+      res.on('end', function () {
+        setTimeout(function () {
+          http.get({port:port, agent:agent}).on('socket', function (s) {
+            t.ok(!~sockets.indexOf(s), "got new socket");
+            t.end();
+          });
+        }, 1e3);
+      });
+    });
+  }
+});
+
+test('keepalive', function (t) {
+  http.createServer(function (req, res) {
+    res.end('okay');
+  }).listen(0, function () {
+    test(this.address().port);
+  });
+  function test(port) {
+    var agent = new http.Agent({keepAlive:true, maxSockets:1, maxFreeSockets:1}),
+        socket = null;
+    http.get({port:port, agent:agent}).on('socket', function (s) {
+      socket = s;
+    });
+    http.get({port:port, agent:agent}).on('socket', function (s) {
+      t.strictEqual(s, socket, "reused socket");
+    }).on('response', function (res) {
+      res.resume();
+      res.on('end', function () {
+        setTimeout(function () {
+          http.get({port:port, agent:agent, headers:{connection:'close'}}).on('socket', function (s) {
+            t.strictEqual(s, socket, "reused socket once more");
+            http.get({port:port, agent:agent}).on('socket', function (s) {
+              t.notStrictEqual(s, socket, "got new socket");
+              t.end();
+            });
+          });
+        }, 1e3);
+      });
+    });
+  }
+});
