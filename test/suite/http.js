@@ -170,17 +170,15 @@ test('connect', function (t) {
         t.ok(net.isIP(chunk.toString().split('\n').pop()));
         t.end();
       });
-//      socket.on('end', function() {
-//        proxy.close();
-//        t.end();
-//      });
+      socket.on('end', function() {
+        proxy.close();
+      });
     });
   });
 
 });
 
 test('upgrade', function (t) {
-  var expect = 2;
   // based on http://nodejs.org/dist/v0.11.13/docs/api/http.html#http_event_upgrade_1
   var srv = http.createServer(function (req, res) {
     res.writeHead(200, {'Content-Type': 'text/plain'});
