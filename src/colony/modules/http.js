@@ -476,6 +476,7 @@ function ClientRequest (opts) {
   this._mainline = [opts.method, opts.path, 'HTTP/1.1'].join(' ');
   this.setHeader('Host', [opts.host, opts.port].join(':'));
   this._addHeaders(opts.headers);
+  if ('expect' in this._headers) this.flush();
   
   var self = this;
   this.once('socket', function (socket) {
