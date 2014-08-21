@@ -179,6 +179,7 @@ function IncomingMessage (type, socket) {
   
   // couple methods that are cleaner sharing closure
   this._restartParser = function () {
+    delete self._headersComplete;
     parser.reinitialize(type);
   };
   this._unplug = function () {
