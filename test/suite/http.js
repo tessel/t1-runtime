@@ -20,6 +20,7 @@ test('client-basic', function (t) {
       // NOTE: assumes single packet…
       var data = JSON.parse(chunk);
       t.equal(data.data, "HELLO WORLD");
+      t.end();
     });
   });
   
@@ -33,4 +34,31 @@ test('client-basic', function (t) {
   req.setHeader('Content-Type', "text/plain");
   req.setHeader('Content-Length', 11);    // httpbin doesn't handle chunked…
   req.end("HELLO WORLD");
+});
+
+test('server-basic', function (t) {
+  // based on http://nodejs.org/ homepage example
+  
+  http.createServer(function (req, res) {
+    res.writeHead(200, {'Content-Type': 'text/plain'});
+    res.end('Hello World\n');
+  }).listen(0, function () {
+    test(this.address().port);
+  });
+  function test(port) {
+    http.get({port:port}, function(res) {
+      t.equal(res.statusCode, 200, "got expected status");
+      t.equal(res.headers['content-type'], 'text/plain', "got expected type");
+      res.on('data', function (chunk) {
+        // NOTE: assumes single packet…
+        t.equal(chunk.length, 12);
+        t.equal(chunk[0], "Hello World\n".charCodeAt(0));
+        t.equal(chunk[11], "Hello World\n".charCodeAt(11));
+      });
+      res.on('end', function () {
+        t.pass("request ended");
+        t.end();
+      });
+    });
+  }
 });
