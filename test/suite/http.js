@@ -217,14 +217,13 @@ test('upgrade', function (t) {
 });
 
 test('upgrade-head', function (t) {
-return t.end();  // TODO: troubleshoot hang
   http.createServer().on('upgrade', function (req, socket, head) {
     t.ok(req && socket, "expected params");
     t.equal(head.toString(), "extra");
     t.end();
   }).listen(0, function () {
     net.connect(this.address().port, function () {
-      this.end(('GET / HTTP/1.1' +
+      this.end(('GET / HTTP/1.1\r\n' +
                  'Upgrade: test\r\n' +
                  'Connection: upgrade\r\n' +
                  '\r\n'+
