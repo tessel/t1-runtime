@@ -79,7 +79,7 @@ test('client-errors', function (t) {
       "garbage"
     ].join('\r\n'));
     this.close();
-  }).listen(0, function () {    
+  }).listen(0, function () {
     http.get({port:this.address().port}).on('error', function (e) {
       t.ok(e, "expected error");
       if (!--expect) t.end();
@@ -88,10 +88,10 @@ test('client-errors', function (t) {
 });
 
 test('server-errors', function (t) {
-return t.end();  // TODO: troubleshoot hang
   var expect = 2;
   http.createServer(function (req, res) {
     res.end();
+    req.socket.close();     // WORKAROUND: https://github.com/tessel/runtime/issues/336
   }).on('clientError', function (e,s) {
     t.ok(e && s, "expected params");
     if (!--expect) t.end();
@@ -100,7 +100,7 @@ return t.end();  // TODO: troubleshoot hang
   });
   function test(port) {
     net.connect(port, function () {
-      this.write("garbage\n\n\n");
+      this.end("garbage\n\n\n");      // TODO: why does it take server so long to receive this?!
     });
     http.request({port:port, method:'post', headers:{'Content-Length': 42}}).end();
   }
