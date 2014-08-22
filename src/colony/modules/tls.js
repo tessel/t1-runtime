@@ -14,6 +14,10 @@ function NotImplementedException () {
 	throw new Error('Not yet implemented.');
 }
 
+exports.connect = function connect (port, host, options) {
+  return net.connect(port, host, options, true);
+}
+
 function checkServerIdentity (host, cert) {
   // Create regexp to much hostnames
   function regexpify(host, wildcards) {
@@ -127,7 +131,6 @@ function checkServerIdentity (host, cert) {
 exports.SLAB_BUFFER_SIZE = 0;
 exports.getCiphers = NotImplementedException;
 exports.createServer = NotImplementedException;
-exports.connect = NotImplementedException;
 exports.createSecurePair = NotImplementedException;
 exports.SecurePair = NotImplementedException;
 exports.Server = NotImplementedException;
