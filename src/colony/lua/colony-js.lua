@@ -437,7 +437,7 @@ arr_proto.splice = function (this, i, del, ...)
   end
 
   local args = table.pack(...)
-  for j=1,args.length do
+  for j=1,args.n do
     if i == 0 then
       arr_proto.unshift(this, args[j])
     else
@@ -445,7 +445,7 @@ arr_proto.splice = function (this, i, del, ...)
     end
     i = i + 1
   end
-  rawset(this, 'length', original_len - del_len + args.length)
+  rawset(this, 'length', original_len - del_len + args.n)
   return js_arr(ret, del_len)
 end
 
