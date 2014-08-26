@@ -45,7 +45,7 @@ util.inherits(ServerResponse, Writable);
 
 ServerResponse.prototype.setHeader = function (name, value) {
   if (this._header) {
-    throw "Already wrote HEAD";
+    throw new Error("Already wrote HEAD");
   }
   this.headers[String(name).toLowerCase()] = value;
 };
@@ -58,7 +58,7 @@ ServerResponse.prototype.setHeaders = function (headers) {
 
 ServerResponse.prototype.writeHead = function (status, headers) {
   if (this._header) {
-    throw "Already wrote HEAD";
+    throw new Error("Already wrote HEAD");
   }
 
   if (headers) {
@@ -245,13 +245,14 @@ function isIP (host) {
   return host.match(/^[0-9.]+$/);
 }
 
-function HTTPOutgoingRequest (port, host, path, method, headers, _secure) {
+function HTTPOutgoingRequest (port, host, path, method, headers, _secure, agent) {
   var self = this;
 
   if (path[0] != '/') {
     path = '/' + path;
   }
 
+  self.agent = agent;
   self._connected = false;
   self._contentLength = 0;
   self.connection = net.connect(port, host, function () {
@@ -375,9 +376,9 @@ HTTPOutgoingRequest.prototype.end = function () {
  * Agent
  */
 
-function Agent () {
-  // NYI
-}
+var agent = require('_http_agent');
+var Agent = exports.Agent = agent.Agent;
+exports.globalAgent = agent.globalAgent;
 
 
 /**
@@ -394,11 +395,15 @@ function ensureSecure (secure) {
 
 exports.request = function (opts, onresponse) {
   ensureSecure(this._secure);
-  if (opts.agent) {
-    throw new Error('Agent not yet implemented.');
-  }
+  // if (opts.agent) {
+  //   throw new Error('Agent not yet implemented.');
+  // }
+
+
   var host = opts.hostname || opts.host || 'localhost';
-  var req = new HTTPOutgoingRequest(opts.port || (this._secure ? 443 : 80), host, opts.path || '', opts.method || 'GET', opts.headers || {}, this._secure);
+  var req = new HTTPOutgoingRequest(opts.port || (this._secure ? 443 : 80), host, opts.path || ''
+    , opts.method || 'GET', opts.headers || {}, this._secure, opts.agent || Agent.globalAgent);
+
   onresponse && req.on('response', onresponse);
   return req;
 };
@@ -408,9 +413,9 @@ exports.get = function (opts, onresponse) {
     opts = url.parse(opts);
   }
   opts.method = 'GET';
-  if (opts.agent) {
-    throw new Error('Agent not yet implemented.');
-  }
+  // if (opts.agent) {
+  //   throw new Error('Agent not yet implemented.');
+  // }
 
   var req = this.request(opts, onresponse);
   // req.end();
