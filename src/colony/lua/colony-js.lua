@@ -300,7 +300,7 @@ obj_proto.toString = function (this)
 end
 
 obj_proto.valueOf = function (this)
-  return this
+  return this.__primitive
 end
 
 obj_proto.hasInstance = function (ths, p)
@@ -760,6 +760,9 @@ Globals
 -- Boolean
 
 global.Boolean = function (ths, n)
+  if type(n) == 'boolean' then
+    ths.__primitive = n;
+  end
   return not not n
 end
 global.Boolean.prototype = bool_proto
@@ -771,9 +774,15 @@ bool_proto.constructor = global.Boolean
 
 global.NaN = 0/0
 
+ -- How do you know when a 'new' function is called?
 global.Number = function (ths, n)
+  -- Wrap the number up in an object
+  if type(n) == 'number' then
+    ths.__primitive = n;
+  end
   return tonumbervalue(n)
 end
+
 global.Number.prototype = num_proto
 num_proto.constructor = global.Number
 
@@ -982,6 +991,9 @@ end
 global.String = function (ths, str)
   if type(str) == 'table' and type(str.toString) == 'function' then
     return str:toString()
+  end
+  if type(str) == 'string' then
+    ths.__primitive = str;
   end
   return tostring(str)
 end

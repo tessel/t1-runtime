@@ -505,7 +505,8 @@ function js_new (f, ...)
     proto = f.prototype
   }
   setmetatable(o, mt)
-  return f(o, ...) or o
+  f(o, ...)
+  return o
 end
 
 -- arguments objects
