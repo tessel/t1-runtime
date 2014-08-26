@@ -41,8 +41,8 @@ var globalAgent = new Agent();
  * ClientRequest
  */
 
-function ClientRequest() {
-  http.ClientRequest.call(this);
+function ClientRequest(opts) {
+  http.ClientRequest.call(this, opts);
 }
 
 util.inherits(ClientRequest, http.ClientRequest);
