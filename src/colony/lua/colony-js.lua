@@ -300,7 +300,7 @@ obj_proto.toString = function (this)
 end
 
 obj_proto.valueOf = function (this)
-  return this.__primitive
+  return getmetatable(this).__primitive;
 end
 
 obj_proto.hasInstance = function (ths, p)
@@ -760,10 +760,19 @@ Globals
 -- Boolean
 
 global.Boolean = function (ths, n)
-  if type(n) == 'boolean' then
-    ths.__primitive = n;
+  -- If this is an object construction
+  if js_instanceof(ths, global.Boolean) == true then
+    -- save the primitive
+    if type(n) == 'boolean' then
+      getmetatable(ths).__primitive = n;
+    end
+    -- return the object
+    return ths;
+  -- this is just a function
+  else
+    -- return the number value
+    return not not n
   end
-  return not not n
 end
 global.Boolean.prototype = bool_proto
 bool_proto.constructor = global.Boolean
@@ -774,13 +783,22 @@ bool_proto.constructor = global.Boolean
 
 global.NaN = 0/0
 
- -- How do you know when a 'new' function is called?
+
 global.Number = function (ths, n)
-  -- Wrap the number up in an object
-  if type(n) == 'number' then
-    ths.__primitive = n;
+  -- If this is an object construction
+  if js_instanceof(ths, global.Number) == true then
+    -- save the primitive
+    if type(n) == 'number' then
+      getmetatable(ths).__primitive = n;
+    end
+    -- return the object
+    global.console:warn("Returning the object");
+    return ths;
+  -- this is just a function
+  else
+    -- return the number value
+    return tonumbervalue(n)
   end
-  return tonumbervalue(n)
 end
 
 global.Number.prototype = num_proto
@@ -992,10 +1010,19 @@ global.String = function (ths, str)
   if type(str) == 'table' and type(str.toString) == 'function' then
     return str:toString()
   end
-  if type(str) == 'string' then
-    ths.__primitive = str;
+  -- If this is an object construction
+  if js_instanceof(ths, global.String) == true then
+    -- save the primitive
+    if type(str) == 'string' then
+      getmetatable(ths).__primitive = str;
+    end
+    -- return the object
+    return ths;
+  -- this is just a function
+  else
+    -- return the number value
+    return tostring(str)
   end
-  return tostring(str)
 end
 global.String.prototype = str_proto
 str_proto.constructor = global.String
