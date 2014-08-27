@@ -717,6 +717,7 @@ global.process.cwd = function ()
   return tm.cwd()
 end
 global.process.nextTick = global.setImmediate
+global.process.version = global.process.versions.node
 
 -- DEPLOY_TIME workaround for setting environmental time
 
@@ -740,6 +741,11 @@ global.process.unref = function ()
     global:clearInterval(global.process.refid)
     global.process.refid = nil
   end
+end
+
+global.process.umask = function(ths, value)
+  -- Return standard octal 0022
+  return 18;
 end
 
 
