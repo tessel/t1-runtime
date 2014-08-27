@@ -1665,6 +1665,8 @@ end
 --|| json library
 --]]
 
+yajl.null = nil
+
 global.JSON = js_obj({
   parse = function (ths, arg)
     return yajl.to_value(tostring(arg))
