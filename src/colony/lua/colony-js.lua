@@ -299,10 +299,10 @@ obj_proto.toString = function (this)
   end
 end
 
-obj_proto.valueOf = function (ths)
-  local primitive = getmetatable(ths).__primitive;
-  if primitive == undefined or type(primitive) == 'undefined' then
-    return ths;
+obj_proto.valueOf = function (this)
+  local primitive = getmetatable(this).__primitive;
+  if primitive == nil then
+    return this;
   else
     return primitive
   end
@@ -765,15 +765,13 @@ Globals
 
 -- Boolean
 
-global.Boolean = function (ths, n)
+global.Boolean = function (this, n)
   -- If this is an object construction
-  if js_instanceof(ths, global.Boolean) == true then
+  if js_instanceof(this, global.Boolean) == true then
     -- save the primitive
-    if type(n) == 'boolean' then
-      getmetatable(ths).__primitive = n;
-    end
+    getmetatable(this).__primitive = not not n;
     -- return the object
-    return ths;
+    return this;
   -- this is just a function
   else
     -- return the number value
@@ -790,15 +788,13 @@ bool_proto.constructor = global.Boolean
 global.NaN = 0/0
 
 
-global.Number = function (ths, n)
+global.Number = function (this, n)
   -- If this is an object construction
-  if js_instanceof(ths, global.Number) == true then
+  if js_instanceof(this, global.Number) == true then
     -- save the primitive
-    if type(n) == 'number' then
-      getmetatable(ths).__primitive = n;
-    end
+    getmetatable(this).__primitive = tonumbervalue(n);
     -- return the object
-    return ths;
+    return this;
   -- this is just a function
   else
     -- return the number value
@@ -1025,17 +1021,20 @@ global.String = function (ths, str)
   end
   -- If this is an object construction
   if js_instanceof(ths, global.String) == true then
+    
+    -- conver to a string
+    str = tostring(str)
     -- save the primitive
-    if type(str) == 'string' then
-      getmetatable(ths).__primitive = str;
-    end
+    getmetatable(ths).__primitive = str;
 
+    -- set the length getter for the boxed value
     js_define_getter(ths, 'length', function() 
       return str.length
     end)
 
+    -- set the boxed object properties
     for i = 0, #str-1 do
-      ths[i] = str.slice(str, i, i+1);
+      ths[i] = str.charAt(str, i);
     end
 
     -- return the object
