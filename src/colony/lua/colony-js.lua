@@ -299,8 +299,14 @@ obj_proto.toString = function (this)
   end
 end
 
-obj_proto.valueOf = function (this)
-  return getmetatable(this).__primitive;
+obj_proto.valueOf = function (ths)
+  local primitive = getmetatable(ths).__primitive;
+  if primitive == undefined or type(primitive) == 'undefined' then
+    return ths;
+  else
+    return primitive
+  end
+
 end
 
 obj_proto.hasInstance = function (ths, p)
@@ -792,7 +798,6 @@ global.Number = function (ths, n)
       getmetatable(ths).__primitive = n;
     end
     -- return the object
-    global.console:warn("Returning the object");
     return ths;
   -- this is just a function
   else
@@ -847,7 +852,15 @@ end
 -- Object
 
 global.Object = function (this, obj)
-  return obj or js_obj({})
+  if type(obj) == 'number' then
+    return js_new(global.Number, obj)
+  elseif type(obj) == 'string' then
+    return js_new(global.String, obj)
+  elseif type(obj) == 'boolean' then
+    return js_new(global.Boolean, obj);
+  else
+    return obj or js_obj({})
+  end
 end
 global.Object.prototype = obj_proto
 obj_proto.constructor = global.Object
@@ -1016,6 +1029,15 @@ global.String = function (ths, str)
     if type(str) == 'string' then
       getmetatable(ths).__primitive = str;
     end
+
+    js_define_getter(ths, 'length', function() 
+      return str.length
+    end)
+
+    for i = 0, #str-1 do
+      ths[i] = str.slice(str, i, i+1);
+    end
+
     -- return the object
     return ths;
   -- this is just a function
