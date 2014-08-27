@@ -1034,3 +1034,25 @@ colony.run = function (name, root, parent)
   res(colony.global, colony.cache[p])
   return colony.cache[p].exports
 end
+
+package.preload.http_parser = function ()
+  local http_parser = require('http_parser_lua')
+
+  local mod = js_obj({
+    HTTPParser = function (type)
+      local obj, parser
+      if type == 'request' or type == 0 then
+        obj = {}
+        parser = http_parser.new('request', obj)
+      else
+        obj = {}
+        parser = http_parser.new('response', obj)
+      end
+      obj.execute = function (this, data, start, len)
+        return parser.execute(data, start, len)
+      end
+      return obj
+    end
+  })
+  return mod
+end
