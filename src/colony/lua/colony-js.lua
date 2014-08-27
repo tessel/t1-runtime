@@ -300,7 +300,13 @@ obj_proto.toString = function (this)
 end
 
 obj_proto.valueOf = function (this)
-  return this
+  local primitive = getmetatable(this).__primitive;
+  if primitive == nil then
+    return this;
+  else
+    return primitive
+  end
+
 end
 
 obj_proto.hasInstance = function (ths, p)
@@ -759,8 +765,18 @@ Globals
 
 -- Boolean
 
-global.Boolean = function (ths, n)
-  return not not n
+global.Boolean = function (this, n)
+  -- If this is an object construction
+  if js_instanceof(this, global.Boolean) == true then
+    -- save the primitive
+    getmetatable(this).__primitive = not not n;
+    -- return the object
+    return this;
+  -- this is just a function
+  else
+    -- return the number value
+    return not not n
+  end
 end
 global.Boolean.prototype = bool_proto
 bool_proto.constructor = global.Boolean
@@ -771,9 +787,21 @@ bool_proto.constructor = global.Boolean
 
 global.NaN = 0/0
 
-global.Number = function (ths, n)
-  return tonumbervalue(n)
+
+global.Number = function (this, n)
+  -- If this is an object construction
+  if js_instanceof(this, global.Number) == true then
+    -- save the primitive
+    getmetatable(this).__primitive = tonumbervalue(n);
+    -- return the object
+    return this;
+  -- this is just a function
+  else
+    -- return the number value
+    return tonumbervalue(n)
+  end
 end
+
 global.Number.prototype = num_proto
 num_proto.constructor = global.Number
 
@@ -820,7 +848,15 @@ end
 -- Object
 
 global.Object = function (this, obj)
-  return obj or js_obj({})
+  if type(obj) == 'number' then
+    return js_new(global.Number, obj)
+  elseif type(obj) == 'string' then
+    return js_new(global.String, obj)
+  elseif type(obj) == 'boolean' then
+    return js_new(global.Boolean, obj);
+  else
+    return obj or js_obj({})
+  end
 end
 global.Object.prototype = obj_proto
 obj_proto.constructor = global.Object
@@ -983,7 +1019,31 @@ global.String = function (ths, str)
   if type(str) == 'table' and type(str.toString) == 'function' then
     return str:toString()
   end
-  return tostring(str)
+  -- If this is an object construction
+  if js_instanceof(ths, global.String) == true then
+    
+    -- conver to a string
+    str = tostring(str)
+    -- save the primitive
+    getmetatable(ths).__primitive = str;
+
+    -- set the length getter for the boxed value
+    js_define_getter(ths, 'length', function() 
+      return str.length
+    end)
+
+    -- set the boxed object properties
+    for i = 0, #str-1 do
+      ths[i] = str.charAt(str, i);
+    end
+
+    -- return the object
+    return ths;
+  -- this is just a function
+  else
+    -- return the number value
+    return tostring(str)
+  end
 end
 global.String.prototype = str_proto
 str_proto.constructor = global.String
