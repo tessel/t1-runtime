@@ -717,6 +717,7 @@ global.process.cwd = function ()
   return tm.cwd()
 end
 global.process.nextTick = global.setImmediate
+global.process.version = global.process.versions.node
 
 -- DEPLOY_TIME workaround for setting environmental time
 
