@@ -503,7 +503,7 @@ arr_proto.sort = function (this, fn)
     end
     local ret
     if not fn then
-      ret = a < b
+      ret = a.valueOf() < b.valueOf()
     else
       ret = fn(this, a, b)
     end
