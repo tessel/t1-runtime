@@ -186,7 +186,7 @@ int tm_tcp_listen (tm_socket_t sock, uint16_t port)
   }
 
   // TM_DEBUG("Listening on local socket...");
-  int listenStatus = listen(sock, 1);
+  int listenStatus = listen(sock, 5);
   if (listenStatus != 0) {
     // TM_COMMAND('w', "cannot listen to socket: %d", listenStatus);
     // CC3000_END;
