@@ -17,31 +17,6 @@ brew tap tessel/tools
 brew install gcc-arm gyp ninja
 ```
 
-If you get an error that looks like this:
-
-```
-==> Checking out http://gyp.googlecode.com/svn/trunk/
-==> python setup.py install
-
-  http://peak.telecommunity.com/EasyInstall.html
-
-Please make the appropriate changes for your system and try again.
-
-
-READ THIS: https://github.com/Homebrew/homebrew/wiki/troubleshooting
-If reporting this issue please do so at (not Homebrew/homebrew):
-  https://github.com/tessel/homebrew-tools/issues
-```
-
-Then try running this:
-
-```
-brew uninstall gyp
-brew install python gyp ninja
-```
-
-And if that doesn't work, you could try `brew install -vd gyp` to get more information.
-
 #### Ubuntu 14.04
 
 All dependencies are in the Ubuntu 14.04 repositories:
