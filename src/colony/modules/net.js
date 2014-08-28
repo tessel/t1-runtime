@@ -239,7 +239,13 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       self._restartTimeout();
       self.__listen();
       self.connected = true;
-      self.emit('connect');
+      if(!self._secure) {
+        self.emit('connect');
+      }
+      else {
+        self.emit('secureConnect');
+      }
+      
       self.__send();
     }
   });
@@ -523,3 +529,4 @@ exports.connect = exports.createConnection = connect;
 exports.createServer = createServer;
 exports.Socket = TCPSocket;
 exports.Server = TCPServer;
+exports._normalizeConnectArgs = normalizeConnectArgs;

@@ -41,8 +41,9 @@ var globalAgent = new Agent();
  * ClientRequest
  */
 
-function ClientRequest() {
-  http.ClientRequest.call(this, true);
+function ClientRequest(opts) {
+  opts = util._extend(opts, { port: 443 });
+  http.ClientRequest.call(this, opts);
 }
 
 util.inherits(ClientRequest, http.ClientRequest);
