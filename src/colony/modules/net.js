@@ -150,7 +150,13 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   self.localAddress = "0.0.0.0";
 
   if (cb) {
-    self.once('connect', cb);
+    if (self._secure) {
+      self.once('secureConnect', cb);
+    }
+    else {
+      self.once('connect', cb);
+    }
+    
   }
 
   setImmediate(function () {
