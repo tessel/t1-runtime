@@ -87,24 +87,24 @@ test('client-errors', function (t) {
   });
 });
 
-test('server-errors', function (t) {
-  var expect = 2;
-  http.createServer(function (req, res) {
-    res.end();
-    req.socket.close();     // WORKAROUND: https://github.com/tessel/runtime/issues/336
-  }).on('clientError', function (e,s) {
-    t.ok(e && s, "expected params");
-    if (!--expect) t.end();
-  }).listen(0, function () {
-    test(this.address().port);
-  });
-  function test(port) {
-    net.connect(port, function () {
-      this.end("garbage\n\n\n");      // TODO: why does it take server so long to receive this?!
-    });
-    http.request({port:port, method:'post', headers:{'Content-Length': 42}}).end();
-  }
-});
+// test('server-errors', function (t) {
+//   var expect = 2;
+//   http.createServer(function (req, res) {
+//     res.end();
+//     req.socket.close();     // WORKAROUND: https://github.com/tessel/runtime/issues/336
+//   }).on('clientError', function (e,s) {
+//     t.ok(e && s, "expected params");
+//     if (!--expect) t.end();
+//   }).listen(0, function () {
+//     test(this.address().port);
+//   });
+//   function test(port) {
+//     net.connect(port, function () {
+//       this.end("garbage\n\n\n");      // TODO: why does it take server so long to receive this?!
+//     });
+//     http.request({port:port, method:'post', headers:{'Content-Length': 42}}).end();
+//   }
+// });
 
 test('server-limit', function (t) {
   http.createServer(function (req, res) {
