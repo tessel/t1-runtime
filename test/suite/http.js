@@ -334,10 +334,11 @@ test('keepalive', function (t) {
   }
 });
 
-test('https', function (t) {
-  require('https').get("https://google.com", function (res) {
-    t.equal(res.headers.location, "https://www.google.com/");
-    res.resume();
-    t.end();
-  });
-});
+// WORKAROUND: https://github.com/tessel/runtime/issues/440
+//test('https', function (t) {
+//  require('https').get("https://google.com", function (res) {
+//    t.equal(res.headers.location, "https://www.google.com/");
+//    res.resume();
+//    t.end();
+//  });
+//});
