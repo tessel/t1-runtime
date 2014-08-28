@@ -166,3 +166,10 @@ test('client-timeout', function (t) {
     });
   });
 });
+
+test('client-connect-args', function (t) {
+  var client = net.connect({port:80, host:"ipcalf.com"}, function () {
+    t.pass("callback called");
+    t.end();
+  });
+});

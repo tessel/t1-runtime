@@ -420,7 +420,9 @@ TCPSocket.prototype.setNoDelay = function (val) {
 
 function connect (port, host, callback, _secure) {
   var client = new TCPSocket(null, _secure);
-  client.connect(port, host, callback);
+  var args = Array.prototype.slice.call(arguments);
+  if (args.length === 4) args.pop();      // drop _secure param
+  TCPSocket.prototype.connect.apply(client, args);
   return client;
 };
 

@@ -27,6 +27,7 @@
     "bindings": "~1.2.0"
   },
   "devDependencies": {
+    "nodejs-websocket": "^1.0.0",
     "tap": "git+https://github.com/tcr/node-tap.git#4f96b1",
     "tape": "~2.3.2",
     "tinytap": "^0.2.0"
