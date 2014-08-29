@@ -64,6 +64,41 @@ test('server-basic', function (t) {
   }
 });
 
+test('client-basic', function (t) {
+  // test based loosely on http://nodejs.org/api/http.html#http_http_request_options_callback
+  var req = http.request({
+    hostname: 'httpbin.org',
+    path: '/post',
+    method: 'POST'
+  }, function(res) {
+    t.ok(res.statusCode, "has status");
+    t.ok(res.headers, "has headers");
+    t.equal(res.statusCode, 200, "got expected status");
+    
+    //res.setEncoding('utf8');
+    res.on('data', function (chunk) {
+      // WORKAROUND: https://github.com/tessel/runtime/issues/363
+      if (typeof chunk !== 'string') chunk = chunk.toString();
+      
+      // NOTE: assumes single packet…
+      var data = JSON.parse(chunk);
+      t.equal(data.data, "HELLO WORLD");
+      t.end();
+    });
+  });
+  
+  req.on('response', function (res) {
+    t.ok(res, "got response event");
+  });
+  req.on('error', function(e) {
+    t.fail("unexpected request error");
+  });
+  
+  req.setHeader('Content-Type', "text/plain");
+  req.setHeader('Content-Length', 11);    // httpbin doesn't handle chunked…
+  req.end("HELLO WORLD");
+});
+
 test('client-errors', function (t) {
   var expect = 2;
   http.get("http://example.invalid").on('error', function (e) {
@@ -87,24 +122,24 @@ test('client-errors', function (t) {
   });
 });
 
-// test('server-errors', function (t) {
-//   var expect = 2;
-//   http.createServer(function (req, res) {
-//     res.end();
-//     req.socket.close();     // WORKAROUND: https://github.com/tessel/runtime/issues/336
-//   }).on('clientError', function (e,s) {
-//     t.ok(e && s, "expected params");
-//     if (!--expect) t.end();
-//   }).listen(0, function () {
-//     test(this.address().port);
-//   });
-//   function test(port) {
-//     net.connect(port, function () {
-//       this.end("garbage\n\n\n");      // TODO: why does it take server so long to receive this?!
-//     });
-//     http.request({port:port, method:'post', headers:{'Content-Length': 42}}).end();
-//   }
-// });
+test('server-errors', function (t) {
+  var expect = 2;
+  http.createServer(function (req, res) {
+    res.end();
+    req.socket.end();
+  }).on('clientError', function (e,s) {
+    t.ok(e && s, "expected params");
+    if (!--expect) t.end();
+  }).listen(0, function () {
+    test(this.address().port);
+  });
+  function test(port) {
+    net.connect(port, function () {
+      this.end("garbage\n\n\n");      // TODO: why does it take server so long to receive this?!
+    });
+    http.request({port:port, method:'post', headers:{'Content-Length': 42}}).end();
+  }
+});
 
 test('server-limit', function (t) {
   http.createServer(function (req, res) {

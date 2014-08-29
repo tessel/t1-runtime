@@ -503,6 +503,7 @@ TCPServer.prototype.listen = function (port, host, backlog, cb) {
 
     setTimeout(poll, 10);
   }
+  return this;
 };
 
 TCPServer.prototype.address = function () {
