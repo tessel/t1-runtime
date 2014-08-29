@@ -150,7 +150,13 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   self.localAddress = "0.0.0.0";
 
   if (cb) {
-    self.once('connect', cb);
+    if (self._secure) {
+      self.once('secureConnect', cb);
+    }
+    else {
+      self.once('connect', cb);
+    }
+    
   }
 
   setImmediate(function () {
@@ -239,7 +245,13 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       self._restartTimeout();
       self.__listen();
       self.connected = true;
-      self.emit('connect');
+      if(!self._secure) {
+        self.emit('connect');
+      }
+      else {
+        self.emit('secureConnect');
+      }
+      
       self.__send();
     }
   });
@@ -491,6 +503,7 @@ TCPServer.prototype.listen = function (port, host, backlog, cb) {
 
     setTimeout(poll, 10);
   }
+  return this;
 };
 
 TCPServer.prototype.address = function () {
@@ -523,3 +536,4 @@ exports.connect = exports.createConnection = connect;
 exports.createServer = createServer;
 exports.Socket = TCPSocket;
 exports.Server = TCPServer;
+exports._normalizeConnectArgs = normalizeConnectArgs;

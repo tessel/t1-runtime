@@ -11,6 +11,7 @@
 var util = require('util');
 var http = require('http');
 var tls = require('tls');
+var url = require('url');
 
 /**
  * Server
@@ -41,8 +42,9 @@ var globalAgent = new Agent();
  * ClientRequest
  */
 
-function ClientRequest() {
-  http.ClientRequest.call(this, true);
+function ClientRequest(opts) {
+  opts = util._extend(opts, { port: 443 });
+  http.ClientRequest.call(this, opts);
 }
 
 util.inherits(ClientRequest, http.ClientRequest);
@@ -68,6 +70,7 @@ exports.createServer = function (cb) {
 };
 
 exports.request = function (opts, cb) {
+  if (typeof opts === 'string') opts = url.parse(opts);
   var req = new ClientRequest(opts);
   if (cb) req.once('response', cb);
   return req;

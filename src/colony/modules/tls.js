@@ -14,6 +14,26 @@ function NotImplementedException () {
 	throw new Error('Not yet implemented.');
 }
 
+exports.connect = function connect () {
+  var arguments = normalizeConnectArgs(arguments);
+  var options = arguments[0];
+  var callback = arguments[1];
+  return net.connect(options.port, options.host, callback, true);
+}
+
+function normalizeConnectArgs(listArgs) {
+  var args = net._normalizeConnectArgs(listArgs);
+  var options = args[0];
+  var cb = args[1];
+  if (util.isObject(listArgs[1])) {
+    options = util._extend(options, listArgs[1]);
+  } else if (util.isObject(listArgs[2])) {
+    options = util._extend(options, listArgs[2]);
+  }
+
+  return (cb) ? [options, cb] : [options];
+}
+
 function checkServerIdentity (host, cert) {
   // Create regexp to much hostnames
   function regexpify(host, wildcards) {
@@ -127,7 +147,6 @@ function checkServerIdentity (host, cert) {
 exports.SLAB_BUFFER_SIZE = 0;
 exports.getCiphers = NotImplementedException;
 exports.createServer = NotImplementedException;
-exports.connect = NotImplementedException;
 exports.createSecurePair = NotImplementedException;
 exports.SecurePair = NotImplementedException;
 exports.Server = NotImplementedException;
