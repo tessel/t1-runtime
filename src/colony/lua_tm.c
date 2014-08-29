@@ -89,6 +89,8 @@ static int l_tm_log(lua_State* L)
  * Net
  */
 
+#ifdef ENABLE_NET
+
 static int l_tm_hostname_lookup (lua_State* L)
 {
   const uint8_t *lookup = (const uint8_t *) lua_tostring(L, 1);
@@ -252,6 +254,8 @@ static int l_tm_tcp_accept (lua_State* L)
   lua_pushnumber(L, port);
   return 3;
 }
+
+#endif
 
 #ifdef ENABLE_TLS
 
@@ -863,6 +867,8 @@ static int l_tm_fs_dir_close (lua_State* L)
 }
 
 
+#ifdef ENABLE_NET
+
 uint32_t tm__sync_gethostbyname (const char *domain);
 
 static int l_tm__sync_gethostbyname (lua_State* L)
@@ -872,6 +878,8 @@ static int l_tm__sync_gethostbyname (lua_State* L)
   lua_pushnumber(L, tm__sync_gethostbyname(host));
   return 1;
 }
+
+#endif
 
 static int l_tm_itoa (lua_State* L)
 {
@@ -1119,33 +1127,6 @@ L_TM_HASH(sha384, SHA384);
 #define SHA512_SIZE SHA512_DIGEST_LENGTH
 L_TM_HASH(sha512, SHA512);
 
-
-#else
-
-static int l_tm_hmac_sha1 (lua_State *L)
-{
-  lua_pushnil(L);
-  return 1;
-}
-
-static int l_tm_hash_md5_create (lua_State *L)
-{
-  lua_pushnil(L);
-  return 1;
-}
-
-static int l_tm_hash_md5_update (lua_State *L)
-{
-  lua_pushnil(L);
-  return 1;
-}
-
-static int l_tm_hash_md5_digest (lua_State *L)
-{
-  lua_pushnil(L);
-  return 1;
-}
-
 #endif
 
 
@@ -1169,6 +1150,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
     // log
     { "log", l_tm_log },
 
+#ifdef ENABLE_NET
     // host
     { "hostname_lookup", l_tm_hostname_lookup },
 
@@ -1188,6 +1170,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "tcp_readable", l_tm_tcp_readable },
     { "tcp_listen", l_tm_tcp_listen },
     { "tcp_accept", l_tm_tcp_accept },
+#endif
 
 #ifdef ENABLE_TLS
     { "ssl_context_create", l_tm_ssl_context_create },
@@ -1274,6 +1257,9 @@ LUALIB_API int luaopen_tm (lua_State *L)
 
     // random
     { "random_bytes", l_tm_random_bytes },
+
+    // TLS
+#ifdef ENABLE_TLS
     { "hmac_sha1", l_tm_hmac_sha1 },
     L_TM_HASH_ENTRIES(md5),
     L_TM_HASH_ENTRIES(sha1),
@@ -1281,6 +1267,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
     L_TM_HASH_ENTRIES(sha256),
     L_TM_HASH_ENTRIES(sha384),
     L_TM_HASH_ENTRIES(sha512),
+#endif
 
     // timestamp
     { "timestamp", l_tm_timestamp },
@@ -1289,7 +1276,9 @@ LUALIB_API int luaopen_tm (lua_State *L)
     // itoa
     { "itoa", l_tm_itoa },
 
+#ifdef ENABLE_NET
     { "_sync_gethostbyname", l_tm__sync_gethostbyname },
+#endif
 
     { NULL, NULL }
   });

@@ -41,7 +41,11 @@ function isNumber (arg) {
 }
 
 function isNull (arg) {
-  return arg == null;
+  return arg === null;
+}
+
+function isUndefined (arg) {
+  return typeof arg == 'undefined';
 }
 
 function isObject (arg) {
@@ -210,6 +214,7 @@ exports.isRegExp = isRegExp;
 exports.inspect = inspect;
 exports.format = format;
 exports.isNullOrUndefined = isNullOrUndefined;
+exports.isUndefined = isUndefined;
 exports.debuglog = debuglog;
 
 /**

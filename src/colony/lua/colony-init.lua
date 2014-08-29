@@ -209,13 +209,12 @@ nil_mt.__pow = function (op1, op2)
 end
 
 nil_mt.__lt = function (op1, op2)
-  return op2 > 0
+  return type(op2) == 'table' or op2 > 0
 end
 
 nil_mt.__le = function (op1, op2)
-  return op2 >= 0
+  return type(op2) == 'table' or op2 >= 0
 end
-
 
 --[[
 --  Object
@@ -445,8 +444,9 @@ end
 
 function js_pairs (arg)
   if type(arg) == 'function' then
-    return pairs({})
-  elseif type(arg) == 'string' then
+    arg = js_func_proxy(arg)
+  end
+  if type(arg) == 'string' then
     -- todo what
     return js_next, {}
   else

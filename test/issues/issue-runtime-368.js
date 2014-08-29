@@ -1,9 +1,11 @@
-console.log('1..2');
+var tap = require('../tap');
+
+tap.count(2)
 
 var obj = [ ];
 function test (k) {
-	console.log(typeof k == 'string' ? 'ok' : 'not ok', typeof k)
+	tap.eq(typeof k, 'string', typeof k)
 	var b = obj[k]
-	console.log(typeof k == 'string' ? 'ok' : 'not ok', typeof k)
+	tap.eq(typeof k, 'string', typeof k)
 }
 test('5')

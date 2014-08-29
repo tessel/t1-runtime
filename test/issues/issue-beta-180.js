@@ -1,3 +1,7 @@
+var tap = require('../tap');
+
+tap.count(1);
+
 var b = 0;
 function a () {
 	return b = 5; 
@@ -9,5 +13,5 @@ console.log((b = {a: 5}).a);
 // test[a]();
 
 var i = { length : 1 };
-var task = [function () { console.log(this == task ? 'ok' : 'not ok'); }]
+var task = [function () { tap.eq(this, task); }]
 task[i.length - 1]();

@@ -1,8 +1,6 @@
-/* test rig */ var t = 1, tmax = 2
-function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + ' -', d); }
-console.log(t + '..' + tmax);
-ok(process.versions.colony, 'running in colony')
+var tap = require('../tap');
 
+tap.count(2);
 
 function MyObject(name){
     this.name = name;
@@ -17,5 +15,5 @@ MyObject.prototype.yo = function(){
 var o = new MyObject("adrian");
 o.yo();
 
-ok(o.constructor, "o.constructor");
-ok(o.constructor.booyakasha() == 'Hear me now!', "o.constructor.booyakasha()");
+tap.ok(o.constructor, "o.constructor");
+tap.eq(o.constructor.booyakasha(), 'Hear me now!', "o.constructor.booyakasha()");

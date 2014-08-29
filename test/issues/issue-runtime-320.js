@@ -1,7 +1,10 @@
+var tap = require('../tap');
+
+tap.count(2);
+
 var buf = new Buffer('test');
 
-console.log('1..2');
 console.log('#', JSON.stringify(String.fromCharCode.apply(null, buf)));
-console.log(String.fromCharCode.apply(null, buf) == 'test' ? 'ok' : 'not ok')
+tap.eq(String.fromCharCode.apply(null, buf), 'test')
 console.log('#', JSON.stringify(String.fromCharCode.apply(null, [])));
-console.log(String.fromCharCode.apply(null, []) == '' ? 'ok' : 'not ok')
+tap.eq(String.fromCharCode.apply(null, []), '')

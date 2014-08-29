@@ -1,13 +1,15 @@
-console.log('1..4');
+var tap = require('../tap')
+
+tap.count(4)
 
 console.log('#', parseFloat("x"));
-console.log(isNaN(parseFloat("x")) ? 'ok' : 'not ok');
+tap.ok(isNaN(parseFloat("x")))
 
 console.log('#', parseInt("x"));
-console.log(isNaN(parseInt("x")) ? 'ok' : 'not ok');
+tap.ok(isNaN(parseInt("x")))
 
 console.log('#', Number("x"));
-console.log(isNaN(Number("x")) ? 'ok' : 'not ok');
+tap.ok(isNaN(Number("x")))
 
 console.log('#', +"x");
-console.log(isNaN(+"x") ? 'ok' : 'not ok');
+tap.ok(isNaN(+"x"))

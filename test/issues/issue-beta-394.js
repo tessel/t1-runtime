@@ -1,4 +1,6 @@
-console.log('1..5');
+var tap = require('../tap');
+
+tap.count(5);
 
 var a = {};
 
@@ -6,40 +8,40 @@ Object.defineProperty(a, 'hello', {
 	value: 'hi'
 })
 
-console.log(a.hello == 'hi' ? 'ok' : 'not ok');
+tap.eq(a.hello, 'hi');
 
 try {
 	Object.defineProperty(null, 'hello', {
 		value: 'hi'
 	})
-	console.log('not ok');
+	tap.ok(false);
 } catch (e) {
-	console.log('ok');
+	tap.ok(true);
 }
 
 try {
 	Object.defineProperty('', 'hello', {
 		value: 'hi'
 	})
-	console.log('not ok');
+	tap.ok(false);
 } catch (e) {
-	console.log('ok', '#', e);
+	tap.ok(e);
 }
 
 try {
 	Object.defineProperty(0, 'hello', {
 		value: 'hi'
 	})
-	console.log('not ok');
+	tap.ok(false);
 } catch (e) {
-	console.log('ok');
+	tap.ok(e);
 }
 
 try {
 	Object.defineProperty(true, 'hello', {
 		value: 'hi'
 	})
-	console.log('not ok');
+	tap.ok(false);
 } catch (e) {
-	console.log('ok');
+	tap.ok(e);
 }

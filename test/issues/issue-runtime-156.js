@@ -1,10 +1,13 @@
+var tap = require('../tap')
+
+tap.count(4)
+
 var querystring = require('querystring');
 var util = require('util');
 
-console.log('1..4');
 console.log('#', isFinite(5))
-console.log(isFinite(5) == true ? 'ok' : 'not ok');
+tap.eq(isFinite(5), true);
 console.log('#', querystring.stringify({room_id: 5}))
-console.log(querystring.stringify({room_id: 5}) == 'room_id=5' ? 'ok' : 'not ok')
-console.log(isFinite("0") == true ? 'ok' : 'not ok');
-console.log(isFinite("hi") == false ? 'ok' : 'not ok');
+tap.eq(querystring.stringify({room_id: 5}), 'room_id=5');
+tap.eq(isFinite("0"), true);
+tap.eq(isFinite("hi"), false);

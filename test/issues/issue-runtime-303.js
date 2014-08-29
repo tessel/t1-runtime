@@ -1,23 +1,25 @@
 // A JS error should be thrown on invalid Objects.
 
-console.log('1..9');
+var tap = require('../tap')
+
+tap.count(9)
 
 function test (source, isobject) {
   console.log('');
   try {
     Object.keys(source);
     if (isobject) {
-      console.log('ok - no error on object')
+      tap.ok(true, 'no error on object')
     } else {
-      console.log('not ok - error not generated for non-object');
+      tap.ok(false, 'error not generated for non-object');
     }
   } catch (e) {
     if (isobject) {
-      console.log('not ok - error generated on object');
-      console.log('not ok - error generated on object');
+      tap.ok(false, 'error generated on object');
+      tap.ok(false, 'error generated on object');
     } else {
-      console.log(e instanceof Error ? 'ok' : 'not ok');
-      console.log(e instanceof TypeError ? 'ok' : 'not ok');
+      tap.ok(e instanceof Error);
+      tap.ok(e instanceof TypeError);
       console.log('#', e.message)
     }
   }

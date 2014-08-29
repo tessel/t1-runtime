@@ -1,4 +1,6 @@
-console.log('1..1');
+var tap = require('../tap');
+
+tap.count(1);
 
 var arr = [{a:1}, {a:6},{a:2}, {a:4}]
 arr.sort(function(a, b) {
@@ -8,4 +10,5 @@ arr.sort(function(a, b) {
 
 arr.sort();
 
-console.log('ok');
+tap.ok(true);
+

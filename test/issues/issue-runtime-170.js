@@ -1,5 +1,8 @@
-console.log('1..2');
+var tap = require('../tap')
+
+tap.count(2)
+
 var dash = require(__dirname + '/170/runtime-170/test-subfolder/subfolder');
-console.log(dash == true ? 'ok' : 'not ok');
+tap.eq(dash, true);
 var underscore = require(__dirname + '/170/runtime_170/test-subfolder/subfolder');
-console.log(underscore == true ? 'ok' : 'not ok');
+tap.eq(underscore, true);

@@ -13,7 +13,6 @@
 
 local bit = require('bit32')
 local tm = require('tm')
-local http_parser = require('http_parser')
 
 -- locals
 
@@ -576,26 +575,34 @@ EventEmitter.prototype.listeners = function (this, type)
   return this._events[type]
 end
 
-EventEmitter.prototype.addListener = function (this, type, f)
-  if (f.listener) then this:emit("newListener", type, f.listener);
-  else this:emit("newListener", type, f);
+EventEmitter.prototype.addListener = function (this, eventName, f)
+  if (type(f) ~= "function") then
+    error(js_new(global.TypeError, 'Supplied listener is not a function.'));
   end
-  if this._maxListeners ~= 0 and this:listeners(type):push(f) > (this._maxListeners or 10) then
-    global.console:warn("Possible EventEmitter memory leak detected. " + this._events[type].length + " listeners added. Use emitter.setMaxListeners() to increase limit.")
+  if (f.listener) then
+    this:emit("newListener", eventName, f.listener);
+  else
+    this:emit("newListener", eventName, f);
+  end
+  if this._maxListeners ~= 0 and this:listeners(eventName):push(f) > (this._maxListeners or 10) then
+    global.console:warn("Possible EventEmitter memory leak detected. " + this._events[eventName].length + " listeners added. Use emitter.setMaxListeners() to increase limit.")
   end
   return this
 end
 
 EventEmitter.prototype.on = EventEmitter.prototype.addListener
 
-EventEmitter.prototype.once = function (this, type, f)
+EventEmitter.prototype.once = function (this, eventName, f)
   local g = nil
+  if (type(f) ~= "function") then
+      error(js_new(global.TypeError, 'Supplied listener is not a function.'));
+  end
   g = function (this, ...)
-    this:removeListener(type, g);
+    this:removeListener(eventName, g);
     f(this, ...)
   end
   g.listener = f;
-  this:on(type, g)
+  this:on(eventName, g)
 end
 
 EventEmitter.prototype.removeListener = function (this, type, f)
@@ -726,6 +733,7 @@ global.process.cwd = function ()
   return tm.cwd()
 end
 global.process.nextTick = global.setImmediate
+global.process.version = global.process.versions.node
 
 -- DEPLOY_TIME workaround for setting environmental time
 
@@ -749,6 +757,11 @@ global.process.unref = function ()
     global:clearInterval(global.process.refid)
     global.process.refid = nil
   end
+end
+
+global.process.umask = function(ths, value)
+  -- Return standard octal 0022
+  return 18;
 end
 
 

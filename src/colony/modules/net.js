@@ -26,24 +26,8 @@ function isIPv4 (host) {
   return /^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(\.|$)){4}/.test(host);
 }
 
-function isIPv6 (host) {
-  // via http://stackoverflow.com/a/17871737/179583
-  var itIs = /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]).){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]).){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/.test(host);
-  if (!itIs && typeof host === 'string') {
-    // HACK: regex above doesn't handle all IPv4-suffixed-IPv6 addresses, and, well…do you really blame me for not fixing it?
-    var parts = host.split(':');
-    if (isIPv4(parts[parts.length-1])) {
-      parts.pop();
-      parts.push('FFFF:FFFF');
-      itIs = isIPv6(parts.join(':'));
-    }
-  }
-  return itIs;
-}
-
 function isIP (host) {
-  if (isIPv6(host)) return 6;
-  else if (isIPv4(host)) return 4;
+  if (isIPv4(host)) return 4;
   else return 0;
 }
 
@@ -166,7 +150,13 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   self.localAddress = "0.0.0.0";
 
   if (cb) {
-    self.once('connect', cb);
+    if (self._secure) {
+      self.once('secureConnect', cb);
+    }
+    else {
+      self.once('connect', cb);
+    }
+    
   }
 
   setImmediate(function () {
@@ -255,7 +245,13 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       self._restartTimeout();
       self.__listen();
       self.connected = true;
-      self.emit('connect');
+      if(!self._secure) {
+        self.emit('connect');
+      }
+      else {
+        self.emit('secureConnect');
+      }
+      
       self.__send();
     }
   });
@@ -436,7 +432,9 @@ TCPSocket.prototype.setNoDelay = function (val) {
 
 function connect (port, host, callback, _secure) {
   var client = new TCPSocket(null, _secure);
-  client.connect(port, host, callback);
+  var args = Array.prototype.slice.call(arguments);
+  if (args.length === 4) args.pop();      // drop _secure param
+  TCPSocket.prototype.connect.apply(client, args);
   return client;
 };
 
@@ -466,8 +464,8 @@ TCPServer.prototype.listen = function (port, host, backlog, cb) {
   }
   
   if (typeof backlog === 'function') {
-    backlog = 511;
     cb = backlog;
+    backlog = 511;
   }
   
   this.localPort = TCPSocket._requestPort(port);
@@ -505,6 +503,7 @@ TCPServer.prototype.listen = function (port, host, backlog, cb) {
 
     setTimeout(poll, 10);
   }
+  return this;
 };
 
 TCPServer.prototype.address = function () {
@@ -533,8 +532,8 @@ function createServer (opts, onsocket) {
 
 exports.isIP = isIP;
 exports.isIPv4 = isIPv4;
-exports.isIPv6 = isIPv6;
 exports.connect = exports.createConnection = connect;
 exports.createServer = createServer;
 exports.Socket = TCPSocket;
 exports.Server = TCPServer;
+exports._normalizeConnectArgs = normalizeConnectArgs;

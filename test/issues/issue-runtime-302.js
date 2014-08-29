@@ -15,7 +15,7 @@ var tests = [
   [(function () { return arguments; })(), 'Arguments', 'object']
 ];
 
-tap(tests.length * 2);
+tap.count(tests.length * 2);
 
 tests.forEach(function (d) {
   console.log('#', d[0])
