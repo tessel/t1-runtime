@@ -45,9 +45,10 @@ test('object inspection', function (t) {
   // basic checks
   var fmt = require('util').inspect;
   t.ok(fmt, "inspect function available")
-  t.equal(fmt({}), "{}");
+  t.equal(fmt({}).replace(/\s/g), "{}");
   
   // TODO: convert this manually-verified sample to actual tests…
+  // (left because it at least verifies no crash/hang)
   var ref = {};
   ref.ref = ref;
   fmt({
