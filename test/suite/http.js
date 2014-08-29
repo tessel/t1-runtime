@@ -13,14 +13,12 @@ test('client-basic', function (t) {
     t.ok(res.headers, "has headers");
     t.equal(res.statusCode, 200, "got expected status");
     
-    //res.setEncoding('utf8');
-    res.on('data', function (chunk) {
-      // WORKAROUND: https://github.com/tessel/runtime/issues/363
-      if (typeof chunk !== 'string') chunk = chunk.toString();
-      
+    res.setEncoding('utf8');
+    res.on('data', function (chunk) {      
       // NOTE: assumes single packet…
       var data = JSON.parse(chunk);
       t.equal(data.data, "HELLO WORLD");
+      res.socket.destroy(); 
       t.end();
     });
   });
@@ -40,14 +38,14 @@ test('client-basic', function (t) {
 test('server-basic', function (t) {
   // based on http://nodejs.org/ homepage example
   
-  http.createServer(function (req, res) {
+  var server = http.createServer(function (req, res) {
     res.writeHead(200, {'Content-Type': 'text/plain'});
     res.end('Hello World\n');
   }).listen(0, function () {
     test(this.address().port);
   });
   function test(port) {
-    http.get({port:port}, function(res) {
+    var req = http.get({port:port}, function(res) {
       t.equal(res.statusCode, 200, "got expected status");
       t.equal(res.headers['content-type'], 'text/plain', "got expected type");
       res.on('data', function (chunk) {
@@ -58,55 +56,22 @@ test('server-basic', function (t) {
       });
       res.on('end', function () {
         t.pass("request ended");
+        server.close();
+        req.end();
         t.end();
       });
     });
   }
 });
 
-test('client-basic', function (t) {
-  // test based loosely on http://nodejs.org/api/http.html#http_http_request_options_callback
-  var req = http.request({
-    hostname: 'httpbin.org',
-    path: '/post',
-    method: 'POST'
-  }, function(res) {
-    t.ok(res.statusCode, "has status");
-    t.ok(res.headers, "has headers");
-    t.equal(res.statusCode, 200, "got expected status");
-    
-    //res.setEncoding('utf8');
-    res.on('data', function (chunk) {
-      // WORKAROUND: https://github.com/tessel/runtime/issues/363
-      if (typeof chunk !== 'string') chunk = chunk.toString();
-      
-      // NOTE: assumes single packet…
-      var data = JSON.parse(chunk);
-      t.equal(data.data, "HELLO WORLD");
-      t.end();
-    });
-  });
-  
-  req.on('response', function (res) {
-    t.ok(res, "got response event");
-  });
-  req.on('error', function(e) {
-    t.fail("unexpected request error");
-  });
-  
-  req.setHeader('Content-Type', "text/plain");
-  req.setHeader('Content-Length', 11);    // httpbin doesn't handle chunked…
-  req.end("HELLO WORLD");
-});
-
 test('client-errors', function (t) {
   var expect = 2;
-  http.get("http://example.invalid").on('error', function (e) {
+  var req = http.get("http://example.invalid").on('error', function (e) {
     t.ok(e, "expected error");
     if (!--expect) t.end();
   });
   
-  net.createServer(function (socket) {
+  var server = net.createServer(function (socket) {
     socket.end([
       "HTTP/1.1 200 OK",
       "Transfer-Encoding: chunked",
@@ -117,6 +82,8 @@ test('client-errors', function (t) {
   }).listen(0, function () {
     http.get({port:this.address().port}).on('error', function (e) {
       t.ok(e, "expected error");
+      req.end();
+      server.close();
       if (!--expect) t.end();
     });
   });
@@ -124,36 +91,40 @@ test('client-errors', function (t) {
 
 test('server-errors', function (t) {
   var expect = 2;
-  http.createServer(function (req, res) {
+  var server = http.createServer(function (req, res) {
     res.end();
     req.socket.end();
   }).on('clientError', function (e,s) {
     t.ok(e && s, "expected params");
-    if (!--expect) t.end();
+    if (!--expect) {
+      server.close();
+      t.end();
+    }
   }).listen(0, function () {
     test(this.address().port);
   });
   function test(port) {
-    net.connect(port, function () {
-      this.end("garbage\n\n\n");      // TODO: why does it take server so long to receive this?!
+    var client = net.connect(port, function () {
+      client.end("garbage\n\n\n");      // TODO: why does it take server so long to receive this?!
     });
     http.request({port:port, method:'post', headers:{'Content-Length': 42}}).end();
   }
 });
 
 test('server-limit', function (t) {
-  http.createServer(function (req, res) {
+  var server = http.createServer(function (req, res) {
     res.end();
     t.equal(Object.keys(req.headers).length, 1, "headers limited");
+    server.close();
     t.end();
   }).listen(0, function () {
     this.maxHeadersCount = 1;
-    http.get({port:this.address().port, headers:{'x-a':1, 'x-b':2, 'x-c':3}});
+    var req = http.get({port:this.address().port, headers:{'x-a':1, 'x-b':2, 'x-c':3}}).end();
   })
 });
 
 test('client-auth', function (t) {
-    http.get({
+  var req = http.get({
       host: "httpbin.org",
       path: "/basic-auth/user/passwd",      // will 401 if not matched
       auth: "user:passwd"
@@ -161,6 +132,7 @@ test('client-auth', function (t) {
       t.equal(res.statusCode, 200);
       t.end();
     });
+  req.end();
 });
 
 test('client-head', function (t) {
@@ -179,26 +151,31 @@ test('client-head', function (t) {
 });
 
 test('continue', function (t) {
-  http.createServer().on('checkContinue', function (req,res) {
+  var server = http.createServer().on('checkContinue', function (req,res) {
     t.ok(req && res, "expected params");
     res.writeContinue();
     res.setHeader('X-Things', [1,2]);
     res.end();
   }).listen(0, function () {
-    http.request({port:this.address().port, headers: {expect:'100-continue'}}, function (res) {
+    var req = http.request({port:this.address().port, headers: {expect:'100-continue'}}, function (res) {
       t.ok(res, "got response");
       t.equal(res.statusCode, 200, "correct status");
       t.equal(res.headers['x-things'], "1, 2", "proper headers");
+      server.close();
       t.end();
-    }).on('continue', function () {
+    })
+    req.on('continue', function () {
       t.pass("got continue");
       this.end();
     });
+    req.end();
   });
 });
 
 test('connect', function (t) {
   // based on http://nodejs.org/dist/v0.11.13/docs/api/http.html#http_event_connect_1
+  var serverSocket;
+  var clientSocket;
   var proxy = http.createServer(function (req, res) {
     res.writeHead(200, {'Content-Type': 'text/plain'});
     res.end('okay');
@@ -206,13 +183,14 @@ test('connect', function (t) {
   proxy.on('connect', function(req, cltSocket, head) {
     // connect to an origin server
     var srvUrl = require('url').parse('http://' + req.url);
-    var srvSocket = net.connect(srvUrl.port, srvUrl.hostname, function() {
-      cltSocket.write('HTTP/1.1 200 Connection Established\r\n' +
+    serverSocket = net.connect(srvUrl.port, srvUrl.hostname, function() {
+      clientSocket = cltSocket;
+      clientSocket.write('HTTP/1.1 200 Connection Established\r\n' +
                       'Proxy-agent: Node-Proxy\r\n' +
                       '\r\n');
-      srvSocket.write(head);
-      srvSocket.pipe(cltSocket);
-      cltSocket.pipe(srvSocket);
+      serverSocket.write(head);
+      serverSocket.pipe(clientSocket);
+      clientSocket.pipe(serverSocket);
     });
   });
 
@@ -240,6 +218,10 @@ test('connect', function (t) {
                    '\r\n');
       socket.on('data', function(chunk) {
         t.ok(net.isIP(chunk.toString().split('\n').pop()));
+        proxy.close();
+        socket.destroy();
+        serverSocket.destroy();
+        clientSocket.destroy();
         t.end();
       });
       socket.on('end', function() {
@@ -247,16 +229,17 @@ test('connect', function (t) {
       });
     });
   });
-
 });
 
 test('upgrade', function (t) {
   // based on http://nodejs.org/dist/v0.11.13/docs/api/http.html#http_event_upgrade_1
   var srv = http.createServer(function (req, res) {
+    console.log('got a request!');
     res.writeHead(200, {'Content-Type': 'text/plain'});
     res.end('okay');
   });
   srv.on('upgrade', function(req, socket, head) {
+    console.log("UPGRADED UP HERE");
     t.ok("got event");
     socket.write('HTTP/1.1 101 Web Socket Protocol Handshake\r\n' +
                  'Upgrade: WebSocket\r\n' +
@@ -276,11 +259,12 @@ test('upgrade', function (t) {
         'Upgrade': 'websocket'
       }
     };
-
+    
     var req = http.request(options);
     req.end();
 
     req.on('upgrade', function(res, socket, upgradeHead) {
+      console.log('got upgraded!')
       t.ok("upgraded!");
       socket.end();
       t.end();
@@ -289,9 +273,10 @@ test('upgrade', function (t) {
 });
 
 test('upgrade-head', function (t) {
-  http.createServer().on('upgrade', function (req, socket, head) {
+  var server = http.createServer().on('upgrade', function (req, socket, head) {
     t.ok(req && socket, "expected params");
     t.equal(head.toString(), "extra");
+    server.close();
     t.end();
   }).listen(0, function () {
     net.connect(this.address().port, function () {
@@ -305,7 +290,7 @@ test('upgrade-head', function (t) {
 });
 
 test('agent', function (t) {
-  http.createServer(function (req, res) {
+  var server = http.createServer(function (req, res) {
     res.end('okay');
   }).listen(0, function () {
     test(this.address().port);
@@ -330,6 +315,7 @@ test('agent', function (t) {
         setTimeout(function () {
           http.get({port:port, agent:agent}).on('socket', function (s) {
             t.ok(!~sockets.indexOf(s), "got new socket");
+            server.close(); 
             t.end();
           });
         }, 1e3);
@@ -339,7 +325,7 @@ test('agent', function (t) {
 });
 
 test('keepalive', function (t) {
-  http.createServer(function (req, res) {
+  var server = http.createServer(function (req, res) {
     res.end('okay');
   }).listen(0, function () {
     test(this.address().port);
@@ -360,6 +346,7 @@ test('keepalive', function (t) {
             t.strictEqual(s, socket, "reused socket once more");
             http.get({port:port, agent:agent}).on('socket', function (s) {
               t.notStrictEqual(s, socket, "got new socket");
+              server.close();
               t.end();
             });
           });
@@ -369,11 +356,3 @@ test('keepalive', function (t) {
   }
 });
 
-// WORKAROUND: https://github.com/tessel/runtime/issues/440
-//test('https', function (t) {
-//  require('https').get("https://google.com", function (res) {
-//    t.equal(res.headers.location, "https://www.google.com/");
-//    res.resume();
-//    t.end();
-//  });
-//});
