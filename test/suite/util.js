@@ -70,3 +70,14 @@ test('object inspection', function (t) {
   
   t.end();
 });
+
+test('circular inspection', function (t) {
+  var fmt = require('util').inspect;
+  
+  var o = {n:42};
+  t.equal(fmt({foo:o, bar:o}).match(/.*Circular.*/), null);
+  
+  o.o = o;
+  t.equal(fmt(o).match(/Circular/g).length, 1);
+  t.equal(fmt({foo:o, bar:o}).match(/Circular/g).length, 2);
+});

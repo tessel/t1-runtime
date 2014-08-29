@@ -102,12 +102,12 @@ function inspect(obj, opts) {
     depth: 2,
     colors: false,    // TODO: colors not supported
     customInspect: true,
-    _: {depth:0,seen:[obj]}
+    _: {depth:0,parents:[obj]}
   }, opts);
   
   function recurse(obj) {
-    if (~opts._.seen.indexOf(obj)) return shortString(obj, 'Circular');
-    else opts._.seen.push(obj);
+    if (~opts._.parents.indexOf(obj)) return shortString(obj, 'Circular');
+    else opts._.parents.push(obj);
     ++opts._.depth;
 //    try {
 //      return inspect(obj, opts);
@@ -117,6 +117,7 @@ function inspect(obj, opts) {
     // WORKAROUND: https://github.com/tessel/runtime/issues/304
     obj = inspect(obj, opts);
     --opts._.depth;
+    opts._.parents.pop();
     return obj;
   }
   function indent(n, s) {
