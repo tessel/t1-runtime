@@ -627,9 +627,10 @@ static int l_tm_buffer_copy (lua_State *L)
 static int l_tm_buffer_tostring (lua_State *L)
 {
   uint8_t *source = (uint8_t *) lua_touserdata(L, 1);
-  size_t source_len = (int) lua_tonumber(L, 2);
-
-  lua_pushlstring(L, (char *) source, source_len);
+  size_t offset = (int) lua_tonumber(L, 2);
+  size_t endOffset = (int) lua_tonumber(L, 3);
+  source += offset;
+  lua_pushlstring(L, (char *) source, endOffset-offset);
   return 1;
 }
 
