@@ -88,10 +88,10 @@ function TCPSocket (socket, _secure) {
     self.close();
   })
   self._closehandler = function (buf) {
-    self.__readSocket(true);
     var socket = buf.readUInt32LE(0);
     if (socket == self.socket) {
       setImmediate(function () {
+        self.__readSocket(true);
         // console.log('closing', socket, 'against', self.socket)
         self.close();
       });
@@ -382,12 +382,12 @@ TCPSocket.prototype.__readSocket = function(restartTimeout) {
 
   if (buf.length) {
 
-    // TODO: stop polling if this returns false
-    self.push(buf);
-    
     if (restartTimeout) {
       self._restartTimeout();
     }
+
+    // TODO: stop polling if this returns false
+    self.push(buf);
   }
 
   return flag;
@@ -406,9 +406,9 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
   setImmediate(function () {
     if (self.__listenid != null) {
       clearInterval(self.__listenid);
-      self.__listenid = null
-      self.emit('end')
+      self.__listenid = null;
     }
+    self.emit('end')
     if (self.socket != null) {
 
       // if there is still data left, wait until its sent before we end
