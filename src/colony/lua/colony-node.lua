@@ -281,11 +281,23 @@ local buffer_proto = js_obj({
     buf:copy(this, offset, 0, length)
     return length
   end,
-  toString = function (this, encoding)
+  toString = function (this, encoding, pos_start, pos_end)
     local sourceBuffer = getmetatable(this).buffer
     local sourceBufferLength = getmetatable(this).bufferlen
 
-    local str = tm.buffer_tostring(sourceBuffer, sourceBufferLength)
+    if not pos_start then
+      pos_start = 0
+    end
+    if pos_start >= sourceBufferLength then
+      return ''
+    end
+    if not pos_end then
+      pos_end = sourceBufferLength
+    end
+
+    local smallbuf = tm.buffer_index(sourceBuffer, pos_start)
+    local len = math.min(pos_end, sourceBufferLength) - pos_start
+    local str = tm.buffer_tostring(smallbuf, len)
 
     if encoding == 'base64' then
       str = to_base64(str)
@@ -782,13 +794,13 @@ function js_wrap_module (module)
           local args = table.pack(module[key](...))
 
           -- single-arg returns, return single arg
-          if args.length < 2 then
+          if args.n < 2 then
             return args[1]
           end
 
           -- multiple arg returns return array to JS
-          local len = args.length
-          args['length'] = nil
+          local len = args.n
+          args['n'] = nil
           args[0] = table.remove(args, 1)
           return js_arr(args, len);
         end

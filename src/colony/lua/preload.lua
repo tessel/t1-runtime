@@ -17,6 +17,13 @@ local colony = require('colony')
 -- This is temporary until we can do global._arr in C extension methods
 _G._colony = colony
 
+if not table.pack then
+  local _select = select
+  table.pack = function(...)
+    return { n = _select('#', ...), ... }
+  end
+end
+
 -- "Precache" builtin library code as functions.
 -- This gets moved into colony.cache when run, as do all modules.
 colony.precache = {}
@@ -56,7 +63,7 @@ if not _G.COLONY_EMBED then
   -- This is temporary until we have proper compilation in C.
   colony._load = function (file)
     -- Compile JS script before running.
-    local status = os.execute('colony-compiler -m ' .. file .. ' > /tmp/colonyunique')
+    local status = os.execute('colony-compiler ' .. file .. ' > /tmp/colonyunique')
     if status ~= 0 then
       os.exit(status)
     end

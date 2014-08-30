@@ -10,7 +10,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-// #include <luajit.h>
+#include <luajit.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -155,16 +155,26 @@ static int builtin_loader (lua_State* L)
   return 1;
 }
 
+int lj_err_unwind_arm(int state, void *ucb, void *ctx)
+{
+  (void) state; (void) ucb; (void) ctx;
+  return -1;
+}
+
 int colony_runtime_open ()
 {
   lua_State* L = tm_lua_state = luaL_newstate ();
+  if (L == NULL) {
+    printf("Error creating Lua state.\n");
+  }
   lua_atpanic(L, &runtime_panic);
-  // luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
   // lua_gc(L, LUA_GCSETPAUSE, 90);
   // lua_gc(L, LUA_GCSETSTEPMUL, 200);
 
   // Open libraries.
   luaL_openlibs(L);
+  
+  luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_OFF);
 
   // Type of build.
 #ifdef COLONY_EMBED

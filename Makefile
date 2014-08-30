@@ -20,6 +20,7 @@ all:
 clean:
 	ninja -v -C out/Debug -t clean
 	ninja -v -C out/Release -t clean
+	cd deps/colony-luajit; make clean
 
 nuke:
 	rm -rf out build

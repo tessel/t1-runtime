@@ -12,6 +12,11 @@
       "sources": [
         'src/colony/cli.c',
       ],
+      'xcode_settings': {
+        'OTHER_LDFLAGS': [
+          '-pagezero_size', '10000', '-image_base', '100000000'
+        ],
+      },
       "include_dirs": [
         'src/',
         'src/colony/',
