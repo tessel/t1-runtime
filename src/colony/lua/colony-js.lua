@@ -1290,6 +1290,7 @@ global.ReferenceError = error_class('ReferenceError')
 global.SyntaxError = error_class('SyntaxError')
 global.TypeError = error_class('TypeError')
 global.URIError = error_class('URIError')
+global.NotImplementedError = error_class('NotImplementedError')
 
 -- Console
 
