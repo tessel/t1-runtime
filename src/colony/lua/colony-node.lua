@@ -305,7 +305,8 @@ local buffer_proto = js_obj({
     
     local str = tm.buffer_tostring(getmetatable(this).buffer, offset, endOffset);
 
-    if encoding == 'utf8' or encoding == 'utf-8' then
+    if encoding == 'utf8' or encoding == 'utf-8' 
+      or encoding == 'binary' or encoding == 'ascii' then
       return str;
     elseif encoding == 'base64' then
       return to_base64(str);
@@ -314,8 +315,8 @@ local buffer_proto = js_obj({
         return string.format('%02x', string.byte(c));
       end)
       return str;
-    elseif encoding == 'ascii' or encoding == 'binary' or encoding == 'ucs2'
-      or encoding == 'ucs-2' or encoding == 'utf16le' or encoding == 'utf-16le' then
+    elseif  encoding == 'ucs2' or encoding == 'ucs-2' 
+      or encoding == 'utf16le' or encoding == 'utf-16le' then
       return error(js_new(global.NotImplementedError, 'Encoding not implemented yet: ' + encoding));
     else
       error(js_new(global.TypeError, 'Unknown encoding: ' + encoding));
