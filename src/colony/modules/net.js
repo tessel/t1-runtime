@@ -91,6 +91,7 @@ function TCPSocket (socket, _secure) {
     var socket = buf.readUInt32LE(0);
     if (socket == self.socket) {
       setImmediate(function () {
+        self.__readSocket(true);
         // console.log('closing', socket, 'against', self.socket)
         self.close();
       });
@@ -274,30 +275,13 @@ TCPSocket.prototype.__listen = function () {
       return;
     }
 
-    var buf = '', flag = 0;
-    while (self.socket != null && (flag = tm.tcp_readable(self.socket)) > 0) {
-      if (self._ssl) {
-        var data = tm.ssl_read(self._ssl);
-      } else {
-        var data = tm.tcp_read(self.socket);
-      }
-      if (!data || data.length == 0) {
-        break;
-      }
-      buf += data;
-    }
+    var flag = self.__readSocket(true);
 
     // Check error condition.
     if (flag < 0) {
       // self.emit('error', new Error('Socket closed.'));
       self.destroy();
       return;
-    }
-
-    if (buf.length) {
-      self._restartTimeout();
-      self.push(buf);
-      // TODO: stop polling if this returns false
     }
 
     self.__listenid = setTimeout(loop, 10);
@@ -379,12 +363,42 @@ TCPSocket.prototype.__send = function (cb) {
   })();
 }
 
-TCPSocket.prototype.__close = function () {
+TCPSocket.prototype.__readSocket = function(restartTimeout) {
   var self = this;
-  process.removeListener('tcp-close', self._closehandler);
-  tm.tcp_close(self.socket);
-  self.socket = null;
-  self.emit('close');
+
+  var buf = '', flag = 0;
+  while (self.socket != null && (flag = tm.tcp_readable(self.socket)) > 0) {
+    if (self._ssl) {
+      var data = tm.ssl_read(self._ssl);
+    } else {
+      var data = tm.tcp_read(self.socket);
+    }
+    if (!data || data.length == 0) {
+      break;
+    }
+    buf += data;
+  }
+
+
+  if (buf.length) {
+
+    if (restartTimeout) {
+      self._restartTimeout();
+    }
+
+    // TODO: stop polling if this returns false
+    self.push(buf);
+  }
+
+  return flag;
+}
+
+
+TCPSocket.prototype.__close = function () {
+  process.removeListener('tcp-close', this._closehandler);
+  tm.tcp_close(this.socket);
+  this.socket = null;
+  this.emit('close');
 }
 
 TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
@@ -392,9 +406,9 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
   setImmediate(function () {
     if (self.__listenid != null) {
       clearInterval(self.__listenid);
-      self.__listenid = null
-      self.emit('end')
+      self.__listenid = null;
     }
+    self.emit('end')
     if (self.socket != null) {
 
       // if there is still data left, wait until its sent before we end
