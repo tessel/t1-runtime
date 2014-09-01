@@ -152,7 +152,7 @@ function inspect(obj, opts) {
   else if (opts.customInspect && typeof obj.inspect === 'function') return obj.inspect();
   else {
     if (typeName === 'Array') return '[ '+obj.map(recurse).join(', ')+' ]';
-    else if (typeName === 'Object') return '{' +
+    else if (typeName === 'Object' || typeName === 'Arguments') return '{' +
       Object[(opts.showHidden) ? 'getOwnPropertyNames' : 'keys'](obj).map(function (k) {
         return indent(opts._.depth+1, k +' : '+recurse(obj[k]));
       }).join(',') + indent(opts._.depth, '}');

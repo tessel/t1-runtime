@@ -81,3 +81,11 @@ test('circular inspection', function (t) {
   t.equal(fmt(o).match(/Circular/g).length, 1);
   t.equal(fmt({foo:o, bar:o}).match(/Circular/g).length, 2);
 });
+
+test('arguments inspection', function (t) {
+  var fmt = require('util').inspect;
+  function fn() {
+    t.equal(fmt(arguments).match(/abc/g).length, 1);
+  }
+  fn('abc');
+});
