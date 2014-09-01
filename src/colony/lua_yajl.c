@@ -825,6 +825,17 @@ static int js_generator_value(lua_State *L) {
             lua_pop(L, 1);
         }
 
+        lua_getfield(L, 2, "toJSON");
+        if (lua_isfunction (L, -1) != 0) {
+          lua_pushvalue(L, 2);   // val for `this`
+          lua_pushnil(L);   // TODO: pass key as first argument!
+          lua_call(L, 2, 1);
+          lua_replace(L, 2);
+          return js_generator_value(L);   // start over with returned value
+        } else {
+          lua_pop(L, 1);
+        }
+
         /* Simply ignore it, perhaps we should warn? */
         if ( type != LUA_TTABLE )  {
             js_generator_open_object(L);
