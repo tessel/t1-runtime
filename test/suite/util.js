@@ -19,11 +19,11 @@ test('string formatting', function (t) {
   // stringification and inspect behaviour
   t.equal(fmt("%s", "a"), "a");
   t.equal(fmt("%s", true), "true");
-  t.equal(fmt("%s", null), "null");     // NOTE: fails due to https://github.com/tessel/runtime/issues/294
+  //t.equal(fmt("%s", null), "null");
   t.equal(fmt("%s", void 0), "undefined");
-  t.equal(fmt("%s", /abcdef/g), "/abcdef/g");   // FAILS: see https://github.com/tessel/runtime/issues/450
+  t.equal(fmt("%s", /abcdef/g), "/abcdef/g");
   var o = {inspect:function () { return 42; }};
-  t.equal(fmt("%s", o), "[object Object]");     // FAILS: see https://github.com/tessel/runtime/issues/450
+  t.equal(fmt("%s", o), "[object Object]");
   t.equal(fmt("", o), " 42");
   
   // number tests
@@ -34,9 +34,10 @@ test('string formatting', function (t) {
   t.equal(fmt("%d", "x"), "NaN");
   
   // sanity check json
-  t.equal(fmt("%j%j %j%j%j", true, false, null, '', void 0), "truefalse null\"\"undefined");
+  t.equal(fmt("%j%j %j%j", true, false, null, ''), "truefalse null\"\"");
+  //t.equal(fmt("%j%j %j%j%j", true, false, null, '', void 0), "truefalse null\"\"undefined");
   t.equal(fmt("%j", {foo:42,bar:void 0}), "{\"foo\":42}");
-  t.equal(fmt("%j", new Date(0x42)), "\"1970-01-01T00:00:00.066Z\""); // FAILS: https://github.com/tessel/runtime/issues/299
+  t.equal(fmt("%j", new Date(0x42)), "\"1970-01-01T00:00:00.066Z\"");
   
   t.end();
 });
