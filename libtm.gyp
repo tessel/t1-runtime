@@ -102,6 +102,29 @@
     },
 
     {
+      "target_name": "rapidjson",
+      "product_name": "rapidjson",
+      "type": "static_library",
+      "defines": [
+      ],
+      "include_dirs": [
+        "<(rapidjson_path)/include",
+      ],
+      'cflags': [
+      ],
+      'xcode_settings': {
+        'OTHER_CFLAGS': [
+        ],
+      },
+
+      'direct_dependent_settings': {
+        'include_dirs': [
+          "<(rapidjson_path)/include",
+        ]
+      }
+    },
+
+    {
       "target_name": "axtls",
       "product_name": "axtls",
       "type": "static_library",
@@ -507,6 +530,7 @@
         'src/tm_log.c',
         'src/tm_random.c',
         'src/tm_deflate.c',
+        'src/tm_json.cpp',
       ],
       "include_dirs": [
         'src/',
@@ -516,6 +540,7 @@
         "http_parser",
         "hsregex",
         "yajl",
+        "rapidjson",
         "c-ares",
         "fortuna",
         "dlmalloc",

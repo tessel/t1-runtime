@@ -20,7 +20,12 @@
       "dependencies": [
         'libcolony.gyp:libcolony',
         'libtm.gyp:libtm',
-      ]
+      ],
+      "link_settings": {
+          'libraries': [
+            '-lstdc++',
+          ],
+      }
     }
   ]
 }

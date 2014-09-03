@@ -168,6 +168,7 @@
         'src/colony/lua_hsregex.c',
         'src/colony/lua_tm.c',
         'src/colony/lua_yajl.c',
+        'src/colony/lua_rapidjson.c',
         'src/colony/colony.c',
         'src/colony/colony_init.c',
         'src/colony/colony_runtime.c',

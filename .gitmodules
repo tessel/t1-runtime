@@ -19,3 +19,6 @@
 [submodule "deps/miniz"]
 	path = deps/miniz
 	url = https://github.com/tessel/miniz
+[submodule "deps/rapidjson"]
+	path = deps/rapidjson
+	url = https://github.com/miloyip/rapidjson.git

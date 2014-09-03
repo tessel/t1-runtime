@@ -14,6 +14,7 @@
 
 local bit = require('bit32')
 local yajl = require('yajl')
+local rapidjson = require('rapidjson')
 local _, hs = pcall(require, 'hsregex')
 local tm = require('tm')
 
@@ -1603,7 +1604,7 @@ date_proto.toISOString = function (this)
   -- TODO don't hardcode microseconds
   return os.date('!%Y-%m-%dT%H:%M:%S.', getmetatable(this).date/1e6) .. string.format('%03dZ', (getmetatable(this).date/1e3)%1e3)
 end
-date_proto.toJSON = date_proto.toISOString
+date_proto.tojson = date_proto.toISOString
 date_proto.valueOf = date_proto.getTime
 
 date_proto.setDate = function () end
@@ -1812,14 +1813,422 @@ end
 --|| json library
 --]]
 
-yajl.null = nil
+-- Added rapidjson globals. TODO: eliminate zem
+stack = {}
+lua_table = nil
+cur_table = nil
+on_key = true
+prev_k = nil
+is_arr = false
+arr_lvl = 0
+
+function json_read_default()
+  if is_arr then
+    lua_table[arr_lvl] = ''
+    arr_lvl = arr_lvl + 1
+  else
+    lua_table[prev_k] = ''
+    on_key = true
+  end
+end
+
+function json_read_null()
+  if is_arr then
+    lua_table[arr_lvl] = 'null'
+    arr_lvl = arr_lvl + 1
+  else
+    lua_table[prev_k] = 'null'
+    on_key = true
+  end
+end
+
+function json_read_bool(value)
+  if is_arr then
+    lua_table[arr_lvl] = value
+    arr_lvl = arr_lvl + 1
+  else
+    lua_table[prev_k] = value
+    on_key = true
+  end
+end
+
+function json_read_int(value)
+  if is_arr then
+    lua_table[arr_lvl] = value
+    arr_lvl = arr_lvl + 1
+  else
+    lua_table[prev_k] = value
+    on_key = true
+  end
+end
+
+function json_read_uint(value)
+  if is_arr then
+    lua_table[arr_lvl] = value
+    arr_lvl = arr_lvl + 1
+  else
+    lua_table[prev_k] = value
+    on_key = true
+  end
+end
+
+function json_read_int64(value)
+  if is_arr then
+    lua_table[arr_lvl] = value
+    arr_lvl = arr_lvl + 1
+  else
+    lua_table[prev_k] = value
+    on_key = true
+  end
+end
+
+function json_read_uint64(value)
+  if is_arr then
+    lua_table[arr_lvl] = value
+    arr_lvl = arr_lvl + 1
+  else
+    lua_table[prev_k] = value
+    on_key = true
+  end
+end
+
+function json_read_double(value)
+  if is_arr then
+    lua_table[arr_lvl] = value
+    arr_lvl = arr_lvl + 1
+  else
+    lua_table[prev_k] = value
+    on_key = true
+  end
+end
+
+function json_read_string(value)
+  if is_arr then
+    lua_table[arr_lvl] = value
+    arr_lvl = arr_lvl + 1
+  elseif on_key then
+    if tonumber(value) ~= nil then
+      lua_table[value] = value
+      prev_k = value
+    else
+      lua_table[value] = value
+      prev_k = value
+    end
+    on_key = false
+  else
+    lua_table[prev_k] = value
+    on_key = true
+  end
+end
+
+function json_read_start_object()
+  if lua_table == nil then
+    lua_table = js_obj({})
+  else
+    local parent_table = js_obj({})
+    parent_table[prev_k] = lua_table
+    table.insert(stack, parent_table)
+    lua_table = js_obj({})
+  end
+  on_key = true
+end
+
+function json_read_end_object(value)
+  local parent_table = table.remove(stack, #stack)
+  if parent_table ~= nil then
+    for k,v in pairs(parent_table) do
+      if k == v[k] then
+        v[k] = lua_table
+        lua_table = parent_table[k]
+      end
+    end
+  end
+  on_key = true
+end
+
+function json_read_start_array()
+  if lua_table == nil then
+    lua_table = js_arr({},0)
+  else
+    local parent_table = {}
+    parent_table[prev_k] = lua_table
+    table.insert(stack, parent_table)
+    lua_table = js_arr({},0)
+  end
+  is_arr = true
+end
+
+function json_read_end_array(value)
+  local parent_table = table.remove(stack, #stack)
+  if parent_table ~= nil then
+    for k,v in pairs(parent_table) do
+      v[k] = lua_table
+      lua_table = parent_table[k]
+    end
+  end
+  is_arr = false
+end
+
+-------------------------------------------------------------------------------
+-- Checks initial type and recurses through object if it needs to
+-------------------------------------------------------------------------------
+function json_stringify (value, ...)
+
+  -- holds keys and values found in input that are in the replacer table
+  local val_copy = {}
+
+  -- if the optional replacer is provided
+  if arg[1]['replacer'] then
+
+    -- if it's a function then call the function TODO: fix
+    if type(arg[1]['replacer']) == 'function' then
+      arg[1]['replacer'](value,value)
+
+    -- if replacer's an array then go through and pull out found keys and value
+    elseif type(arg[1]['replacer']) == 'table' then
+      if global.Array:isArray(value) then
+      elseif type(value) == 'table' then
+        if next(value) then
+          for i=0,#arg[1]['replacer'] do
+            local k = tostring(arg[1]['replacer'][i])
+            if value[k] then
+              val_copy[k] = value[k]
+            end
+          end
+          value = val_copy
+        end
+      end
+    end
+
+  end
+
+  -- initial return if only nil present
+  if type(value) == 'nil' then
+    return 'null'
+  -- initial return if only a boolean, number, or string are present
+  elseif type(value) == 'boolean' or type(value) == 'number' or type(value) == 'string' then
+    return js_tostring(value)
+  -- initial return if only userdata, a function, or a thread are present
+  elseif type(value) == 'userdata' or type(value) == 'function' or type(value) == 'thread' then
+    return js_tostring('')
+  -- initial setup if a table is present
+  elseif type(value) == 'table' then
+
+    -- create handler
+    local wh = rapidjson.create()
+
+    -- array present
+    if global.Array:isArray(value) then
+      rapidjson.array_start(wh)
+      for i=0,#value do
+        json_recurse(wh,value[i],arg[1],arg[2])
+      end
+      rapidjson.array_end(wh)
+
+    -- object present
+    else
+      rapidjson.object_start(wh)
+      for k, v in pairs(value) do
+          json_recurse(wh,tostring(k),arg[1],arg[2])
+          json_recurse(wh,v,arg[1],arg[2])
+      end
+      rapidjson.object_end(wh)
+    end
+
+    -- get result and destroy handler
+    local str = rapidjson.result(wh)
+    rapidjson.destroy(wh)
+
+    -- if there's a spacer return a new string based off the stringified result
+    if arg[1]['indent'] then
+      str = json_space(str,arg[1]['indent'])
+    end
+
+    -- return the javascript string
+    return js_tostring(str)
+
+  end
+
+end
+
+-------------------------------------------------------------------------------
+-- Recurses through the incoming object past initial value checks
+-------------------------------------------------------------------------------
+function json_recurse (handler, value, ...)
+
+  -- write null to handler buffer
+  if type(value) == 'nil' then
+    rapidjson.to_null(handler,value)
+  -- write boolean to handler buffer
+  elseif type(value) == 'boolean' then
+    rapidjson.to_boolean(handler,value)
+  -- write number to handler buffer
+  elseif type(value) == 'number' then
+    rapidjson.to_number(handler,value)
+  -- write string to handler buffer
+  elseif type(value) == 'string' then
+    rapidjson.to_string(handler,value)
+  -- write nothing to hander for unsupported types
+  elseif type(value) == 'userdata' or type(value) == 'function' or type(value) == 'thread' then
+    rapidjson.to_default(handler)
+  elseif type(value) == 'table' then
+    -- write array to handler buffer
+    if global.Array:isArray(value) then
+      rapidjson.array_start(handler)
+      for i=0,#value do
+            json_recurse(handler,value[i],arg[1],arg[2])
+        end
+      rapidjson.array_end(handler)
+    -- write object to handler buffer
+    else
+      local val_copy = {}
+      if arg[1]['replacer'] then
+        if type(arg[1]['replacer']) == 'function' then
+          arg[1]['replacer'](value,value)
+        elseif type(arg[1]['replacer']) == 'table' then
+          if global.Array:isArray(value) then
+          elseif type(value) == 'table' then
+            if next(value) then
+              for i=0,#arg[1]['replacer'] do
+                local k = tostring(arg[1]['replacer'][i])
+                if value[k] then
+                  val_copy[k] = value[k]
+                end
+              end
+              value = val_copy
+            end
+          end
+        end
+      end
+      rapidjson.object_start(handler)
+      for k, v in pairs(value) do
+        if type(k) ~= 'table' then
+              json_recurse(handler,tostring(k),arg[1],arg[2])
+            else
+              json_recurse(handler,k,arg[1],arg[2])
+            end
+            json_recurse(handler,v,arg[1],arg[2])
+        end
+      rapidjson.object_end(handler)
+    end
+  end
+
+end
+
+-------------------------------------------------------------------------------
+-- Takes stringified json and returns the spaced version
+-------------------------------------------------------------------------------
+function json_space(str,spacer)
+
+  function space_fill(filler)
+
+    local lvl = 0   -- the level of indentation
+    local sb = ''   -- the spaced stringified json string builder
+        
+    -- go through each char and intert spaces and new lines as needed
+    for i=0,#str-1 do
+      -- for '{' fill the string builder and increment the level
+      if str[i] == '{' then
+        if str[i+1] == '}' then
+          return js_tostring('{}')
+        else
+          lvl = lvl + 1
+          sb = sb..str[i]..'\n'
+          for j=1,lvl do sb = sb..filler end
+        end
+      -- for '[' fill the string builder and increment the level
+      elseif str[i] == '[' then
+        sb = sb..str[i]..'\n'
+        lvl = lvl + 1
+        for j=1,lvl do sb = sb..filler end
+      -- for any comma place a new line and then filler
+      elseif str[i] == ',' then
+        sb = sb..str[i]..'\n'
+        for j=1,lvl do sb = sb..filler end
+      -- for any colon place a space between the key and value
+      elseif str[i] == ':' then
+        sb = sb..': '
+      -- for '}' or ']' place the new line, the filler, then the brace
+      elseif str[i] == ']' or str[i] == '}' then
+        lvl = lvl - 1
+        sb = sb..'\n'
+        for j=1,lvl do sb = sb..filler end
+        sb = sb..str[i]
+      -- for any non special char just add it to the builder
+      else
+        sb = sb..tostring(str[i])
+      end
+    end
+
+    return sb
+
+  end
+
+  -- return the string with the number of spaces inserted
+  if type(spacer) == 'number' then
+    local filler = ''
+    for i=1,tonumber(spacer) do filler = filler + ' ' end
+    return js_tostring(space_fill(filler))
+
+  -- rerturn the string with the string instered into the string
+  elseif type(spacer) == 'string' then
+    if #spacer > 10 then spacer = string.sub(arg[2],0,10) end
+    return js_tostring(space_fill(spacer))
+  end
+
+end
+
+-------------------------------------------------------------------------------
+-- Parsed the string into a lua table
+-------------------------------------------------------------------------------
+function json_parse(value)
+
+  -- if there's no object or array return the stringified value
+  -- TODO: have this throw an error instead of return a string
+  local c = string.byte(value)
+  if c ~= 123 and c ~= 91 then return js_tostring(value) end
+
+  -- parse the value and set the lua table based off callbacks
+  rapidjson.parse(
+    rapidjson.reader(),
+    value,
+    json_read_default,
+    json_read_null,
+    json_read_bool,
+    json_read_int,
+    json_read_uint,
+    json_read_int64,
+    json_read_uint64,
+    json_read_double,
+    json_read_string,
+    json_read_start_object,
+    json_read_end_object,
+    json_read_start_array,
+    json_read_end_array
+  )
+
+  -- reference it from here so we can clear the globals for another round
+  local lua_table_cpy = lua_table
+
+  -- clear the globals for the next round
+  lua_table = nil
+  cur_table = nil
+  on_key = true
+  prev_k = nil
+  is_arr = false
+  arr_lvl = 0
+
+  -- return the parsed object to lua
+  return lua_table_cpy
+
+end
 
 global.JSON = js_obj({
   parse = function (ths, arg)
-    return yajl.to_value(tostring(arg))
+    return json_parse(tostring(arg))
   end,
   stringify = function (ths, arg, replacer, space)
-    return yajl.to_string(arg, {
+    return json_stringify(arg, {
       replacer = replacer or nil,
       indent = space or nil
     })
