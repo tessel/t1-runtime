@@ -1974,15 +1974,78 @@ end
 -------------------------------------------------------------------------------
 function json_stringify (value, ...)
 
-  -- holds keys and values found in input that are in the replacer table
-  local val_copy = {}
+  local val_copy = {}     -- copies of hits in the replacer array
+  local call_ext = false  -- whether to call an external replacer function
+
+  -- a function that can be called recursively
+  function json_recurse (handler, value, ...)
+
+    -- write null to handler buffer
+    if type(value) == 'nil' then
+      rapidjson.to_null(handler,value)
+    -- write boolean to handler buffer
+    elseif type(value) == 'boolean' then
+      rapidjson.to_boolean(handler,value)
+    -- write number to handler buffer
+    elseif type(value) == 'number' then
+      rapidjson.to_number(handler,value)
+    -- write string to handler buffer
+    elseif type(value) == 'string' then
+      rapidjson.to_string(handler,value)
+    -- write nothing to hander for unsupported types
+    elseif type(value) == 'userdata' or type(value) == 'function' or type(value) == 'thread' then
+      rapidjson.to_default(handler)
+    elseif type(value) == 'table' then
+      -- write array to handler buffer
+      if global.Array:isArray(value) then
+        rapidjson.array_start(handler)
+        for i=0,#value do
+          if call_ext then arg[1]['replacer'](nil,i,value[i]) end
+          json_recurse(handler,value[i],arg[1])
+        end
+        rapidjson.array_end(handler)
+      -- write object to handler buffer
+      else
+        local val_copy = {}
+        if arg[1]['replacer'] then
+          if type(arg[1]['replacer']) == 'function' then
+          elseif type(arg[1]['replacer']) == 'table' then
+            if global.Array:isArray(value) then
+            elseif type(value) == 'table' then
+              if next(value) then
+                for i=0,#arg[1]['replacer'] do
+                  local k = tostring(arg[1]['replacer'][i])
+                  if value[k] then
+                    val_copy[k] = value[k]
+                  end
+                end
+                value = val_copy
+              end
+            end
+          end
+        end
+        rapidjson.object_start(handler)
+        for k, v in pairs(value) do
+          if call_ext then arg[1]['replacer'](nil,k,v) end
+          if type(k) ~= 'table' then
+                json_recurse(handler,tostring(k),arg[1])
+              else
+                json_recurse(handler,k,arg[1])
+              end
+              json_recurse(handler,v,arg[1])
+
+          end
+        rapidjson.object_end(handler)
+      end
+    end
+  end
 
   -- if the optional replacer is provided
   if arg[1]['replacer'] then
 
     -- if it's a function then call the function TODO: fix
     if type(arg[1]['replacer']) == 'function' then
-      arg[1]['replacer'](value,value)
+      call_ext = true
 
     -- if replacer's an array then go through and pull out found keys and value
     elseif type(arg[1]['replacer']) == 'table' then
@@ -2004,15 +2067,21 @@ function json_stringify (value, ...)
 
   -- initial return if only nil present
   if type(value) == 'nil' then
+    if call_ext then arg[1]['replacer'](nil,'',value) end
     return 'null'
   -- initial return if only a boolean, number, or string are present
   elseif type(value) == 'boolean' or type(value) == 'number' or type(value) == 'string' then
+    if call_ext then arg[1]['replacer'](nil,'',value) end
     return js_tostring(value)
   -- initial return if only userdata, a function, or a thread are present
   elseif type(value) == 'userdata' or type(value) == 'function' or type(value) == 'thread' then
+    if call_ext then arg[1]['replacer'](nil,'','') end
     return js_tostring('')
   -- initial setup if a table is present
   elseif type(value) == 'table' then
+
+    -- if there's a function replacer then call it on the main object
+    if call_ext then arg[1]['replacer'](nil,'',value) end
 
     -- create handler
     local wh = rapidjson.create()
@@ -2021,7 +2090,8 @@ function json_stringify (value, ...)
     if global.Array:isArray(value) then
       rapidjson.array_start(wh)
       for i=0,#value do
-        json_recurse(wh,value[i],arg[1],arg[2])
+        if call_ext then arg[1]['replacer'](nil,i,value[i]) end
+        json_recurse(wh,value[i],arg[1])
       end
       rapidjson.array_end(wh)
 
@@ -2029,8 +2099,9 @@ function json_stringify (value, ...)
     else
       rapidjson.object_start(wh)
       for k, v in pairs(value) do
-          json_recurse(wh,tostring(k),arg[1],arg[2])
-          json_recurse(wh,v,arg[1],arg[2])
+          if call_ext then arg[1]['replacer'](nil,k,v) end
+          json_recurse(wh,tostring(k),arg[1])
+          json_recurse(wh,v,arg[1])
       end
       rapidjson.object_end(wh)
     end
@@ -2048,71 +2119,6 @@ function json_stringify (value, ...)
     return js_tostring(str)
 
   end
-
-end
-
--------------------------------------------------------------------------------
--- Recurses through the incoming object past initial value checks
--------------------------------------------------------------------------------
-function json_recurse (handler, value, ...)
-
-  -- write null to handler buffer
-  if type(value) == 'nil' then
-    rapidjson.to_null(handler,value)
-  -- write boolean to handler buffer
-  elseif type(value) == 'boolean' then
-    rapidjson.to_boolean(handler,value)
-  -- write number to handler buffer
-  elseif type(value) == 'number' then
-    rapidjson.to_number(handler,value)
-  -- write string to handler buffer
-  elseif type(value) == 'string' then
-    rapidjson.to_string(handler,value)
-  -- write nothing to hander for unsupported types
-  elseif type(value) == 'userdata' or type(value) == 'function' or type(value) == 'thread' then
-    rapidjson.to_default(handler)
-  elseif type(value) == 'table' then
-    -- write array to handler buffer
-    if global.Array:isArray(value) then
-      rapidjson.array_start(handler)
-      for i=0,#value do
-            json_recurse(handler,value[i],arg[1],arg[2])
-        end
-      rapidjson.array_end(handler)
-    -- write object to handler buffer
-    else
-      local val_copy = {}
-      if arg[1]['replacer'] then
-        if type(arg[1]['replacer']) == 'function' then
-          arg[1]['replacer'](value,value)
-        elseif type(arg[1]['replacer']) == 'table' then
-          if global.Array:isArray(value) then
-          elseif type(value) == 'table' then
-            if next(value) then
-              for i=0,#arg[1]['replacer'] do
-                local k = tostring(arg[1]['replacer'][i])
-                if value[k] then
-                  val_copy[k] = value[k]
-                end
-              end
-              value = val_copy
-            end
-          end
-        end
-      end
-      rapidjson.object_start(handler)
-      for k, v in pairs(value) do
-        if type(k) ~= 'table' then
-              json_recurse(handler,tostring(k),arg[1],arg[2])
-            else
-              json_recurse(handler,k,arg[1],arg[2])
-            end
-            json_recurse(handler,v,arg[1],arg[2])
-        end
-      rapidjson.object_end(handler)
-    end
-  end
-
 end
 
 -------------------------------------------------------------------------------
