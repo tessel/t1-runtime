@@ -1,9 +1,3 @@
-/******************************************************************************
- * test.c
- * Example of a C program that interfaces with Lua.
- * Based on Lua 5.0 code by Pedro Martelletto in November, 2003.
- * Updated to Lua 5.1. David Manura, January 2007.
- *****************************************************************************/
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
