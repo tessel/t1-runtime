@@ -111,6 +111,13 @@ void cb_EndArray(size_t value) {
 	lua_call(jcb.EndArray.state,1,0);
 }
 
+void on_error(lua_State *L, const char* val, parse_error_t err) {
+    lua_getfield(L, LUA_GLOBALSINDEX,"json_error");
+    lua_pushstring(L,val);
+    lua_pushnumber(L,err.code);
+    lua_pushnumber(L,err.offset);
+    lua_call(L,3,0);
+}
 
 /******************************************************************************
  * Creates the parsing handler for the parsing function to work
@@ -179,7 +186,7 @@ static int tm_json_read(lua_State *L) {
     rh->EndArray = cb_EndArray;
 
     // call rapidjson to parse the string
-    tm_json_parse(*rh,value);
+    parse_error_t parse_err = tm_json_parse(*rh,value);
 
     // free the references in the reference table
     luaL_unref(L,LUA_REGISTRYINDEX,jcb.Default.reference);
@@ -195,6 +202,9 @@ static int tm_json_read(lua_State *L) {
     luaL_unref(L,LUA_REGISTRYINDEX,jcb.EndObject.reference);
     luaL_unref(L,LUA_REGISTRYINDEX,jcb.StartArray.reference);
     luaL_unref(L,LUA_REGISTRYINDEX,jcb.EndArray.reference);
+
+    // if there's an error deal with it
+    if(parse_err.code) { on_error(L,value,parse_err); }
 
     // return the parsed string (eventually)
     return 1;

@@ -1821,6 +1821,24 @@ on_key = true
 prev_k = nil
 is_arr = false
 arr_lvl = 0
+error_codes = {
+	'The document is empty.',
+	'The document root must be either object or array.',
+	'The document root must not follow by other values.',
+	'Invalid value.',
+	'Missing a name for object member.',
+	'Missing a colon after a name of object member.',
+	'Missing a comma or \'}\' after an object member.',
+	'Missing a comma or \']\' after an array element.',
+	'Incorrect hex digit after \\\\u escape in string.',
+	'The surrogate pair in string is invalid.',
+	'Invalid escape character in string.',
+	'Missing a closing quotation mark in string.',
+	'Invalid encoidng in string.',
+	'Number too big to be stored in double.',
+	'Miss fraction part in number.',
+	'Miss exponent in number.',
+}
 
 function json_read_default()
   if is_arr then
@@ -2190,7 +2208,6 @@ end
 function json_parse(value)
 
   -- if there's no object or array return the stringified value
-  -- TODO: have this throw an error instead of return a string
   local c = string.byte(value)
   if c ~= 123 and c ~= 91 then return js_tostring(value) end
 
@@ -2227,6 +2244,17 @@ function json_parse(value)
   -- return the parsed object to lua
   return lua_table_cpy
 
+end
+
+-- prints an error message (prints the traceback if a second param is provided)
+function json_error(val,code,offset)
+  if code == 0 then return end
+  print(val)
+  local filler = ''
+  for i=1,offset do filler = filler..' ' end
+  print(filler..'^')
+  print(debug.traceback())
+  error(error_codes[code])
 end
 
 global.JSON = js_obj({

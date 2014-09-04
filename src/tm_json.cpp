@@ -16,7 +16,7 @@
 using namespace rapidjson;
 
 /* Converts string to input stream and feeds it to rapidJSON Parse function */
-extern "C" bool tm_json_parse(tm_json_r_handler_t rh,const char* json_s) {
+extern "C" parse_error_t tm_json_parse(tm_json_r_handler_t rh,const char* json_s) {
 
 	// create an input stream from the stringified JSON input
 	StringStream is(json_s);
@@ -25,7 +25,13 @@ extern "C" bool tm_json_parse(tm_json_r_handler_t rh,const char* json_s) {
 	Reader reader;
 
 	// call rapidJSON's Parser using the input stream and the given handler
-	return reader.Parse(is,rh);
+	reader.Parse(is,rh);
+
+	// return the error code and the offset
+	parse_error_t ret;
+	ret.code = reader.GetParseErrorCode();
+	ret.offset = reader.GetErrorOffset();
+	return ret;
 
 }
 

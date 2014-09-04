@@ -42,8 +42,14 @@ typedef struct tm_json_w_handler {
   tm_json_stringbuffer_t stringBuffer;
 } tm_json_w_handler_t;
 
+/* Holds the parse error code and offset of the error */
+typedef struct parse_error {
+  int code;
+  int offset;
+} parse_error_t;
+
 /* Reading prototypes */
-bool tm_json_parse(tm_json_r_handler_t,const char*);
+parse_error_t tm_json_parse(tm_json_r_handler_t,const char*);
 
 /* Writing prototypes */
 tm_json_w_handler_t tm_json_write_create();
