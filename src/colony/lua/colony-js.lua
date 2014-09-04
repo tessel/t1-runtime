@@ -1977,7 +1977,7 @@ function json_stringify (value, ...)
   local val_copy = {}     -- copies of hits in the replacer array
   local call_ext = false  -- whether to call an external replacer function
 
-  -- a function that can be called recursively
+  -- does what stringify does but can be called recursively
   function json_recurse (handler, value, ...)
 
     -- write null to handler buffer
@@ -2043,7 +2043,7 @@ function json_stringify (value, ...)
   -- if the optional replacer is provided
   if arg[1]['replacer'] then
 
-    -- if it's a function then call the function TODO: fix
+    -- if it's a function set the flag to call en external function
     if type(arg[1]['replacer']) == 'function' then
       call_ext = true
 
@@ -2115,7 +2115,7 @@ function json_stringify (value, ...)
       str = json_space(str,arg[1]['indent'])
     end
 
-    -- return the javascript string
+    -- return the string
     return js_tostring(str)
 
   end
@@ -2162,7 +2162,7 @@ function json_space(str,spacer)
         sb = sb..str[i]
       -- for any non special char just add it to the builder
       else
-        sb = sb..tostring(str[i])
+        sb = sb..str[i]
       end
     end
 
@@ -2176,9 +2176,9 @@ function json_space(str,spacer)
     for i=1,tonumber(spacer) do filler = filler + ' ' end
     return js_tostring(space_fill(filler))
 
-  -- rerturn the string with the string instered into the string
+  -- return the string with the string inserted
   elseif type(spacer) == 'string' then
-    if #spacer > 10 then spacer = string.sub(arg[2],0,10) end
+    if #spacer > 10 then spacer = string.sub(spacer,0,10) end
     return js_tostring(space_fill(spacer))
   end
 
