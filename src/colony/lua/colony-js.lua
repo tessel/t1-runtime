@@ -1604,7 +1604,7 @@ date_proto.toISOString = function (this)
   -- TODO don't hardcode microseconds
   return os.date('!%Y-%m-%dT%H:%M:%S.', getmetatable(this).date/1e6) .. string.format('%03dZ', (getmetatable(this).date/1e3)%1e3)
 end
-date_proto.tojson = date_proto.toISOString
+date_proto.toJSON = date_proto.toISOString
 date_proto.valueOf = date_proto.getTime
 
 date_proto.setDate = function () end
