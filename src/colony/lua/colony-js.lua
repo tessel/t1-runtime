@@ -1298,9 +1298,6 @@ local function make_callsite (frame, ctx)
   return callsite
 end
 
-local function callsite_tbd ()
-end
-
 CallSite.name = 'CallSite'    -- (nvw) not sure why this is needed?
 
 CallSite.prototype.toString = function (this)
@@ -1310,13 +1307,33 @@ CallSite.prototype.toString = function (this)
   return name .. " (" .. file .. ":" .. frame.currentline .. ")"
 end
 
-CallSite.prototype.getThis = callsite_tbd
-CallSite.prototype.getTypeName = callsite_tbd
-CallSite.prototype.getFunction = callsite_tbd
-CallSite.prototype.getFunctionName = callsite_tbd
+CallSite.prototype.getThis = function (this)
+  return this.receiver
+end
+
+CallSite.prototype.getTypeName = function (this)
+  return this.receiver and this.receiver.constructor.name
+end
+
+CallSite.prototype.getFunction = function (this)
+  return this.fun
+end
+
+CallSite.prototype.getFunctionName = function (this)
+  return this.fun.name
+end
+
+CallSite.prototype.getFileName = function (this)
+  return getmetatable(callsite).short_src
+end
+
+CallSite.prototype.getLineNumber = function (this)
+  return getmetatable(callsite).currentline
+end
+
+-- (nvw) I'm not sure if/how we can fully implement these
+local function callsite_tbd () end
 CallSite.prototype.getMethodName = callsite_tbd
-CallSite.prototype.getFileName = callsite_tbd
-CallSite.prototype.getLineNumber = callsite_tbd
 CallSite.prototype.getColumnNumber = callsite_tbd
 CallSite.prototype.getEvalOrigin = callsite_tbd
 CallSite.prototype.isToplevel = callsite_tbd
