@@ -1292,59 +1292,30 @@ global.TypeError = error_class('TypeError')
 global.URIError = error_class('URIError')
 global.NotImplementedError = error_class('NotImplementedError')
 
-global.Error.captureStackTrace = function (this, err, ctor)
-  err._frames = {}
-  local frame_idx
-  if ctor then
-    frame_idx = 0
-  else
-    frame_idx = 1
-  end
-  
-  local frame
-  local info_idx = 2     -- skip ourselves for starters
-  while true do
-    -- TODO: break if `frame_idx` past Error.stackTraceLimit
-    frame = debug.getinfo(info_idx)
-    if not frame then
-      break
-    end
-    if frame_idx > 0 then
-      -- TODO: wrap `frame` in a CallSite
-      err._frames[frame_idx] = frame
-      frame_idx = frame_idx + 1
-    elseif frame.func == ctor then
-      frame_idx = 1
-    end
-    info_idx = info_idx + 1
-  end
-end
 
-js_define_getter(error_constructor.prototype, 'stack', function (this)
-  if (global.Error.prepareStackTrace) then
-    return global.Error.prepareStackTrace(global.Error, this, this._frames)
-  end
-  
-  local s = this.toString(this)
-  local frame
-  local frame_idx = 1
-  for i, frame in ipairs(this._frames) do
-    -- TODO: handle this in CallSite.prototype.toString
-    local name = frame.name or "<anonymous>"
-    local file = string.gsub(frame.short_src, "%[[TC]%]. ", '')
-    s = s .. "\n    at " .. name .. " (" .. file .. ":" .. frame.currentline .. ")"
-  end
-  return s
-end)
-
-
+-- NOTE: this constructor mimics v8's undocumented parameters/properties
 local function CallSite (this, rcvr, fun, pos)
   this.receiver = rcvr
   this.fun = fun
-  this.pos = pos
+  this.pos = pos            -- (nvw) I think in v8 this is actually character/byte offset, not line number
+end
+
+local function make_callsite (frame, ctx)
+  local callsite = js_new(CallSite, ctx, frame.func, frame.currentline)
+  getmetatable(callsite).frame = frame
+  return callsite
 end
 
 local function callsite_tbd ()
+end
+
+CallSite.name = 'CallSite'    -- (nvw) not sure why this is needed?
+
+CallSite.prototype.toString = function (this)
+  local frame = getmetatable(this).frame
+  local name = frame.name or "<anonymous>"
+  local file = string.gsub(frame.short_src, "%[[TC]%]. ", '')
+  return name .. " (" .. file .. ":" .. frame.currentline .. ")"
 end
 
 CallSite.prototype.getThis = callsite_tbd
@@ -1361,6 +1332,55 @@ CallSite.prototype.isEval = callsite_tbd
 CallSite.prototype.isNative = callsite_tbd
 CallSite.prototype.isConstructor = callsite_tbd
 
+
+global.Error.stackTraceLimit = 10
+
+global.Error.captureStackTrace = function (this, err, ctor)
+  err._frames = {}
+  local frame_idx
+  if ctor then
+    frame_idx = 0
+  else
+    frame_idx = 1
+  end
+  
+  local info_idx = 2     -- skip ourselves for starters
+  while true do
+    local frame = nil
+    if frame_idx < global.Error.stackTraceLimit+2 then
+      frame = debug.getinfo(info_idx)
+    end
+    if not frame then
+      break
+    end
+    if frame_idx > 0 then
+      local k, v = debug.getlocal(info_idx, 1)
+      err._frames[frame_idx] = make_callsite(frame, v)
+      frame_idx = frame_idx + 1
+    elseif frame.func == ctor then
+      frame_idx = 1
+    end
+    info_idx = info_idx + 1
+  end
+end
+
+js_define_getter(error_constructor.prototype, 'stack', function (this)
+  if (global.Error.prepareStackTrace) then
+    -- NOTE: https://code.google.com/p/v8/wiki/JavaScriptStackTraceApi states that this will
+    --       actually be called when error is *created*. node seems to match this claim, however,
+    --       in Chrome 37.0.2062.94 console you have to call .stack to trigger. This seems simpler.
+    local arr = global.Array(unpack(this._frames))
+    return global.Error.prepareStackTrace(global.Error, this, arr)
+  end
+  
+  local s = this:toString()
+  local frame
+  local frame_idx = 1
+  for i, frame in ipairs(this._frames) do
+    s = s .. "\n    at " .. frame:toString()
+  end
+  return s
+end)
 
 
 -- Console
