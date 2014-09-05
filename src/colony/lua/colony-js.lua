@@ -283,7 +283,7 @@ obj_proto.toString = function (this)
   elseif type(this) == 'function' then
     return '[object Function]'
 
-  elseif getmetatable(this) and getmetatable(this).error_stack ~= nil then
+  elseif getmetatable(this) and getmetatable(this).error then
     return '[object Error]'
   elseif type(this) == 'boolean' then
     return '[object Boolean]'
@@ -1239,20 +1239,12 @@ global.Math = js_obj({
 -- Error
 
 local function error_constructor (this, str, ctor)
-  local stack = tostring(debug.traceback())
-  if not global.process.debug then
-    stack = string.gsub(stack, "\t%[[TC]%].-\n", '')
-  end
-
-  getmetatable(this).__tostring = function (this)
-    return this.message
-  end
-  getmetatable(this).error_stack = stack
-
+  getmetatable(this).__tostring = js_tostring
+  getmetatable(this).error = True
+  
   this.name = 'Error'
   this.type = 'Error'
   this.message = str
-  this._stack = stack
   global.Error.captureStackTrace(global.Error, this, ctor)
 end
 
@@ -1336,7 +1328,7 @@ CallSite.prototype.isConstructor = callsite_tbd
 global.Error.stackTraceLimit = 10
 
 global.Error.captureStackTrace = function (this, err, ctor)
-  err._frames = {}
+  local frames = {}
   local frame_idx
   if ctor then
     frame_idx = 0
@@ -1355,28 +1347,30 @@ global.Error.captureStackTrace = function (this, err, ctor)
     end
     if frame_idx > 0 then
       local k, v = debug.getlocal(info_idx, 1)
-      err._frames[frame_idx] = make_callsite(frame, v)
+      frames[frame_idx] = make_callsite(frame, v)
       frame_idx = frame_idx + 1
     elseif frame.func == ctor then
       frame_idx = 1
     end
     info_idx = info_idx + 1
   end
+  getmetatable(err).frames = frames
 end
 
 js_define_getter(error_constructor.prototype, 'stack', function (this)
+  local frames = getmetatable(this).frames
   if (global.Error.prepareStackTrace) then
     -- NOTE: https://code.google.com/p/v8/wiki/JavaScriptStackTraceApi states that this will
     --       actually be called when error is *created*. node seems to match this claim, however,
     --       in Chrome 37.0.2062.94 console you have to call .stack to trigger. This seems simpler.
-    local arr = global.Array(unpack(this._frames))
+    local arr = global.Array(unpack(frames))
     return global.Error.prepareStackTrace(global.Error, this, arr)
   end
   
   local s = this:toString()
   local frame
   local frame_idx = 1
-  for i, frame in ipairs(this._frames) do
+  for i, frame in ipairs(frames) do
     s = s .. "\n    at " .. frame:toString()
   end
   return s
