@@ -1,3 +1,12 @@
+// Copyright 2014 Technical Machine, Inc. See the COPYRIGHT
+// file at the top-level directory of this distribution.
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -6,11 +15,13 @@
 #include "lua_rapidjson.h"
 #include "../tm_json.h"
 
+/* Used to keep state and reference position for callbacks to function */
 typedef struct tm_lua_callback {
     int reference;
     lua_State *state;
 } tm_lua_callback_t;
 
+/* Handler of the callbacks that get set to call Lua functions */
 typedef struct json_parser_callback {
   tm_lua_callback_t Default;
   tm_lua_callback_t Null;
@@ -27,54 +38,64 @@ typedef struct json_parser_callback {
   tm_lua_callback_t EndArray;
 } json_parser_callback_t;
 
+/* Unfortunate global needed in order for callbacks to all have access */
 json_parser_callback_t jcb;
 
+/* Callback to Lua for parsing default values */
 void cb_Default() {
     lua_rawgeti(jcb.Default.state, LUA_REGISTRYINDEX, jcb.Default.reference);
 	lua_call(jcb.Default.state,0,0);
 }
 
+/* Callback to Lua for parsing nulls */
 void cb_Null() {
     lua_rawgeti(jcb.Null.state, LUA_REGISTRYINDEX, jcb.Null.reference);
 	lua_call(jcb.Null.state,0,0);
 }
 
+/* Callback to Lua for parsing booleans */
 void cb_Bool(bool value) {
     lua_rawgeti(jcb.Bool.state, LUA_REGISTRYINDEX, jcb.Bool.reference);
     lua_pushboolean(jcb.Bool.state,value);
 	lua_call(jcb.Bool.state,1,0);
 }
 
+/* Callback to Lua for parsing ints */
 void cb_Int(int value) {
     lua_rawgeti(jcb.Int.state, LUA_REGISTRYINDEX, jcb.Int.reference);
     lua_pushnumber(jcb.Int.state,value);
 	lua_call(jcb.Int.state,1,0);
 }
 
+/* Callback to Lua for parsing unsigned ints */
 void cb_Uint(unsigned value) {
     lua_rawgeti(jcb.Uint.state, LUA_REGISTRYINDEX, jcb.Uint.reference);
     lua_pushnumber(jcb.Uint.state,value);
 	lua_call(jcb.Uint.state,1,0);
 }
 
+/* Callback to Lua for parsing 64 bit ints */
 void cb_Int64(int64_t value) {
     lua_rawgeti(jcb.Int64.state, LUA_REGISTRYINDEX, jcb.Int64.reference);
     lua_pushnumber(jcb.Int64.state,value);
 	lua_call(jcb.Int64.state,1,0);
 }
 
+/* Callback to Lua for parsing unsigned 64 bit ints */
 void cb_Uint64(uint64_t value) {
     lua_rawgeti(jcb.Uint64.state, LUA_REGISTRYINDEX, jcb.Uint64.reference);
     lua_pushnumber(jcb.Uint64.state,value);
 	lua_call(jcb.Uint64.state,1,0);
 }
 
+/* Callback to Lua for parsing doubles */
 void cb_Double(double value) {
     lua_rawgeti(jcb.Double.state, LUA_REGISTRYINDEX, jcb.Double.reference);
     lua_pushnumber(jcb.Double.state,value);
 	lua_call(jcb.Double.state,1,0);
 }
 
+/* Callback to Lua for parsing strings */
 void cb_String(const char* value, size_t len, bool set) {
     lua_rawgeti(jcb.String.state, LUA_REGISTRYINDEX, jcb.String.reference);
     lua_pushstring(jcb.String.state,value);
@@ -83,28 +104,33 @@ void cb_String(const char* value, size_t len, bool set) {
     lua_call(jcb.String.state, 3, 0);
 }
 
+/* Callback to Lua for parsing start of an object */
 void cb_StartObject() {
     lua_rawgeti(jcb.StartObject.state, LUA_REGISTRYINDEX, jcb.StartObject.reference);
 	lua_call(jcb.StartObject.state,0,0);
 }
 
+/* Callback to Lua for parsing end of an object */
 void cb_EndObject(size_t value) {
     lua_rawgeti(jcb.EndObject.state, LUA_REGISTRYINDEX, jcb.EndObject.reference);
     lua_pushnumber(jcb.EndObject.state,value);
 	lua_call(jcb.EndObject.state,1,0);
 }
 
+/* Callback to Lua for parsing start of an array */
 void cb_StartArray() {
     lua_rawgeti(jcb.StartArray.state, LUA_REGISTRYINDEX, jcb.StartArray.reference);
 	lua_call(jcb.StartArray.state,0,0);
 }
 
+/* Callback to Lua for parsing end of an array */
 void cb_EndArray(size_t value) {
     lua_rawgeti(jcb.EndArray.state, LUA_REGISTRYINDEX, jcb.EndArray.reference);
     lua_pushnumber(jcb.EndArray.state,value);
 	lua_call(jcb.EndArray.state,1,0);
 }
 
+/* Calls Lua to deal with any error that occurs when parsing */
 void on_error(lua_State *L, const char* val, parse_error_t err) {
     lua_getfield(L, LUA_GLOBALSINDEX,"json_error");
     lua_pushstring(L,val);
@@ -113,9 +139,7 @@ void on_error(lua_State *L, const char* val, parse_error_t err) {
     lua_call(L,3,0);
 }
 
-/******************************************************************************
- * Creates the parsing handler for the parsing function to work
- *****************************************************************************/
+/* Creates the parsing handler for the parsing function to work */
 static int tm_json_reader(lua_State *L) {
     tm_json_r_handler_t rh;
     void* addr = lua_newuserdata(L, sizeof(tm_json_r_handler_t));
@@ -123,9 +147,7 @@ static int tm_json_reader(lua_State *L) {
     return 1;
 }
 
-/******************************************************************************
- * Parsing function called by lua to turn JSON strings to a Lua table
- *****************************************************************************/
+/* Parsing function called by lua to turn JSON strings to a Lua table */
 static int tm_json_read(lua_State *L) {
 
     // get the read handler passed in
@@ -204,9 +226,7 @@ static int tm_json_read(lua_State *L) {
     return 1;
 }
 
-/******************************************************************************
- * Creates the writting handler for the writing functions to work
- *****************************************************************************/
+/* Creates the writting handler for the writing functions to work */
 static int tm_json_create(lua_State *L) {
     tm_json_w_handler_t wh = tm_json_write_create();
     void* addr = lua_newuserdata(L, sizeof(tm_json_w_handler_t));
@@ -214,9 +234,7 @@ static int tm_json_create(lua_State *L) {
     return 1;
 }
 
-/******************************************************************************
- * Allows Lua call rapidjson's ability to write strings
- *****************************************************************************/
+/* Allows Lua call rapidjson's ability to write strings */
 static int tm_json_to_string (lua_State *L) {
     tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
 	const char* value = lua_tostring(L, 2);
@@ -224,9 +242,7 @@ static int tm_json_to_string (lua_State *L) {
 	return 1;
 }
 
-/******************************************************************************
- * Allows Lua call rapidjson's ability to write booleans
- *****************************************************************************/
+/* Allows Lua call rapidjson's ability to write booleans */
 static int tm_json_to_boolean(lua_State *L) {
     tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
     int value = lua_toboolean(L, 2);
@@ -234,9 +250,7 @@ static int tm_json_to_boolean(lua_State *L) {
     return 1;
 }
 
-/******************************************************************************
- * Allows Lua call rapidjson's ability to write numbers
- *****************************************************************************/
+/* Allows Lua call rapidjson's ability to write numbers */
 static int tm_json_to_number(lua_State *L) {
     tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
     lua_Number value = lua_tonumber(L, 2);
@@ -244,54 +258,42 @@ static int tm_json_to_number(lua_State *L) {
 	return 1;
 }
 
-/******************************************************************************
- * Allows Lua call rapidjson's ability to write null values
- *****************************************************************************/
+/* Allows Lua call rapidjson's ability to write null values */
 static int tm_json_to_null(lua_State *L) {
     tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
     tm_json_write_null(*wh);
 	return 1;
 }
 
-/******************************************************************************
- * Allows Lua call rapidjson's ability to write the start of objects
- *****************************************************************************/
+/* Allows Lua call rapidjson's ability to write the start of objects */
 static int tm_json_start_object(lua_State *L) {
     tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
     tm_json_write_object_start(*wh);
 	return 1;
 }
 
-/******************************************************************************
- * Allows Lua call rapidjson's ability to write the end of objects
- *****************************************************************************/
+/* Allows Lua call rapidjson's ability to write the end of objects */
 static int tm_json_end_object(lua_State *L) {
     tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
     tm_json_write_object_end(*wh);
 	return 1;
 }
 
-/******************************************************************************
- * Allows Lua call rapidjson's ability to write the start of arrays
- *****************************************************************************/
+/* Allows Lua call rapidjson's ability to write the start of arrays */
 static int tm_json_start_array(lua_State *L) {
     tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
     tm_json_write_array_start(*wh);
 	return 1;
 }
 
-/******************************************************************************
- * Allows Lua call rapidjson's ability to write the end of arrays
- *****************************************************************************/
+/* Allows Lua call rapidjson's ability to write the end of arrays */
 static int tm_json_end_array(lua_State *L) {
     tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
     tm_json_write_array_end(*wh);
 	return 1;
 }
 
-/******************************************************************************
- * Allows Lua call rapidjson's ability to write out what's in it's buffer
- *****************************************************************************/
+/* Allows Lua call rapidjson's ability to write out what's in it's buffer */
 static int tm_json_result(lua_State *L) {
     tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
     const char* str = tm_json_write_result(*wh);
@@ -299,27 +301,26 @@ static int tm_json_result(lua_State *L) {
 	return 1;
 }
 
-/******************************************************************************
- * Allows Lua call rapidjson's ability to destroy the writing handler
- *****************************************************************************/
+/* Allows Lua call rapidjson's ability to destroy the writing handler */
 static int tm_json_destroy(lua_State *L) {
     tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
     tm_json_write_destroy(*wh);
     return 1;
 }
 
+/* Creates and pushes to a table the function that Lua needs to access */
 int lua_open_rapidjson(lua_State *L) {
     
     lua_createtable(L, 0, 0);
 
     lua_pushcfunction(L, tm_json_reader);
-    lua_setfield(L, -2, "reader");
+    lua_setfield(L, -2, "create_reader");
 
     lua_pushcfunction(L, tm_json_read);
     lua_setfield(L, -2, "parse");
 
     lua_pushcfunction(L, tm_json_create);
-    lua_setfield(L, -2, "create");
+    lua_setfield(L, -2, "create_writer");
 
     lua_pushcfunction(L, tm_json_to_string);
     lua_setfield(L, -2, "to_string");

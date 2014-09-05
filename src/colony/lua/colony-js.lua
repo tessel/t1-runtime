@@ -1813,7 +1813,8 @@ end
 --|| json library
 --]]
 
--- Added rapidjson globals. TODO: eliminate zem
+-- Added rapidjson globals
+-- TODO: eliminate zem
 stack = {}
 lua_table = nil
 cur_table = nil
@@ -1821,25 +1822,8 @@ on_key = true
 prev_k = nil
 is_arr = false
 arr_lvl = 0
-error_codes = {
-	'The document is empty.',
-	'The document root must be either object or array.',
-	'The document root must not follow by other values.',
-	'Invalid value.',
-	'Missing a name for object member.',
-	'Missing a colon after a name of object member.',
-	'Missing a comma or \'}\' after an object member.',
-	'Missing a comma or \']\' after an array element.',
-	'Incorrect hex digit after \\\\u escape in string.',
-	'The surrogate pair in string is invalid.',
-	'Invalid escape character in string.',
-	'Missing a closing quotation mark in string.',
-	'Invalid encoidng in string.',
-	'Number too big to be stored in double.',
-	'Miss fraction part in number.',
-	'Miss exponent in number.',
-}
 
+-- Callback when a default value is parsed in json
 function json_read_default()
   if is_arr then
     lua_table[arr_lvl] = ''
@@ -1850,6 +1834,7 @@ function json_read_default()
   end
 end
 
+-- Callback when a null value is parsed in json
 function json_read_null()
   if is_arr then
     lua_table[arr_lvl] = 'null'
@@ -1860,6 +1845,7 @@ function json_read_null()
   end
 end
 
+-- Callback when a boolean is parsed in json
 function json_read_bool(value)
   if is_arr then
     lua_table[arr_lvl] = value
@@ -1870,6 +1856,7 @@ function json_read_bool(value)
   end
 end
 
+-- Callback when an int is parsed in json
 function json_read_int(value)
   if is_arr then
     lua_table[arr_lvl] = value
@@ -1880,6 +1867,7 @@ function json_read_int(value)
   end
 end
 
+-- Callback when a unsigned int is parsed in json
 function json_read_uint(value)
   if is_arr then
     lua_table[arr_lvl] = value
@@ -1890,6 +1878,7 @@ function json_read_uint(value)
   end
 end
 
+-- Callback when a 64 bit int is parsed in json
 function json_read_int64(value)
   if is_arr then
     lua_table[arr_lvl] = value
@@ -1900,6 +1889,7 @@ function json_read_int64(value)
   end
 end
 
+-- Callback when an unsigned 64 bit int is parsed in json
 function json_read_uint64(value)
   if is_arr then
     lua_table[arr_lvl] = value
@@ -1910,6 +1900,7 @@ function json_read_uint64(value)
   end
 end
 
+-- Callback when a double is parsed in json
 function json_read_double(value)
   if is_arr then
     lua_table[arr_lvl] = value
@@ -1920,6 +1911,7 @@ function json_read_double(value)
   end
 end
 
+-- Callback when a string is parsed in json
 function json_read_string(value)
   if is_arr then
     lua_table[arr_lvl] = value
@@ -1939,6 +1931,7 @@ function json_read_string(value)
   end
 end
 
+-- Callback when the start of an object is parsed in json
 function json_read_start_object()
   if lua_table == nil then
     lua_table = js_obj({})
@@ -1951,6 +1944,7 @@ function json_read_start_object()
   on_key = true
 end
 
+-- Callback when the end of an object is parsed in json
 function json_read_end_object(value)
   local parent_table = table.remove(stack, #stack)
   if parent_table ~= nil then
@@ -1964,6 +1958,7 @@ function json_read_end_object(value)
   on_key = true
 end
 
+-- Callback when the start of an array is parsed in json
 function json_read_start_array()
   if lua_table == nil then
     lua_table = js_arr({},0)
@@ -1976,6 +1971,7 @@ function json_read_start_array()
   is_arr = true
 end
 
+-- Callback when the end of an array is parsed in json
 function json_read_end_array(value)
   local parent_table = table.remove(stack, #stack)
   if parent_table ~= nil then
@@ -1987,9 +1983,7 @@ function json_read_end_array(value)
   is_arr = false
 end
 
--------------------------------------------------------------------------------
 -- Checks initial type and recurses through object if it needs to
--------------------------------------------------------------------------------
 function json_stringify (value, ...)
 
   local val_copy = {}     -- copies of hits in the replacer array
@@ -2102,7 +2096,7 @@ function json_stringify (value, ...)
     if call_ext then arg[1]['replacer'](nil,'',value) end
 
     -- create handler
-    local wh = rapidjson.create()
+    local wh = rapidjson.create_writer()
 
     -- array present
     if global.Array:isArray(value) then
@@ -2139,22 +2133,23 @@ function json_stringify (value, ...)
   end
 end
 
--------------------------------------------------------------------------------
 -- Takes stringified json and returns the spaced version
--------------------------------------------------------------------------------
 function json_space(str,spacer)
 
+  -- does the actual filling of the string
   function space_fill(filler)
 
-    local lvl = 0   -- the level of indentation
-    local sb = ''   -- the spaced stringified json string builder
+    local lvl = 0       -- the level of indentation
+    local sb = ''       -- the spaced stringified json string builder
+    local skip = false  -- special case flag for an empty object
         
-    -- go through each char and intert spaces and new lines as needed
+    -- go through each char and insert spaces and new lines as needed
     for i=0,#str-1 do
       -- for '{' fill the string builder and increment the level
       if str[i] == '{' then
         if str[i+1] == '}' then
-          return js_tostring('{}')
+          sb = sb..'{}'
+          skip = true
         else
           lvl = lvl + 1
           sb = sb..str[i]..'\n'
@@ -2175,9 +2170,13 @@ function json_space(str,spacer)
       -- for '}' or ']' place the new line, the filler, then the brace
       elseif str[i] == ']' or str[i] == '}' then
         lvl = lvl - 1
-        sb = sb..'\n'
-        for j=1,lvl do sb = sb..filler end
-        sb = sb..str[i]
+        if skip then
+          skip = false
+        else
+          sb = sb..'\n'
+          for j=1,lvl do sb = sb..filler end
+          sb = sb..str[i]
+        end
       -- for any non special char just add it to the builder
       else
         sb = sb..str[i]
@@ -2191,7 +2190,7 @@ function json_space(str,spacer)
   -- return the string with the number of spaces inserted
   if type(spacer) == 'number' then
     local filler = ''
-    for i=1,tonumber(spacer) do filler = filler + ' ' end
+    for i=1,spacer do filler = filler..' ' end
     return js_tostring(space_fill(filler))
 
   -- return the string with the string inserted
@@ -2202,18 +2201,18 @@ function json_space(str,spacer)
 
 end
 
--------------------------------------------------------------------------------
--- Parsed the string into a lua table
--------------------------------------------------------------------------------
+-- Parses the string into a lua table
 function json_parse(value)
 
-  -- if there's no object or array return the stringified value
-  local c = string.byte(value)
-  if c ~= 123 and c ~= 91 then return js_tostring(value) end
+  -- rapidjson will throw an error if non-objects are passed in
+  -- this circumvents those errors
+  if value == 'true' or value == 'false' or tonumber(value) then
+    return value
+  end
 
   -- parse the value and set the lua table based off callbacks
   rapidjson.parse(
-    rapidjson.reader(),
+    rapidjson.create_reader(),
     value,
     json_read_default,
     json_read_null,
@@ -2246,15 +2245,41 @@ function json_parse(value)
 
 end
 
--- prints an error message (prints the traceback if a second param is provided)
+-- called by lua_rapidjson.c when a parsing error occurs
 function json_error(val,code,offset)
-  if code == 0 then return end
-  print(val)
-  local filler = ''
-  for i=1,offset do filler = filler..' ' end
-  print(filler..'^')
-  print(debug.traceback())
-  error(error_codes[code])
+
+  -- error message starting string
+  -- TODO: replicate node messages more closely
+  error_msg = {
+    'end of input',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'end of input ',
+    'token ',
+    'token after ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+  }
+
+  -- format the offset of the value that's failing
+  local token = ''
+  if val[offset] then
+    token = val[offset]
+  elseif val[#val-1] then
+    token = val[#val-1]
+  end
+
+  -- throw a new error
+  error(js_new(global.SyntaxError,'Unexpected '..error_msg[code]..token))
+
 end
 
 global.JSON = js_obj({
