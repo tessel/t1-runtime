@@ -1241,17 +1241,19 @@ global.Math = js_obj({
 local function error_constructor (this, str, ctor)
   getmetatable(this).__tostring = js_tostring
   getmetatable(this).error = True
-  
-  this.name = 'Error'
-  this.type = 'Error'
-  this.message = str
+  if str ~= nil then
+    this.message = str
+  end
   global.Error.captureStackTrace(global.Error, this, ctor)
 end
+
+error_constructor.prototype.name = "Error"
+error_constructor.prototype.message = ""
 
 error_constructor.prototype.toString = function (this)
   if not this then
     return '(undefined)'
-  elseif this.message and this.message.length then
+  elseif this.message then
     return this.name .. ": " .. this.message
   else
      return this.name
@@ -1267,7 +1269,6 @@ local function error_class (name)
 
     error_constructor(this, str, constructor)
     this.name = name
-    this.type = name
   end
   constructor.name = name
 
