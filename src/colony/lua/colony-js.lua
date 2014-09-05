@@ -1240,7 +1240,7 @@ global.Math = js_obj({
 
 local function error_constructor (this, str, ctor)
   getmetatable(this).__tostring = js_tostring
-  getmetatable(this).error = True
+  getmetatable(this).error = true
   if str ~= nil then
     this.message = str
   end
