@@ -1238,7 +1238,7 @@ global.Math = js_obj({
 
 -- Error
 
-local function error_constructor (this, str)
+local function error_constructor (this, str, ctor)
   local stack = tostring(debug.traceback())
   if not global.process.debug then
     stack = string.gsub(stack, "\t%[[TC]%].-\n", '')
@@ -1252,18 +1252,18 @@ local function error_constructor (this, str)
   this.name = 'Error'
   this.type = 'Error'
   this.message = str
-  this.stack = stack
-end
-
-error_constructor.prototype.captureStackTrace = function ()
-  return {}
+  this._stack = stack
+  global.Error.captureStackTrace(global.Error, this, ctor)
 end
 
 error_constructor.prototype.toString = function (this)
   if not this then
     return '(undefined)'
+  elseif this.message and this.message.length then
+    return this.name .. ": " .. this.message
+  else
+     return this.name
   end
-  return this.name .. ": " .. this.message
 end
 
 local function error_class (name)
@@ -1273,7 +1273,7 @@ local function error_class (name)
       return js_new(constructor, str)
     end
 
-    error_constructor(this, str)
+    error_constructor(this, str, constructor)
     this.name = name
     this.type = name
   end
@@ -1291,6 +1291,77 @@ global.SyntaxError = error_class('SyntaxError')
 global.TypeError = error_class('TypeError')
 global.URIError = error_class('URIError')
 global.NotImplementedError = error_class('NotImplementedError')
+
+global.Error.captureStackTrace = function (this, err, ctor)
+  err._frames = {}
+  local frame_idx
+  if ctor then
+    frame_idx = 0
+  else
+    frame_idx = 1
+  end
+  
+  local frame
+  local info_idx = 2     -- skip ourselves for starters
+  while true do
+    -- TODO: break if `frame_idx` past Error.stackTraceLimit
+    frame = debug.getinfo(info_idx)
+    if not frame then
+      break
+    end
+    if frame_idx > 0 then
+      -- TODO: wrap `frame` in a CallSite
+      err._frames[frame_idx] = frame
+      frame_idx = frame_idx + 1
+    elseif frame.func == ctor then
+      frame_idx = 1
+    end
+    info_idx = info_idx + 1
+  end
+end
+
+js_define_getter(error_constructor.prototype, 'stack', function (this)
+  if (global.Error.prepareStackTrace) then
+    return global.Error.prepareStackTrace(global.Error, this, this._frames)
+  end
+  
+  local s = this.toString(this)
+  local frame
+  local frame_idx = 1
+  for i, frame in ipairs(this._frames) do
+    -- TODO: handle this in CallSite.prototype.toString
+    local name = frame.name or "<anonymous>"
+    local file = string.gsub(frame.short_src, "%[[TC]%]. ", '')
+    s = s .. "\n    at " .. name .. " (" .. file .. ":" .. frame.currentline .. ")"
+  end
+  return s
+end)
+
+
+local function CallSite (this, rcvr, fun, pos)
+  this.receiver = rcvr
+  this.fun = fun
+  this.pos = pos
+end
+
+local function callsite_tbd ()
+end
+
+CallSite.prototype.getThis = callsite_tbd
+CallSite.prototype.getTypeName = callsite_tbd
+CallSite.prototype.getFunction = callsite_tbd
+CallSite.prototype.getFunctionName = callsite_tbd
+CallSite.prototype.getMethodName = callsite_tbd
+CallSite.prototype.getFileName = callsite_tbd
+CallSite.prototype.getLineNumber = callsite_tbd
+CallSite.prototype.getColumnNumber = callsite_tbd
+CallSite.prototype.getEvalOrigin = callsite_tbd
+CallSite.prototype.isToplevel = callsite_tbd
+CallSite.prototype.isEval = callsite_tbd
+CallSite.prototype.isNative = callsite_tbd
+CallSite.prototype.isConstructor = callsite_tbd
+
+
 
 -- Console
 
