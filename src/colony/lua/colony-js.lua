@@ -1339,7 +1339,7 @@ global.Error.captureStackTrace = function (this, err, ctor)
   local info_idx = 2     -- skip ourselves for starters
   while true do
     local frame = nil
-    if frame_idx < global.Error.stackTraceLimit+2 then
+    if frame_idx <= global.Error.stackTraceLimit then
       frame = debug.getinfo(info_idx)
     end
     if not frame then
@@ -1363,7 +1363,7 @@ js_define_getter(error_constructor.prototype, 'stack', function (this)
     -- NOTE: https://code.google.com/p/v8/wiki/JavaScriptStackTraceApi states that this will
     --       actually be called when error is *created*. node seems to match this claim, however,
     --       in Chrome 37.0.2062.94 console you have to call .stack to trigger. This seems simpler.
-    local arr = global.Array(unpack(frames))
+    local arr = global:Array(unpack(frames))
     return global.Error.prepareStackTrace(global.Error, this, arr)
   end
   
