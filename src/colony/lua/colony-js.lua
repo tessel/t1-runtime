@@ -1376,7 +1376,7 @@ global.Error.captureStackTrace = function (this, err, ctor)
 end
 
 js_define_getter(error_constructor.prototype, 'stack', function (this)
-  local frames = getmetatable(this).frames
+  local frames = getmetatable(this).frames or {}
   if (global.Error.prepareStackTrace) then
     -- NOTE: https://code.google.com/p/v8/wiki/JavaScriptStackTraceApi states that this will
     --       actually be called when error is *created*. node seems to match this claim, however,
