@@ -418,15 +418,14 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
     }
     self.emit('end')
     if (self.socket != null) {
-
       // if there is still data left, wait until its sent before we end
       if (self._outgoing.length || self._sending) {
         self._queueEnd = true;
       } else {
         self.__close();
-      }
-      
+      } 
     }
+    self.removeAllListeners();
   });
 };
 

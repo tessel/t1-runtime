@@ -414,6 +414,7 @@ function _getPool(agent, opts) {
       socket.removeListener('close', handleDead);
       socket.removeListener('_free', handleFree);
       removeSocket(socket);
+      socket.destroy();
     });
     
     function handleDead() { removeSocket(socket); }
@@ -431,6 +432,7 @@ function _getPool(agent, opts) {
         freeSockets.push(socket);
       } else socket.end();
       removeSocket(socket);
+      socket.destroy();
     }
   }
   
