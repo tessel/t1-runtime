@@ -92,7 +92,7 @@ var STATUS_CODES = {
 
 // WORKAROUND: https://github.com/tessel/runtime/issues/426
 //var _closeRE = /\bclose\b/i;
-var _closeRE = /close/i;
+// var _closeRE = /close/i;
 
 
 /**
@@ -108,7 +108,7 @@ function IncomingMessage (type, socket) {
   this.rawTrailers = [];
   this.socket = this.connection = socket;
   // TODO: finish timeout forwarding/handling/cleanup! (and implement other occurences)
-  this.setTimeout = socket.setTimeout.bind(socket);
+  // this.setTimeout = socket.setTimeout.bind(socket);
 
   function js_wrap_function (fn) {
     return function () {
@@ -117,63 +117,32 @@ function IncomingMessage (type, socket) {
   }
 
   var self = this;
-  var parser = http_parser.new(type, {
-    onMessageBegin: js_wrap_function(function () {
-      self.emit('_messageBegin');
-    }),
-    onUrl: js_wrap_function(function (url) {
-      self.url = url;
-    }),
-    onHeaderField: js_wrap_function(function (field) {
-      var arr = (self._headersComplete) ? self.rawTrailers : self.rawHeaders;
-      if (arr.length + 1 > self._maxRawHeaders) return;
-      arr.push(field);
-    }),
-    onHeaderValue: js_wrap_function(function (value) {
-      var arr = (self._headersComplete) ? self.rawTrailers : self.rawHeaders,
-          key = arr[arr.length - 1].toLowerCase();
-      if (arr.length + 1 > self._maxRawHeaders) return;
-      arr.push(value);
-      var obj = (self._headersComplete) ? self.trailers : self.headers;
-      IncomingMessage._addHeaderLine(key, value, obj);
-    }),
-    onHeadersComplete: js_wrap_function(function (info) {
-      self.method = info.method;
-      self.statusCode = info.status_code;
-      self.httpVersionMajor = info.version_major;
-      self.httpVersionMinor = info.version_minor;
-      self.httpVersion = [self.httpVersionMajor, self.httpVersionMinor].join('.');
-      self._headersComplete = true;
-      self._upgrade = info.upgrade || self._upgrade;
-      if (!self._upgrade) self.emit('_headersComplete');
-      else self._unplug();
-      return (self._noContent) ? 1 : 0;
-    }),
-    onBody: js_wrap_function(function (body) {
-      var glad = self.push(body);
-      if (!glad) socket.pause();
-    }),
-    onMessageComplete: js_wrap_function(function () {
-      self.push(null);
-      self._unplug();
-    })
-  });
+
+  setImmediate(function () {
+    self.emit('_messageBegin');
+    self.url = 'http://localhost:8080/';
+    self.emit('_headersComplete');
+    self.push('CONTENT');
+    self.push(null);
+    self._unplug();
+  })
+
   function _emitError(e) {
     // NOTE: '_error' becomes ClientRequest 'error' or Server 'clientError'
-    if (!e) e = new Error(parser.getErrorString());
+    // if (!e) e = new Error(parser.getErrorString());
     self.emit('_error', e);
   }
   function _emitClose() {
     self.emit('close');
   }
   function _handleData(d) {
-    var nparsed = parser.execute(d.toString('binary'), 0, d.length);
+    // var nparsed = parser.execute(d.toString('binary'), 0, d.length);
     if (self._upgrade) self.emit('_upgrade', d.slice(nparsed));
     else if (nparsed !== d.length) _emitError();
   }
   function _handleEnd() {
-    if (parser.finish() !== 0) _emitError();
-    else self.push(null);
+    // if (parser.finish() !== 0) _emitError();
+    self.push(null);
   }
   socket.on('error', _emitError);
   socket.on('close', _emitClose);
@@ -203,44 +172,6 @@ IncomingMessage.prototype._read = function () {
 
 // NOTE: from https://github.com/joyent/node/blob/a454063ea17f94a5d456bb2666502076c0d51795/lib/_http_incoming.js#L143
 IncomingMessage._addHeaderLine = function(field, value, dest) {
-  field = field.toLowerCase();
-  switch (field) {
-    // Array headers:
-    case 'set-cookie':
-      if (!util.isUndefined(dest[field])) {
-        dest[field].push(value);
-      } else {
-        dest[field] = [value];
-      }
-      break;
-
-    // list is taken from:
-    // https://mxr.mozilla.org/mozilla/source/netwerk/protocol/http/src/nsHttpHeaderArray.cpp
-    case 'content-type':
-    case 'content-length':
-    case 'user-agent':
-    case 'referer':
-    case 'host':
-    case 'authorization':
-    case 'proxy-authorization':
-    case 'if-modified-since':
-    case 'if-unmodified-since':
-    case 'from':
-    case 'location':
-    case 'max-forwards':
-      // drop duplicates
-      if (util.isUndefined(dest[field]))
-        dest[field] = value;
-      break;
-
-    default:
-      // make comma-separated list
-      if (!util.isUndefined(dest[field]))
-        dest[field] += ', ' + value;
-      else {
-        dest[field] = value;
-      }
-  }
 };
 
 /**
@@ -253,7 +184,6 @@ function OutgoingMessage () {
   this._keepAlive = true;
   this.sendDate = false;        // NOTE: ServerResponse changes default to true
   this._chunked = true;
-  this._outbox = new PassThrough();   // buffer w/backpressure
   this._headers = {};
   this._headerNames = {};   // store original case
   this._trailer = '';
@@ -264,7 +194,7 @@ function OutgoingMessage () {
       self._chunked = false;
       self.flush();
     }
-    if (this._chunked) self._outbox.write('0\r\n'+this._trailer+'\r\n');
+    if (this._chunked) self._socket.write('0\r\n'+this._trailer+'\r\n');
   });
 }
 
@@ -275,14 +205,12 @@ OutgoingMessage.prototype._assignSocket = function (socket) {
   //       new/idle sockets get assigned syncronously by Agent.
   //       ClientRequest re-emits a public event asyncronously.
   this.emit('_socket-SYNC', socket);
-  this._outbox.pipe(socket);
+  this._socket = socket;
+  // this._outbox.pipe(socket);
   // TODO: setTimeout/setNoDelay/setSocketKeepAlive
 };
 
 OutgoingMessage.prototype._addHeaders = function (obj) {
-  Object.keys(obj).forEach(function (k) {
-    this.setHeader(k, obj[k]);
-  }, this);
 };
 
 OutgoingMessage.prototype.getHeader = function (name) {
@@ -290,59 +218,19 @@ OutgoingMessage.prototype.getHeader = function (name) {
   return this._headers[k];
 };
 OutgoingMessage.prototype.setHeader = function (name, value) {
-  if (this.headersSent) throw Error("Can't setHeader after they've been sent!");
-  var k = name.toLowerCase();
-  this._headerNames[k] = name;
-  this._headers[k] = value;
 };
 OutgoingMessage.prototype.removeHeader = function (name) {
-  if (this.headersSent) throw Error("Can't removeHeader after they've been sent!");
-  var k = name.toLowerCase();
-  delete this._headerNames[k];
-  delete this._headers[k];
 };
 
-// helper used to avoid response splitting
-function _stripCRLF(str) { return str.replace(/\r\n/g, ''); }
-
 OutgoingMessage.prototype.flush = function () {
-  var lines = [];
-  lines.push(this._mainline);
-  Object.keys(this._headers).forEach(function (k) {
-    var key = this._headerNames[k],
-        val = this._headers[k];
-    if (Array.isArray(val)) val = val.join(', ');
-    lines.push(key+': '+val);
-    if (k === 'date') this.sendDate = +this.sendDate;
-    else if (k === 'content-length') this._chunked = false;
-    else if (k === 'transfer-encoding') this._chunked = 'explicit';
-  }, this);
-  if (this._chunked === true) lines.push('Transfer-Encoding: chunked');
-  // NOTE: will be broken until https://github.com/tessel/runtime/issues/388
-  if (this.sendDate === true) lines.push('Date: '+new Date().toUTCString());
-  else this.sendDate = !!this.sendDate;   // HACK: don't expose signal above
-  lines.push('','');
-  this._outbox.write(lines.map(_stripCRLF).join('\r\n'));
+  this._socket.write("GET / HTTP/1.1\r\nHost: 10.20.49.67:8080\r\nContent-Type: text/html\r\n\r\n");
   this.headersSent = true;
 };
 
 OutgoingMessage.prototype.addTrailers = function (obj) {
-  var lines = [];
-  Object.keys(obj).forEach(function (k) {
-    var key = k,
-        val = obj[k];
-    if (Array.isArray(val)) val = val.join(', ');
-    lines.push(key+': '+val);
-  });
-  lines.push('');
-  this._trailer = lines.map(_stripCRLF).join('\r\n');
 };
 
 OutgoingMessage.prototype._write = function (chunk, enc, cb) {
-  if (!this.headersSent) this.flush();
-  if (this._chunked) this._outbox.write(chunk.length.toString(16)+'\r\n');
-  this._outbox.write(chunk, enc, cb);
-  if (this._chunked) this._outbox.write('\r\n');
 };
 
 /**
@@ -431,13 +319,16 @@ function _getPool(agent, opts) {
         freeSockets.push(socket);
       } else socket.end();
       removeSocket(socket);
+      socket.destroy();
+      socket.removeAllListeners()
     }
   }
   
   function removeSocket(socket) {
     sockets.splice(sockets.indexOf(socket), 1);
     if (requests.length && sockets.length < agent.maxSockets) {
-      addSocket().emit('_free');
+      // addSocket().emit('_free');
+      socket.emit('_free');
     }
     collectGarbage();
   }
@@ -452,6 +343,7 @@ function _getPool(agent, opts) {
     }
     if (socket) {
       sockets.push(socket);
+      console.log(socket.socket);
       req._assignSocket(socket);
     } else requests.push(req);
   };
@@ -478,17 +370,17 @@ var globalAgent = new Agent();
 
 function ClientRequest (opts, _https) {
   if (typeof opts === 'string') opts = url.parse(opts);
-  opts = util._extend({
-    host: 'localhost',
-    port: (_https) ? 443 : 80,
-    method: 'GET',
-    path: '/',
-    headers: {},
-    auth: null,
-    agent: (void 0),
-    keepAlive: false,
-    keepAliveMsecs: 1000
-  }, opts);
+  // opts = util._extend({
+  //   host: 'localhost',
+  //   port: (_https) ? 443 : 80,
+  //   method: 'GET',
+  //   path: '/',
+  //   headers: {},
+  //   auth: null,
+  //   agent: (void 0),
+  //   keepAlive: false,
+  //   keepAliveMsecs: 1000
+  // }, opts);
   if ('hostname' in opts) opts.host = opts.hostname;
   if (opts.agent === false) opts.agent = this._getAgent('single');
   else if (!opts.agent) opts.agent = this._getAgent('global');
@@ -503,30 +395,25 @@ function ClientRequest (opts, _https) {
   
   var self = this;
   this.once('_socket-SYNC', function (socket) {   // NOTE: sometimes called before _enqueueRequest returns
-    if (self._aborted) return socket.emit('agentRemove');
-    else self.abort = function () {
-      socket.emit('agentRemove');
-      socket.destroy();
-    };
     
-    // public event is always async
-    setImmediate(function () {
-      self.emit('socket', socket);
-    });
+    // // public event is always async
+    // setImmediate(function () {
+    //   self.emit('socket', socket);
+    // });
     
     var response = new IncomingMessage('response', socket);
     response._maxRawHeaders = 2000;   // also use for responses
-    if (opts.method === 'HEAD') response._noContent = true;
-    response.once('_error', function (e) {
-      self.emit('error', e);
-    });
-    if (opts.method === 'CONNECT') response._upgrade = true;      // parser can't detect (2xx vs. 101)
-    response.once('_upgrade', function (head) {
-      var event = (opts.method === 'CONNECT') ? 'connect' : 'upgrade',
-          handled = self.emit(event, response, socket, head);
-      if (!handled) socket.destroy();
-      socket.emit('agentRemove');
-    });
+    // if (opts.method === 'HEAD') response._noContent = true;
+    // response.once('_error', function (e) {
+    //   self.emit('error', e);
+    // });
+    // if (opts.method === 'CONNECT') response._upgrade = true;      // parser can't detect (2xx vs. 101)
+    // response.once('_upgrade', function (head) {
+    //   var event = (opts.method === 'CONNECT') ? 'connect' : 'upgrade',
+    //       handled = self.emit(event, response, socket, head);
+    //   if (!handled) socket.destroy();
+    //   socket.emit('agentRemove');
+    // });
     response.on('_headersComplete', function () {
       if (response.statusCode === 100) {
         response._restartParser();
@@ -537,25 +424,23 @@ function ClientRequest (opts, _https) {
       if (!handled) response.resume();    // dump it
     });
     response.once('end', function () {
-      var close = _closeRE.test(self._headers['connection']) || _closeRE.test(response.headers['connection']);
-      if (close) {
-        socket.emit('agentRemove');
-        socket.end();
-      } else socket.emit('_free');
+      // var close = _closeRE.test(self._headers['connection']) || _closeRE.test(response.headers['connection']);
+      socket.emit('_free');
     });
-    self.on('error', self.abort);
+    // self.on('error', self.abort);
   });
+  // this._assignSocket(net.createConnection(opts));
   opts.agent._enqueueRequest(this, opts);
 }
 
 util.inherits(ClientRequest, OutgoingMessage);
 
 ClientRequest.prototype.abort = function () {     // NOTE: post-socket, replaced w/logic above
-  this._aborted = true;
+  // this._aborted = true;
 };
 
 ClientRequest.prototype._getAgent = function (type) {
-  return (type === 'global') ? globalAgent : new Agent();
+  return new Agent();
 };
 
 
@@ -640,9 +525,9 @@ Server._commonSetup = function () {       // also used by 'https'
       if (!handled) socket.destroy();
     });
     req.once('_headersComplete', function () {
-      if (_closeRE.test(req.headers['connection'])) {
-        res._keepAlive = false;
-      }
+      // if (_closeRE.test(req.headers['connection'])) {
+      //   res._keepAlive = false;
+      // }
       if (req.httpVersionMajor < 1 || (req.httpVersionMajor === 1 && req.httpVersionMinor < 1)) {
         res._keepAlive = false;
       }
