@@ -31,6 +31,9 @@ end
 
 static int js_proto_get (lua_State* L)
 {
+	luaL_argcheck(L, !lua_isnil(L, 1), 1, "non-nil value expected");
+	luaL_argcheck(L, !lua_isnil(L, 2), 2, "non-nil value expected");
+
 	// stack: self, proto, key
 
 	// if key == '__proto__' then return proto; end
@@ -42,16 +45,7 @@ static int js_proto_get (lua_State* L)
 	}
 
 	// proto = rawget(funcproxies, proto) or proto
-	if (lua_isfunction(L, 2)) {
-		lua_getglobal(L, "funcproxies");
-		lua_pushvalue(L, 2);
-		lua_rawget(L, -2);
-		if (lua_isnil(L, -1)) {
-			return 1;
-		}
-	} else {
-		lua_pushvalue(L, 2);
-	}
+	lua_pushvalue(L, 2);
 
 	// -- self, proto, key ... proto
 	lua_pushvalue(L, 3);

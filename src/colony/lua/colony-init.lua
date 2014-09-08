@@ -70,6 +70,7 @@ end
 
 local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_proto, date_proto = {}, {}, {}, {}, {}, {}, {}, {}
 funcproxies = {}
+-- setmetatable(funcproxies, {__mode = 'v'})
 
 _G.funcproxies = funcproxies
 
@@ -89,10 +90,15 @@ end
 
 function js_define_setter (self, key, fn)
   if type(self) == 'function' then
-    self = js_func_proxy(self)
+    mt = self.__mt
+    if not mt then
+      self.__mt = {}
+      mt = self.__mt
+    end
+  else
+    mt = get_unique_metatable(self)
   end
 
-  local mt = get_unique_metatable(self)
   rawset(self, key, nil)
   if not mt.getters then
     mt.getters = {}
@@ -107,11 +113,17 @@ function js_define_setter (self, key, fn)
 end
 
 function js_define_getter (self, key, fn)
+  local mt
   if type(self) == 'function' then
-    self = js_func_proxy(self)
+    mt = self.__mt
+    if not mt then
+      self.__mt = {}
+      mt = self.__mt
+    end
+  else
+    mt = get_unique_metatable(self)
   end
-
-  local mt = get_unique_metatable(self)
+  
   rawset(self, key, nil)
   if not mt.getters then
     mt.getters = {}
@@ -292,37 +304,23 @@ js_obj(date_proto)
 -- so when we access an __index or __newindex, we
 -- set up an intermediary object to handle it
 
-setmetatable(funcproxies, {__mode = 'k'})
+-- setmetatable(funcproxies, {__mode = 'k'})
 
 function js_func_proxy (fn)
-  local proxy = rawget(funcproxies, fn)
-  if not proxy then
-    proxy = js_obj({})
-    proxy.__proto__ = func_proto
-    rawset(funcproxies, fn, proxy)
-  end
-  return proxy
+  return fn;
 end
 
 func_mt.__index = function (self, key)
   if key == 'prototype' then
-    local proxy = js_func_proxy(self)
-    if proxy.prototype == nil then
-      proxy.prototype = js_obj({constructor = self})
-    end
-    return proxy.prototype
-  end
-
-  local proxy = rawget(funcproxies, self)
-  if proxy then
-    return js_proto_get(self, proxy, key)
+    self.prototype = js_obj({constructor = self})
+    return self.prototype
   end
   return js_proto_get(self, func_proto, key)
 end
-func_mt.__newindex = function (this, key, value)
-  local proxy = js_func_proxy(this)
-  proxy[key] = value
-end
+-- func_mt.__newindex = function (this, key, value)
+--   local proxy = js_func_proxy(this)
+--   proxy[key] = value
+-- end
 func_mt.__tostring = js_tostring
 func_mt.__tovalue = js_valueof
 -- func_mt.__tostring = function ()
