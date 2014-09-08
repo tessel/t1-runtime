@@ -69,10 +69,6 @@ end
 -- built-in prototypes
 
 local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_proto, date_proto = {}, {}, {}, {}, {}, {}, {}, {}
-funcproxies = {}
--- setmetatable(funcproxies, {__mode = 'v'})
-
-_G.funcproxies = funcproxies
 
 -- NOTE: js_proto_get defined in colony_init.c
 -- NOTE: js_getter_index defined in colony_init.c
@@ -304,12 +300,6 @@ js_obj(date_proto)
 -- so when we access an __index or __newindex, we
 -- set up an intermediary object to handle it
 
--- setmetatable(funcproxies, {__mode = 'k'})
-
-function js_func_proxy (fn)
-  return fn;
-end
-
 func_mt.__index = function (self, key)
   if key == 'prototype' then
     self.prototype = js_obj({constructor = self})
@@ -317,10 +307,6 @@ func_mt.__index = function (self, key)
   end
   return js_proto_get(self, func_proto, key)
 end
--- func_mt.__newindex = function (this, key, value)
---   local proxy = js_func_proxy(this)
---   proxy[key] = value
--- end
 func_mt.__tostring = js_tostring
 func_mt.__tovalue = js_valueof
 -- func_mt.__tostring = function ()
@@ -441,9 +427,6 @@ end
 -- pairs
 
 function js_pairs (arg)
-  if type(arg) == 'function' then
-    arg = js_func_proxy(arg)
-  end
   if type(arg) == 'string' then
     -- todo what
     return js_next, {}
@@ -606,7 +589,6 @@ colony.js_getter_index = js_getter_index
 colony.js_define_getter = js_define_getter
 colony.js_define_setter = js_define_setter
 colony.js_proto_get = js_proto_get
-colony.js_func_proxy = js_func_proxy
 colony.js_with = js_with
 
 colony.obj_proto = obj_proto
