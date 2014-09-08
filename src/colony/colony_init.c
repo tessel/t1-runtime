@@ -18,7 +18,7 @@
 /*
 local function js_proto_get (self, proto, key)
    if key == '__proto__' then return proto; end
-   proto = rawget(funcproxies, proto) or proto
+   proto = proto
    return rawget(proto, key) or (getmetatable(proto) and getmetatable(proto).__index and getmetatable(proto).__index(self, key, proto)) or nil
 end
 */
@@ -44,7 +44,7 @@ static int js_proto_get (lua_State* L)
 		return 1;
 	}
 
-	// proto = rawget(funcproxies, proto) or proto
+	// proto = proto
 	lua_pushvalue(L, 2);
 
 	// -- self, proto, key ... proto

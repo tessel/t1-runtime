@@ -34,7 +34,6 @@ local js_getter_index = colony.js_getter_index
 local js_define_getter = colony.js_define_getter
 local js_define_setter = colony.js_define_setter
 local js_proto_get = colony.js_proto_get
-local js_func_proxy = colony.js_func_proxy
 
 local obj_proto = colony.obj_proto
 local num_proto = colony.num_proto
