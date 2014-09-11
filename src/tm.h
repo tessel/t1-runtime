@@ -148,7 +148,8 @@ typedef void* tm_inflate_t;
 enum {
   TM_RAW = 0,
   TM_ZLIB = 1,
-  TM_GZIP = 2
+  TM_GZIP = 2,
+  TM_UNZIP = 3
 } tm_flate_t;
 
 size_t tm_deflate_alloc_size ();
