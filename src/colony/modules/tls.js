@@ -25,7 +25,6 @@ function normalizeConnectArgs(listArgs) {
   var args = net._normalizeConnectArgs(listArgs);
   var options = args[0];
   var cb = args[1];
-  console.log('args', args);
   if (util.isObject(listArgs[1])) {
     options = util._extend(options, listArgs[1]);
   } else if (util.isObject(listArgs[2])) {

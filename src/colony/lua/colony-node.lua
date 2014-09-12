@@ -1054,7 +1054,6 @@ package.preload.http_parser = function ()
         end,
         onHeadersComplete = function (info)
           if obj.onHeadersComplete then
-            print('--------- CMON TIM ---->', info.url);
             obj.onHeadersComplete(parser, js_obj({
               statusCode = info.status_code,
               method = info.method,

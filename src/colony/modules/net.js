@@ -142,7 +142,6 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   var port = +opts.port;
   var host = opts.host || "127.0.0.1";
   var cb = args[1];
-  console.log('p, h, c', port, host, callback);
 
   self.remotePort = port;
   self.remoteAddress = host;
