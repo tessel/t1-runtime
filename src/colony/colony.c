@@ -94,3 +94,17 @@ uint8_t* colony_tobuffer (lua_State* L, int index, size_t* buf_len)
   buf = (uint8_t *) colony_getbufferptr(L, index, buf_len);
   return buf;
 }
+
+void colony_ipc_emit (lua_State* L, char *type, void* data, size_t size)
+{
+  // Get preload table.
+  lua_getglobal(L, "_colony_emit");
+  if (lua_isnil(L, -1)) {
+    lua_pop(L, 1);
+  } else {
+    lua_pushstring(L, type);
+    uint8_t* buf = colony_createbuffer(L, size);
+    memcpy(buf, data, size);
+    tm_checked_call(L, 2);
+  }
+}

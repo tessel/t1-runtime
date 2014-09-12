@@ -18,7 +18,23 @@
 local bit = require('bit32')
 local tm = require('tm')
 
+-- local logger = assert(io.open('colony.log', 'w+'))
+-- debug.sethook(function ()
+--   logger:write(debug.traceback())
+--   logger:write('\n\n')
+-- end, 'c', 1000)
+
 -- lua methods
+
+-- tonumber that returns NaN instead of nil
+_G.tonumbervalue = function (val)
+  val = tonumber(val)
+  if val == nil then
+    return 0/0
+  else
+    return val
+  end
+end
 
 function table.augment (t1,t2)
   for i=1,#t2 do
@@ -53,27 +69,13 @@ end
 
 -- built-in prototypes
 
-local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_proto = {}, {}, {}, {}, {}, {}, {}
+local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_proto, date_proto = {}, {}, {}, {}, {}, {}, {}, {}
 funcproxies = {}
 
--- get from prototype chain while maintaining "self"
+_G.funcproxies = funcproxies
 
-local function js_proto_get (self, proto, key)
-  if key == '__proto__' then return proto; end
-  proto = rawget(funcproxies, proto) or proto
-  return rawget(proto, key) or (getmetatable(proto) and getmetatable(proto).__index and getmetatable(proto).__index(self, key, proto)) or nil
-end
-
-local function js_getter_index (proto)
-  return function (self, key, _self)
-    local mt = getmetatable(_self or self)
-    local getter = mt.getters[key]
-    if getter then
-      return getter(self)
-    end
-    return rawget(_self or self, key) or js_proto_get(self, proto, key)
-  end
-end
+-- NOTE: js_proto_get defined in colony_init.c
+-- NOTE: js_getter_index defined in colony_init.c
 
 local function js_setter_index (proto)
   return function (self, key, value)
@@ -84,6 +86,44 @@ local function js_setter_index (proto)
     end
     rawset(self, key, value)
   end
+end
+
+function js_define_setter (self, key, fn)
+  if type(self) == 'function' then
+    self = js_func_proxy(self)
+  end
+
+  local mt = get_unique_metatable(self)
+  rawset(self, key, nil)
+  if not mt.getters then
+    mt.getters = {}
+    mt.__index = js_getter_index
+  end
+  if not mt.setters then
+    mt.setters = {}
+    mt.__newindex = js_setter_index(mt.proto)
+  end
+
+  mt.setters[key] = fn
+end
+
+function js_define_getter (self, key, fn)
+  if type(self) == 'function' then
+    self = js_func_proxy(self)
+  end
+
+  local mt = get_unique_metatable(self)
+  rawset(self, key, nil)
+  if not mt.getters then
+    mt.getters = {}
+    mt.__index = js_getter_index
+  end
+  if not mt.setters then
+    mt.setters = {}
+    mt.__newindex = js_setter_index(mt.proto)
+  end
+
+  mt.getters[key] = fn
 end
 
 local function js_tostring (this)
@@ -138,54 +178,99 @@ nil_mt.__tostring = function (arg)
 end
 
 nil_mt.__add = function (op1, op2)
-  return "null" + op2
+  if op1 == nil then
+    op1 = 'null'
+  end
+  if op2 == nil and type(op1) == 'string' then
+    op2 = 'null'
+  elseif op2 == nil then
+    op2 = 0
+  end
+  return op1 + op2
 end
 
-nil_mt.__eq = function (op1, op2)
-  return op2 == nil
+nil_mt.__sub = function (op1, op2)
+  return (tonumber(op1) or 0) - (tonumber(op2) or 0)
+end
+
+nil_mt.__mul = function (op1, op2)
+  return (tonumber(op1) or 0) * (tonumber(op2) or 0)
+end
+
+nil_mt.__div = function (op1, op2)
+  return (tonumber(op1) or 0) / (tonumber(op2) or 0)
+end
+
+nil_mt.__mod = function (op1, op2)
+  return (tonumber(op1) or 0) % (tonumber(op2) or 0)
+end
+
+nil_mt.__pow = function (op1, op2)
+  return (tonumber(op1) or 0) ^ (tonumber(op2) or 0)
 end
 
 nil_mt.__lt = function (op1, op2)
-  return op2 > 0
+  return type(op2) == 'table' or op2 > 0
 end
 
 nil_mt.__le = function (op1, op2)
-  return op2 >= 0
+  return type(op2) == 'table' or op2 >= 0
 end
-
 
 --[[
 --  Object
 --]]
 
+function get_unique_metatable (this)
+  local mt = getmetatable(this)
+  if mt and mt.shared then
+    setmetatable(this, {
+      __index = mt.__index,
+      __newindex = mt.__newindex,
+      __tostring = mt.__tostring,
+      __tovalue = mt.__tovalue,
+      proto = mt.proto,
+      shared = false
+    });
+    return getmetatable(this)
+  end
+  return mt
+end
+
 function js_obj_index (self, key)
   return js_proto_get(self, obj_proto, key)
 end
 
-function js_obj (o)
-  local mt = getmetatable(o) or {}
-  local proto = obj_proto
-  if o.__proto__ then
-    proto = o.__proto__
-    o.__proto__ = nil
-  end
-  mt.__index = function (self, key)
-    return js_proto_get(self, proto, key)
-  end
-  mt.__newindex = function (this, key, value)
-    if key == '__proto__' then
-      mt.proto = value
-      mt.__index = function (self, key)
-        return js_proto_get(self, value, key)
-      end
-    else
-      rawset(this, key, value)
+function js_obj_newindex (this, key, value)
+  if key == '__proto__' then
+    local mt = get_unique_metatable(this)
+    mt.proto = value
+    mt.__index = function (self, key)
+      return js_proto_get(self, value, key)
     end
+  else
+    rawset(this, key, value)
   end
-  mt.__tostring = js_tostring
-  mt.__tovalue = js_valueof
-  mt.proto = proto
-  setmetatable(o, mt)
+end
+
+local js_obj_mt = {
+  __index = js_obj_index,
+  __newindex = js_obj_newindex,
+  __tostring = js_tostring,
+  __tovalue = js_valueof,
+  proto = obj_proto,
+  shared = true
+};
+
+function js_obj (o)
+  if rawget(o, '__proto__') then
+    local proto = o.__proto__
+    rawset(o, '__proto__', nil)
+    setmetatable(o, js_obj_mt)
+    o.__proto__ = proto
+  else
+    setmetatable(o, js_obj_mt)
+  end
   return o
 end
 
@@ -196,6 +281,8 @@ js_obj(num_proto)
 js_obj(bool_proto)
 js_obj(str_proto)
 js_obj(arr_proto)
+js_obj(regex_proto)
+js_obj(date_proto)
 
 
 --[[
@@ -203,7 +290,7 @@ js_obj(arr_proto)
 --]]
 
 -- Functions don't have objects on them by default
--- so when we access an __index or __newindex, we 
+-- so when we access an __index or __newindex, we
 -- set up an intermediary object to handle it
 
 setmetatable(funcproxies, {__mode = 'k'})
@@ -255,7 +342,7 @@ str_mt.getters = {
   end
 }
 str_mt.__index = function (self, key)
-  -- custom js_getter_index for strings 
+  -- custom js_getter_index for strings
   -- allows numerical indices
   local mt = getmetatable(self)
   local getter = mt.getters[key]
@@ -281,38 +368,35 @@ str_mt.proto = str_proto
 --  Array
 --]]
 
-function array_getter_length (this)
-  return math.max((this[0] ~= nil and {#this + 1} or {#this})[1], getmetatable(this).length)
-end
-
 function array_setter (this, key, val)
   if type(key) == 'number' then
-    local mt = getmetatable(this)
-    mt.length = math.max(mt.length, (tonumber(key) or 0) + 1)
+    rawset(this, 'length', math.max(rawget(this, 'length'), (tonumber(key) or 0) + 1))
   end
-  rawset(this, key, val)
+  if key ~= 'length' then
+    rawset(this, key, val)
+  end
 end
+
+function js_arr_index (self, key)
+  return js_proto_get(self, arr_proto, key)
+end
+
+local arr_mt_cached = {
+  __index = js_arr_index,
+  __newindex = array_setter,
+  __tostring = js_tostring,
+  __valueof = js_valueof,
+  proto = arr_proto,
+  shared = true
+}
 
 function js_arr (arr, len)
   if len == nil then
-    len = #arr
-    if len > 1 or arr[0] ~= nil then
-      len = len + 1
-    end
+    error('js_arr invoked without length')
   end
 
-  setmetatable(arr, {
-    getters = {
-      length = array_getter_length
-    },
-    values = {},
-    length = len,
-    __index = js_getter_index(arr_proto),
-    __newindex = array_setter,
-    __tostring = js_tostring,
-    __valueof = js_valueof,
-    proto = arr_proto
-  })
+  rawset(arr, 'length', len)
+  setmetatable(arr, arr_mt_cached)
   return arr
 end
 
@@ -335,16 +419,17 @@ local function js_void () end
 
 -- a = object, b = last value
 local function js_next (a, b, c)
+  local len = rawget(a, 'length')
   local mt = getmetatable(a)
 
   -- first value in arrays should be 0
-  if b == nil and mt and (mt.length ~= nil and mt.length > 0) then
+  if b == nil and type(len) == 'number' and len > 0 then
     return 0
   end
 
   -- next value after 0 should be 1
-  if type(b) == 'number' and mt and mt.length ~= nil then
-    if b < a.length - 1 then
+  if type(b) == 'number' and len then
+    if b < len - 1 then
       return b + 1
     end
     b = nil
@@ -352,7 +437,7 @@ local function js_next (a, b, c)
   local k = b
   repeat
     k = next(a, k)
-  until mt == nil or mt.length == nil or type(k) ~= 'number'
+  until (len == nil or type(k) ~= 'number') and not (k == 'length' and mt.proto == arr_proto)
   return k
 end
 
@@ -360,8 +445,9 @@ end
 
 function js_pairs (arg)
   if type(arg) == 'function' then
-    return pairs({})
-  elseif type(arg) == 'string' then
+    arg = js_func_proxy(arg)
+  end
+  if type(arg) == 'string' then
     -- todo what
     return js_next, {}
   else
@@ -397,7 +483,7 @@ end
 
 function js_new (f, ...)
   if type(f) ~= 'function' then
-    error('TypeError: object is not a function')
+    error(js_new(global.TypeError, 'object is not a function'))
   end
   local o = {}
   local mt = {
@@ -406,7 +492,7 @@ function js_new (f, ...)
     end,
     __newindex = function (this, key, value)
       if key == '__proto__' then
-        local mt = getmetatable(this)
+        local mt = get_unique_metatable(this)
         mt.proto = value
         mt.__index = function (self, key)
           return js_proto_get(self, value, key)
@@ -434,6 +520,7 @@ function js_arguments (...)
 
   local obj = global._obj(a);
   obj.length = len
+  get_unique_metatable(obj).arguments = true
   return obj
 end
 
@@ -471,8 +558,8 @@ function js_with (env, fn)
     end
     idx = 1 + idx
   end
-  
-  local mt = getmetatable(env) or {};
+
+  local mt = get_unique_metatable(env) or {};
 
   mt.__index = function (this, key)
     if locals[key] ~= nil then
@@ -494,7 +581,7 @@ function js_with (env, fn)
   setmetatable(env, mt);
 
   setfenv(fn, env)
-  
+
   return fn(js_with)
 end
 
@@ -519,6 +606,8 @@ colony.js_seq = js_seq
 colony.js_in = js_in
 colony.js_setter_index = js_setter_index
 colony.js_getter_index = js_getter_index
+colony.js_define_getter = js_define_getter
+colony.js_define_setter = js_define_setter
 colony.js_proto_get = js_proto_get
 colony.js_func_proxy = js_func_proxy
 colony.js_with = js_with
@@ -530,3 +619,4 @@ colony.func_proto = func_proto
 colony.str_proto = str_proto
 colony.arr_proto = arr_proto
 colony.regex_proto = regex_proto
+colony.date_proto = date_proto

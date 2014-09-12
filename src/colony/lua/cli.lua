@@ -20,6 +20,12 @@ if _tessel_lib then
 	colony.run('tessel')
 end
 
+-- also temporary.
+if _wifi_cc3000_lib then
+	colony.precache['wifi-cc3000'] = _wifi_cc3000_lib
+	colony.run('wifi-cc3000')
+end
+
 -- Command line invocation
 if #arg < 2 then
   print('Usage: colony script.js')
@@ -30,4 +36,6 @@ if string.sub(p, 1, 1) ~= '.' then
   p = './' .. p
 end
 
-colony.run(p)
+colony.global:setImmediate(function ()
+	colony.run(p)
+end)

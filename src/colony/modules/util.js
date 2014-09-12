@@ -7,6 +7,8 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+// Portions Copyright Joyent, Inc. and other Node contributors
+
 /**
  * util.inherits
  */
@@ -39,11 +41,19 @@ function isNumber (arg) {
 }
 
 function isNull (arg) {
-  return arg == null;
+  return arg === null;
+}
+
+function isUndefined (arg) {
+  return typeof arg == 'undefined';
 }
 
 function isObject (arg) {
   return typeof arg == 'object';
+}
+
+function isBoolean(arg) {
+  return typeof arg == 'boolean';
 }
 
 function isArray (arg) {
@@ -85,6 +95,22 @@ function debuglog(set) {
   return debugs[set];
 };
 
+// TODO: Make it work like Node's inspect
+function inspect(object) {
+  console.log(object);
+}
+
+function extend(origin, add) {
+  // Don't do anything if add isn't an object
+  if (!add || typeof add !== 'object') return origin;
+
+  var keys = Object.keys(add);
+  var i = keys.length;
+  while (i--) {
+    origin[keys[i]] = add[keys[i]];
+  }
+  return origin;
+}
 
 /**
  * Public API
@@ -94,6 +120,7 @@ exports.inherits = inherits;
 exports.deprecate = deprecate;
 exports.isString = isString;
 exports.isBuffer = isBuffer;
+exports.isBoolean = isBoolean;
 exports.isNumber = isNumber;
 exports.isNull = isNull;
 exports.isObject = isObject;
@@ -101,5 +128,13 @@ exports.isArray = isArray;
 exports.isFunction = isFunction;
 exports.isDate = isDate;
 exports.isRegExp = isRegExp;
+exports.dir = exports.inspect = inspect;
 exports.isNullOrUndefined = isNullOrUndefined;
+exports.isUndefined = isUndefined;
 exports.debuglog = debuglog;
+
+/**
+ * Non-public API (but that doesn't stop some people)
+ */
+
+exports._extend = extend;

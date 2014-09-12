@@ -1,13 +1,12 @@
-/* test rig */ var t = 1, tmax = 3
-function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + ' -', d); }
-console.log(t + '..' + tmax);
-ok(process.versions.colony, 'running in colony')
+var tap = require('../tap');
+
+tap.count(2);
 
 try {
 	throw Error("Test");
-	ok(false)
+	tap.ok(false)
 } catch (e) {
-	ok(true)
+	tap.ok(true)
 }
 
-ok(Error("Test").message)
+tap.ok(Error("Test").message)

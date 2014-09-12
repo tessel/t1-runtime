@@ -20,6 +20,8 @@ int colony_runtime_open();
 int colony_runtime_run(const char *path, const char **argv, int argc);
 int colony_runtime_close();
 
+void colony_init (lua_State* L);
+
 int tm_eval_lua(lua_State *L, const char* script);
 int tm_checked_call(lua_State *L, int nargs);
 
@@ -35,4 +37,4 @@ void colony_createobj (lua_State* L, int size, int proto);
 uint8_t* colony_createbuffer (lua_State* L, int size);
 const uint8_t* colony_toconstdata (lua_State* L, int index, size_t* buf_len);
 uint8_t* colony_tobuffer (lua_State* L, int index, size_t* buf_len);
-
+void colony_ipc_emit (lua_State* L, char *type, void* data, size_t size);

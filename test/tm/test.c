@@ -46,22 +46,95 @@ TEST doubles()
 	PASS();
 }
 
+
 TEST random_test()
 {
+	size_t read = 0;
 	uint8_t buf[16] = { 0 };
-	tm_random(buf, sizeof(buf));
-	print_buffer(buf, sizeof(buf));
+	tm_entropy_seed();
+	tm_random_bytes(buf, sizeof(buf), &read);
+	// print_buffer(buf, sizeof(buf));
 
 	PASS();
 }
 
 
-SUITE(tm_buf)
+unsigned char hello_gz[] = {
+  0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x01, 0x0d,
+  0x00, 0xf2, 0xff, 0x48, 0x45, 0x4c, 0x4c, 0x4f, 0x20, 0x57, 0x4f, 0x52,
+  0x4c, 0x44, 0x0a, 0x00, 0x1a, 0xdf, 0xa2, 0xe6, 0x0d, 0x00, 0x00, 0x00
+};
+unsigned int hello_gz_len = 36;
+
+unsigned char* helloworld = (unsigned char *) "HELLO WORLD\n";
+size_t helloworld_len = sizeof("HELLO WORLD\n");
+
+TEST tm_deflate_test()
+{
+	uint8_t out[1024*16] = { 0 };
+	size_t out_total = 0;
+	size_t out_len = sizeof(out), out_written = 0, in_read = 0;
+
+	uint8_t in[1024*16] = { 0 };
+	size_t in_total = 0;
+
+	{
+		tm_deflate_t deflator;
+		tm_deflate_alloc(&deflator);
+
+		ASSERT_EQ(tm_deflate_start(deflator, TM_GZIP, 1), 0);
+
+		ASSERT_EQ(tm_deflate_write(deflator, helloworld, helloworld_len, &in_read, &out[out_total], out_len - out_total, &out_written), 0);
+		out_total += out_written;
+		ASSERT_EQ(out[0], 0x1F); // magic
+		ASSERT_EQ(out[1], 0x8b); // magic
+		ASSERT_EQ(in_read, helloworld_len);
+
+		ASSERT_EQ(tm_deflate_end(deflator, &out[out_total], out_len - out_total, &out_written), 0);
+		out_total += out_written;
+
+		// Check compiled version.
+		ASSERT_BUF_N_EQ(hello_gz, out, hello_gz_len);
+	}
+
+	{
+		size_t in_len = sizeof(in), out_read = 0, in_written = 0;
+
+		tm_inflate_t inflator;
+		tm_inflate_alloc(&inflator);
+
+		ASSERT_EQ(tm_inflate_start(inflator, TM_GZIP), 0);
+
+		out_len = out_total;
+		for (size_t offset = 0; offset < out_len; ) {
+			size_t in_chunk_size = out_len - offset < 10 ? out_len - offset : 10;
+			out_read = 0;
+			int status = tm_inflate_write(inflator, &out[out_read + offset], in_chunk_size, &out_read, &in[in_total], in_len - in_total, &in_written);
+			ASSERT_EQ(status, 0);
+			ASSERT_FALSE(out_read == 0 && in_written == 0);
+
+			offset += out_read;
+			in_total += in_written;
+		}
+
+		ASSERT_EQ(tm_inflate_end(inflator, &in[in_total], in_len - in_total, &in_written), 0);
+		in_total += in_written;
+
+		// Compares result to "hello world"
+		ASSERT_BUF_N_EQ(in, helloworld, in_total);
+	}
+
+	PASS();
+}
+
+SUITE(tm)
 {
 	RUN_TEST(floats);
 	RUN_TEST(doubles);
 	RUN_TEST(random_test);
+	RUN_TEST(tm_deflate_test);
 }
+
 
 
 /**
@@ -170,7 +243,7 @@ GREATEST_MAIN_DEFS();
 int main(int argc, char **argv)
 {
 	GREATEST_MAIN_BEGIN();      /* command-line arguments, initialization. */
-	// RUN_SUITE(tm_buf);
+	RUN_SUITE(tm);
 	// RUN_SUITE(runtime);
 	RUN_SUITE(unicode);
 	GREATEST_MAIN_END();        /* display results */

@@ -1,7 +1,9 @@
-console.log('1..2')
+var tap = require('../tap');
+
+tap.count(2);
 
 var d = [3,2,1];
-if (!d) console.log("not ok -", d); else console.log('ok')
+tap.ok(d);
 
 var _d = [1,2,3];
-if (!_d) console.log("not ok -", _d); else console.log('ok')
+tap.ok(_d);

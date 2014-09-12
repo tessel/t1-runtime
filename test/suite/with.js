@@ -1,7 +1,6 @@
-/* test rig */ var t = 1, tmax = 1
-function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + ' -', d); }
-console.log(t + '..' + tmax);
-ok(process.versions.colony, 'running in colony')
+var tap = require('../tap');
+
+tap.count(7);
 
 var internal = function () {
 	return 'external';
@@ -19,15 +18,15 @@ var obj = {
 
 var a = 5;
 with (obj) {
-	console.log(internal() == 'internal' ? 'ok 1' : 'not ok 1');
-	console.log(external() == 'external' ? 'ok 2' : 'not ok 2');
+	tap.eq(internal(), 'internal')
+	tap.eq(external(), 'external');
 	obj.external = function () {
 		return 'internal';
 	}
-	console.log(external() == 'internal' ? 'ok 3' : 'not ok 3');
+	tap.eq(external(), 'internal');
 	a = 6;
 }
-console.log(a == 6 ? 'ok 4' : 'not ok 4');
+tap.eq(a, 6);
 
 t = 5;
 var a, x, y;
@@ -39,6 +38,6 @@ with (Math) {
   y = r * sin(PI / 2);
 }
 
-ok(a == Math.PI * 100)
-ok(x == -10)
-ok(y == 10)
+tap.eq(a, Math.PI * 100)
+tap.eq(x, -10)
+tap.eq(y, 10)

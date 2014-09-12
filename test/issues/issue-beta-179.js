@@ -1,5 +1,6 @@
-console.log('1..2');
-var i = 0;
+var tap = require('../tap');
+
+tap.count(2);
 
 var util = require('util');
 var events = require('events');
@@ -20,18 +21,18 @@ c.once('booted', bootSequence.bind(c));
 
 function bootSequence(data) {
   setImmediate(function() {
-    console.log(data, ++i, '-', this.name);
+    tap.ok(data, this.name);
   }.bind(this));
 }
 
-t.emit('booted', 'ok');
+t.emit('booted', true);
 
-c.emit('booted', 'ok');
+c.emit('booted', true);
 
 console.log('# no more not oks');
 
-t.emit('booted', 'not ok');
+t.emit('booted', false);
 
-c.emit('booted', 'not ok');
+c.emit('booted', false);
 
-t.emit('booted', 'not ok');
+t.emit('booted', false);

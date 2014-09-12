@@ -304,6 +304,7 @@ int tm_fs_write (tm_fs_file_handle* fd, const uint8_t *buf, size_t size) {
 			}
 			memcpy(fd->ent->file.data+fd->position, buf, size);
 			fd->position += size;
+			return 0;
 		default:
 			return -EINVAL;
 	}

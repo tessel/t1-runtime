@@ -13,7 +13,6 @@
 
 local bit = require('bit32')
 local tm = require('tm')
-local http_parser = require('http_parser')
 
 -- locals
 
@@ -32,6 +31,8 @@ local js_seq = colony.js_seq
 local js_in = colony.js_in
 local js_setter_index = colony.js_setter_index
 local js_getter_index = colony.js_getter_index
+local js_define_getter = colony.js_define_getter
+local js_define_setter = colony.js_define_setter
 local js_proto_get = colony.js_proto_get
 local js_func_proxy = colony.js_func_proxy
 
@@ -41,6 +42,7 @@ local func_proto = colony.func_proto
 local str_proto = colony.str_proto
 local arr_proto = colony.arr_proto
 local regex_proto = colony.regex_proto
+local date_proto = colony.date_proto
 
 local global = colony.global
 
@@ -187,7 +189,7 @@ function from_base64(to_decode)
     local char = string.sub(to_decode, i, i)
     local offset, _ = string.find(index_table, char)
     if offset == nil then
-      error("Invalid character '" .. char .. "' found.")
+      error(js_new(global.Error, "Invalid character '" .. char .. "' found."))
     end
 
     bit_pattern = bit_pattern .. string.sub(to_binary(offset-1), 3)
@@ -244,7 +246,7 @@ local buffer_proto = js_obj({
     local targetBuffer = getmetatable(target).buffer
     local targetBufferLength = getmetatable(target).bufferlen
     if not sourceBuffer or not targetBuffer then
-      error('Buffer::copy requires a buffer source and buffer target')
+      error(js_new(global.TypeError, 'Buffer::copy requires a buffer source and buffer target'))
     end
     targetStart = tonumber(targetStart)
     sourceStart = tonumber(sourceStart)
@@ -256,7 +258,7 @@ local buffer_proto = js_obj({
     end
 
     if targetStart > targetBufferLength then
-      error('targetStart out of bounds')
+      error(js_new(global.RangeError, 'targetStart out of bounds'))
     end
 
     if not targetStart or targetStart < 0 then
@@ -279,35 +281,62 @@ local buffer_proto = js_obj({
     buf:copy(this, offset, 0, length)
     return length
   end,
-  toString = function (this, encoding)
+  toString = function (this, encoding, offset, endOffset)
+
     local sourceBuffer = getmetatable(this).buffer
-    local sourceBufferLength = getmetatable(this).bufferlen
+    local sourceBufferLength = getmetatable(this).bufferlen;
 
-    local str = tm.buffer_tostring(sourceBuffer, sourceBufferLength)
+    if offset == nil or offset < 0 then
+      offset = 0
+    end
 
-    if encoding == 'base64' then
-      str = to_base64(str)
+    if endOffset == nil or endOffset > sourceBufferLength then
+      endOffset = sourceBufferLength;
+    end
+
+    if endOffset < offset then
+      return '';
+    end
+
+    if encoding == nil then
+      encoding = 'utf8'
+    end
+    encoding = string.lower(encoding);
+    
+    local str = tm.buffer_tostring(getmetatable(this).buffer, offset, endOffset);
+
+    if encoding == 'utf8' or encoding == 'utf-8' 
+      or encoding == 'binary' or encoding == 'ascii' then
+      return str;
+    elseif encoding == 'base64' then
+      return to_base64(str);
     elseif encoding == 'hex' then
       str = string.gsub(str, '(.)', function (c)
-        return string.format('%02x', string.byte(c))
+        return string.format('%02x', string.byte(c));
       end)
+      return str;
+    elseif  encoding == 'ucs2' or encoding == 'ucs-2' 
+      or encoding == 'utf16le' or encoding == 'utf-16le' then
+      return error(js_new(global.NotImplementedError, 'Encoding not implemented yet: ' + encoding));
+    else
+      error(js_new(global.TypeError, 'Unknown encoding: ' + encoding));
     end
-    
-    return str
   end,
   toJSON = function (this)
     local arr = {}
-    for i=0,this.length-1 do
+    local len = this.length
+    local lenmax = len - 1
+    for i=0,lenmax do
       arr[i] = this[i]
     end
-    return js_arr(arr)
+    return js_arr(arr, len)
   end,
 
   -- Internal use only
   _random = function (this)
     local sourceBuffer = getmetatable(this).buffer
     local sourceBufferLength = getmetatable(this).bufferlen
-    
+
     return tm.random_bytes(sourceBuffer, 0, tonumber(sourceBufferLength));
   end
 })
@@ -319,7 +348,7 @@ function read_buf (this, pos, no_assert, size, fn, le)
 
   if not (pos >= 0 and pos <= sourceBufferLength - size) then
     if not no_assert then
-      error('RangeError: Trying to access beyond buffer length')
+      error(js_new(global.RangeError, 'Trying to access beyond buffer length'))
     end
 
     if pos >= sourceBufferLength then
@@ -361,7 +390,7 @@ function write_buf (this, value, pos, no_assert, size, fn, le)
 
   if not (pos >= 0 and pos <= sourceBufferLength - size) then
     if not no_assert then
-      error('RangeError: Trying to access beyond buffer length')
+      error(js_new(global.RangeError, 'Trying to access beyond buffer length'))
     end
 
     local tmp = tm.buffer_create(4)
@@ -448,8 +477,8 @@ local function Buffer (this, arg, encoding)
   if type(arg) == 'number' then
     length = tonumber(arg)
   else
-    str = arg
-    length = arg.length
+    str = arg or ''
+    length = arg and arg.length or 0
   end
 
   -- encoding first check
@@ -459,7 +488,7 @@ local function Buffer (this, arg, encoding)
     length = string.len(str)
   elseif type(str) == 'string' and encoding == 'hex' then
     if string.len(str) % 2 ~= 0 or string.gsub(str, '[a-fA-F0-9]', '') ~= '' then
-      error('Invalid hex string.')
+      error(js_new(global.TypeError, 'Invalid hex string.'))
     end
     str = string.lower(str)
     length = string.len(str) / 2
@@ -505,7 +534,7 @@ end
 
 Buffer.concat = function (this, args, len)
   -- Proper usage
-  if not args then
+  if not global.Array.isArray(nil, args) then
     error(js_new(global.TypeError, 'Usage: Buffer.concat(list, [length])'))
   end
 
@@ -551,54 +580,67 @@ EventEmitter.prototype.listeners = function (this, type)
     this._events = js_obj({})
   end
   if not this.hasOwnProperty:call(this._events, type) then
-    this._events[type] = js_arr({})
+    this._events[type] = js_arr({}, 0)
   end
   return this._events[type]
 end
 
-EventEmitter.prototype.addListener = function (this, type, f)
-  if (f.listener) then this:emit("newListener", type, f.listener);
-  else this:emit("newListener", type, f);
+EventEmitter.prototype.addListener = function (this, eventName, f)
+  if (type(f) ~= "function") then
+    error(js_new(global.TypeError, 'Supplied listener is not a function.'));
   end
-  if this._maxListeners ~= 0 and this:listeners(type):push(f) > (this._maxListeners or 10) then
-    global.console:warn("Possible EventEmitter memory leak detected. " + this._events[type].length + " listeners added. Use emitter.setMaxListeners() to increase limit.")
+  if (f.listener) then
+    this:emit("newListener", eventName, f.listener);
+  else
+    this:emit("newListener", eventName, f);
+  end
+  if this._maxListeners ~= 0 and this:listeners(eventName):push(f) > (this._maxListeners or 10) then
+    global.console:warn("Possible EventEmitter memory leak detected. " + this._events[eventName].length + " listeners added. Use emitter.setMaxListeners() to increase limit.")
   end
   return this
 end
 
 EventEmitter.prototype.on = EventEmitter.prototype.addListener
 
-EventEmitter.prototype.once = function (this, type, f)
+EventEmitter.prototype.once = function (this, eventName, f)
   local g = nil
+  if (type(f) ~= "function") then
+      error(js_new(global.TypeError, 'Supplied listener is not a function.'));
+  end
   g = function (this, ...)
-    this:removeListener(type, g);
+    this:removeListener(eventName, g);
     f(this, ...)
   end
   g.listener = f;
-  this:on(type, g)
+  this:on(eventName, g)
 end
 
 EventEmitter.prototype.removeListener = function (this, type, f)
 
-  local i = this:listeners(type):indexOf(f); 
+  type = tostring(type) or ''
+  if not f then
+    error(js_new(global.TypeError, 'Supplied listener is not a function.'))
+  end
+
+  local i = this:listeners(type):indexOf(f);
   local callback = f;
 
   if (f.listener) then
     callback = f.listener;
   end
 
-  -- If the listener wasn't found 
-  if i ~= -1 then 
+  -- If the listener wasn't found
+  if i ~= -1 then
     -- the index is the index of the callback listener
     this:listeners(type):splice(i, 1);
     this:emit("removeListener", type, callback);
   end
-  
+
   return this
 end
 
 EventEmitter.prototype.removeAllListeners = function (this, type)
-  
+
   -- If no events, just return
   if (not this._events) then
     return;
@@ -620,24 +662,35 @@ EventEmitter.prototype.removeAllListeners = function (this, type)
 
     -- Remove each of them
     for k in pairs(listeners) do
-      this:removeListener(type, listeners[k]);
+      if listeners[k] then
+        this:removeListener(type, listeners[k]);
+      end
     end
     return this;
   end
 end
 
 EventEmitter.prototype.emit = function (this, type, ...)
-  if not this._events or not this._events[type] then
-    return
+  local count = 0
+  if this._events and this._events[type] then
+    local fns, listeners = {}, this._events[type]
+    for i=0,listeners.length-1 do
+      table.insert(fns, listeners[i])
+    end
+    count = #fns
+    for i=1,#fns do
+      fns[i](this, ...)
+    end
   end
-  local fns, listeners = {}, this._events[type]
-  for i=0,listeners.length do
-    table.insert(fns, listeners[i])
+  if type == 'error' and count == 0 then
+    local args = table.pack(...)
+    if js_instanceof(args[1], global.Error) then
+      error(args[1])
+    else
+      error(js_new(global.TypeError, 'Uncaught, unspecified "error" event.'))
+    end
   end
-  for i=1,#fns do
-    fns[i](this, ...)
-  end
-  return #fns
+  return count
 end
 
 EventEmitter.prototype.setMaxListeners = function (this, maxListeners)
@@ -646,16 +699,16 @@ EventEmitter.prototype.setMaxListeners = function (this, maxListeners)
 end
 
 
-EventEmitter.listenerCount = function(this, emitter, event) 
+EventEmitter.listenerCount = function(this, emitter, event)
   local ret;
-  
-  if not emitter._events or not emitter._events[event] then 
+
+  if not emitter._events or not emitter._events[event] then
     ret = 0;
 
   elseif (type(emitter._events[event]) == "function") then
     ret = 1;
 
-  else 
+  else
     return emitter._events[event].length;
   end
 
@@ -673,13 +726,14 @@ global.process.memoryUsage = function (ths)
     heapUsed=collectgarbage('count')*1024
   });
 end
-global.process.platform = "colony"
+global.process.platform = "tessel"
+global.process.arch = "armv7-m"
 global.process.versions = js_obj({
   node = "0.10.0",
   colony = "0.10.0"
 })
 global.process.EventEmitter = EventEmitter
-global.process.argv = js_arr({})
+global.process.argv = js_arr({}, 0)
 global.process.env = js_obj({})
 global.process.exit = function (this, code)
   tm.exit(code)
@@ -688,6 +742,16 @@ global.process.cwd = function ()
   return tm.cwd()
 end
 global.process.nextTick = global.setImmediate
+global.process.version = global.process.versions.node
+
+-- DEPLOY_TIME workaround for setting environmental time
+
+global.Object:defineProperty(global.process.env, 'DEPLOY_TIMESTAMP', {
+  set = function (this, value)
+    tm.timestamp_update((tonumber(value or 0) or 0)*1e3)
+    rawset(this, 'DEPLOY_TIMESTAMP', value)
+  end
+});
 
 -- simple process.ref() and process.unref() options
 
@@ -704,17 +768,29 @@ global.process.unref = function ()
   end
 end
 
+global.process.umask = function(ths, value)
+  -- Return standard octal 0022
+  return 18;
+end
+
 
 --[[
 --|| global variables
 --]]
 
+function abssource (ret)
+  if string.sub(ret, 1, 2) == './' then
+    ret = os.getenv('PWD') + string.sub(ret, 2)
+  end
+  return ret
+end
+
 global:__defineGetter__('____dirname', function (this)
-  return string.gsub(string.sub(debug.getinfo(3).source, 2), "/?[^/]+$", "")
+  return abssource(string.gsub(string.sub(debug.getinfo(3).source, 2), "/?[^/]+$", ""))
 end)
 
 global:__defineGetter__('____filename', function (this)
-  return string.sub(debug.getinfo(3).source, 2)
+  return abssource(string.sub(debug.getinfo(3).source, 2))
 end)
 
 
@@ -800,20 +876,21 @@ local function fs_exists (path)
   --   return file:close() and true
   -- end
 end
- 
+
 
 local LUA_DIRSEP = '/'
 
 -- https://github.com/leafo/lapis/blob/master/lapis/cmd/path.lua
 local function path_normalize (path)
   while string.find(path, "%w+/%.%./") or string.find(path, "/%./") do
-    path = string.gsub(path, "%w+/%.%./", "/")
+    path = string.gsub(path, "/[%w-_]+/%.%./", "/")
+    path = string.gsub(path, "[%w-_]+/%.%./", "")
     path = string.gsub(path, "/%./", "/")
   end
   return path
 end
 
--- Returns string with any leading directory components removed. If specified, also remove a trailing suffix. 
+-- Returns string with any leading directory components removed. If specified, also remove a trailing suffix.
 -- Copied and adapted from http://dev.alpinelinux.org/alpine/acf/core/acf-core-0.4.20.tar.bz2/acf-core-0.4.20/lib/fs.lua
 local function path_basename (string_, suffix)
   string_ = string_ or ''
@@ -830,7 +907,7 @@ local function path_dirname (string_)
   string_ = string.gsub (string_, LUA_DIRSEP ..'$', '')
   local basename = path_basename(string_)
   string_ = string.sub(string_, 1, #string_ - #basename - 1)
-  return(string_)  
+  return(string_)
 end
 
 -- lookup and execution
@@ -840,7 +917,6 @@ colony.cache = {}
 local function require_resolve (origname, root)
   root = root or './'
   local name = origname
-  -- print('<-', root, name)
   if string.sub(name, 1, 1) == '.' then
     if string.sub(name, -3) == '.js' then
       name = string.sub(name, 1, -4)
@@ -854,17 +930,30 @@ local function require_resolve (origname, root)
     if colony.precache[name] or colony.cache[name] then
       root = ''
     else
-      -- TODO climb hierarchy for node_modules
+      -- climb hierarchy for node_modules
       local fullname = name
       while string.find(name, '/') do
         name = path_dirname(name)
       end
-      while not fs_exists(root .. 'node_modules/' .. name) and not fs_exists(root .. 'node_modules/' .. name .. '/package.json') and string.find(path_dirname(root), "/") do
-        root = path_dirname(root) .. '/'
+      
+      -- On PC, we want to support node_modules from any folder. (Crudely.)
+      if not COLONY_EMBED and string.sub(root, 1, 1) == '.' then
+        root = path_normalize(path_normalize(os.getenv("PWD")) .. '/' .. root)
+      end
+
+      while not fs_exists(root .. 'node_modules/' .. name .. '/package.json') do
+        local next_root = path_dirname(root) .. '/'
+        if next_root == root then
+          -- we've searched all the way up through available path
+          root = nil
+          break
+        else
+          root = next_root
+        end
       end
       if not root then
         -- no node_modules folder found
-        return root .. name, false
+        return name, false
       end
       root = root .. 'node_modules/'
       if string.find(fullname, '/') then
@@ -892,7 +981,7 @@ local function require_resolve (origname, root)
     local p = path_normalize(root .. name)
     if string.sub(origname, -5) == '.json' or fs_exists(p .. '.json') then
       name = name .. '.json'
-    else 
+    else
       name = name .. '.js'
     end
   end
@@ -914,7 +1003,7 @@ local function require_load (p)
         res = function (global, module)
           module.exports = parsed
         end
-      else 
+      else
         res = assert(loadstring(colony._load(p), "@"..p))()
       end
     end
@@ -938,8 +1027,16 @@ colony.run = function (name, root, parent)
     return colony.cache[p].exports
   end
   local res = pfound and require_load(p)
+
+  -- If we can't find the file, they may have passed in a folder
+  -- eg. lib may need to resolve to lib/index.js, not lib.js
+  if not res then
+    local extensionIndex = string.find(p, '.js');
+    p = string.sub(p, 1, extensionIndex-1) + "/index.js";
+    res = require_load(p)
+  end
   if not pfound or not res then
-    error('Could not find module "' .. p .. '"')
+    error(js_new(global.Error, 'Could not find module "' .. p .. '"'))
   end
 
   -- Run the script and return its value.
@@ -957,8 +1054,57 @@ colony.run = function (name, root, parent)
     -- Return the new script.
     return colony.run(value, path_dirname(scriptpath) .. '/', colony.cache[scriptpath])
   end
-  
+  colony.global.require.cache = colony.cache
+
   colony.cache[p] = js_obj({exports=js_obj({}),parent=parent}) --dummy
   res(colony.global, colony.cache[p])
   return colony.cache[p].exports
+end
+
+package.preload.http_parser = function ()
+  local http_parser = require('http_parser_lua')
+
+  local mod = js_obj({
+    HTTPParser = function (type)
+      local obj, parser
+      local proxyobj = {
+        onHeaderField = function (field)
+          if obj.onHeaderField then
+            obj.onHeaderField(parser, field, 0, #field)
+          end
+        end,
+        onHeaderValue = function (field)
+          if obj.onHeaderValue then
+            obj.onHeaderValue(parser, field, 0, #field)
+          end
+        end,
+        onHeadersComplete = function (info)
+          if obj.onHeadersComplete then
+            obj.onHeadersComplete(parser, js_obj({
+              statusCode = info.status_code,
+              method = info.method,
+              url = info.url,
+            }))
+          end
+        end,
+        onMessageComplete = function ()
+          if obj.onMessageComplete then
+            obj.onMessageComplete(parser)
+          end
+        end
+      }
+      if type == 'request' or type == 0 then
+        obj = {}
+        parser = http_parser.new('request', proxyobj)
+      else
+        obj = {}
+        parser = http_parser.new('response', proxyobj)
+      end
+      obj.execute = function (this, data, start, len)
+        return parser:execute(data:toString(), start, len)
+      end
+      return obj
+    end
+  })
+  return mod
 end

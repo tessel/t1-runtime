@@ -10,12 +10,14 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+#include <math.h>
 
 #include "tm.h"
 #include "colony.h"
 #include "order32.h"
 
 #ifdef ENABLE_TLS
+#include <sha2.h>
 #include <crypto.h>
 #endif
 
@@ -86,6 +88,8 @@ static int l_tm_log(lua_State* L)
 /**
  * Net
  */
+
+#ifdef ENABLE_NET
 
 static int l_tm_hostname_lookup (lua_State* L)
 {
@@ -186,13 +190,10 @@ static int l_tm_tcp_close (lua_State* L)
 static int l_tm_tcp_connect (lua_State* L)
 {
   tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
-  uint8_t ip0 = (uint8_t) lua_tonumber(L, 2);
-  uint8_t ip1 = (uint8_t) lua_tonumber(L, 3);
-  uint8_t ip2 = (uint8_t) lua_tonumber(L, 4);
-  uint8_t ip3 = (uint8_t) lua_tonumber(L, 5);
-  uint16_t port = (uint16_t) lua_tonumber(L, 6);
+  uint32_t addr = (uint32_t) lua_tonumber(L, 2);
+  uint16_t port = (uint16_t) lua_tonumber(L, 3);
 
-  lua_pushnumber(L, tm_tcp_connect(socket, ip0, ip1, ip2, ip3, port));
+  lua_pushnumber(L, tm_tcp_connect(socket, addr, port));
   return 1;
 }
 
@@ -202,9 +203,12 @@ static int l_tm_tcp_write (lua_State* L)
   tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
   size_t len;
   const uint8_t* buf = colony_toconstdata(L, 2, &len);
+  
+  if (buf == NULL) return -1;
 
-  tm_tcp_write(socket, buf, len);
-  return 0;
+  lua_pushnumber(L, tm_tcp_write(socket, buf, len));
+  
+  return 1;
 }
 
 
@@ -242,12 +246,16 @@ static int l_tm_tcp_listen (lua_State* L)
 static int l_tm_tcp_accept (lua_State* L)
 {
   uint32_t addr;
+  uint16_t port;
   tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
 
-  lua_pushnumber(L, tm_tcp_accept(socket, &addr));
+  lua_pushnumber(L, tm_tcp_accept(socket, &addr, &port));
   lua_pushnumber(L, addr);
-  return 2;
+  lua_pushnumber(L, port);
+  return 3;
 }
+
+#endif
 
 #ifdef ENABLE_TLS
 
@@ -277,22 +285,55 @@ static int l_tm_ssl_context_free (lua_State* L)
 }
 
 static int l_tm_ssl_session_create (lua_State* L)
-{ 
+{
   tm_ssl_session_t session;
 
   tm_ssl_ctx_t ctx = (tm_ssl_ctx_t) lua_touserdata(L, 1);
   tm_socket_t sock = (tm_socket_t) lua_tonumber(L, 2);
-
-  int res = tm_ssl_session_create(&session, ctx, sock);
-
-  if (res > 0) {
-    lua_pushnil(L);
-  } else {
-    lua_pushlightuserdata(L, session);
+  const char* host_name = NULL;
+  if (!lua_isnil(L, 3)) {
+    host_name = lua_tostring(L, 3);
   }
-  return 1;
+
+  int res = tm_ssl_session_create(&session, ctx, sock, host_name);
+
+  lua_pushlightuserdata(L, session);
+  lua_pushnumber(L, res);
+  return 2;
 }
 
+static int l_tm_ssl_session_altname (lua_State* L)
+{
+  tm_ssl_session_t session = (tm_ssl_session_t) lua_touserdata(L, 1);
+  size_t index = (size_t) lua_tonumber(L, 2);
+
+  const char* altname = NULL;
+  int res = tm_ssl_session_altname(&session, index, &altname);
+
+  if (altname == NULL) {
+    lua_pushnil(L);
+  } else {
+    lua_pushstring(L, altname);
+  }
+  lua_pushnumber(L, res);
+  return 2;
+}
+
+static int l_tm_ssl_session_cn (lua_State* L)
+{
+  tm_ssl_session_t session = (tm_ssl_session_t) lua_touserdata(L, 1);
+
+  const char* cn = NULL;
+  int res = tm_ssl_session_cn(&session, &cn);
+
+  if (cn == NULL) {
+    lua_pushnil(L);
+  } else {
+    lua_pushstring(L, cn);
+  }
+  lua_pushnumber(L, res);
+  return 2;
+}
 
 static int l_tm_ssl_session_free (lua_State* L)
 {
@@ -418,9 +459,13 @@ static int l_tm_buffer_set (lua_State *L)
 {
   uint8_t *ud = (uint8_t *) lua_touserdata(L, 1);
   size_t index = (size_t) lua_tonumber(L, 2);
-  uint8_t newvalue = (uint8_t) lua_tonumber(L, 3);
-
-  ud[index] = newvalue;
+  double newvalue = (double) lua_tonumber(L, 3);
+  
+  if (newvalue < 0) {
+    ud[index] = 0x100 - (((uint32_t) -newvalue) % 0x100);
+  } else {
+    ud[index] = (((uint32_t) newvalue) % 0x100);
+  }
   return 0;
 }
 
@@ -486,7 +531,7 @@ static int l_tm_buffer_read_float (lua_State *L)
   uint8_t *ud = (uint8_t *) lua_touserdata(L, 1);
   size_t index = (size_t) lua_tonumber(L, 2);
   uint8_t le = (int) lua_tonumber(L, 3);
-  
+
   uint8_t *a = &ud[index];
   float out = 0;
   char* temp = (char*) &out;
@@ -504,7 +549,7 @@ static int l_tm_buffer_read_double (lua_State *L)
   uint8_t *ud = (uint8_t *) lua_touserdata(L, 1);
   size_t index = (size_t) lua_tonumber(L, 2);
   uint8_t le = (int) lua_tonumber(L, 3);
-  
+
   uint8_t *a = &ud[index];
   double out = 0;
   char* temp = (char*) &out;
@@ -523,7 +568,7 @@ static int l_tm_buffer_write_float (lua_State *L)
   size_t index = (size_t) lua_tonumber(L, 2);
   float value = (float) lua_tonumber(L, 3);
   uint8_t le = (int) lua_tonumber(L, 4);
-  
+
   uint8_t *a = &ud[index];
   char* temp = (char*) &value;
   if (le ^ (O32_HOST_ORDER == O32_BIG_ENDIAN)) {
@@ -540,11 +585,11 @@ static int l_tm_buffer_write_double (lua_State *L)
   size_t index = (size_t) lua_tonumber(L, 2);
   double value = (double) lua_tonumber(L, 3);
   uint8_t le = (int) lua_tonumber(L, 4);
-  
+
   uint8_t *a = &ud[index];
   char* temp = (char*) &value;
   if (le ^ (O32_HOST_ORDER == O32_BIG_ENDIAN)) {
-    a[0] = temp[0]; a[1] = temp[1]; a[2] = temp[2]; a[3] = temp[3]; a[4] = temp[4]; a[5] = temp[5]; a[6] = temp[6]; a[7] = temp[7]; 
+    a[0] = temp[0]; a[1] = temp[1]; a[2] = temp[2]; a[3] = temp[3]; a[4] = temp[4]; a[5] = temp[5]; a[6] = temp[6]; a[7] = temp[7];
   } else {
     a[0] = temp[7]; a[1] = temp[6]; a[2] = temp[5]; a[3] = temp[4]; a[4] = temp[3]; a[5] = temp[2]; a[6] = temp[1]; a[7] = temp[0];
   }
@@ -582,9 +627,10 @@ static int l_tm_buffer_copy (lua_State *L)
 static int l_tm_buffer_tostring (lua_State *L)
 {
   uint8_t *source = (uint8_t *) lua_touserdata(L, 1);
-  size_t source_len = (int) lua_tonumber(L, 2);
-
-  lua_pushlstring(L, (char *) source, source_len);
+  size_t offset = (int) lua_tonumber(L, 2);
+  size_t endOffset = (int) lua_tonumber(L, 3);
+  source += offset;
+  lua_pushlstring(L, (char *) source, endOffset-offset);
   return 1;
 }
 
@@ -890,6 +936,7 @@ static int l_tm_ucs2_str_charat (lua_State* L)
   return 1;
 }
 
+#ifdef ENABLE_NET
 
 uint32_t tm__sync_gethostbyname (const char *domain);
 
@@ -901,6 +948,8 @@ static int l_tm__sync_gethostbyname (lua_State* L)
   return 1;
 }
 
+#endif
+
 static int l_tm_itoa (lua_State* L)
 {
   long long value = (long long) lua_tonumber(L, 1);
@@ -910,10 +959,162 @@ static int l_tm_itoa (lua_State* L)
   char buf[256] = { 0 };
   tm_itoa(value, buf, radix == 0 ? 10 : radix);
   buf[255] = 0;
-  
+
   lua_pushstring(L, buf);
   return 1;
 }
+
+/**
+ * deflate / inflate
+ */
+
+static int l_tm_deflate_start (lua_State *L)
+{
+  uint8_t type = (uint8_t) lua_tonumber(L, 1);
+  size_t level = (size_t) lua_tonumber(L, 2);
+
+  tm_deflate_t deflate = (tm_deflate_t) lua_newuserdata(L, tm_deflate_alloc_size());
+
+  // Need minimum 32kb dictionary size
+  size_t out_len = 64*1024, out_total = 0;
+  colony_createbuffer(L, out_len);
+
+  int status = tm_deflate_start(deflate, type, level);
+  lua_pushnumber(L, out_total);
+
+  lua_pushnumber(L, status);
+  return 4;
+}
+
+static int l_tm_deflate_write (lua_State *L)
+{
+  tm_deflate_t deflate = (tm_deflate_t) lua_touserdata(L, 1);
+  size_t out_len = 0;
+  uint8_t* out = colony_tobuffer(L, 2, &out_len);
+  size_t out_total = (size_t) lua_tonumber(L, 3);
+
+  size_t in_len = 0;
+  const uint8_t* in = colony_toconstdata(L, 4, &in_len);
+  size_t in_total = (size_t) lua_tonumber(L, 5);
+
+  // TODO check for < half of buffer available
+
+  size_t out_written = 0, in_written = 0;
+  int status = tm_deflate_write(deflate, &in[in_total], in_len - in_total, &in_written, &out[out_total], out_len - out_total, &out_written);
+
+  lua_pushvalue(L, 2);
+  lua_pushnumber(L, out_total + out_written);
+
+  lua_pushvalue(L, 4);
+  lua_pushnumber(L, in_total + in_written);
+
+  lua_pushnumber(L, status);
+  return 5;
+}
+
+static int l_tm_deflate_end (lua_State *L)
+{
+  tm_deflate_t deflate = (tm_deflate_t) lua_touserdata(L, 1);
+  size_t out_len = 0;
+  uint8_t* out = colony_tobuffer(L, 2, &out_len);
+  size_t out_total = (size_t) lua_tonumber(L, 3);
+
+  // TODO check for < half of buffer available
+
+  size_t out_written = 0;
+  int status = tm_deflate_end(deflate, &out[out_total], out_len - out_total, &out_written);
+
+  lua_pushvalue(L, 2);
+  lua_pushnumber(L, out_total + out_written);
+
+  lua_pushnumber(L, status);
+  return 3;
+}
+
+static int l_tm_inflate_start (lua_State *L)
+{
+  uint8_t type = (uint8_t) lua_tonumber(L, 1);
+
+  tm_inflate_t inflate = (tm_inflate_t) lua_newuserdata(L, tm_inflate_alloc_size());
+
+  // Need minimum 32kb dictionary size
+  size_t out_len = 64*1024, out_total = 0;
+  colony_createbuffer(L, out_len);
+
+  int status = tm_inflate_start(inflate, type);
+  lua_pushnumber(L, out_total);
+
+  lua_pushnumber(L, status);
+  return 4;
+}
+
+static int l_tm_inflate_write (lua_State *L)
+{
+ tm_inflate_t inflate = (tm_inflate_t) lua_touserdata(L, 1);
+ size_t out_len = 0;
+ uint8_t* out = colony_tobuffer(L, 2, &out_len);
+ size_t out_total = (size_t) lua_tonumber(L, 3);
+
+ size_t in_len = 0;
+ const uint8_t* in = colony_toconstdata(L, 4, &in_len);
+ size_t in_total = (size_t) lua_tonumber(L, 5);
+
+ // TODO check for < half of buffer available
+
+ size_t out_written = 0, in_written = 0;
+ int status = tm_inflate_write(inflate, &in[in_total], in_len - in_total, &in_written, &out[out_total], out_len - out_total, &out_written);
+
+ lua_pushvalue(L, 2);
+ lua_pushnumber(L, out_total + out_written);
+
+ lua_pushvalue(L, 4);
+ lua_pushnumber(L, in_total + in_written);
+
+ lua_pushnumber(L, status);
+ return 5;
+}
+
+static int l_tm_inflate_end (lua_State *L)
+{
+ tm_inflate_t inflate = (tm_inflate_t) lua_touserdata(L, 1);
+ size_t out_len = 0;
+ uint8_t* out = colony_tobuffer(L, 2, &out_len);
+ size_t out_total = (size_t) lua_tonumber(L, 3);
+
+ // TODO check for < half of buffer available
+
+ size_t out_written = 0;
+ int status = tm_inflate_end(inflate, &out[out_total], out_len - out_total, &out_written);
+
+ lua_pushvalue(L, 2);
+ lua_pushnumber(L, out_total + out_written);
+
+ lua_pushnumber(L, status);
+ return 3;
+}
+
+/*Approxidate*/
+
+#include <approxidate.h>
+
+static int l_tm_approxidate_milli (lua_State *L) 
+{
+  char* date_string = (char*)lua_tostring(L, 1);
+
+  struct timeval tv;
+  approxidate(date_string, &tv);
+
+  double sec = (double)tv.tv_sec;
+  double usec = (double)tv.tv_usec;
+
+  double millisec = sec * 1000;
+  double micro_milli = floor(usec/1000);
+  double since_epoch = millisec+micro_milli;
+
+  lua_pushnumber(L, since_epoch);
+  return 1;
+}
+
 
 /**
  * Random
@@ -958,13 +1159,42 @@ static int l_tm_hmac_sha1 (lua_State *L)
   return 1;
 }
 
-#else
+#define L_TM_HASH(x, X) static int l_tm_hash_##x##_create (lua_State *L) \
+  { \
+    X##_CTX* ctx = (X##_CTX *) lua_newuserdata(L, sizeof(X##_CTX)); \
+    X##_Init(ctx); \
+    return 1; \
+  } \
+  \
+  static int l_tm_hash_##x##_update (lua_State *L) \
+  { \
+    X##_CTX *ctx = (X##_CTX *) lua_touserdata(L, 1); \
+    size_t msg_len = 0; \
+    uint8_t *msg = (uint8_t *) colony_toconstdata(L, 2, &msg_len); \
+  \
+    X##_Update(ctx, msg, msg_len); \
+    return 0; \
+  } \
+  \
+  static int l_tm_hash_##x##_digest (lua_State *L) \
+  { \
+    X##_CTX *ctx = (X##_CTX *) lua_touserdata(L, 1); \
+    \
+    uint8_t* digest = colony_createbuffer(L, X##_SIZE); \
+    X##_Final(digest, ctx); \
+    return 1; \
+  }
 
-static int l_tm_hmac_sha1 (lua_State *L)
-{
-  lua_pushnil(L);
-  return 1;
-}
+L_TM_HASH(md5, MD5);
+L_TM_HASH(sha1, SHA1);
+#define SHA224_SIZE SHA224_DIGEST_LENGTH
+L_TM_HASH(sha224, SHA224);
+#define SHA256_SIZE SHA256_DIGEST_LENGTH
+L_TM_HASH(sha256, SHA256);
+#define SHA384_SIZE SHA384_DIGEST_LENGTH
+L_TM_HASH(sha384, SHA384);
+#define SHA512_SIZE SHA512_DIGEST_LENGTH
+L_TM_HASH(sha512, SHA512);
 
 #endif
 
@@ -974,6 +1204,10 @@ static int l_tm_hmac_sha1 (lua_State *L)
  */
 
 #define luaL_setfieldnumber(L, str, num) lua_pushnumber (L, num); lua_setfield (L, -2, str);
+
+#define L_TM_HASH_ENTRIES(x) { "hash_" #x "_create", l_tm_hash_##x##_create }, \
+  { "hash_" #x "_update", l_tm_hash_##x##_update }, \
+  { "hash_" #x "_digest", l_tm_hash_##x##_digest }
 
 LUALIB_API int luaopen_tm (lua_State *L)
 {
@@ -985,6 +1219,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
     // log
     { "log", l_tm_log },
 
+#ifdef ENABLE_NET
     // host
     { "hostname_lookup", l_tm_hostname_lookup },
 
@@ -993,7 +1228,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "udp_close", l_tm_udp_close },
     { "udp_listen", l_tm_udp_listen },
     { "udp_receive", l_tm_udp_receive },
-    { "udp_readable", l_tm_udp_readable }, 
+    { "udp_readable", l_tm_udp_readable },
     { "udp_send", l_tm_udp_send },
 
     { "tcp_open", l_tm_tcp_open },
@@ -1004,11 +1239,14 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "tcp_readable", l_tm_tcp_readable },
     { "tcp_listen", l_tm_tcp_listen },
     { "tcp_accept", l_tm_tcp_accept },
+#endif
 
 #ifdef ENABLE_TLS
     { "ssl_context_create", l_tm_ssl_context_create },
     { "ssl_context_free", l_tm_ssl_context_free },
     { "ssl_session_create", l_tm_ssl_session_create },
+    { "ssl_session_altname", l_tm_ssl_session_altname },
+    { "ssl_session_cn", l_tm_ssl_session_cn },
     { "ssl_session_free", l_tm_ssl_session_free },
     { "ssl_write", l_tm_ssl_write },
     { "ssl_read", l_tm_ssl_read },
@@ -1079,11 +1317,51 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "utf8_str_toupper", l_tm_utf8_str_toupper },
     { "ucs2_str_length", l_tm_ucs2_str_length },
     { "ucs2_str_charat", l_tm_ucs2_str_charat },
+    // deflate
+    { "deflate_start", l_tm_deflate_start },
+    { "deflate_write", l_tm_deflate_write },
+    { "deflate_end", l_tm_deflate_end },
 
+    // inflate
+    { "inflate_start", l_tm_inflate_start },
+    { "inflate_write", l_tm_inflate_write },
+    { "inflate_end", l_tm_inflate_end },
+
+    // Approxidate
+    {"approxidate_milli", l_tm_approxidate_milli },
+
+    // random
+    { "random_bytes", l_tm_random_bytes },
+
+    // TLS
+#ifdef ENABLE_TLS
+    { "hmac_sha1", l_tm_hmac_sha1 },
+    L_TM_HASH_ENTRIES(md5),
+    L_TM_HASH_ENTRIES(sha1),
+    L_TM_HASH_ENTRIES(sha224),
+    L_TM_HASH_ENTRIES(sha256),
+    L_TM_HASH_ENTRIES(sha384),
+    L_TM_HASH_ENTRIES(sha512),
+#endif
+
+    // timestamp
+    { "timestamp", l_tm_timestamp },
+    { "timestamp_update", l_tm_timestamp_update },
+
+    // itoa
+    { "itoa", l_tm_itoa },
+
+#ifdef ENABLE_NET
     { "_sync_gethostbyname", l_tm__sync_gethostbyname },
+#endif
 
     { NULL, NULL }
   });
+
+  luaL_setfieldnumber(L, "RAW", TM_RAW);
+  luaL_setfieldnumber(L, "ZLIB", TM_ZLIB);
+  luaL_setfieldnumber(L, "GZIP", TM_GZIP);
+  luaL_setfieldnumber(L, "UNZIP", TM_UNZIP);
 
   luaL_setfieldnumber(L, "FS_TYPE_INVALID", TM_FS_TYPE_INVALID);
   luaL_setfieldnumber(L, "FS_TYPE_FILE", TM_FS_TYPE_FILE);
@@ -1097,5 +1375,11 @@ LUALIB_API int luaopen_tm (lua_State *L)
   luaL_setfieldnumber(L, "OPEN_ALWAYS", TM_OPEN_ALWAYS);
   luaL_setfieldnumber(L, "CREATE_NEW", TM_CREATE_NEW);
   luaL_setfieldnumber(L, "CREATE_ALWAYS", TM_CREATE_ALWAYS);
+
+  #ifdef ENABLE_TLS
+  luaL_setfieldnumber(L, "TLS_ENABLED", 1);
+  #else
+  luaL_setfieldnumber(L, "TLS_ENABLED", 0);
+  #endif
   return 1;
 }

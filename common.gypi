@@ -13,7 +13,9 @@
     "fortuna_inc_path": "./deps/fortuna-inc",
     "dlmalloc_path": "./deps/dlmalloc",
     "utf8proc_path": "./deps/utf8proc",
-    'builtin_section%': '',
+    "miniz_path": "./deps/miniz",
+    "miniz_inc_path": "./deps/miniz-inc",
+    "approxidate_path": "./deps/approxidate",
     'enable_ssl%': 0,
   },
 
@@ -72,6 +74,11 @@
           "ENABLE_TLS",
         ],
       }],
+      ['enable_net==1', {
+        'defines': [
+          "ENABLE_NET",
+        ],
+      }],
     ],
 
     'default_configuration': 'Release',
@@ -109,7 +116,7 @@
         'conditions': [
           [ 'OS=="arm"', {
             'cflags': [
-              '-Ofast',
+              '-O3',
             ],
           }],
           [ 'OS!="arm"', {
@@ -118,7 +125,7 @@
             ],
             'xcode_settings': {
               'OTHER_CFLAGS': [
-                '-O3',
+                '-O3'
               ]
             },
             'msvs_settings': {

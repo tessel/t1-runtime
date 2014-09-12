@@ -1,7 +1,11 @@
-console.log('1..3')
+var tap = require('../tap');
+
+tap.count(3);
+
+
 var b = { $super: {} };
 var c = b.$super.init;
-console.log('ok');
+tap.ok(true);
 
 a: {
 	if (true) {
@@ -9,7 +13,7 @@ a: {
 	}
 }
 
-console.log('ok');
+tap.ok(true);
 
 
 function inheritAsync () {
@@ -22,4 +26,4 @@ function inheritAsync () {
     }
 };
 
-console.log('ok')
+tap.ok(true);

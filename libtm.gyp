@@ -106,6 +106,7 @@
       "product_name": "axtls",
       "type": "static_library",
       "defines": [
+        "CONFIG_SSL_SNI"
       ],
       "sources": [
         "<(axtls_path)/crypto/aes.c",
@@ -131,6 +132,10 @@
         "<(axtls_path)/crypto",
         "<(axtls_path)/ssl",
         "<(axtls_path)/config",
+      ],
+
+      "dependencies": [
+        "fortuna",
       ],
 
       'conditions': [
@@ -176,8 +181,31 @@
           "<(axtls_path)/crypto",
           "<(axtls_path)/config",
           "<(axtls_path)/ssl"
+        ],
+        "defines": [
+          "CONFIG_SSL_SNI"
         ]
       }
+    },
+
+    {
+      'target_name': 'cacert_bundle',
+      'type': 'none',
+      'sources': [
+        '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c'
+      ],
+      'actions': [
+        {
+          'action_name': '<(_target_name)_compile',
+          'inputs': [
+            'deps/cacert/certdata.new'
+          ],
+          'outputs': [
+            '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c',
+          ],
+          'action': [ 'tools/compile_certs.js', '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c', '<(_target_name)', '<@(_inputs)' ],
+        },
+      ]
     },
 
     {
@@ -310,7 +338,7 @@
       "product_name": "fortuna",
       "type": "static_library",
       "defines": [
-        "C_H", 
+        "C_H",
       ],
       "cflags": [
         "-fno-strict-aliasing",
@@ -368,6 +396,59 @@
       },
     },
 
+    {
+      "target_name": "miniz",
+      "product_name": "miniz",
+      "type": "static_library",
+      "defines": [
+        "MINIZ_NO_ARCHIVE_APIS",
+        "MINIZ_NO_ZLIB_APIS",
+        "MINIZ_NO_MALLOC",
+      ],
+      "sources": [
+        "<(miniz_path)/miniz.c"
+      ],
+      "include_dirs": [
+        "<(miniz_inc_path)"
+      ],
+      "cflags": [
+        "-Wno-strict-aliasing",
+      ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          '<(miniz_inc_path)'
+        ],
+        "defines": [
+          "MINIZ_NO_ARCHIVE_APIS",
+          "MINIZ_NO_ZLIB_APIS",
+          "MINIZ_NO_MALLOC",
+        ],
+      }
+    },
+
+    ##
+    #Approxidate
+    ##
+
+    {
+      "target_name": "approxidate",
+      "product_name": "approxidate",
+      "type": "static_library",
+      "sources": [
+        "<(approxidate_path)/approxidate.c",
+        "<(approxidate_path)/approxidate.h",
+      ],
+      "include_dirs": [
+        "<(approxidate_path)/"
+      ],
+
+      "direct_dependent_settings": {
+        "include_dirs": [
+          "<(approxidate_path)/"
+        ],
+      },
+    },
+
 
     ###
     # TM WRAPPER LIBRARIES
@@ -380,12 +461,14 @@
       "sources": [
         "<(axtls_inc_path)/crypto_misc.c",
         'src/tm_ssl.c',
+        '<(SHARED_INTERMEDIATE_DIR)/cacert_bundle.c',
       ],
       "include_dirs": [
         'src/',
       ],
       "dependencies": [
-        "axtls"
+        "axtls",
+        "cacert_bundle"
       ],
     },
 
@@ -423,6 +506,7 @@
         'src/tm_itoa.c',
         'src/tm_log.c',
         'src/tm_random.c',
+        'src/tm_deflate.c',
       ],
       "include_dirs": [
         'src/',
@@ -436,6 +520,8 @@
         "fortuna",
         "dlmalloc",
         "utf8proc",
+        "miniz",
+        "approxidate",
       ],
       'direct_dependent_settings': {
         'include_dirs': [

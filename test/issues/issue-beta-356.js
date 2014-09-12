@@ -1,5 +1,7 @@
-console.log('1..1');
+var tap = require('../tap');
+
+tap.count(1);
 
 process.nextTick(function () {
-	console.log('ok');
+	tap.ok(true);
 });

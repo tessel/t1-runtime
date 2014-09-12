@@ -1,4 +1,8 @@
-console.log('1..1');
+var tap = require('../tap');
+
+tap.count(1);
+
 console.log(true << 1);
 console.log(+true << 1);
-console.log('ok')
+
+tap.ok(true);

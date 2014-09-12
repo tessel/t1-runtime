@@ -1,20 +1,22 @@
-console.log('1..7')
+var tap = require('../tap');
+
+tap.count(7);
 
 function MyObject(name){
     this.name = name;
 }
 MyObject.prototype.yo = function(){
-    console.log("ok Greetings from " + this.name);
+    tap.ok(true, "Greetings from " + this.name);
 }
 var o = new MyObject("adrian");
-console.log("ok original", o);
+tap.ok(o, "original");
 o.yo();
 
 var i = Object(o);
-console.log("ok Object()", i);
+tap.ok(i, "Object()");
 i.name = "zankich";
 i.yo();
 o.yo();
 
-console.log("ok Object()", i);
-console.log("ok original", o);
+tap.ok(i, "Object()");
+tap.ok(o, "original");

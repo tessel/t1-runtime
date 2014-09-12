@@ -22,7 +22,7 @@
 #define js_check_generator(L, narg) \
     (yajl_gen*)luaL_checkudata((L), (narg), "yajl.generator.meta")
 
-static void* js_null;
+// static void* js_null;
 
 static int js_generator(lua_State *L);
 static int js_generator_value(lua_State *L);
@@ -108,7 +108,8 @@ static int js_to_string(lua_State *L) {
 static int to_value_null(void* ctx) {
     lua_State* L = (lua_State*)ctx;
 
-    lua_getfield(L, LUA_REGISTRYINDEX, "yajl.null");
+    // lua_getfield(L, LUA_REGISTRYINDEX, "yajl.null");
+    lua_pushnil(L);
     (lua_tocfunction(L, -2))(L);
 
     return 1;
@@ -172,6 +173,20 @@ static int got_map_key(lua_State* L) {
 /* See STRATEGY section below */
 static int got_array_value(lua_State* L) {
     /* ..., Table, Integer, Func, Value */
+    lua_pushliteral(L, "length");
+    /* ..., Table, Integer, Func, Value, "length" */
+    lua_pushvalue(L, -1);
+    /* ..., Table, Integer, Func, Value, "length", "length" */
+    lua_rawget(L, -6);
+    /* ..., Table, Integer, Func, Value, "length", len */
+    long len = lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    /* ..., Table, Integer, Func, Value, "length" */
+    lua_pushnumber(L, len + 1);
+    /* ..., Table, Integer, Func, Value, "length", len */
+    lua_rawset(L, -6);
+
+    /* ..., Table, Integer, Func, Value */
     lua_rawseti(L, -4, lua_tointeger(L, -3));
     lua_pushinteger(L, lua_tointeger(L, -2)+1);
     lua_replace(L, -3);
@@ -228,6 +243,17 @@ static int to_value_start_array(void* ctx) {
 }
 
 /* See STRATEGY section below */
+static int to_value_end_array(void* ctx) {
+    lua_State* L = (lua_State*)ctx;
+
+    /* Simply pop the stack and call the cfunction: */
+    lua_pop(L, 2);
+    (lua_tocfunction(L, -2))(L);
+
+    return 1;
+}
+
+/* See STRATEGY section below */
 static int to_value_end(void* ctx) {
     lua_State* L = (lua_State*)ctx;
 
@@ -256,7 +282,7 @@ static yajl_callbacks js_to_value_callbacks = {
     to_value_string,
     to_value_end,
     to_value_start_array,
-    to_value_end,
+    to_value_end_array,
 };
 
 
@@ -356,7 +382,8 @@ static int js_parser_null(void *ctx) {
     lua_getfield(L, lua_upvalueindex(2), "value");
     if ( ! lua_isnil(L, -1) ) {
         lua_pushvalue(L, lua_upvalueindex(2));
-        lua_getfield(L, LUA_REGISTRYINDEX, "yajl.null");
+        lua_pushnil(L);
+        // lua_getfield(L, LUA_REGISTRYINDEX, "yajl.null");
         lua_pushliteral(L, "null");
         lua_call(L, 3, 0);
     } else {
@@ -587,7 +614,7 @@ static int js_parser(lua_State *L) {
     lua_getfield(L, 1, "events");
 
     /* Create callback function that calls yajl_parse[_complete]()
-     
+
       upvalue(1) = yajl_handle*
       upvalue(2) = events table */
     lua_pushcclosure(L, &js_parser_parse, 2);
@@ -664,7 +691,7 @@ static int js_generator_number(lua_State *L) {
         str = "-1e+666";
         len = 7;
     } else if ( isnan(num) ) {
-        str = "-0"; 
+        str = "-0";
         len = 2;
    } else {
         str = luaL_checklstring(L, 2, &len);
@@ -780,9 +807,9 @@ static int js_generator_value(lua_State *L) {
     case LUA_TSTRING:
         return js_generator_string(L);
     case LUA_TUSERDATA:
-        if ( lua_topointer(L, 2) == js_null ) { 
-            return js_generator_null(L);
-        }
+        // if ( lua_topointer(L, 2) == js_null ) {
+        //     return js_generator_null(L);
+        // }
     case LUA_TLIGHTUSERDATA:
     case LUA_TTABLE:
     case LUA_TFUNCTION:
@@ -822,6 +849,8 @@ static int js_generator_value(lua_State *L) {
                     is_array = 0;
                     break;
                 }
+            } else if (lua_type(L, -2) == LUA_TSTRING && strncmp(lua_tostring(L, -2), "length", 6) == 0) {
+                // ignore "length"
             } else {
                 lua_pop(L, 2);
                 is_array = 0;
@@ -1069,24 +1098,24 @@ static void js_create_generator_mt(lua_State *L) {
     lua_pop(L, 1);
 }
 
-static int js_null_tostring(lua_State* L) {
-    lua_pushstring(L, "null");
-    return 1;
-}
+// static int js_null_tostring(lua_State* L) {
+//     lua_pushstring(L, "null");
+//     return 1;
+// }
 
-static void js_create_null_mt(lua_State *L) {
-    luaL_newmetatable(L, "yajl.null.meta");
+// static void js_create_null_mt(lua_State *L) {
+//     luaL_newmetatable(L, "yajl.null.meta");
 
-    lua_pushcfunction(L, js_null_tostring);
-    lua_setfield(L, -2, "__tostring");
+//     lua_pushcfunction(L, js_null_tostring);
+//     lua_setfield(L, -2, "__tostring");
 
-    lua_pop(L, 1);
-}
+//     lua_pop(L, 1);
+// }
 
 LUALIB_API int luaopen_yajl(lua_State *L) {
     js_create_parser_mt(L);
     js_create_generator_mt(L);
-    js_create_null_mt(L);
+    // js_create_null_mt(L);
 
     /* Create the yajl.refs weak table: */
     lua_createtable(L, 0, 2);
@@ -1110,14 +1139,13 @@ LUALIB_API int luaopen_yajl(lua_State *L) {
     lua_pushcfunction(L, js_generator);
     lua_setfield(L, -2, "generator");
 
-    js_null = lua_newuserdata(L, 0);
-    luaL_getmetatable(L, "yajl.null.meta");
-    lua_setmetatable(L, -2);
-
-    lua_pushvalue(L, -1);
-    lua_setfield(L, LUA_REGISTRYINDEX, "yajl.null");
-
-    lua_setfield(L, -2, "null");
+    // lua_pushnil(L);
+    // luaL_getmetatable(L, "yajl.null.meta");
+    // lua_setmetatable(L, -2);
+    // lua_pushvalue(L, -1);
+    // lua_pushnil(L);
+    // lua_setfield(L, LUA_REGISTRYINDEX, "yajl.null");
+    // lua_setfield(L, -2, "null");
 
     return 1;
 }
