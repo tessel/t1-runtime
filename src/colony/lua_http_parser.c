@@ -185,6 +185,7 @@ static int lhttp_parser_on_body(http_parser *p, const char *at, size_t length) {
 
 static int lhttp_parser_on_headers_complete(http_parser *p) {
   lua_State *L = p->data;
+  size_t nocontent;
 
   /* Put the environment of the userdata on the top of the stack */
   lua_getfenv(L, 1);
@@ -227,9 +228,10 @@ static int lhttp_parser_on_headers_complete(http_parser *p) {
 
 
   lua_call(L, 1, 1);
+  nocontent = lua_tointeger(L, -1);
 
   lua_pop(L, 2); /* pop returned value and the userdata env */
-  return 0;
+  return nocontent;
 }
 
 /******************************************************************************/

@@ -108,6 +108,16 @@ int tm_checked_call(lua_State *L, int nargs)
   // Run checked call.
   lua_insert(L, err_func);
   int r = lua_pcall(L, nargs, 0, err_func);
+
+  if (r != 0) {
+    if (r == LUA_ERRMEM) {
+      tm_logf(SYS_ERR, "Error: Out of memory\n");
+    } else {
+      tm_logf(SYS_ERR, "lua_pcall error %i\n", r);
+    }
+    tm_runtime_exit_longjmp(255);
+  }
+
   lua_remove(L, err_func);
   return r;
 }

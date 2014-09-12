@@ -13,14 +13,12 @@ test('client-basic', function (t) {
     t.ok(res.headers, "has headers");
     t.equal(res.statusCode, 200, "got expected status");
     
-    //res.setEncoding('utf8');
-    res.on('data', function (chunk) {
-      // WORKAROUND: https://github.com/tessel/runtime/issues/363
-      if (typeof chunk !== 'string') chunk = chunk.toString();
-      
+    res.setEncoding('utf8');
+    res.on('data', function (chunk) {      
       // NOTE: assumes single packet…
       var data = JSON.parse(chunk);
       t.equal(data.data, "HELLO WORLD");
+      res.socket.destroy(); 
       t.end();
     });
   });
@@ -40,14 +38,14 @@ test('client-basic', function (t) {
 test('server-basic', function (t) {
   // based on http://nodejs.org/ homepage example
   
-  http.createServer(function (req, res) {
+  var server = http.createServer(function (req, res) {
     res.writeHead(200, {'Content-Type': 'text/plain'});
     res.end('Hello World\n');
   }).listen(0, function () {
     test(this.address().port);
   });
   function test(port) {
-    http.get({port:port}, function(res) {
+    var req = http.get({port:port}, function(res) {
       t.equal(res.statusCode, 200, "got expected status");
       t.equal(res.headers['content-type'], 'text/plain', "got expected type");
       res.on('data', function (chunk) {
@@ -58,6 +56,8 @@ test('server-basic', function (t) {
       });
       res.on('end', function () {
         t.pass("request ended");
+        server.close();
+        req.end();
         t.end();
       });
     });
@@ -65,14 +65,13 @@ test('server-basic', function (t) {
 });
 
 test('client-errors', function (t) {
-return t.end();   // TODO: file/fix DNS exception
   var expect = 2;
-  http.get("http://example.invalid").on('error', function (e) {
+  var req = http.get("http://example.invalid").on('error', function (e) {
     t.ok(e, "expected error");
     if (!--expect) t.end();
   });
   
-  net.createServer(function (socket) {
+  var server = net.createServer(function (socket) {
     socket.end([
       "HTTP/1.1 200 OK",
       "Transfer-Encoding: chunked",
@@ -80,57 +79,103 @@ return t.end();   // TODO: file/fix DNS exception
       "garbage"
     ].join('\r\n'));
     this.close();
-  }).listen(0, function () {    
+  }).listen(0, function () {
     http.get({port:this.address().port}).on('error', function (e) {
       t.ok(e, "expected error");
+      req.end();
+      server.close();
       if (!--expect) t.end();
     });
   });
 });
 
 test('server-errors', function (t) {
-return t.end();  // TODO: troubleshoot hang
   var expect = 2;
-  http.createServer(function (req, res) {
+  var server = http.createServer(function (req, res) {
     res.end();
+    req.socket.end();
   }).on('clientError', function (e,s) {
     t.ok(e && s, "expected params");
-    if (!--expect) t.end();
+    if (!--expect) {
+      server.close();
+      t.end();
+    }
   }).listen(0, function () {
     test(this.address().port);
   });
   function test(port) {
-    net.connect(port, function () {
-      this.write("garbage\n\n\n");
+    var client = net.connect(port, function () {
+      client.end("garbage\n\n\n");      // TODO: why does it take server so long to receive this?!
     });
     http.request({port:port, method:'post', headers:{'Content-Length': 42}}).end();
   }
 });
 
-test('continue', function (t) {
-return t.end();  // TODO: troubleshoot hang
-  var expect = 3;
-  http.createServer(function (req, res) {
-    res.setHeader('X-Things', [1,2]);
-    res.end("DATA");
-  }).on('checkContinue', function (req,res) {
-    t.ok(req && res, "expected params");
-    if (!--expect) t.end();
-    res.writeContinue();
+test('server-limit', function (t) {
+  var server = http.createServer(function (req, res) {
+    res.end();
+    t.equal(Object.keys(req.headers).length, 1, "headers limited");
+    server.close();
+    t.end();
   }).listen(0, function () {
-    http.request({port:this.address().port, headers: {expect:'100-continue'}}, function (res) {
+    this.maxHeadersCount = 1;
+    var req = http.get({port:this.address().port, headers:{'x-a':1, 'x-b':2, 'x-c':3}}).end();
+  })
+});
+
+test('client-auth', function (t) {
+  var req = http.get({
+      host: "httpbin.org",
+      path: "/basic-auth/user/passwd",      // will 401 if not matched
+      auth: "user:passwd"
+    }, function (res) {
+      t.equal(res.statusCode, 200);
+      t.end();
+    });
+  req.end();
+});
+
+test('client-head', function (t) {
+  http.request({
+      method: 'HEAD',
+      host: "ipcalf.com"
+    }, function (res) {
+      t.ok(res.headers['content-length']);
+      res.on('data', function () {
+        t.fail("should not get content");
+      });
+      res.on('end', function () {
+        t.end();
+      });
+    }).end();
+});
+
+test('continue', function (t) {
+  var server = http.createServer().on('checkContinue', function (req,res) {
+    t.ok(req && res, "expected params");
+    res.writeContinue();
+    res.setHeader('X-Things', [1,2]);
+    res.end();
+  }).listen(0, function () {
+    var req = http.request({port:this.address().port, headers: {expect:'100-continue'}}, function (res) {
       t.ok(res, "got response");
-      if (!--expect) t.end();
-    }).on('continue', function () {
+      t.equal(res.statusCode, 200, "correct status");
+      t.equal(res.headers['x-things'], "1, 2", "proper headers");
+      server.close();
+      t.end();
+    })
+    req.on('continue', function () {
       t.pass("got continue");
-      if (!--expect) t.end();
       this.end();
     });
+    req.end();
   });
 });
 
 test('connect', function (t) {
   // based on http://nodejs.org/dist/v0.11.13/docs/api/http.html#http_event_connect_1
+  var serverSocket;
+  var clientSocket;
   var proxy = http.createServer(function (req, res) {
     res.writeHead(200, {'Content-Type': 'text/plain'});
     res.end('okay');
@@ -138,13 +183,14 @@ test('connect', function (t) {
   proxy.on('connect', function(req, cltSocket, head) {
     // connect to an origin server
     var srvUrl = require('url').parse('http://' + req.url);
-    var srvSocket = net.connect(srvUrl.port, srvUrl.hostname, function() {
-      cltSocket.write('HTTP/1.1 200 Connection Established\r\n' +
+    serverSocket = net.connect(srvUrl.port, srvUrl.hostname, function() {
+      clientSocket = cltSocket;
+      clientSocket.write('HTTP/1.1 200 Connection Established\r\n' +
                       'Proxy-agent: Node-Proxy\r\n' +
                       '\r\n');
-      srvSocket.write(head);
-      srvSocket.pipe(cltSocket);
-      cltSocket.pipe(srvSocket);
+      serverSocket.write(head);
+      serverSocket.pipe(clientSocket);
+      clientSocket.pipe(serverSocket);
     });
   });
 
@@ -172,25 +218,28 @@ test('connect', function (t) {
                    '\r\n');
       socket.on('data', function(chunk) {
         t.ok(net.isIP(chunk.toString().split('\n').pop()));
+        proxy.close();
+        socket.destroy();
+        serverSocket.destroy();
+        clientSocket.destroy();
         t.end();
       });
-//      socket.on('end', function() {
-//        proxy.close();
-//        t.end();
-//      });
+      socket.on('end', function() {
+        proxy.close();
+      });
     });
   });
-
 });
 
 test('upgrade', function (t) {
-  var expect = 2;
   // based on http://nodejs.org/dist/v0.11.13/docs/api/http.html#http_event_upgrade_1
   var srv = http.createServer(function (req, res) {
+    console.log('got a request!');
     res.writeHead(200, {'Content-Type': 'text/plain'});
     res.end('okay');
   });
   srv.on('upgrade', function(req, socket, head) {
+    console.log("UPGRADED UP HERE");
     t.ok("got event");
     socket.write('HTTP/1.1 101 Web Socket Protocol Handshake\r\n' +
                  'Upgrade: WebSocket\r\n' +
@@ -210,11 +259,12 @@ test('upgrade', function (t) {
         'Upgrade': 'websocket'
       }
     };
-
+    
     var req = http.request(options);
     req.end();
 
     req.on('upgrade', function(res, socket, upgradeHead) {
+      console.log('got upgraded!')
       t.ok("upgraded!");
       socket.end();
       t.end();
@@ -223,14 +273,14 @@ test('upgrade', function (t) {
 });
 
 test('upgrade-head', function (t) {
-return t.end();  // TODO: troubleshoot hang
-  http.createServer().on('upgrade', function (req, socket, head) {
+  var server = http.createServer().on('upgrade', function (req, socket, head) {
     t.ok(req && socket, "expected params");
     t.equal(head.toString(), "extra");
+    server.close();
     t.end();
   }).listen(0, function () {
     net.connect(this.address().port, function () {
-      this.end(('GET / HTTP/1.1' +
+      this.end(('GET / HTTP/1.1\r\n' +
                  'Upgrade: test\r\n' +
                  'Connection: upgrade\r\n' +
                  '\r\n'+
@@ -238,3 +288,71 @@ return t.end();  // TODO: troubleshoot hang
     });
   });
 });
+
+test('agent', function (t) {
+  var server = http.createServer(function (req, res) {
+    res.end('okay');
+  }).listen(0, function () {
+    test(this.address().port);
+  });
+  function test(port) {
+    var agent = new http.Agent({keepAlive:false, maxSockets:2}),
+        sockets = [];
+    http.get({port:port, agent:agent}).on('socket', function (s) {
+      sockets[0] = s;
+      s.on('close', function () { sockets.CLOSED = true; });
+    });
+    http.get({port:port, agent:agent}).on('socket', function (s) {
+      sockets[1] = s;
+      s.on('close', function () { sockets.CLOSED = true; });
+    });
+    http.get({port:port, agent:agent}).on('socket', function (s) {
+      if (sockets.CLOSED) t.pass("needed new socket");
+      else t.ok(~sockets.indexOf(s), "reused a socket");
+    }).on('response', function (res) {
+      res.resume();
+      res.on('end', function () {
+        setTimeout(function () {
+          http.get({port:port, agent:agent}).on('socket', function (s) {
+            t.ok(!~sockets.indexOf(s), "got new socket");
+            server.close(); 
+            t.end();
+          });
+        }, 1e3);
+      });
+    });
+  }
+});
+
+test('keepalive', function (t) {
+  var server = http.createServer(function (req, res) {
+    res.end('okay');
+  }).listen(0, function () {
+    test(this.address().port);
+  });
+  function test(port) {
+    var agent = new http.Agent({keepAlive:true, maxSockets:1, maxFreeSockets:1}),
+        socket = null;
+    http.get({port:port, agent:agent}).on('socket', function (s) {
+      socket = s;
+    });
+    http.get({port:port, agent:agent}).on('socket', function (s) {
+      t.strictEqual(s, socket, "reused socket");
+    }).on('response', function (res) {
+      res.resume();
+      res.on('end', function () {
+        setTimeout(function () {
+          http.get({port:port, agent:agent, headers:{connection:'close'}}).on('socket', function (s) {
+            t.strictEqual(s, socket, "reused socket once more");
+            http.get({port:port, agent:agent}).on('socket', function (s) {
+              t.notStrictEqual(s, socket, "got new socket");
+              server.close();
+              t.end();
+            });
+          });
+        }, 1e3);
+      });
+    });
+  }
+});
+

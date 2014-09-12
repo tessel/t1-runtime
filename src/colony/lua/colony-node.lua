@@ -281,21 +281,46 @@ local buffer_proto = js_obj({
     buf:copy(this, offset, 0, length)
     return length
   end,
-  toString = function (this, encoding)
+  toString = function (this, encoding, offset, endOffset)
+
     local sourceBuffer = getmetatable(this).buffer
-    local sourceBufferLength = getmetatable(this).bufferlen
+    local sourceBufferLength = getmetatable(this).bufferlen;
 
-    local str = tm.buffer_tostring(sourceBuffer, sourceBufferLength)
-
-    if encoding == 'base64' then
-      str = to_base64(str)
-    elseif encoding == 'hex' then
-      str = string.gsub(str, '(.)', function (c)
-        return string.format('%02x', string.byte(c))
-      end)
+    if offset == nil or offset < 0 then
+      offset = 0
     end
 
-    return str
+    if endOffset == nil or endOffset > sourceBufferLength then
+      endOffset = sourceBufferLength;
+    end
+
+    if endOffset < offset then
+      return '';
+    end
+
+    if encoding == nil then
+      encoding = 'utf8'
+    end
+    encoding = string.lower(encoding);
+    
+    local str = tm.buffer_tostring(getmetatable(this).buffer, offset, endOffset);
+
+    if encoding == 'utf8' or encoding == 'utf-8' 
+      or encoding == 'binary' or encoding == 'ascii' then
+      return str;
+    elseif encoding == 'base64' then
+      return to_base64(str);
+    elseif encoding == 'hex' then
+      str = string.gsub(str, '(.)', function (c)
+        return string.format('%02x', string.byte(c));
+      end)
+      return str;
+    elseif  encoding == 'ucs2' or encoding == 'ucs-2' 
+      or encoding == 'utf16le' or encoding == 'utf-16le' then
+      return error(js_new(global.NotImplementedError, 'Encoding not implemented yet: ' + encoding));
+    else
+      error(js_new(global.TypeError, 'Unknown encoding: ' + encoding));
+    end
   end,
   toJSON = function (this)
     local arr = {}
@@ -717,6 +742,7 @@ global.process.cwd = function ()
   return tm.cwd()
 end
 global.process.nextTick = global.setImmediate
+global.process.version = global.process.versions.node
 
 -- DEPLOY_TIME workaround for setting environmental time
 
