@@ -1060,3 +1060,51 @@ colony.run = function (name, root, parent)
   res(colony.global, colony.cache[p])
   return colony.cache[p].exports
 end
+
+package.preload.http_parser = function ()
+  local http_parser = require('http_parser_lua')
+
+  local mod = js_obj({
+    HTTPParser = function (type)
+      local obj, parser
+      local proxyobj = {
+        onHeaderField = function (field)
+          if obj.onHeaderField then
+            obj.onHeaderField(parser, field, 0, #field)
+          end
+        end,
+        onHeaderValue = function (field)
+          if obj.onHeaderValue then
+            obj.onHeaderValue(parser, field, 0, #field)
+          end
+        end,
+        onHeadersComplete = function (info)
+          if obj.onHeadersComplete then
+            obj.onHeadersComplete(parser, js_obj({
+              statusCode = info.status_code,
+              method = info.method,
+              url = info.url,
+            }))
+          end
+        end,
+        onMessageComplete = function ()
+          if obj.onMessageComplete then
+            obj.onMessageComplete(parser)
+          end
+        end
+      }
+      if type == 'request' or type == 0 then
+        obj = {}
+        parser = http_parser.new('request', proxyobj)
+      else
+        obj = {}
+        parser = http_parser.new('response', proxyobj)
+      end
+      obj.execute = function (this, data, start, len)
+        return parser:execute(data:toString(), start, len)
+      end
+      return obj
+    end
+  })
+  return mod
+end
