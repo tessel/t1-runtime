@@ -420,7 +420,7 @@ local function js_next (a, b, c)
   local k = b
   repeat
     k = next(a, k)
-  until (len == nil or type(k) ~= 'number') and not (k == 'length' and mt.proto == arr_proto)
+  until (len == nil or type(k) ~= 'number') and not (k == 'length' and mt.proto == arr_proto) and not (type(a) == 'function' and k == '__mt')
   return k
 end
 

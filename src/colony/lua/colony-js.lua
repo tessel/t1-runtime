@@ -906,7 +906,7 @@ end
 global.Object.keys = function (this, obj)
   local a = {}
 
-  if type(obj) ~= 'table' then
+  if type(obj) ~= 'table' and type(obj) ~= 'function' then
     error(js_new(global.TypeError, 'Object.keys called on non-object'))
   end
 
