@@ -181,6 +181,15 @@ function inflateRaw (buffer, callback)
   return convenience(createInflateRaw(), buffer, callback);
 }
 
+function createUnzip(opts)
+{
+  return Unzip(o);
+}
+
+function Unzip(opts) {
+  // TODO: do something with the options
+  return createInflateStream(tm.UNZIP);
+}
 
 exports.createGzip = createGzip;
 exports.createGunzip = createGunzip;
@@ -188,6 +197,7 @@ exports.createDeflate = createDelate;
 exports.createInflate = createInflate;
 exports.createDeflateRaw = createDelateRaw;
 exports.createInflateRaw = createInflateRaw;
+exports.createUnzip = createUnzip;
 
 exports.gzip = gzip;
 exports.gunzip = gunzip;
