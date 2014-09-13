@@ -182,12 +182,20 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       var ret = tm.tcp_connect(self.socket, addr, port);
       if (ret >= 1) {
         // we're not connected to the internet
-        return self.emit('error', new Error("Lost connection"));
+        self.emit('error', new Error("Lost connection"));
+        // force the cleanup
+        self.destroy();
+        return self.__close(); // need to call close otherwise we keep listening for the tcp-close event
       }
+
       if (ret < 0) {
+        console.log("tcp_connect is", ret, "trying to close socket number", self.socket);
         tm.tcp_close(self.socket); // -57
         if (retries > 3) {
-          return self.emit('error', new Error('ENOENT Cannot connect to ' + ip + ' Got: err'+ret));
+          self.emit('error', new Error('ENOENT Cannot connect to ' + ip + ' Got: err'+ret));
+          // force the cleanup
+          self.destroy();
+          return self.__close();
         } else {
           retries++;
           setTimeout(function(){
@@ -410,15 +418,14 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
     }
     self.emit('end')
     if (self.socket != null) {
-
       // if there is still data left, wait until its sent before we end
       if (self._outgoing.length || self._sending) {
         self._queueEnd = true;
       } else {
         self.__close();
-      }
-      
+      } 
     }
+    self.removeAllListeners();
   });
 };
 

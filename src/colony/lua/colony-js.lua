@@ -37,7 +37,6 @@ local js_getter_index = colony.js_getter_index
 local js_define_getter = colony.js_define_getter
 local js_define_setter = colony.js_define_setter
 local js_proto_get = colony.js_proto_get
-local js_func_proxy = colony.js_func_proxy
 local js_with = colony.js_with
 
 local obj_proto = colony.obj_proto
@@ -324,10 +323,6 @@ obj_proto.hasOwnProperty = function (ths, p)
 
   if type(ths) == 'boolean' then
     return false
-  end
-
-  if type(ths) == 'function' then
-    ths = js_func_proxy(ths)
   end
 
   if getmetatable(ths) and getmetatable(ths).buffer then
@@ -878,9 +873,6 @@ global.Object.create = function (this, proto, props)
 end
 
 global.Object.defineProperty = function (this, obj, prop, config)
-  if type(obj) == 'function' then
-    obj = js_func_proxy(obj)
-  end
   if type(obj) ~= 'table' then
     error(js_new(global.TypeError, 'Object.defineProperty called on non-object'))
   end
@@ -914,12 +906,7 @@ end
 global.Object.keys = function (this, obj)
   local a = {}
 
-  -- Use function proxy for object variables.
-  if type(obj) == 'function' then
-    obj = js_func_proxy(obj)
-  end
-
-  if type(obj) ~= 'table' then
+  if type(obj) ~= 'table' and type(obj) ~= 'function' then
     error(js_new(global.TypeError, 'Object.keys called on non-object'))
   end
 
@@ -942,10 +929,6 @@ end
 
 global.Object.getOwnPropertyNames = function (this, obj)
   local a = js_arr({}, 0)
-  -- TODO debug this one:
-  if type(obj) == 'function' then
-    obj = js_func_proxy(obj)
-  end
   for k,v in js_pairs(obj) do
     a:push(k)
   end
