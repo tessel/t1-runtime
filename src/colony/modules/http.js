@@ -408,13 +408,15 @@ function _getPool(agent, opts) {
   
   function addSocket() {
     var socket = agent._createConnection(opts);
-    socket.on('close', handleDead);
+    socket.on('close', function(){
+      handleDead();
+      socket.destroy();
+    });
     socket.on('_free', handleFree);
     socket.once('agentRemove', function () {
       socket.removeListener('close', handleDead);
       socket.removeListener('_free', handleFree);
       removeSocket(socket);
-      socket.destroy();
     });
     
     function handleDead() { removeSocket(socket); }
@@ -522,7 +524,9 @@ function ClientRequest (opts, _https) {
     response.once('_error', function (e) {
       self.emit('error', e);
     });
-    if (opts.method === 'CONNECT') response._upgrade = true;      // parser can't detect (2xx vs. 101)
+    if (opts.method === 'CONNECT') {
+      response._upgrade = true;      // parser can't detect (2xx vs. 101)
+    } 
     response.once('_upgrade', function (head) {
       var event = (opts.method === 'CONNECT') ? 'connect' : 'upgrade',
           handled = self.emit(event, response, socket, head);
