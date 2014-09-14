@@ -301,7 +301,7 @@ local buffer_proto = js_obj({
       encoding = 'utf8'
     end
     encoding = string.lower(encoding);
-    
+
     local str = tm.buffer_tostring(getmetatable(this).buffer, offset, endOffset);
 
     if encoding == 'utf8' or encoding == 'utf-8' 
@@ -1069,7 +1069,7 @@ colony.run = function (name, root, parent)
       return nil
     end
   end
-  
+
   colony.cache[p] = js_obj({exports=js_obj({}),parent=parent}) --dummy
   res(colony.global, colony.cache[p])
   return colony.cache[p].exports
