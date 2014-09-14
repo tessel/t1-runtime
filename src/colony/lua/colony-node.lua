@@ -1058,6 +1058,7 @@ colony.run = function (name, root, parent)
     -- Return the new script.
     return colony.run(value, path_dirname(scriptpath) .. '/', colony.cache[scriptpath])
   end
+
   colony.global.require.cache = colony.cache
 
   colony.global.require.resolve = function(ths, str)
