@@ -109,14 +109,16 @@ function IncomingMessage (type, socket) {
   this.socket = this.connection = socket;
   // TODO: finish timeout forwarding/handling/cleanup! (and implement other occurences)
   this.setTimeout = socket.setTimeout.bind(socket);
+  var self = this;
 
   function js_wrap_function (fn) {
     return function () {
-      return fn.apply(null, [this].concat(arguments));
+      if (self.socket) {
+        return fn.apply(null, [this].concat(arguments));
+      }
     }
   }
 
-  var self = this;
   var parser = http_parser.new(type, {
     onMessageBegin: js_wrap_function(function () {
       self.emit('_messageBegin');
@@ -131,7 +133,7 @@ function IncomingMessage (type, socket) {
     }),
     onHeaderValue: js_wrap_function(function (value) {
       var arr = (self._headersComplete) ? self.rawTrailers : self.rawHeaders,
-          key = arr[arr.length - 1].toLowerCase();
+        key = arr[arr.length - 1].toLowerCase();
       if (arr.length + 1 > self._maxRawHeaders) return;
       arr.push(value);
       var obj = (self._headersComplete) ? self.trailers : self.headers;
@@ -264,7 +266,9 @@ function OutgoingMessage () {
       self._chunked = false;
       self.flush();
     }
-    if (this._chunked) self._outbox.write('0\r\n'+this._trailer+'\r\n');
+    if (this._chunked) {
+      self._outbox.write('0\r\n'+this._trailer+'\r\n');
+    }
   });
 }
 
