@@ -109,35 +109,37 @@ function IncomingMessage (type, socket) {
   this.socket = this.connection = socket;
   // TODO: finish timeout forwarding/handling/cleanup! (and implement other occurences)
   this.setTimeout = socket.setTimeout.bind(socket);
+  var self = this;
 
-  function js_wrap_function (fn) {
+  function parserCallback (fn) {
     return function () {
-      return fn.apply(null, [this].concat(arguments));
+      if (self.socket) {
+        return fn.apply(null, [this].concat(arguments));
+      }
     }
   }
 
-  var self = this;
   var parser = http_parser.new(type, {
-    onMessageBegin: js_wrap_function(function () {
+    onMessageBegin: parserCallback(function () {
       self.emit('_messageBegin');
     }),
-    onUrl: js_wrap_function(function (url) {
+    onUrl: parserCallback(function (url) {
       self.url = url;
     }),
-    onHeaderField: js_wrap_function(function (field) {
+    onHeaderField: parserCallback(function (field) {
       var arr = (self._headersComplete) ? self.rawTrailers : self.rawHeaders;
       if (arr.length + 1 > self._maxRawHeaders) return;
       arr.push(field);
     }),
-    onHeaderValue: js_wrap_function(function (value) {
+    onHeaderValue: parserCallback(function (value) {
       var arr = (self._headersComplete) ? self.rawTrailers : self.rawHeaders,
-          key = arr[arr.length - 1].toLowerCase();
+        key = arr[arr.length - 1].toLowerCase();
       if (arr.length + 1 > self._maxRawHeaders) return;
       arr.push(value);
       var obj = (self._headersComplete) ? self.trailers : self.headers;
       IncomingMessage._addHeaderLine(key, value, obj);
     }),
-    onHeadersComplete: js_wrap_function(function (info) {
+    onHeadersComplete: parserCallback(function (info) {
       self.method = info.method;
       self.statusCode = info.status_code;
       self.httpVersionMajor = info.version_major;
@@ -149,11 +151,11 @@ function IncomingMessage (type, socket) {
       else self._unplug();
       return (self._noContent) ? 1 : 0;
     }),
-    onBody: js_wrap_function(function (body) {
+    onBody: parserCallback(function (body) {
       var glad = self.push(body);
       if (!glad) socket.pause();
     }),
-    onMessageComplete: js_wrap_function(function () {
+    onMessageComplete: parserCallback(function () {
       self.push(null);
       self._unplug();
     })
@@ -264,7 +266,9 @@ function OutgoingMessage () {
       self._chunked = false;
       self.flush();
     }
-    if (this._chunked) self._outbox.write('0\r\n'+this._trailer+'\r\n');
+    if (this._chunked) {
+      self._outbox.write('0\r\n'+this._trailer+'\r\n');
+    }
   });
 }
 
