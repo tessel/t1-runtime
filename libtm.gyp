@@ -496,6 +496,35 @@
     },
 
     {
+      "target_name": "libtm-cxx",
+      "product_name": "tm-cxx",
+      "type": "static_library",
+      'cflags': [
+        '-Wall', '-Wextra', '-Werror',
+        '-fno-rtti', '-fno-exceptions', '-nostdlib',
+      ],
+      'xcode_settings': {
+        'OTHER_CPLUSPLUSFLAGS': [
+          '-fno-rtti', '-fno-exceptions', '-nostdlib',
+        ]
+      },
+      'cflags!': [
+        '-std=c99',
+      ],
+      'sources': [
+        'src/std.cpp',
+        'src/tm_json.cpp',
+      ],
+      "include_dirs": [
+        'src/',
+        '<(yajl_inc_path)',
+      ],
+      'dependencies': [
+        "rapidjson",
+      ],
+    },
+
+    {
       "target_name": "libtm",
       "product_name": "tm",
       "type": "static_library",
@@ -530,7 +559,6 @@
         'src/tm_log.c',
         'src/tm_random.c',
         'src/tm_deflate.c',
-        'src/tm_json.cpp',
       ],
       "include_dirs": [
         'src/',
@@ -547,6 +575,7 @@
         "utf8proc",
         "miniz",
         "approxidate",
+        'libtm-cxx',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
