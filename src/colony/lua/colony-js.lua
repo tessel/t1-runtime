@@ -1837,10 +1837,10 @@ end
 -- Callback when a null value is parsed in json
 function json_read_null()
   if is_arr then
-    lua_table[arr_lvl] = 'null'
+    lua_table[arr_lvl] = js_null
     arr_lvl = arr_lvl + 1
   else
-    lua_table[prev_k] = 'null'
+    lua_table[prev_k] = js_null
     on_key = true
   end
 end
@@ -1988,45 +1988,38 @@ function json_stringify (value, ...)
 
   local val_copy = {}     -- copies of hits in the replacer array
   local call_ext = false  -- whether to call an external replacer function
+  local replacer = arg[1]['replacer'] -- replacer function/array if provided
+  local spacer = arg[1]['indent'] -- spacer to insert if provided
 
   -- does what stringify does but can be called recursively
-  function json_recurse (handler, value, ...)
+  function json_recurse (handler, value)
 
-    -- write null to handler buffer
     if type(value) == 'nil' then
       rapidjson.to_null(handler,value)
-    -- write boolean to handler buffer
     elseif type(value) == 'boolean' then
       rapidjson.to_boolean(handler,value)
-    -- write number to handler buffer
     elseif type(value) == 'number' then
       rapidjson.to_number(handler,value)
-    -- write string to handler buffer
     elseif type(value) == 'string' then
       rapidjson.to_string(handler,value)
-    -- write nothing to hander for unsupported types
-    elseif type(value) == 'userdata' or type(value) == 'function' or type(value) == 'thread' then
-      rapidjson.to_default(handler)
     elseif type(value) == 'table' then
-      -- write array to handler buffer
       if global.Array:isArray(value) then
         rapidjson.array_start(handler)
         for i=0,#value do
-          if call_ext then arg[1]['replacer'](nil,i,value[i]) end
-          json_recurse(handler,value[i],arg[1])
+          if call_ext then replacer(value,i,value[i]) end
+          json_recurse(handler,value[i])
         end
         rapidjson.array_end(handler)
-      -- write object to handler buffer
       else
         local val_copy = {}
-        if arg[1]['replacer'] then
-          if type(arg[1]['replacer']) == 'function' then
-          elseif type(arg[1]['replacer']) == 'table' then
+        if replacer then
+          if type(replacer) == 'function' then
+          elseif type(replacer) == 'table' then
             if global.Array:isArray(value) then
             elseif type(value) == 'table' then
               if next(value) then
-                for i=0,#arg[1]['replacer'] do
-                  local k = tostring(arg[1]['replacer'][i])
+                for i=0,#replacer do
+                  local k = tostring(replacer[i])
                   if value[k] then
                     val_copy[k] = value[k]
                   end
@@ -2038,34 +2031,36 @@ function json_stringify (value, ...)
         end
         rapidjson.object_start(handler)
         for k, v in pairs(value) do
-          if call_ext then arg[1]['replacer'](nil,k,v) end
-          if type(k) ~= 'table' then
-                json_recurse(handler,tostring(k),arg[1])
-              else
-                json_recurse(handler,k,arg[1])
-              end
-              json_recurse(handler,v,arg[1])
-
+          local rep = value
+          if call_ext then rep = replacer(value,k,v) end
+          if rep then
+            if type(k) ~= 'table' then
+              json_recurse(handler,tostring(k))
+            else
+              json_recurse(handler,k)
+            end
+            json_recurse(handler,v)
           end
+        end
         rapidjson.object_end(handler)
       end
+    else
+      rapidjson.object_start(handler)
+      rapidjson.object_end(handler)
     end
   end
 
   -- if the optional replacer is provided
-  if arg[1]['replacer'] then
-
-    -- if it's a function set the flag to call en external function
-    if type(arg[1]['replacer']) == 'function' then
+  if replacer then
+    if type(replacer) == 'function' then
       call_ext = true
-
-    -- if replacer's an array then go through and pull out found keys and value
-    elseif type(arg[1]['replacer']) == 'table' then
+    elseif type(replacer) == 'table' then
+      call_ext = false
       if global.Array:isArray(value) then
       elseif type(value) == 'table' then
         if next(value) then
-          for i=0,#arg[1]['replacer'] do
-            local k = tostring(arg[1]['replacer'][i])
+          for i=0,#replacer do
+            local k = tostring(replacer[i])
             if value[k] then
               val_copy[k] = value[k]
             end
@@ -2074,63 +2069,31 @@ function json_stringify (value, ...)
         end
       end
     end
-
   end
 
   -- initial return if only nil present
   if type(value) == 'nil' then
-    if call_ext then arg[1]['replacer'](nil,'',value) end
-    return 'null'
+    return js_null()
+
   -- initial return if only a boolean, number, or string are present
   elseif type(value) == 'boolean' or type(value) == 'number' or type(value) == 'string' then
-    if call_ext then arg[1]['replacer'](nil,'',value) end
     return js_tostring(value)
-  -- initial return if only userdata, a function, or a thread are present
-  elseif type(value) == 'userdata' or type(value) == 'function' or type(value) == 'thread' then
-    if call_ext then arg[1]['replacer'](nil,'','') end
-    return js_tostring('')
-  -- initial setup if a table is present
+
+  -- setup and parse if a table is present
   elseif type(value) == 'table' then
-
-    -- if there's a function replacer then call it on the main object
-    if call_ext then arg[1]['replacer'](nil,'',value) end
-
-    -- create handler
     local wh = rapidjson.create_writer()
-
-    -- array present
-    if global.Array:isArray(value) then
-      rapidjson.array_start(wh)
-      for i=0,#value do
-        if call_ext then arg[1]['replacer'](nil,i,value[i]) end
-        json_recurse(wh,value[i],arg[1])
-      end
-      rapidjson.array_end(wh)
-
-    -- object present
-    else
-      rapidjson.object_start(wh)
-      for k, v in pairs(value) do
-          if call_ext then arg[1]['replacer'](nil,k,v) end
-          json_recurse(wh,tostring(k),arg[1])
-          json_recurse(wh,v,arg[1])
-      end
-      rapidjson.object_end(wh)
-    end
-
-    -- get result and destroy handler
+    json_recurse(wh,value)
     local str = rapidjson.result(wh)
     rapidjson.destroy(wh)
-
-    -- if there's a spacer return a new string based off the stringified result
-    if arg[1]['indent'] then
-      str = json_space(str,arg[1]['indent'])
-    end
-
-    -- return the string
+    if spacer then str = json_space(str,spacer) end
     return js_tostring(str)
 
+  -- if an unsupported type is stringified write empty object
+  else
+    rapidjson.object_start(handler)
+    rapidjson.object_end(handler)
   end
+
 end
 
 -- Takes stringified json and returns the spaced version
@@ -2182,6 +2145,9 @@ function json_space(str,spacer)
         sb = sb..str[i]
       end
     end
+
+    -- if the last char is the end of an object append a new line
+    if str[#str-1] == '}' or str[#str-1] == ']' then sb = sb..'\n' end
 
     return sb
 
