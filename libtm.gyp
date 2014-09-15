@@ -507,6 +507,8 @@
         'src/tm_log.c',
         'src/tm_random.c',
         'src/tm_deflate.c',
+        'src/tm_ucs2.c',
+        'src/tm_utf8.c'
       ],
       "include_dirs": [
         'src/',
