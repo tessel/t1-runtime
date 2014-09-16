@@ -1,25 +1,26 @@
 console.log('1..1');
 
 var zlib = require('zlib');
-var Stream = require('stream')
+var Stream = require('stream');
+var crypto = require('crypto');
 
 var inputs = [
   'HELLO WORLD\n',
   '{!@#$%^&*()}_+-=\n\r\t',
   "012345678",
   '{"created": true}',
-  '0'
+  '0',
+  crypto.randomBytes(4096)
   ];
 
-// var input = 'HELLO WORLD\n';
 function zlibUnzipTest(data, type, input){
   var stream = new Stream();
   var unzip = zlib.createUnzip();
 
   unzip.on('data', function(buf){
-    console.log('#', input);
+    console.log('#', input.toString());
     console.log('#', 'zlib test', type, 'got', buf.toString());
-    console.log(buf.toString() == input ? 'ok' : 'not ok');
+    console.log(buf.toString() == input.toString() ? 'ok' : 'not ok');
   });
 
   unzip.on('error', function(err){
@@ -37,7 +38,7 @@ inputs.forEach(function(input){
     zlib.gunzip(zip, function (err, str) {
       console.log('#', JSON.stringify(str.toString()));
       console.log('#', JSON.stringify(input));
-      console.log(str.toString() == input ? 'ok' : 'not ok');
+      console.log(str.toString() == input.toString() ? 'ok' : 'not ok');
     })
   })
 
@@ -45,7 +46,7 @@ inputs.forEach(function(input){
     zlib.inflate(zip, function (err, str) {
       console.log('#', JSON.stringify(str.toString()));
       console.log('#', JSON.stringify(input));
-      console.log(str.toString() == input ? 'ok' : 'not ok');
+      console.log(str.toString() == input.toString() ? 'ok' : 'not ok');
     })
   })
 
@@ -53,7 +54,7 @@ inputs.forEach(function(input){
     zlib.inflateRaw(zip, function (err, str) {
       console.log('#', JSON.stringify(str.toString()));
       console.log('#', JSON.stringify(input));
-      console.log(str.toString() == input ? 'ok' : 'not ok');
+      console.log(str.toString() == input.toString() ? 'ok' : 'not ok');
     })
   })
 
