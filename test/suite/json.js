@@ -32,7 +32,9 @@ tap.ok(JSON.stringify({"hi": 5}) == "{\"hi\":5}", 'stringify obj');
 tap.ok(JSON.stringify(Object()) == '{}', 'empty obj')
 tap.ok(JSON.stringify([]) == '[]', 'empty array #TODO')
 
-tap.ok(JSON.stringify({hi : 5}, null, '  ') == '{\n  "hi": 5\n}\n', 'indentation formatting');
+tap.ok(JSON.stringify({hi : 5}, null, '  ') == '{\n  "hi": 5\n}\n', 'indentation formatting string');
+tap.ok(JSON.stringify({hi : 5}, null, '123456789AB') == '{\n123456789A"hi": 5\n}\n', 'indentation formatting long string');
+tap.ok(JSON.stringify({hi : 5}, null, 3) == '{\n   "hi": 5\n}\n', 'indentation formatting number');
 
 function censor(key, value) {
 	tap.ok(this[key] == value, '"this" value correct in replacer');
@@ -45,3 +47,13 @@ var foo = {foundation: "Mozilla", model: "box", week: 45, transport: "car", mont
 var jsonString = JSON.stringify(foo, censor);
 tap.ok(jsonString == '{"week":45,"month":7}', 'json replacer works')
 console.log('#', jsonString);
+
+var objs = [
+	{1:[1,2,3],2:'[1,2,3]',3:'toJSON on array'},
+	{1:{},2:'{}',3:'toJSON on empty object'},
+	{1:{firstName: "John", lastName: "Doe", age: 50},2:'{"firstName":"John","lastName":"Doe","age":50}',3:'toJSON on object'},
+	{1:censor,2:'{}',3:'toJSON on a function'},
+]
+for (var i in objs) {
+	tap.ok(objs[i][1].toJSON() == objs[i][2],objs[i][3]);
+}

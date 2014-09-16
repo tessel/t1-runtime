@@ -299,6 +299,10 @@ obj_proto.toString = function (this)
   end
 end
 
+obj_proto.toJSON = function (this)
+  return json_stringify(this)
+end
+
 obj_proto.valueOf = function (this)
   local primitive = getmetatable(this).__primitive;
   if primitive == nil then
@@ -1988,8 +1992,14 @@ function json_stringify (value, ...)
 
   local val_copy = {}     -- copies of hits in the replacer array
   local call_ext = false  -- whether to call an external replacer function
-  local replacer = arg[1]['replacer'] -- replacer function/array if provided
-  local spacer = arg[1]['indent'] -- spacer to insert if provided
+  local replacer = nil    -- replacer function/array if provided
+  local spacer = nil      -- spacer to insert if provided
+
+  -- A gaurd to allow calls to json_stringify(value) with no replacer/spacer
+  if arg[1] then
+    replacer = arg[1]['replacer']
+    spacer = arg[1]['indent']
+  end
 
   -- does what stringify does but can be called recursively
   function json_recurse (handler, value)
