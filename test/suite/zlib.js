@@ -7,7 +7,8 @@ var inputs = [
   'HELLO WORLD\n',
   '{!@#$%^&*()}_+-=\n\r\t',
   "012345678",
-  '{"created": true}'
+  '{"created": true}',
+  '0'
   ];
 
 // var input = 'HELLO WORLD\n';
