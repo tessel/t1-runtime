@@ -2073,7 +2073,7 @@ function json_stringify (value, ...)
 
   -- initial return if only nil present
   if type(value) == 'nil' then
-    return js_null()
+    return js_null
 
   -- initial return if only a boolean, number, or string are present
   elseif type(value) == 'boolean' or type(value) == 'number' or type(value) == 'string' then
@@ -2088,10 +2088,14 @@ function json_stringify (value, ...)
     if spacer then str = json_space(str,spacer) end
     return js_tostring(str)
 
-  -- if an unsupported type is stringified write empty object
+  -- if an unsupported type is stringified write empty object and return
   else
-    rapidjson.object_start(handler)
-    rapidjson.object_end(handler)
+    local wh = rapidjson.create_writer()
+    rapidjson.object_start(wh)
+    rapidjson.object_end(wh)
+    local str = rapidjson.result(wh)
+    rapidjson.destroy(wh)
+    return js_tostring(str)
   end
 
 end
