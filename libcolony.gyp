@@ -167,7 +167,6 @@
         'src/tm_timer.c',
         'src/colony/lua_hsregex.c',
         'src/colony/lua_tm.c',
-        'src/colony/lua_yajl.c',
         'src/colony/lua_rapidjson.c',
         'src/colony/colony.c',
         'src/colony/colony_init.c',
@@ -187,7 +186,6 @@
         'libtm.gyp:hsregex',
         'libtm.gyp:fortuna',
         'libtm.gyp:dlmalloc',
-        'libtm.gyp:yajl',
         'libtm.gyp:libtm',
         'libtm.gyp:approxidate'
       ],

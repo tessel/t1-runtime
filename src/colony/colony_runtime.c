@@ -21,7 +21,6 @@
 #include "lua_tm.h"
 #include "lua_hsregex.h"
 #include "lua_bit.h"
-#include "lua_yajl.h"
 #include "lua_rapidjson.h"
 
 #include "colony.h"
@@ -203,9 +202,6 @@ int colony_runtime_open ()
   // hsregex
   lua_pushcfunction(L, luaopen_hsregex);
   lua_setfield(L, -2, "hsregex");
-  // yajl
-  lua_pushcfunction(L, luaopen_yajl);
-  lua_setfield(L, -2, "yajl");
   // rapidjson
   lua_pushcfunction(L, lua_open_rapidjson);
   lua_setfield(L, -2, "rapidjson");

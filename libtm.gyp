@@ -62,46 +62,6 @@
     },
 
     {
-      "target_name": "yajl",
-      "product_name": "yajl",
-      "type": "static_library",
-      "defines": [
-      ],
-      "sources": [
-        "<(yajl_path)/src/yajl.c",
-        "<(yajl_path)/src/yajl_alloc.c",
-        "<(yajl_path)/src/yajl_buf.c",
-        "<(yajl_path)/src/yajl_encode.c",
-        "<(yajl_path)/src/yajl_gen.c",
-        "<(yajl_path)/src/yajl_lex.c",
-        "<(yajl_path)/src/yajl_parser.c",
-        "<(yajl_path)/src/yajl_tree.c",
-        "<(yajl_path)/src/yajl_version.c",
-      ],
-      "include_dirs": [
-        "<(yajl_path)/src",
-        "<(yajl_inc_path)"
-      ],
-
-      # yajl plays fast with enums
-      'cflags': [
-        '-Wno-enum-conversion',
-      ],
-      'xcode_settings': {
-        'OTHER_CFLAGS': [
-          '-Wno-enum-conversion',
-        ],
-      },
-
-      'direct_dependent_settings': {
-        'include_dirs': [
-          "<(yajl_path)/src",
-          "<(yajl_inc_path)"
-        ]
-      }
-    },
-
-    {
       "target_name": "rapidjson",
       "product_name": "rapidjson",
       "type": "static_library",
@@ -517,7 +477,6 @@
       ],
       "include_dirs": [
         'src/',
-        '<(yajl_inc_path)',
       ],
       'dependencies': [
         "rapidjson",
@@ -562,12 +521,10 @@
       ],
       "include_dirs": [
         'src/',
-        '<(yajl_inc_path)',
       ],
       'dependencies': [
         "http_parser",
         "hsregex",
-        "yajl",
         "rapidjson",
         "c-ares",
         "fortuna",

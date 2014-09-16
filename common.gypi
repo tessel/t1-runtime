@@ -2,9 +2,7 @@
   "variables": {
     "http_parser_path": "./deps/http-parser",
     "hsregex_path": "./deps/hsregex",
-    "yajl_path": "./deps/yajl",
     "rapidjson_path": "./deps/rapidjson",
-    "yajl_inc_path": "./deps/yajl-inc",
     "axtls_path": "./deps/axtls",
     "axtls_inc_path": "./deps/axtls-inc",
     "c_ares_path": "./deps/c-ares",

@@ -13,7 +13,6 @@
 --
 
 local bit = require('bit32')
-local yajl = require('yajl')
 local rapidjson = require('rapidjson')
 local _, hs = pcall(require, 'hsregex')
 local tm = require('tm')
@@ -1995,7 +1994,7 @@ function json_stringify (value, ...)
   local replacer = nil    -- replacer function/array if provided
   local spacer = nil      -- spacer to insert if provided
 
-  -- A gaurd to allow calls to json_stringify(value) with no replacer/spacer
+  -- A gaurd to allow calls to json_stringify(value)x with no replacer/spacer
   if arg[1] then
     replacer = arg[1]['replacer']
     spacer = arg[1]['indent']
