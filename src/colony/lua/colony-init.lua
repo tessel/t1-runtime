@@ -338,7 +338,7 @@ str_mt.__index = function (self, key)
     if key >= self.length then
       return null
     else
-      return tm.ucs2_str_charat(self, key)
+      return tostring(tm.utf8_char_encode(tm.ucs2_str_charat(self, key)))
     end
   end
   return js_proto_get(self, str_proto, key)
