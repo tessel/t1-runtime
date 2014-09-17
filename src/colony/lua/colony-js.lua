@@ -1994,7 +1994,7 @@ function json_stringify (value, ...)
   local replacer = nil    -- replacer function/array if provided
   local spacer = nil      -- spacer to insert if provided
 
-  -- A gaurd to allow calls to json_stringify(value)x with no replacer/spacer
+  -- A gaurd to allow calls to json_stringify(value) with no replacer/spacer
   if arg[1] then
     replacer = arg[1]['replacer']
     spacer = arg[1]['indent']
@@ -2040,15 +2040,19 @@ function json_stringify (value, ...)
         end
         rapidjson.object_start(handler)
         for k, v in pairs(value) do
-          local rep = value
-          if call_ext then rep = replacer(value,k,v) end
-          if rep then
-            if type(k) ~= 'table' then
-              json_recurse(handler,tostring(k))
-            else
-              json_recurse(handler,k)
+          local vt = type(v)
+          if vt == 'function' or vt == 'userdata' or vt == 'thread' then
+          else
+            local rep = value
+            if call_ext then rep = replacer(value,k,v) end
+            if rep then
+              if type(k) ~= 'table' then
+                json_recurse(handler,tostring(k))
+              else
+                json_recurse(handler,k)
+              end
+              json_recurse(handler,v)
             end
-            json_recurse(handler,v)
           end
         end
         rapidjson.object_end(handler)
