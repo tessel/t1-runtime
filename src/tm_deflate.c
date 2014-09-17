@@ -279,6 +279,9 @@ int tm_inflate_write (tm_inflate_t _inflator, const uint8_t* in, size_t in_len, 
   if (inflator->state == TM_TRAILER && inflator->type == TM_GZIP) {
     // if the ending chunk is too small, exit out
     if (in_len < 8) {
+      *in_total = in_len;
+      inflator->state = TM_END;
+      *out_total += 0;
       return 0;
     }
 
