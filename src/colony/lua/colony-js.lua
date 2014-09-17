@@ -125,7 +125,8 @@ str_proto.charCodeAt = function (this, i)
 end
 
 str_proto.charAt = function (str, i)
-  return tostring(tm.utf8_char_encode(tm.ucs2_str_charat(this, i)))
+  -- BUG: `str.charAt('foo')` should not alias `str.foo` but let's pretend we can just…
+  return str[i] or '';
 end
 
 str_proto.substr = function (str, i, len)
