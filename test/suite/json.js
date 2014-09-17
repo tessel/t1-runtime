@@ -30,11 +30,17 @@ tap.ok(JSON.stringify({a: function () {}, b: 5}) == '{"b":5}', 'stringify fn #TO
 tap.ok(JSON.stringify({"hi": 5}) == "{\"hi\":5}", 'stringify obj');
 
 tap.ok(JSON.stringify(Object()) == '{}', 'empty obj')
-tap.ok(JSON.stringify([]) == '[]', 'empty array #TODO')
+tap.ok(JSON.stringify([]) == '[]', 'empty array')
 
 tap.ok(JSON.stringify({hi : 5}, null, '  ') == '{\n  "hi": 5\n}\n', 'indentation formatting string');
 tap.ok(JSON.stringify({hi : 5}, null, '123456789AB') == '{\n123456789A"hi": 5\n}\n', 'indentation formatting long string');
 tap.ok(JSON.stringify({hi : 5}, null, 3) == '{\n   "hi": 5\n}\n', 'indentation formatting number');
+
+var censor_arr = ['transport','month']
+var foo = {foundation: "Mozilla", model: "box", week: 45, transport: "car", month: 7};
+var jsonString = JSON.stringify(foo, censor_arr);
+tap.ok(jsonString == '{"month":7,"transport":"car"}', 'json replacer array works')
+console.log('#', jsonString);
 
 function censor(key, value) {
 	tap.ok(this[key] == value, '"this" value correct in replacer');
@@ -45,7 +51,7 @@ function censor(key, value) {
 }
 var foo = {foundation: "Mozilla", model: "box", week: 45, transport: "car", month: 7};
 var jsonString = JSON.stringify(foo, censor);
-tap.ok(jsonString == '{"week":45,"month":7}', 'json replacer works')
+tap.ok(jsonString == '{"week":45,"month":7}', 'json replacer function works');
 console.log('#', jsonString);
 
 var objs = [

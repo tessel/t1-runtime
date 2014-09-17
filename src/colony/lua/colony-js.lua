@@ -2095,6 +2095,7 @@ function json_stringify (value, ...)
     local str = rapidjson.result(wh)
     rapidjson.destroy(wh)
     if spacer then str = json_space(str,spacer) end
+    str = string.gsub(str,'%[null%]','%[%]')
     return js_tostring(str)
 
   -- if an unsupported type is stringified write empty object and return
