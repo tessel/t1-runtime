@@ -299,6 +299,9 @@ obj_proto.toString = function (this)
 end
 
 obj_proto.toJSON = function (this)
+  if type(this) == 'function' then
+    error(js_new(global.TypeError, 'Object '..tostring(this)..' has no method \'toJSON\''))
+  end
   return json_stringify(this)
 end
 
@@ -2016,7 +2019,10 @@ function json_stringify (value, ...)
         rapidjson.array_start(handler)
         for i=0,#value do
           if call_ext then replacer(value,i,value[i]) end
-          json_recurse(handler,value[i])
+          local vt = type(value[i])
+          if vt == 'function' or vt == 'userdata' or vt == 'thread' then
+            rapidjson.to_null(handler,value)
+          else json_recurse(handler,value[i]) end
         end
         rapidjson.array_end(handler)
       else
@@ -2086,11 +2092,11 @@ function json_stringify (value, ...)
 
   -- initial return if only nil present
   if type(value) == 'nil' then
-    return js_null
+    return 'null'
 
   -- initial return if only a boolean, number, or string are present
   elseif type(value) == 'boolean' or type(value) == 'number' or type(value) == 'string' then
-    return js_tostring(value)
+    return tostring(value)
 
   -- setup and parse if a table is present
   elseif type(value) == 'table' then
@@ -2100,7 +2106,7 @@ function json_stringify (value, ...)
     rapidjson.destroy(wh)
     if spacer then str = json_space(str,spacer) end
     str = string.gsub(str,'%[null%]','%[%]')
-    return js_tostring(str)
+    return tostring(str)
 
   -- if an unsupported type is stringified write empty object and return
   else
@@ -2109,7 +2115,7 @@ function json_stringify (value, ...)
     rapidjson.object_end(wh)
     local str = rapidjson.result(wh)
     rapidjson.destroy(wh)
-    return js_tostring(str)
+    return tostring(str)
   end
 
 end
@@ -2163,9 +2169,6 @@ function json_space(str,spacer)
         sb = sb..str[i]
       end
     end
-
-    -- if the last char is the end of an object append a new line
-    if str[#str-1] == '}' or str[#str-1] == ']' then sb = sb..'\n' end
 
     return sb
 
