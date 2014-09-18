@@ -298,13 +298,6 @@ obj_proto.toString = function (this)
   end
 end
 
-obj_proto.toJSON = function (this)
-  if type(this) == 'function' then
-    error(js_new(global.TypeError, 'Object '..tostring(this)..' has no method \'toJSON\''))
-  end
-  return json_stringify(this)
-end
-
 obj_proto.valueOf = function (this)
   local primitive = getmetatable(this).__primitive;
   if primitive == nil then

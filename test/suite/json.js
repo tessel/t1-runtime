@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(26);
+tap.count(23);
 
 function arreq (a, b) {
 	if (a.length != b.length) {
@@ -55,21 +55,4 @@ var objs = [
 ]
 for (var i in objs) {
 	tap.ok(JSON.stringify(objs[i][1],objs[i][4],objs[i][5]) == objs[i][2],objs[i][3]);
-}
-
-// toJSON testing
-//    1:object to testing 					2:expected string result				3:message
-var objs = [
-	{ 1:{},									2:'{}',									3:'toJSON on empty object'},
-	{ 1:{fn: "John", ln: "Doe", age: 50},	2:'{"fn":"John","age":50,"ln":"Doe"}',	3:'toJSON on object'},
-]
-for (var i in objs) {
-	tap.ok(objs[i][1].toJSON() == objs[i][2],objs[i][3]);
-}
-
-var objs = [censor]
-for (var i in objs) {
-	try { objs[i].toJSON(); }
-	catch (e) { tap.ok(0==0,'toJSON called on array failed correctly'); break; }
-	tap.ok(0==1,'toJSON called on array should have failed')
 }
