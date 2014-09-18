@@ -1997,7 +1997,7 @@ function json_stringify (value, ...)
   local replacer = nil    -- replacer function/array if provided
   local spacer = nil      -- spacer to insert if provided
 
-  -- A gaurd to allow calls to json_stringify(value) with no replacer/spacer
+  -- A guard to allow calls to json_stringify(value) with no replacer/spacer
   if arg[1] then
     replacer = arg[1]['replacer']
     spacer = arg[1]['indent']
@@ -2199,7 +2199,6 @@ function json_parse(value)
 
   -- parse the value and set the lua table based off callbacks
   rapidjson.parse(
-    rapidjson.create_reader(),
     value,
     json_read_default,
     json_read_null,

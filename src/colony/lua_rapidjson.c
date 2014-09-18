@@ -139,22 +139,14 @@ void on_error(lua_State *L, const char* val, parse_error_t err) {
     lua_call(L,3,0);
 }
 
-/* Creates the parsing handler for the parsing function to work */
-static int tm_json_reader(lua_State *L) {
-    tm_json_r_handler_t rh;
-    void* addr = lua_newuserdata(L, sizeof(tm_json_r_handler_t));
-    memcpy(addr,&rh,sizeof(tm_json_r_handler_t));
-    return 1;
-}
-
 /* Parsing function called by lua to turn JSON strings to a Lua table */
 static int tm_json_read(lua_State *L) {
 
-    // get the read handler passed in
-    tm_json_r_handler_t* rh = (tm_json_r_handler_t*)lua_touserdata(L, 1);
+    // create the reader handler
+    tm_json_r_handler_t rh;
 
     // get the string to parse
-    const char* value = lua_tostring(L, 2);
+    const char* value = lua_tostring(L, 1);
 
     // set the states of the structs
     jcb.EndArray.state = L;
@@ -187,22 +179,22 @@ static int tm_json_read(lua_State *L) {
     jcb.Default.reference = luaL_ref(L, LUA_REGISTRYINDEX);
 
     // set the handler function pointers
-    rh->Default = cb_Default;
-    rh->Null = cb_Null;
-    rh->Bool = cb_Bool;
-    rh->Int = cb_Int;
-    rh->Uint = cb_Uint;
-    rh->Int64 = cb_Int64;
-    rh->Uint64 = cb_Uint64;
-    rh->Double = cb_Double;
-    rh->String = cb_String;
-    rh->StartObject = cb_StartObject;
-    rh->EndObject = cb_EndObject;
-    rh->StartArray = cb_StartArray;
-    rh->EndArray = cb_EndArray;
+    rh.Default = cb_Default;
+    rh.Null = cb_Null;
+    rh.Bool = cb_Bool;
+    rh.Int = cb_Int;
+    rh.Uint = cb_Uint;
+    rh.Int64 = cb_Int64;
+    rh.Uint64 = cb_Uint64;
+    rh.Double = cb_Double;
+    rh.String = cb_String;
+    rh.StartObject = cb_StartObject;
+    rh.EndObject = cb_EndObject;
+    rh.StartArray = cb_StartArray;
+    rh.EndArray = cb_EndArray;
 
     // call rapidjson to parse the string
-    parse_error_t parse_err = tm_json_parse(*rh,value);
+    parse_error_t parse_err = tm_json_parse(rh,value);
 
     // free the references in the reference table
     luaL_unref(L,LUA_REGISTRYINDEX,jcb.Default.reference);
@@ -312,9 +304,6 @@ static int tm_json_destroy(lua_State *L) {
 int lua_open_rapidjson(lua_State *L) {
     
     lua_createtable(L, 0, 0);
-
-    lua_pushcfunction(L, tm_json_reader);
-    lua_setfield(L, -2, "create_reader");
 
     lua_pushcfunction(L, tm_json_read);
     lua_setfield(L, -2, "parse");
