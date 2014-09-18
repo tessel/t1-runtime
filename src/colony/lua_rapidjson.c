@@ -148,21 +148,6 @@ static int tm_json_read(lua_State *L) {
     // get the string to parse
     const char* value = lua_tostring(L, 1);
 
-    // set the states of the structs
-    jcb.EndArray.state = L;
-    jcb.StartArray.state = L;
-    jcb.EndObject.state = L;
-    jcb.StartObject.state = L;
-    jcb.String.state = L;
-    jcb.Double.state = L;
-    jcb.Uint64.state = L;
-    jcb.Int64.state = L;
-    jcb.Uint.state = L;
-    jcb.Int.state = L;
-    jcb.Bool.state = L;
-    jcb.Null.state = L;
-    jcb.Default.state = L;
-
     // get the function reference from Lua
     jcb.EndArray.reference = luaL_ref(L, LUA_REGISTRYINDEX);
     jcb.StartArray.reference = luaL_ref(L, LUA_REGISTRYINDEX);
@@ -195,21 +180,6 @@ static int tm_json_read(lua_State *L) {
 
     // call rapidjson to parse the string
     parse_error_t parse_err = tm_json_parse(rh,value);
-
-    // free the references in the reference table
-    luaL_unref(L,LUA_REGISTRYINDEX,jcb.Default.reference);
-    luaL_unref(L,LUA_REGISTRYINDEX,jcb.Null.reference);
-    luaL_unref(L,LUA_REGISTRYINDEX,jcb.Bool.reference);
-    luaL_unref(L,LUA_REGISTRYINDEX,jcb.Int.reference);
-    luaL_unref(L,LUA_REGISTRYINDEX,jcb.Uint.reference);
-    luaL_unref(L,LUA_REGISTRYINDEX,jcb.Int64.reference);
-    luaL_unref(L,LUA_REGISTRYINDEX,jcb.Uint64.reference);
-    luaL_unref(L,LUA_REGISTRYINDEX,jcb.Double.reference);
-    luaL_unref(L,LUA_REGISTRYINDEX,jcb.String.reference);
-    luaL_unref(L,LUA_REGISTRYINDEX,jcb.StartObject.reference);
-    luaL_unref(L,LUA_REGISTRYINDEX,jcb.EndObject.reference);
-    luaL_unref(L,LUA_REGISTRYINDEX,jcb.StartArray.reference);
-    luaL_unref(L,LUA_REGISTRYINDEX,jcb.EndArray.reference);
 
     // if there's an error deal with it
     if(parse_err.code) { on_error(L,value,parse_err); }
@@ -302,6 +272,21 @@ static int tm_json_destroy(lua_State *L) {
 
 /* Creates and pushes to a table the function that Lua needs to access */
 int lua_open_rapidjson(lua_State *L) {
+
+    // set the states of the structs
+    jcb.EndArray.state = L;
+    jcb.StartArray.state = L;
+    jcb.EndObject.state = L;
+    jcb.StartObject.state = L;
+    jcb.String.state = L;
+    jcb.Double.state = L;
+    jcb.Uint64.state = L;
+    jcb.Int64.state = L;
+    jcb.Uint.state = L;
+    jcb.Int.state = L;
+    jcb.Bool.state = L;
+    jcb.Null.state = L;
+    jcb.Default.state = L;
     
     lua_createtable(L, 0, 0);
 
