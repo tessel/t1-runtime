@@ -78,6 +78,9 @@
       },
 
       'direct_dependent_settings': {
+        'defines': [
+          "__STDC_CONSTANT_MACROS",
+        ], 
         'include_dirs': [
           "<(rapidjson_path)/include",
         ]
