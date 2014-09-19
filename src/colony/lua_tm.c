@@ -936,6 +936,17 @@ static int l_tm_ucs2_str_charat (lua_State* L)
   return 1;
 }
 
+static int l_tm_ucs2_str_lookup (lua_State* L)
+{
+  size_t buf_len = 0;
+  const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
+  uint32_t idx = (uint32_t) lua_tonumber(L, 2);
+  uint32_t uchar;
+  lua_pushnumber(L, tm_ucs2_str_lookup(buf, buf_len, idx, &uchar));
+  lua_pushnumber(L, uchar);
+  return 2;
+}
+
 #ifdef ENABLE_NET
 
 uint32_t tm__sync_gethostbyname (const char *domain);
@@ -1317,6 +1328,8 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "utf8_str_toupper", l_tm_utf8_str_toupper },
     { "ucs2_str_length", l_tm_ucs2_str_length },
     { "ucs2_str_charat", l_tm_ucs2_str_charat },
+    { "ucs2_str_lookup", l_tm_ucs2_str_lookup },
+    
     // deflate
     { "deflate_start", l_tm_deflate_start },
     { "deflate_write", l_tm_deflate_write },

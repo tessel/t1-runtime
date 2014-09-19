@@ -338,7 +338,9 @@ func_mt.proto = func_proto
 
 str_mt.getters = {
   length = function (this)
-    return tm.ucs2_str_length(this)
+    -- BROKEN!!!! this is the wrong tool for the job…
+    return tm.ucs2_str_lookup(this, #this)
+    --return tm.ucs2_str_length(this)
   end
 }
 str_mt.__index = function (self, key)

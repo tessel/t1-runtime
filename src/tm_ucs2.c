@@ -49,3 +49,25 @@ int32_t tm_ucs2_str_charat (const uint8_t* buf, ssize_t buf_len, ssize_t index)
 			? (dst - 0x10000) % 0x400 + 0xDC00
 			: dst & 0xFFFF;
 }
+
+
+size_t tm_ucs2_str_lookup (const uint8_t* buf, size_t len, size_t ucs2_index, uint32_t* outchar)
+{
+  const uint8_t* const orig_buf = buf;
+  size_t ucs2_position = 0;
+	int32_t uchar = 0;
+	while (len && ucs2_position < ucs2_index) {
+		ssize_t bytes_read = utf8proc_iterate(buf, len, &uchar);
+    if (uchar < 0) {
+      // "convert" ptr[0] to noncharacter
+      uchar = 0xFFFF;
+      bytes_read = 1;
+    }
+		buf += bytes_read;
+		len -= bytes_read;
+    ucs2_position += (uchar > 0xFFFF) ? 2 : 1;
+	}
+  if (outchar != NULL) *outchar = uchar;
+	return buf - orig_buf;
+}
+
