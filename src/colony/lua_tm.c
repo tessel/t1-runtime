@@ -936,16 +936,28 @@ static int l_tm_ucs2_str_charat (lua_State* L)
   return 1;
 }
 
-static int l_tm_ucs2_str_lookup (lua_State* L)
+static int l_tm_ucs2_str_lookup_16to8 (lua_State* L)
 {
   size_t buf_len = 0;
   const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
   uint32_t idx = (uint32_t) lua_tonumber(L, 2);
-  uint32_t uchar;
-  lua_pushnumber(L, tm_ucs2_str_lookup(buf, buf_len, idx, &uchar));
-  lua_pushnumber(L, uchar);
-  return 2;
+  lua_pushnumber(L, tm_ucs2_str_lookup_16to8(buf, buf_len, idx));
+  return 1;
 }
+
+static int l_tm_ucs2_str_lookup_8to16 (lua_State* L)
+{
+  size_t buf_len = 0;
+  const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
+  uint32_t idx = (uint32_t) lua_tonumber(L, 2);
+  if (idx > buf_len) {
+    // str methods are expected to pre-sanitize. make issue obvious if not!
+    return luaL_error(L, "assertion failure: lookup beyond end of string");
+  }
+  lua_pushnumber(L, tm_ucs2_str_lookup_8to16(buf, idx));
+  return 1;
+}
+
 
 #ifdef ENABLE_NET
 
@@ -1328,7 +1340,8 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "utf8_str_toupper", l_tm_utf8_str_toupper },
     { "ucs2_str_length", l_tm_ucs2_str_length },
     { "ucs2_str_charat", l_tm_ucs2_str_charat },
-    { "ucs2_str_lookup", l_tm_ucs2_str_lookup },
+    { "ucs2_str_lookup_16to8", l_tm_ucs2_str_lookup_16to8 },
+    { "ucs2_str_lookup_8to16", l_tm_ucs2_str_lookup_8to16 },
     
     // deflate
     { "deflate_start", l_tm_deflate_start },
