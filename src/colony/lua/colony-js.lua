@@ -1844,6 +1844,9 @@ function json_read_null()
   end
 end
 
+-- Callback when a boolean is parsed in json
+function json_read_value(value) json_read_double(value) end
+
 -- Callback when a double is parsed in json
 function json_read_double(value)
   if is_arr then
