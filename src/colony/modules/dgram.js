@@ -22,7 +22,15 @@ UDP.prototype.bind = function (port, cb) {
   var self = this;
 
   this._bound = true;
-  tm.udp_listen(this.socket, port || 0);
+  var ret = tm.udp_listen(this.socket, port || 0);
+  if (ret < 0) {
+    var err = "ENOENT cannot listen to socket.";
+    if (ret == -tm.NO_CONNECTION) {
+      err = "Wifi is not connected";
+    }
+    self.emit('error', new Error(err));
+    return;
+  }
 
   this._listenid = setTimeout(function poll () {
     self._listenid = null;

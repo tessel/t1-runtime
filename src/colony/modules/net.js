@@ -17,7 +17,7 @@ var dns = require('dns');
 var Stream = require('stream');
 var tls = require('tls');
 
-
+var ccOpenSockets = [];
 /**
  * ip/helpers
  */
@@ -67,6 +67,9 @@ function TCPSocket (socket, _secure) {
   } else if (socket == null) {
     if (_secure) ensureSSLCtx();
     this.socket = tm.tcp_open();
+    // ccOpenSockets.push(this.socket);
+
+    // console.log("70 opened socket", ccOpenSockets);
   } else {
     this.socket = socket;
   }
@@ -78,7 +81,15 @@ function TCPSocket (socket, _secure) {
   var self = this;
   if (this.socket < 0) {
     setImmediate(function () {
-      self.emit('error', new Error("ENOENT: Cannot open another socket."));
+      var err = "ENOENT: Cannot open another socket.";
+      if (self.socket == -tm.NO_CONNECTION) {
+        // wifi is not connected
+        err = "ENOTFOUND: Wifi is not connected.";
+      }
+      self.emit('error', new Error(err));
+
+      // cleanup
+      self.removeAllListeners();
     });
     return;
   }
@@ -137,6 +148,13 @@ function normalizeConnectArgs(args) {
 
 TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   var self = this;
+
+  if (self.socket == null || self.socket < 0) {
+    console.log("tcp connect has no socket");
+    self.destroy();
+    return self.__close();
+  }
+
   var args = normalizeConnectArgs(arguments);
   var opts = args[0];
   if (opts.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
@@ -180,9 +198,9 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       addr = (addr[0] << 24) + (addr[1] << 16) + (addr[2] << 8) + addr[3];
 
       var ret = tm.tcp_connect(self.socket, addr, port);
-      if (ret >= 1) {
+      if (ret == -tm.NO_CONNECTION) {
         // we're not connected to the internet
-        self.emit('error', new Error("Lost connection"));
+        self.emit('error', new Error("No wifi connection"));
         // force the cleanup
         self.destroy();
         return self.__close(); // need to call close otherwise we keep listening for the tcp-close event
@@ -201,7 +219,21 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
           setTimeout(function(){
             // wait for tcp socket to actually close
             self.socket = tm.tcp_open();
-            doConnect(ip);
+
+            if (self.socket < 0) {
+              var err = "ENOENT: Cannot open another socket.";
+              if (self.socket == -tm.NO_CONNECTION) {
+                // wifi is not connected
+                err = "ENOTFOUND: Wifi is not connected.";
+              }
+              self.emit('error', new Error(err));
+
+              // force the close
+              self.destroy();
+              return self.__close();
+            } else {
+              doConnect(ip);
+            }
           }, 100);
           return;
         }
@@ -405,6 +437,10 @@ TCPSocket.prototype.__readSocket = function(restartTimeout) {
 TCPSocket.prototype.__close = function () {
   process.removeListener('tcp-close', this._closehandler);
   tm.tcp_close(this.socket);
+  console.log("closing socket", this.socket);
+
+  ccOpenSockets.splice(ccOpenSockets.indexOf(this.socket), 1);
+  console.log("closed socket", ccOpenSockets);
   this.socket = null;
   this.emit('close');
 }
@@ -453,9 +489,14 @@ TCPSocket.prototype.setNoDelay = function (val) {
 
 function connect (port, host, callback, _secure) {
   var client = new TCPSocket(null, _secure);
-  var args = Array.prototype.slice.call(arguments);
-  if (args.length === 4) args.pop();      // drop _secure param
-  TCPSocket.prototype.connect.apply(client, args);
+  if (client.socket >= 0) {
+    var args = Array.prototype.slice.call(arguments);
+    if (args.length === 4) args.pop();      // drop _secure param
+    console.log("connect function called");
+    TCPSocket.prototype.connect.apply(client, args);
+  } else {
+    console.log("tcp connect is null, tcp socket broke");
+  }
   return client;
 };
 
@@ -541,7 +582,18 @@ function createServer (opts, onsocket) {
     opts = null;
   }
   if (opts && opts.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
-  var server = new TCPServer(tm.tcp_open());
+  var socket = tm.tcp_open();
+  
+  if (socket < 0) {
+    var err = "ENOENT: Cannot open another socket.";
+    if (socket == -tm.NO_CONNECTION) {
+      // wifi is not connected
+      err = "ENOTFOUND: Wifi is not connected.";
+    }
+    throw new Error(err);
+  }
+
+  var server = new TCPServer(socket);
   onsocket && server.on('connection', onsocket);
   return server;
 };

@@ -1289,6 +1289,9 @@ LUALIB_API int luaopen_tm (lua_State *L)
   luaL_setfieldnumber(L, "GZIP", TM_GZIP);
   luaL_setfieldnumber(L, "UNZIP", TM_UNZIP);
 
+  luaL_setfieldnumber(L, "NO_CONNECTION", NO_CONNECTION);
+  luaL_setfieldnumber(L, "SOCKET_TRACK_ERR", SOCKET_TRACK_ERR);
+
   luaL_setfieldnumber(L, "FS_TYPE_INVALID", TM_FS_TYPE_INVALID);
   luaL_setfieldnumber(L, "FS_TYPE_FILE", TM_FS_TYPE_FILE);
   luaL_setfieldnumber(L, "FS_TYPE_DIR", TM_FS_TYPE_DIR);

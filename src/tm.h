@@ -30,6 +30,8 @@ void tm_logf(char level, const char* format, ...);
 #define SYS_DBG 1
 #define SYS_LOG 20
 #define SYS_ERR 22
+#define NO_CONNECTION 10
+#define SOCKET_TRACK_ERR 11
 
 #define TM_DEBUG(str, ...) tm_logf(SYS_DBG, str, ##__VA_ARGS__)
 #define TM_LOG(str, ...) tm_logf(SYS_LOG, str, ##__VA_ARGS__)
