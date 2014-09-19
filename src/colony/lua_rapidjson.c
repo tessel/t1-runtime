@@ -15,119 +15,96 @@
 #include "lua_rapidjson.h"
 #include "../tm_json.h"
 
-/* Used to keep state and reference position for callbacks to function */
-typedef struct tm_lua_callback {
-    int reference;
-    lua_State *state;
-} tm_lua_callback_t;
-
-/* Handler of the callbacks that get set to call Lua functions */
-typedef struct json_parser_callback {
-  tm_lua_callback_t Default;
-  tm_lua_callback_t Null;
-  tm_lua_callback_t Bool;
-  tm_lua_callback_t Int;
-  tm_lua_callback_t Uint;
-  tm_lua_callback_t Int64;
-  tm_lua_callback_t Uint64;
-  tm_lua_callback_t Double;
-  tm_lua_callback_t String;
-  tm_lua_callback_t StartObject;
-  tm_lua_callback_t EndObject;
-  tm_lua_callback_t StartArray;
-  tm_lua_callback_t EndArray;
-} json_parser_callback_t;
-
-/* Unfortunate global needed in order for callbacks to all have access */
-json_parser_callback_t jcb;
+/* Unfortunate global needed in order to save lua state */
+lua_State* _lua_state;
 
 /* Callback to Lua for parsing default values */
 void cb_Default() {
-    lua_rawgeti(jcb.Default.state, LUA_REGISTRYINDEX, jcb.Default.reference);
-	lua_call(jcb.Default.state,0,0);
+    lua_getfield(_lua_state, LUA_GLOBALSINDEX, "json_read_default");
+    lua_call(_lua_state,0,0);
 }
 
 /* Callback to Lua for parsing nulls */
 void cb_Null() {
-    lua_rawgeti(jcb.Null.state, LUA_REGISTRYINDEX, jcb.Null.reference);
-	lua_call(jcb.Null.state,0,0);
+    lua_getfield(_lua_state, LUA_GLOBALSINDEX, "json_read_null");
+	lua_call(_lua_state,0,0);
 }
 
 /* Callback to Lua for parsing booleans */
 void cb_Bool(bool value) {
-    lua_rawgeti(jcb.Bool.state, LUA_REGISTRYINDEX, jcb.Bool.reference);
-    lua_pushboolean(jcb.Bool.state,value);
-	lua_call(jcb.Bool.state,1,0);
+    lua_getfield(_lua_state, LUA_GLOBALSINDEX, "json_read_bool");
+    lua_pushboolean(_lua_state,value);
+	lua_call(_lua_state,1,0);
 }
 
 /* Callback to Lua for parsing ints */
 void cb_Int(int value) {
-    lua_rawgeti(jcb.Int.state, LUA_REGISTRYINDEX, jcb.Int.reference);
-    lua_pushnumber(jcb.Int.state,value);
-	lua_call(jcb.Int.state,1,0);
+    lua_getfield(_lua_state, LUA_GLOBALSINDEX, "json_read_int");
+    lua_pushnumber(_lua_state,value);
+	lua_call(_lua_state,1,0);
 }
 
 /* Callback to Lua for parsing unsigned ints */
 void cb_Uint(unsigned value) {
-    lua_rawgeti(jcb.Uint.state, LUA_REGISTRYINDEX, jcb.Uint.reference);
-    lua_pushnumber(jcb.Uint.state,value);
-	lua_call(jcb.Uint.state,1,0);
+    lua_getfield(_lua_state, LUA_GLOBALSINDEX, "json_read_uint");
+    lua_pushnumber(_lua_state,value);
+	lua_call(_lua_state,1,0);
 }
 
 /* Callback to Lua for parsing 64 bit ints */
 void cb_Int64(int64_t value) {
-    lua_rawgeti(jcb.Int64.state, LUA_REGISTRYINDEX, jcb.Int64.reference);
-    lua_pushnumber(jcb.Int64.state,value);
-	lua_call(jcb.Int64.state,1,0);
+    lua_getfield(_lua_state, LUA_GLOBALSINDEX, "json_read_int64");
+    lua_pushnumber(_lua_state,value);
+	lua_call(_lua_state,1,0);
 }
 
 /* Callback to Lua for parsing unsigned 64 bit ints */
 void cb_Uint64(uint64_t value) {
-    lua_rawgeti(jcb.Uint64.state, LUA_REGISTRYINDEX, jcb.Uint64.reference);
-    lua_pushnumber(jcb.Uint64.state,value);
-	lua_call(jcb.Uint64.state,1,0);
+    lua_getfield(_lua_state, LUA_GLOBALSINDEX, "json_read_uint64");
+    lua_pushnumber(_lua_state,value);
+	lua_call(_lua_state,1,0);
 }
 
 /* Callback to Lua for parsing doubles */
 void cb_Double(double value) {
-    lua_rawgeti(jcb.Double.state, LUA_REGISTRYINDEX, jcb.Double.reference);
-    lua_pushnumber(jcb.Double.state,value);
-	lua_call(jcb.Double.state,1,0);
+    lua_getfield(_lua_state, LUA_GLOBALSINDEX, "json_read_double");
+    lua_pushnumber(_lua_state,value);
+	lua_call(_lua_state,1,0);
 }
 
 /* Callback to Lua for parsing strings */
 void cb_String(const char* value, size_t len, bool set) {
-    lua_rawgeti(jcb.String.state, LUA_REGISTRYINDEX, jcb.String.reference);
-    lua_pushstring(jcb.String.state,value);
-    lua_pushnumber(jcb.String.state,len);
-    lua_pushboolean(jcb.String.state,set);
-    lua_call(jcb.String.state, 3, 0);
+    lua_getfield(_lua_state, LUA_GLOBALSINDEX, "json_read_string");
+    lua_pushstring(_lua_state,value);
+    lua_pushnumber(_lua_state,len);
+    lua_pushboolean(_lua_state,set);
+    lua_call(_lua_state, 3, 0);
 }
 
 /* Callback to Lua for parsing start of an object */
 void cb_StartObject() {
-    lua_rawgeti(jcb.StartObject.state, LUA_REGISTRYINDEX, jcb.StartObject.reference);
-	lua_call(jcb.StartObject.state,0,0);
+    lua_getfield(_lua_state, LUA_GLOBALSINDEX, "json_read_start_object");
+	lua_call(_lua_state,0,0);
 }
 
 /* Callback to Lua for parsing end of an object */
 void cb_EndObject(size_t value) {
-    lua_rawgeti(jcb.EndObject.state, LUA_REGISTRYINDEX, jcb.EndObject.reference);
-    lua_pushnumber(jcb.EndObject.state,value);
-	lua_call(jcb.EndObject.state,1,0);
+    lua_getfield(_lua_state, LUA_GLOBALSINDEX, "json_read_end_object");
+    lua_pushnumber(_lua_state,value);
+	lua_call(_lua_state,1,0);
 }
 
 /* Callback to Lua for parsing start of an array */
 void cb_StartArray() {
-    lua_rawgeti(jcb.StartArray.state, LUA_REGISTRYINDEX, jcb.StartArray.reference);
-	lua_call(jcb.StartArray.state,0,0);
+    lua_getfield(_lua_state, LUA_GLOBALSINDEX, "json_read_start_array");
+	lua_call(_lua_state,0,0);
 }
 
 /* Callback to Lua for parsing end of an array */
 void cb_EndArray(size_t value) {
-    lua_rawgeti(jcb.EndArray.state, LUA_REGISTRYINDEX, jcb.EndArray.reference);
-    lua_pushnumber(jcb.EndArray.state,value);
-	lua_call(jcb.EndArray.state,1,0);
+    lua_getfield(_lua_state, LUA_GLOBALSINDEX, "json_read_end_array");
+    lua_pushnumber(_lua_state,value);
+	lua_call(_lua_state,1,0);
 }
 
 /* Calls Lua to deal with any error that occurs when parsing */
@@ -142,26 +119,11 @@ void on_error(lua_State *L, const char* val, parse_error_t err) {
 /* Parsing function called by lua to turn JSON strings to a Lua table */
 static int tm_json_read(lua_State *L) {
 
-    // create the reader handler
-    tm_json_r_handler_t rh;
-
     // get the string to parse
     const char* value = lua_tostring(L, 1);
 
-    // get the function reference from Lua
-    jcb.EndArray.reference = luaL_ref(L, LUA_REGISTRYINDEX);
-    jcb.StartArray.reference = luaL_ref(L, LUA_REGISTRYINDEX);
-    jcb.EndObject.reference = luaL_ref(L, LUA_REGISTRYINDEX);
-    jcb.StartObject.reference = luaL_ref(L, LUA_REGISTRYINDEX);
-    jcb.String.reference = luaL_ref(L, LUA_REGISTRYINDEX);
-    jcb.Double.reference = luaL_ref(L, LUA_REGISTRYINDEX);
-    jcb.Uint64.reference = luaL_ref(L, LUA_REGISTRYINDEX);
-    jcb.Int64.reference = luaL_ref(L, LUA_REGISTRYINDEX);
-    jcb.Uint.reference = luaL_ref(L, LUA_REGISTRYINDEX);
-    jcb.Int.reference = luaL_ref(L, LUA_REGISTRYINDEX);
-    jcb.Bool.reference = luaL_ref(L, LUA_REGISTRYINDEX);
-    jcb.Null.reference = luaL_ref(L, LUA_REGISTRYINDEX);
-    jcb.Default.reference = luaL_ref(L, LUA_REGISTRYINDEX);
+    // create the reader handler
+    tm_json_r_handler_t rh;
 
     // set the handler function pointers
     rh.Default = cb_Default;
@@ -274,19 +236,7 @@ static int tm_json_destroy(lua_State *L) {
 int lua_open_rapidjson(lua_State *L) {
 
     // set the states of the structs
-    jcb.EndArray.state = L;
-    jcb.StartArray.state = L;
-    jcb.EndObject.state = L;
-    jcb.StartObject.state = L;
-    jcb.String.state = L;
-    jcb.Double.state = L;
-    jcb.Uint64.state = L;
-    jcb.Int64.state = L;
-    jcb.Uint.state = L;
-    jcb.Int.state = L;
-    jcb.Bool.state = L;
-    jcb.Null.state = L;
-    jcb.Default.state = L;
+    _lua_state = L;
     
     lua_createtable(L, 0, 0);
 
