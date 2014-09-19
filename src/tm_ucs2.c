@@ -51,13 +51,18 @@ int32_t tm_ucs2_str_charat (const uint8_t* buf, ssize_t buf_len, ssize_t index)
 }
 
 // convert UCS-2 index to offset in CESU-8 string
-size_t tm_ucs2_str_lookup_16to8 (const uint8_t* buf, size_t len, size_t ucs2_index)
+size_t tm_ucs2_str_lookup_16to8 (const uint8_t* buf, size_t len, size_t ucs2_index, size_t* seq_len)
 {
   const uint8_t* const orig_buf = buf;
+  ssize_t bytes_read;
   size_t ucs2_position = 0;
-	int32_t uchar;
-	while (len && ucs2_position < ucs2_index) {
-		ssize_t bytes_read = utf8proc_iterate(buf, len, &uchar);
+	while (ucs2_position <= ucs2_index) {        // NOTE: we read _past_ ucs2_index to get seq_len
+    if (len == 0) {
+      bytes_read = 0;
+      break;
+    }
+    int32_t uchar;
+		bytes_read = utf8proc_iterate(buf, len, &uchar);
     if (uchar < 0) {
       // "convert" ptr[0] to noncharacter
       uchar = 0xFFFF;
@@ -69,7 +74,8 @@ size_t tm_ucs2_str_lookup_16to8 (const uint8_t* buf, size_t len, size_t ucs2_ind
     //       we can't do any better here; IMO the correct solution is for colony-compiler to ensure CESU for us
     ucs2_position += (uchar > 0xFFFF) ? 2 : 1;
 	}
-	return buf - orig_buf;
+  *seq_len = bytes_read;
+	return (buf - bytes_read) - orig_buf;
 }
 
 

@@ -335,10 +335,11 @@ str_mt.__index = function (self, key)
     return getter(self, key)
   end
   if (tonumber(key) == key) then
-    if key >= self.length then
-      return null
+    local off, len = tm.ucs2_str_lookup_16to8(self, key)
+    if len > 0 then
+      return string.sub(self, off, off+len-1)
     else
-      return tostring(tm.utf8_char_encode(tm.ucs2_str_charat(self, key)))
+      return null
     end
   end
   return js_proto_get(self, str_proto, key)
