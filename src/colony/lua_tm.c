@@ -941,8 +941,10 @@ static int l_tm_ucs2_str_lookup_16to8 (lua_State* L)
   size_t buf_len = 0;
   const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
   uint32_t idx = (uint32_t) lua_tonumber(L, 2);
-  lua_pushnumber(L, tm_ucs2_str_lookup_16to8(buf, buf_len, idx));
-  return 1;
+  size_t seq_len;
+  lua_pushnumber(L, tm_ucs2_str_lookup_16to8(buf, buf_len, idx, &seq_len) + 1);
+  lua_pushnumber(L, seq_len);
+  return 2;
 }
 
 static int l_tm_ucs2_str_lookup_8to16 (lua_State* L)
