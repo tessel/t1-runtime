@@ -72,6 +72,7 @@ size_t tm_ucs2_str_lookup_16to8 (const uint8_t* buf, size_t len, size_t ucs2_ind
 		len -= bytes_read;
     // NOTE: this logic (*somewhat* incorrectly) won't split surrogate pair if `buf` is UTF-8 instead of CESU-8
     //       we can't do any better here; IMO the correct solution is for colony-compiler to ensure CESU for us
+    // HOWEVER: utf8proc_iterate is very strict about UTF-8 correctness! so _that_ will be fun…
     ucs2_position += (uchar > 0xFFFF) ? 2 : 1;
 	}
   *seq_len = bytes_read;
