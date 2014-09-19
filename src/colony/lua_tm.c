@@ -936,6 +936,18 @@ static int l_tm_ucs2_str_charat (lua_State* L)
   return 1;
 }
 
+static int l_tm_ucs2_str_lookup (lua_State* L)
+{
+  size_t buf_len = 0;
+  const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
+  uint32_t idx = (uint32_t) lua_tonumber(L, 2);
+  uint32_t uchar;
+  lua_pushnumber(L, tm_ucs2_str_lookup(buf, buf_len, idx, &uchar));
+  lua_pushnumber(L, uchar);
+  return 2;
+}
+
+#ifdef ENABLE_NET
 
 uint32_t tm__sync_gethostbyname (const char *domain);
 
@@ -1316,6 +1328,41 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "utf8_str_toupper", l_tm_utf8_str_toupper },
     { "ucs2_str_length", l_tm_ucs2_str_length },
     { "ucs2_str_charat", l_tm_ucs2_str_charat },
+    { "ucs2_str_lookup", l_tm_ucs2_str_lookup },
+    
+    // deflate
+    { "deflate_start", l_tm_deflate_start },
+    { "deflate_write", l_tm_deflate_write },
+    { "deflate_end", l_tm_deflate_end },
+
+    // inflate
+    { "inflate_start", l_tm_inflate_start },
+    { "inflate_write", l_tm_inflate_write },
+    { "inflate_end", l_tm_inflate_end },
+
+    // Approxidate
+    {"approxidate_milli", l_tm_approxidate_milli },
+
+    // random
+    { "random_bytes", l_tm_random_bytes },
+
+    // TLS
+#ifdef ENABLE_TLS
+    { "hmac_sha1", l_tm_hmac_sha1 },
+    L_TM_HASH_ENTRIES(md5),
+    L_TM_HASH_ENTRIES(sha1),
+    L_TM_HASH_ENTRIES(sha224),
+    L_TM_HASH_ENTRIES(sha256),
+    L_TM_HASH_ENTRIES(sha384),
+    L_TM_HASH_ENTRIES(sha512),
+#endif
+
+    // timestamp
+    { "timestamp", l_tm_timestamp },
+    { "timestamp_update", l_tm_timestamp_update },
+
+    // itoa
+    { "itoa", l_tm_itoa },
 
 #ifdef ENABLE_NET
     { "_sync_gethostbyname", l_tm__sync_gethostbyname },
