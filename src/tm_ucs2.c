@@ -63,9 +63,9 @@ size_t tm_ucs2_str_lookup_16to8 (const uint8_t* buf, size_t len, size_t ucs2_ind
     }
     int32_t uchar;
 		bytes_read = utf8proc_iterate(buf, len, &uchar);
-    if (uchar < 0) {
-      // "convert" ptr[0] to noncharacter
-      uchar = 0xFFFF;
+    if (uchar < 0) {      // NOTE: it seems colony-compiler is sanitizing, so (currently) this shouldn't happen
+      // "replace" ptr[0]
+      uchar = 0xFFFD;
       bytes_read = 1;
     }
 		buf += bytes_read;
