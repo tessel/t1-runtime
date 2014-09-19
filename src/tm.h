@@ -213,6 +213,7 @@ ssize_t tm_utf8_str_toupper (const uint8_t *buf, ssize_t buf_len, uint8_t **dstp
 
 size_t tm_ucs2_str_length (const uint8_t* buf, ssize_t buf_len);
 int32_t tm_ucs2_str_charat (const uint8_t* buf, ssize_t buf_len, ssize_t index);
+size_t tm_ucs2_str_lookup (const uint8_t* buf, size_t len, size_t index, uint32_t* outchar);
 
 // fs
 
