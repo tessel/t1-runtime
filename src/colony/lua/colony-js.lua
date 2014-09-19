@@ -2191,22 +2191,7 @@ function json_parse(value)
   end
 
   -- parse the value and set the lua table based off callbacks
-  rapidjson.parse(
-    value,
-    json_read_default,
-    json_read_null,
-    json_read_bool,
-    json_read_int,
-    json_read_uint,
-    json_read_int64,
-    json_read_uint64,
-    json_read_double,
-    json_read_string,
-    json_read_start_object,
-    json_read_end_object,
-    json_read_start_array,
-    json_read_end_array
-  )
+  rapidjson.parse(value)
 
   -- reference it from here so we can clear the globals for another round
   local lua_table_cpy = lua_table

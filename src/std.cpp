@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void * operator new(size_t size) /* let op: size geeft het aantal bytes aan */
+void * operator new(size_t size)
 {
     return(malloc(size));
 } 
