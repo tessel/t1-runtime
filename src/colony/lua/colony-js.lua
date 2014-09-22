@@ -174,18 +174,9 @@ str_proto.toUpperCase = function (this)
 end
 
 str_proto.indexOf = function (str, needle, fromIndex)
-
-  if needle == '' then
-    if fromIndex < str.length then return fromIndex; else return str.length; end
-  end
-
-  if fromIndex == nil or fromIndex < 0 then
-    fromIndex = 1
-  elseif fromIndex > str.length then return -1;
-  end
-
-  local ret = string.find(str, tostring(needle), fromIndex, true)
-  if ret == null then return -1; else return ret - 1; end
+  start = tm.ucs2_str_lookup_16to8(str, math.max(0, tonumber(fromIndex) or 0))
+  loc = string.find(str, tostring(needle), start, true)
+  if loc == nil then return -1; else return tm.ucs2_str_lookup_8to16(str, loc); end
 end
 
 str_proto.lastIndexOf = function (str, needle, fromIndex)
