@@ -1,7 +1,7 @@
 var tap = require('../tap');
 var buf = require('buffer');
 
-tap.count(80);
+tap.count(76);
 
 // little empty tester
 function is_empty(obj) {
@@ -59,11 +59,7 @@ var objs = [
   { 1:foo1,                                     2:'{"week":45,"month":7}',           3:'replacer function',          4:censor,          5:null },
   { 1:{a: function () {}, b: 5},                2:'{"b":5}',                         3:'function',                   4:null,            5:null },
   { 1:[1,function(){},2],                       2:'[1,null,2]',                      3:'function in array',          4:null,            5:null },
-  { 1:new buf.Buffer([11,22,33,44],'utf-8'),    2:'[11,22,33,44]',                   3:'buffer utf-8',               4:null,            5:null },
-  { 1:new buf.Buffer([11,22,33,44],'ascii'),    2:'[11,22,33,44]',                   3:'buffer ascii',               4:null,            5:null },
-  { 1:new buf.Buffer([11,22,33,44],'ucs2'),     2:'[11,22,33,44]',                   3:'buffer ucs2',                4:null,            5:null },
-  { 1:new buf.Buffer([11,22,33,44],'base64'),   2:'[11,22,33,44]',                   3:'buffer base64',              4:null,            5:null },
-  { 1:new buf.Buffer([11,22,33,44],'binary'),   2:'[11,22,33,44]',                   3:'buffer binary',              4:null,            5:null },
+  { 1:new buf.Buffer([11,22,33,44]),            2:'[11,22,33,44]',                   3:'buffer',                     4:null,            5:null },
 ]
 
 // parsing testing
