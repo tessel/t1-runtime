@@ -1956,9 +1956,9 @@ function json_stringify (value, ...)
     elseif type(value) == 'string' then
       rapidjson.to_string(handler,value)
     elseif type(value) == 'table' then
-      if global.Array:isArray(value) then
+      if global.Array:isArray(value) or (getmetatable(value) and getmetatable(value).buffer) then
         rapidjson.array_start(handler)
-        for i=0,#value do
+        for i=0,value.length-1 do
           if call_ext then replacer(value,i,value[i]) end
           local vt = type(value[i])
           if vt == 'function' or vt == 'userdata' or vt == 'thread' then

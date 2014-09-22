@@ -1,6 +1,7 @@
 var tap = require('../tap');
+var buf = require('buffer');
 
-tap.count(75);
+tap.count(80);
 
 // little empty tester
 function is_empty(obj) {
@@ -29,35 +30,40 @@ function censor(key, value) {
   return value;
 }
 
-//  1:objects                       2:string                             3:message                       4:replacer         5:spacer
+//  1:objects                                   2:string                             3:message                       4:replacer         5:spacer
 var objs = [
-  { 1:null,                         2:'null',                            3:'non object null',            4:null,            5:null },
-  { 1:true,                         2:'true',                            3:'non object bool',            4:null,            5:null },
-  { 1:3,                            2:'3',                               3:'non object number',          4:null,            5:null },
-  { 1:7.42,                         2:'7.42',                            3:'non object double',          4:null,            5:null },
-  { 1:[],                           2:'[]',                              3:'empty array',                4:null,            5:null },
-  { 1:[0, 1, 2],                    2:'[0,1,2]',                         3:'array',                      4:null,            5:null },
-  { 1:[3,"a"],                      2:'[3,"a"]',                         3:'mixed array',                4:null,            5:null },
-  { 1:[3,false,3.454,"a","a"],      2:'[3,false,3.454,"a","a"]',         3:'repeat value array',         4:null,            5:null },
-  { 1:[[[],[],[]],[[],[[1,2]]]],    2:'[[[],[],[]],[[],[[1,2]]]]',       3:'super nested arrays',        4:null,            5:null },
-  { 1:foo2,                         2:'{"a":2,"b":[false,true,"a"]}',    3:'sringify lvl 1 array',       4:null,            5:null },
-  { 1:{},                           2:'{}',                              3:'empty object',               4:null,            5:null },
-  { 1:Object(),                     2:'{}',                              3:'empty object constructor',   4:null,            5:null },
-  { 1:{"hi":5},                     2:'{"hi":5}',                        3:'object explicit key',        4:null,            5:null },
-  { 1:{hi:5},                       2:'{"hi":5}',                        3:'object implicit key',        4:null,            5:null },
-  { 1:{"a":{}},                     2:'{"a":{}}',                        3:'lvl 1 empty object',         4:null,            5:null },
-  { 1:foo3,                         2:'{"a":3,"b":{"1":false,"x":54}}',  3:'lvl 1 object',               4:null,            5:null },
-  { 1:foo4,                         2:'{"a":{"b":{"c":{"d":1}}}}',       3:'super nested objects',       4:null,            5:null },
-  { 1:foo6,                         2:foo7,                              3:'realistic object',           4:null,            5:null },
-  { 1:foo8,                         2:foo9,                              3:'array object mess',          4:null,            5:null },
-  { 1:{"hi":5},                     2:'{\n  "hi": 5\n}',                 3:'spacer string',              4:null,            5:'  ' },
-  { 1:{"hi":5},                     2:'{\n123456789A"hi": 5\n}',         3:'spacer string long',         4:null,            5:'123456789AB' },
-  { 1:{"hi":5},                     2:'{\n   "hi": 5\n}',                3:'spacer number',              4:null,            5:3 },
-  { 1:foo4,                         2:foo5,                              3:'super nested spacer',        4:null,            5:' ' },
-  { 1:foo1,                         2:'{"month":7,"transport":"car"}',   3:'replacer array',             4:censor_arr,      5:null },
-  { 1:foo1,                         2:'{"week":45,"month":7}',           3:'replacer function',          4:censor,          5:null },
-  { 1:{a: function () {}, b: 5},    2:'{"b":5}',                         3:'function',                   4:null,            5:null },
-  { 1:[1,function(){},2],           2:'[1,null,2]',                      3:'function in array',          4:null,            5:null },
+  { 1:null,                                     2:'null',                            3:'non object null',            4:null,            5:null },
+  { 1:true,                                     2:'true',                            3:'non object bool',            4:null,            5:null },
+  { 1:3,                                        2:'3',                               3:'non object number',          4:null,            5:null },
+  { 1:7.42,                                     2:'7.42',                            3:'non object double',          4:null,            5:null },
+  { 1:[],                                       2:'[]',                              3:'empty array',                4:null,            5:null },
+  { 1:[0, 1, 2],                                2:'[0,1,2]',                         3:'array',                      4:null,            5:null },
+  { 1:[3,"a"],                                  2:'[3,"a"]',                         3:'mixed array',                4:null,            5:null },
+  { 1:[3,false,3.454,"a","a"],                  2:'[3,false,3.454,"a","a"]',         3:'repeat value array',         4:null,            5:null },
+  { 1:[[[],[],[]],[[],[[1,2]]]],                2:'[[[],[],[]],[[],[[1,2]]]]',       3:'super nested arrays',        4:null,            5:null },
+  { 1:foo2,                                     2:'{"a":2,"b":[false,true,"a"]}',    3:'sringify lvl 1 array',       4:null,            5:null },
+  { 1:{},                                       2:'{}',                              3:'empty object',               4:null,            5:null },
+  { 1:Object(),                                 2:'{}',                              3:'empty object constructor',   4:null,            5:null },
+  { 1:{"hi":5},                                 2:'{"hi":5}',                        3:'object explicit key',        4:null,            5:null },
+  { 1:{hi:5},                                   2:'{"hi":5}',                        3:'object implicit key',        4:null,            5:null },
+  { 1:{"a":{}},                                 2:'{"a":{}}',                        3:'lvl 1 empty object',         4:null,            5:null },
+  { 1:foo3,                                     2:'{"a":3,"b":{"1":false,"x":54}}',  3:'lvl 1 object',               4:null,            5:null },
+  { 1:foo4,                                     2:'{"a":{"b":{"c":{"d":1}}}}',       3:'super nested objects',       4:null,            5:null },
+  { 1:foo6,                                     2:foo7,                              3:'realistic object',           4:null,            5:null },
+  { 1:foo8,                                     2:foo9,                              3:'array object mess',          4:null,            5:null },
+  { 1:{"hi":5},                                 2:'{\n  "hi": 5\n}',                 3:'spacer string',              4:null,            5:'  ' },
+  { 1:{"hi":5},                                 2:'{\n123456789A"hi": 5\n}',         3:'spacer string long',         4:null,            5:'123456789AB' },
+  { 1:{"hi":5},                                 2:'{\n   "hi": 5\n}',                3:'spacer number',              4:null,            5:3 },
+  { 1:foo4,                                     2:foo5,                              3:'super nested spacer',        4:null,            5:' ' },
+  { 1:foo1,                                     2:'{"month":7,"transport":"car"}',   3:'replacer array',             4:censor_arr,      5:null },
+  { 1:foo1,                                     2:'{"week":45,"month":7}',           3:'replacer function',          4:censor,          5:null },
+  { 1:{a: function () {}, b: 5},                2:'{"b":5}',                         3:'function',                   4:null,            5:null },
+  { 1:[1,function(){},2],                       2:'[1,null,2]',                      3:'function in array',          4:null,            5:null },
+  { 1:new buf.Buffer([11,22,33,44],'utf-8'),    2:'[11,22,33,44]',                   3:'buffer utf-8',               4:null,            5:null },
+  { 1:new buf.Buffer([11,22,33,44],'ascii'),    2:'[11,22,33,44]',                   3:'buffer ascii',               4:null,            5:null },
+  { 1:new buf.Buffer([11,22,33,44],'ucs2'),     2:'[11,22,33,44]',                   3:'buffer ucs2',                4:null,            5:null },
+  { 1:new buf.Buffer([11,22,33,44],'base64'),   2:'[11,22,33,44]',                   3:'buffer base64',              4:null,            5:null },
+  { 1:new buf.Buffer([11,22,33,44],'binary'),   2:'[11,22,33,44]',                   3:'buffer binary',              4:null,            5:null },
 ]
 
 // parsing testing
@@ -126,5 +132,5 @@ for (var i in objs) {
 // stringify testing
 console.log('Stringify tesing');
 for (var i in objs) {
-    tap.ok(JSON.stringify(objs[i][1],objs[i][4],objs[i][5]) == objs[i][2],objs[i][3]);
+  tap.ok(JSON.stringify(objs[i][1],objs[i][4],objs[i][5]) == objs[i][2],objs[i][3]);
 }
