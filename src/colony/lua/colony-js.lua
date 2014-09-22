@@ -174,8 +174,8 @@ str_proto.toUpperCase = function (this)
 end
 
 str_proto.indexOf = function (str, needle, fromIndex)
-  start = tm.ucs2_str_lookup_16to8(str, math.max(0, tonumber(fromIndex) or 0))
-  loc = string.find(str, tostring(needle), start, true)
+  local start = tm.ucs2_str_lookup_16to8(str, math.max(0, tonumber(fromIndex) or 0))
+  local loc = string.find(str, tostring(needle), start, true)
   if loc == nil then return -1; else return tm.ucs2_str_lookup_8to16(str, loc); end
 end
 
