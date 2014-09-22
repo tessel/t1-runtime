@@ -951,7 +951,7 @@ static int l_tm_ucs2_str_lookup_8to16 (lua_State* L)
 {
   size_t buf_len = 0;
   const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
-  uint32_t idx = (uint32_t) lua_tonumber(L, 2);
+  uint32_t idx = (uint32_t) lua_tonumber(L, 2) - 1;
   if (idx > buf_len) {
     // str methods are expected to pre-sanitize. make issue obvious if not!
     return luaL_error(L, "assertion failure: lookup beyond end of string");
