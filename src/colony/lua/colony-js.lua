@@ -180,25 +180,10 @@ str_proto.indexOf = function (str, needle, fromIndex)
 end
 
 str_proto.lastIndexOf = function (str, needle, fromIndex)
-  local len = string.len(str)
-
-  if fromIndex == nil or fromIndex >= len then
-    fromIndex = len
-  end
-  if fromIndex < 0 then
-    fromIndex = 0
-  end
-
-  if fromIndex >= len then
-    fromIndex = len - 1
-  end
-  local ret = string.find(string.reverse(string.sub(str, 1, fromIndex + 1)), tostring(needle), 1, true)
-
-  if ret == nil then
-    return -1
-  else
-    return fromIndex - (ret - 1)
-  end
+  local clampedIndex = math.max(0, math.min(tonumber(fromIndex) or math.huge, str.length))
+  local start = tm.ucs2_str_lookup_16to8(str, clampedIndex)
+  local locBeg, locEnd = string.find(string.reverse(str), string.reverse(tostring(needle)), #str+1-start, true)
+  if locEnd == nil then return -1; else return tm.ucs2_str_lookup_8to16(str, #str+1-locEnd); end
 end
 
 str_proto.toString = function (this)
