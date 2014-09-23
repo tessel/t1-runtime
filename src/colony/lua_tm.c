@@ -940,7 +940,8 @@ static int l_tm_ucs2_str_lookup_16to8 (lua_State* L)
 {
   size_t buf_len = 0;
   const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
-  uint32_t idx = (uint32_t) lua_tonumber(L, 2);
+  lua_Number rawIdx = lua_tonumber(L, 2);
+  size_t idx = (rawIdx < SIZE_MAX) ? (size_t)rawIdx : SIZE_MAX;
   size_t seq_len;
   lua_pushnumber(L, tm_ucs2_str_lookup_16to8(buf, buf_len, idx, &seq_len) + 1);
   lua_pushnumber(L, seq_len);
@@ -951,10 +952,10 @@ static int l_tm_ucs2_str_lookup_8to16 (lua_State* L)
 {
   size_t buf_len = 0;
   const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
-  uint32_t idx = (uint32_t) lua_tonumber(L, 2) - 1;
-  if (idx > buf_len) {
+  lua_Number idx = lua_tonumber(L, 2) - 1;
+  if (idx < 0 || idx > buf_len) {
     // str methods are expected to pre-sanitize. make issue obvious if not!
-    return luaL_error(L, "assertion failure: lookup beyond end of string");
+    return luaL_error(L, "assertion failure: invalid string lookup value");
   }
   lua_pushnumber(L, tm_ucs2_str_lookup_8to16(buf, idx));
   return 1;
