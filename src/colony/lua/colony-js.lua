@@ -495,43 +495,43 @@ arr_proto.concat = function (this, ...)
 end
 
 arr_proto.sort = function (this, fn)
-        -- shift from 0-based to 1-based index
-        table.insert(this, 1, this[0])
-        rawset(this, 0, nil)
+  -- shift from 0-based to 1-based index
+  table.insert(this, 1, this[0])
+  rawset(this, 0, nil)
 
-        -- sort
-        table.sort(this, function (a, b)
-            -- handle nil values
-            if b == nil and a ~= nil then
-                return true
-            end
-            if a == nil and b ~= nil then
+  -- sort
+  table.sort(this, function (a, b)
+    -- handle nil values
+    if b == nil and a ~= nil then
+      return true
+    end
+    if a == nil and b ~= nil then
+      return false
+    end
+
+    if not fn then
+        return (tostring(a) < tostring(b))
+    else
+        local comp = fn(this, a, b)
+        local tcomp = type(comp)
+        if tcomp == "number" then
+          return comp < 0
+        elseif tcomp == "boolean" then
+            if a == b then
                 return false
             end
-
-            if not fn then
-                return (tostring(a) < tostring(b))
-            else
-                local comp = fn(this, a, b)
-                local tcomp = type(comp)
-                if tcomp == "number" then
-                    return comp < 0
-                elseif tcomp == "boolean" then
-                    if a == b then
-                        return false
-                    end
-                    return not comp
-                end
-            end
+            return not comp
         end
-        )
+    end
+  end
+  )
 
-        --  unshift
-        local tmp = rawget(this, 1)
-        table.remove(this, 1)
-        rawset(this, 0, tmp)
+  --  unshift
+  local tmp = rawget(this, 1)
+  table.remove(this, 1)
+  rawset(this, 0, tmp)
 
-        return this
+  return this
 end
 
 arr_proto.join = function (this, ...)
