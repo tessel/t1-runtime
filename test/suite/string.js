@@ -13,22 +13,22 @@ tap.ok("abc".slice(0,1) == "a", 'slice 2')
 tap.ok("abc"[0] == "a", 'index 1')
 tap.ok("abc"['1'] == "b", 'index 2')
 
-var s = "abc✨a✇def";
-tap.eq(s.indexOf('d'), 6);
-tap.eq(s.indexOf('def'), 6);
+var s = "abc👀a✇def";
+tap.eq(s.indexOf('d'), 7);
+tap.eq(s.indexOf('def'), 7);
 tap.eq(s.indexOf('defg'), -1);
-tap.eq(s.indexOf('✨'), 3);
+tap.eq(s.indexOf('👀'), 3);
 tap.eq(s.indexOf('a',-1), 0);
-tap.eq(s.indexOf('a',4), 4);
-tap.eq(s.indexOf('a',5), -1);
+tap.eq(s.indexOf('a',5), 5);
+tap.eq(s.indexOf('a',6), -1);
 tap.eq(s.indexOf(''), 0);
 tap.eq(s.indexOf('',2), 2);
 //tap.eq(s.indexOf('',1 << 32), s.length);     // TODO: this is another can of worms!
 tap.eq(s.indexOf('',1000), s.length);
-tap.eq(s.lastIndexOf('a'), 4);
-tap.eq(s.lastIndexOf('a', 3), 0);
+tap.eq(s.lastIndexOf('a'), 5);
+tap.eq(s.lastIndexOf('a', 4), 0);
 tap.eq(s.lastIndexOf('a', -1), 0);
-tap.eq(s.lastIndexOf('✨'), 3);
+tap.eq(s.lastIndexOf('👀'), 3);
 tap.eq(s.lastIndexOf('f'), s.length-1);
 tap.eq(s.lastIndexOf('f',s.length-2), -1);
 tap.eq(s.lastIndexOf(''), s.length);
