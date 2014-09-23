@@ -2035,7 +2035,8 @@ function json_stringify (value, ...)
   -- setup and parse if a table is present
   elseif type(value) == 'table' then
     local wh = rapidjson.create_writer()
-    json_recurse(wh,value)
+    local status, err = pcall(json_recurse,wh,value)
+    if not status then error(js_new(global.Error,tostring(exception))) end
     local str = rapidjson.result(wh)
     rapidjson.destroy(wh)
     if spacer then str = json_space(str,spacer) end
@@ -2198,7 +2199,6 @@ global.JSON = js_obj({
     })
   end,
 })
-
 
 --[[
 --|| encode
