@@ -129,22 +129,29 @@ str_proto.charAt = function (str, i)
   return str[i] or '';
 end
 
-str_proto.substr = function (str, i, len)
-  if i < 0 then
-    i = i - 1
-  end
-  if len ~= nil then
-    return string.sub(str, i+1, i + len)
+str_proto.substr = function (str, beg, len)
+  if len == nil then
+    len = math.huge
   else
-    return string.sub(str, i+1)
+    len = math.max(0, tonumber(len))
   end
+  function adjTo8(idx, adj)      -- n.b. different than others!
+    idx = tonumber(idx)
+    if idx < 0 then
+      idx = math.max(0, str.length + idx)
+    end
+    return tm.ucs2_str_lookup_16to8(str, idx+adj)
+  end
+  local begOffset = adjTo8(beg, 0)
+  local finOffset = adjTo8(beg, len)
+  return string.sub(str, begOffset, finOffset-1)
 end
 
 str_proto.substring = function (str, beg, fin)
   if fin == nil then
     fin = str.length
   end
-  function adjTo8(idx)      -- n.b. different than slice!
+  function adjTo8(idx)      -- n.b. different than others!
     idx = tonumber(idx)
     if idx == nil or idx < 0 then
       idx = 0
@@ -163,10 +170,10 @@ str_proto.slice = function (str, beg, fin)
   if fin == nil then
     fin = str.length
   end
-  function adjTo8(idx)      -- n.b. different than substring!
+  function adjTo8(idx)      -- n.b. different than others!
     idx = tonumber(idx)
     if idx < 0 then
-      idx = str.length + idx
+      idx = math.max(0, str.length + idx)
     end
     return tm.ucs2_str_lookup_16to8(str, idx)
   end
