@@ -154,15 +154,21 @@ str_proto.substring = function (str, i, j)
   end
 end
 
-str_proto.slice = function (str, i, len)
-  len = tonumber(len)
-  if len < 0 then
-    len = str.length + len
+str_proto.slice = function (str, beg, fin)
+  function adjTo8(idx)
+    idx = tonumber(idx)
+    if idx < 0 then
+      idx = str.length + idx
+    end
+    return tm.ucs2_str_lookup_16to8(str, idx)
   end
-  if len < 0 then
-    len = 0
+  
+  local begOffset = adjTo8(beg)
+  if fin == nil then
+    fin = str.length
   end
-  return string.sub(str, i+1, len)
+  local finOffset = adjTo8(fin)
+  return string.sub(str, begOffset, finOffset-1)
 end
 
 str_proto.toLowerCase = function (this)
