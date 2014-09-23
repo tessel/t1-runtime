@@ -1864,13 +1864,8 @@ function json_read_string(value)
     lua_table[arr_lvl] = value
     arr_lvl = arr_lvl + 1
   elseif on_key then
-    if tonumber(value) ~= nil then
-      lua_table[value] = value
-      prev_k = value
-    else
-      lua_table[value] = value
-      prev_k = value
-    end
+    lua_table[value] = value
+    prev_k = value
     on_key = false
   else
     lua_table[prev_k] = value
@@ -1896,10 +1891,8 @@ function json_read_end_object(value)
   local parent_table = table.remove(stack, #stack)
   if parent_table ~= nil then
     for k,v in pairs(parent_table) do
-      if k == v[k] then
-        v[k] = lua_table
-        lua_table = parent_table[k]
-      end
+      v[k] = lua_table
+      lua_table = parent_table[k]
     end
   end
   on_key = true

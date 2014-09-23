@@ -1,7 +1,7 @@
 var tap = require('../tap');
 var buf = require('buffer');
 
-tap.count(76);
+tap.count(116);
 
 // little empty tester
 function is_empty(obj) {
@@ -19,6 +19,8 @@ var foo6 = { "location": { "city": { "name": "Chattanooga", "population": 167674
 var foo7 = '{"location":{"city":{"name":"Chattanooga","population":167674},"state":{"abbreviation":"TN","name":"Tennessee","population":6403000}},"name":"Jim Cowart","company":"appendTo"}';
 var foo8 = { "a": [ { "b": [ { "c": [ [1,2,3], [], [4,5,6] ] }, { "d": { "e": { "f": [7,8,9], "g": [ [9,8,7], [] ] } } } ] }, "g", [ [ [ { "h": [ [ [ [ [6,5,4] ] ] ] ] } ] ] ], { "i": [ { "j": [ { "k": [ [3,2,1] ] } ] } ] } ] };
 var foo9 = '{"a":[{"b":[{"c":[[1,2,3],[],[4,5,6]]},{"d":{"e":{"g":[[9,8,7],[]],"f":[7,8,9]}}}]},"g",[[[{"h":[[[[[6,5,4]]]]]}]]],{"i":[{"j":[{"k":[[3,2,1]]}]}]}]}';
+var fooA = { "1800": { "name": "Generic Access", "type": "org.bluetooth.service.generic_access" }, "1801": { "name": "Generic Attribute", "type": "org.bluetooth.service.generic_attribute" }, "1802": { "name": "Immediate Alert", "type": "org.bluetooth.service.immediate_alert" }, "1803": { "name": "Link Loss", "type": "org.bluetooth.service.link_loss" }, "1804": { "name": "Tx Power", "type": "org.bluetooth.service.tx_power" }, "1805": { "name": "Current Time Service", "type": "org.bluetooth.service.current_time" }, "1806": { "name": "Reference Time Update Service", "type": "org.bluetooth.service.reference_time_update" }, "1807": { "name": "Next DST Change Service", "type": "org.bluetooth.service.next_dst_change" }, "1808": { "name": "Glucose", "type": "org.bluetooth.service.glucose" }, "1809": { "name": "Health Thermometer", "type": "org.bluetooth.service.health_thermometer" }, "180a": { "name": "Device Information", "type": "org.bluetooth.service.device_information" }, "180d": { "name": "Heart Rate", "type": "org.bluetooth.service.heart_rate" }, "180e": { "name": "Phone Alert Status Service", "type": "org.bluetooth.service.phone_alert_service" }, "180f": { "name": "Battery Service", "type": "org.bluetooth.service.battery_service" }, "1810": { "name": "Blood Pressure", "type": "org.bluetooth.service.blood_pressuer" }, "1811": { "name": "Alert Notification Service", "type": "org.bluetooth.service.alert_notification" }, "1812": { "name": "Human Interface Device", "type": "org.bluetooth.service.human_interface_device" }, "1813": { "name": "Scan Parameters", "type": "org.bluetooth.service.scan_parameters" }, "1814": { "name": "Running Speed and Cadence", "type": "org.bluetooth.service.running_speed_and_cadence" }, "1815": { "name": "Cycling Speed and Cadence", "type": "org.bluetooth.service.cycling_speed_and_cadence" } };
+var fooB = '{"180e":{"name":"Phone Alert Status Service","type":"org.bluetooth.service.phone_alert_service"},"180a":{"name":"Device Information","type":"org.bluetooth.service.device_information"},"1800":{"name":"Generic Access","type":"org.bluetooth.service.generic_access"},"1801":{"name":"Generic Attribute","type":"org.bluetooth.service.generic_attribute"},"1802":{"name":"Immediate Alert","type":"org.bluetooth.service.immediate_alert"},"1803":{"name":"Link Loss","type":"org.bluetooth.service.link_loss"},"1804":{"name":"Tx Power","type":"org.bluetooth.service.tx_power"},"1805":{"name":"Current Time Service","type":"org.bluetooth.service.current_time"},"1806":{"name":"Reference Time Update Service","type":"org.bluetooth.service.reference_time_update"},"1807":{"name":"Next DST Change Service","type":"org.bluetooth.service.next_dst_change"},"1808":{"name":"Glucose","type":"org.bluetooth.service.glucose"},"1809":{"name":"Health Thermometer","type":"org.bluetooth.service.health_thermometer"},"1810":{"name":"Blood Pressure","type":"org.bluetooth.service.blood_pressuer"},"1811":{"name":"Alert Notification Service","type":"org.bluetooth.service.alert_notification"},"1812":{"name":"Human Interface Device","type":"org.bluetooth.service.human_interface_device"},"1813":{"name":"Scan Parameters","type":"org.bluetooth.service.scan_parameters"},"1814":{"name":"Running Speed and Cadence","type":"org.bluetooth.service.running_speed_and_cadence"},"180f":{"name":"Battery Service","type":"org.bluetooth.service.battery_service"},"1815":{"name":"Cycling Speed and Cadence","type":"org.bluetooth.service.cycling_speed_and_cadence"},"180d":{"name":"Heart Rate","type":"org.bluetooth.service.heart_rate"}}';
 
 // testing replacer array and functions
 var censor_arr = ['transport','month'];
@@ -51,6 +53,7 @@ var objs = [
   { 1:foo4,                                     2:'{"a":{"b":{"c":{"d":1}}}}',       3:'super nested objects',       4:null,            5:null },
   { 1:foo6,                                     2:foo7,                              3:'realistic object',           4:null,            5:null },
   { 1:foo8,                                     2:foo9,                              3:'array object mess',          4:null,            5:null },
+  { 1:fooA,                                     2:fooB,                              3:'input file test',            4:null,            5:null },
   { 1:{"hi":5},                                 2:'{\n  "hi": 5\n}',                 3:'spacer string',              4:null,            5:'  ' },
   { 1:{"hi":5},                                 2:'{\n123456789A"hi": 5\n}',         3:'spacer string long',         4:null,            5:'123456789AB' },
   { 1:{"hi":5},                                 2:'{\n   "hi": 5\n}',                3:'spacer number',              4:null,            5:3 },
@@ -67,7 +70,7 @@ console.log('Parsing tesing');
 tap.ok(JSON.parse("{\"hi\": 5}").hasOwnProperty, 'json object is real object');
 tap.ok(JSON.parse("[0, 1, 2]").slice, 'json array is real array');
 for (var i in objs) {
-  if(parseInt(i) < 4 || parseInt(i) > 18) {
+  if(parseInt(i) < 4 || parseInt(i) > 19) {
     // note thse cases are not tested in parse
   } else {
     var parsed = JSON.parse(objs[i][2]);
@@ -86,8 +89,8 @@ for (var i in objs) {
         tap.ok(is_empty(parsed)==false,objs[i][3]);
         break;
       case 9:
-        for (var j in parsed) { tap.ok(parsed[parseInt(j)]==objs[i][1][parseInt(j)],objs[i][3]+' at key '+j); }
-        for (var j in parsed.b) { tap.ok(parsed[parseInt(j)]==objs[i][1][parseInt(j)],objs[i][3]+' key b at index '+j); }
+        for (var j in parsed) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
+        for (var j in parsed.b) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' key b at index '+j); }
 				break;
       case 10:
       case 11:
@@ -101,24 +104,28 @@ for (var i in objs) {
         tap.ok(is_empty(parsed.a)==true,objs[i][3]);
 				break;
       case 15:
-        for (var j in parsed) { tap.ok(parsed[parseInt(j)]==objs[i][1][parseInt(j)],objs[i][3]+' at key '+j); }
-        for (var j in parsed.b) { tap.ok(parsed[parseInt(j)]==objs[i][1][parseInt(j)],objs[i][3]+' key b at key '+j); }
+        for (var j in parsed) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
+        for (var j in parsed.b) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' key b at key '+j); }
 				break;
       case 16:
         tap.ok(parsed.a.b.c.d==1,objs[i][3]);
         break;
       case 17:
-        for (var j in parsed) { tap.ok(parsed[parseInt(j)]==objs[i][1][parseInt(j)],objs[i][3]+' at key '+j); }
-        for (var j in parsed.location) { tap.ok(parsed[parseInt(j)]==objs[i][1][parseInt(j)],objs[i][3]+' at key '+j); }
-        for (var j in parsed.location.city) { tap.ok(parsed[parseInt(j)]==objs[i][1][parseInt(j)],objs[i][3]+' at key '+j); }
-        for (var j in parsed.location.state) { tap.ok(parsed[parseInt(j)]==objs[i][1][parseInt(j)],objs[i][3]+' at key '+j); }
+        for (var j in parsed) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
+        for (var j in parsed.location) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
+        for (var j in parsed.location.city) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
+        for (var j in parsed.location.state) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
 				break;
       case 18:
-        for (var j in parsed) { tap.ok(parsed[parseInt(j)]==objs[i][1][parseInt(j)],objs[i][3]+' at key '+j); }
-        for (var j in parsed.a) { tap.ok(parsed[parseInt(j)]==objs[i][1][parseInt(j)],objs[i][3]+' at key '+j); }
-        tap.ok(parsed.a.i[18]=='j',objs[i][3]+' deep object');
-        tap.ok(parsed.a.i.i[19]=='k',objs[i][3]+' deeper object');
+        for (var j in parsed) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
+        for (var j in parsed.a) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
 				break;
+      case 19:
+        for (var j in parsed) {
+          tap.ok(parsed[j].name==objs[i][1][j].name,objs[i][3]+' at key '+j+' name');
+          tap.ok(parsed[j].type==objs[i][1][j].type,objs[i][3]+' at key '+j+' type');
+        }
+        break;
       default:
 				break;
     }
