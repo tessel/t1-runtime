@@ -141,20 +141,28 @@ str_proto.substr = function (str, i, len)
 end
 
 str_proto.substring = function (str, i, j)
-  if i < 0 then
-    i = i - 1
+  if j == nil then
+    j = str.length
   end
-  if j < 0 then
-    j = j - 1
+  function adjTo8(idx)
+    idx = tonumber(idx)
+    if idx == nil or idx < 0 then
+      idx = 0
+    end
+    return tm.ucs2_str_lookup_16to8(str, idx)
   end
-  if j ~= nil then
-    return string.sub(str, i+1, j)
-  else
-    return string.sub(str, i+1)
+  local begOffset = adjTo8(i)
+  local finOffset = adjTo8(j)
+  if begOffset > finOffset then
+    begOffset, finOffset = finOffset, begOffset
   end
+  return string.sub(str, begOffset, finOffset-1)
 end
 
 str_proto.slice = function (str, beg, fin)
+  if fin == nil then
+    fin = str.length
+  end
   function adjTo8(idx)
     idx = tonumber(idx)
     if idx < 0 then
@@ -162,11 +170,7 @@ str_proto.slice = function (str, beg, fin)
     end
     return tm.ucs2_str_lookup_16to8(str, idx)
   end
-  
   local begOffset = adjTo8(beg)
-  if fin == nil then
-    fin = str.length
-  end
   local finOffset = adjTo8(fin)
   return string.sub(str, begOffset, finOffset-1)
 end
