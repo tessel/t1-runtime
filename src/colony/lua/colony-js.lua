@@ -2036,7 +2036,10 @@ function json_stringify (value, ...)
   elseif type(value) == 'table' then
     local wh = rapidjson.create_writer()
     local status, err = pcall(json_recurse,wh,value)
-    if not status then error(js_new(global.Error,tostring(exception))) end
+    if not status then
+      rapidjson.destroy(wh)
+      error(err)
+    end
     local str = rapidjson.result(wh)
     rapidjson.destroy(wh)
     if spacer then str = json_space(str,spacer) end
