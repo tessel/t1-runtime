@@ -208,7 +208,15 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
 
       if (ret < 0) {
         console.log("tcp_connect is", ret, "trying to close socket number", self.socket);
-        tm.tcp_close(self.socket); // -57
+        
+        var closeRet = tm.tcp_close(self.socket); // -57
+        if (closeRet < 0){
+          // couldn't close socket, throw an error
+          self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+closeRet));
+          self.destroy();
+          return self.__close(false);
+        }
+
         if (retries > 3) {
           self.emit('error', new Error('ENOENT Cannot connect to ' + ip + ' Got: err'+ret));
           // force the cleanup
@@ -434,15 +442,37 @@ TCPSocket.prototype.__readSocket = function(restartTimeout) {
 }
 
 
-TCPSocket.prototype.__close = function () {
+TCPSocket.prototype.__close = function (tryToClose) {
+  var self = this;
   process.removeListener('tcp-close', this._closehandler);
-  tm.tcp_close(this.socket);
-  console.log("closing socket", this.socket);
 
-  ccOpenSockets.splice(ccOpenSockets.indexOf(this.socket), 1);
-  console.log("closed socket", ccOpenSockets);
-  this.socket = null;
-  this.emit('close');
+
+  var retries = 0;
+  function closeSocket(){
+    var ret = tm.tcp_close(self.socket);
+    if (ret < 0) {
+      if (retries > 3) {
+        // tried 3 times and couldn't close, error out
+        self.emit('close');
+        self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+ret));
+      } else {
+        retries++;
+        console.log("Error closing socket", self.socket, "got return code", ret);
+        // try again
+        setTimeout(function(){
+          closeSocket();
+        }, 100);
+      }
+     
+    } else {
+      self.socket = null;
+      self.emit('close');
+    }
+  }
+
+  if (tryToClose !== false) {
+    closeSocket();
+  }
 }
 
 TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
