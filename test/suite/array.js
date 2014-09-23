@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(46);
+tap.count(50);
 
 function arreq (a, b) {
 	if (a.length != b.length) {
@@ -156,3 +156,25 @@ tap.eq(a.join(''), 'foobar');
 //   }
 // });
 tap.ok(true);
+
+var arr = [3, 2, 5, 1, 4];
+arr.sort();
+tap.eq(arr.join(','), '1,2,3,4,5');
+
+arr = [1, 2, 3, 4, 5];
+arr.sort(function(a, b) {
+  return b-a;
+});
+
+tap.eq(arr.join(','), '5,4,3,2,1');
+
+arr = ["C", -6, 11, 2, -30, "b", 100000];
+arr.sort();
+tap.eq(arr.join(','), '-30,-6,100000,11,2,C,b');
+
+arr = [10, -6, -11, 2];
+arr.sort(function (a, b) {
+    return a > b
+});
+
+tap.eq(arr.join(','), '-11,-6,2,10');
