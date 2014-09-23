@@ -498,17 +498,23 @@ arr_proto.sort = function (this, fn)
   local len = this.length
   table.insert(this, 1, this[0])
   rawset(this, 0, nil)
+  this.length = len+1;
   table.sort(this, function (a, b)
     if not b then
       return 0
     end
     local ret
     if not fn then
-      ret = a < b
+      return tostring(a) < tostring(b)
     else
       ret = fn(this, a, b)
+
+      if ret == 0 or ret == 1 then
+        return true;
+      else  
+        return false;
+      end
     end
-    return ret
   end)
   local zero = rawget(this, 1)
   table.remove(this, 1)

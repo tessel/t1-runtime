@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(46);
+tap.count(47);
 
 function arreq (a, b) {
 	if (a.length != b.length) {
@@ -156,3 +156,8 @@ tap.eq(a.join(''), 'foobar');
 //   }
 // });
 tap.ok(true);
+
+var arr = [3, 2, 5, 1, 4];
+arr.sort();
+tap.eq(arr.join(','), '1,2,3,4,5');
+
