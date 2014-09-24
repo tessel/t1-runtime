@@ -67,9 +67,6 @@ function TCPSocket (socket, _secure) {
   } else if (socket == null) {
     if (_secure) ensureSSLCtx();
     this.socket = tm.tcp_open();
-    // ccOpenSockets.push(this.socket);
-
-    // console.log("70 opened socket", ccOpenSockets);
   } else {
     this.socket = socket;
   }
@@ -208,7 +205,6 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
 
       if (ret < 0) {
         console.log("tcp_connect is", ret, "trying to close socket number", self.socket);
-        
         var closeRet = tm.tcp_close(self.socket); // -57
         if (closeRet < 0){
           // couldn't close socket, throw an error
@@ -313,21 +309,23 @@ TCPSocket.prototype._read = function (size) {
 TCPSocket.prototype.__listen = function () {
   var self = this;
   this.__listenid = setTimeout(function loop () {
+    if (self._sending) {
+      // retry soon
+      setTimeout(loop, 100);
+      return;
+    }
+
     self.__listenid = null;
     // ~HACK: set a watchdog to fire end event if not re-polled
     var failsafeEnd = setImmediate(function () {
       self.emit('end');
     });
 
-    if (self._sending) {
-      return;
-    }
-
     var flag = self.__readSocket(true);
 
     // Check error condition.
     if (flag < 0) {
-      // self.emit('error', new Error('Socket closed.'));
+      self.emit('error', new Error('Socket closed.'));
       self.destroy();
       return;
     }
@@ -345,7 +343,6 @@ var WRITE_PACKET_SIZE = 1024;
 
 TCPSocket.prototype._write = function (buf, encoding, cb) {
   var self = this;
-  
   if (!Buffer.isBuffer(buf)) {
     buf = new Buffer(buf);
   }
@@ -373,6 +370,7 @@ TCPSocket.prototype.__send = function (cb) {
 
   var self = this;
   var buf = this._outgoing.shift();
+
   (function send () {
     if (self.socket == null) {
       // most likely we ran out of memory or needed to send an EWOULDBLOCK / EAGAIN
@@ -413,7 +411,6 @@ TCPSocket.prototype.__send = function (cb) {
 
 TCPSocket.prototype.__readSocket = function(restartTimeout) {
   var self = this;
-
   var buf = '', flag = 0;
   while (self.socket != null && (flag = tm.tcp_readable(self.socket)) > 0) {
     if (self._ssl) {
@@ -443,12 +440,16 @@ TCPSocket.prototype.__readSocket = function(restartTimeout) {
 
 
 TCPSocket.prototype.__close = function (tryToClose) {
+  if (this.socket == null) {
+    return;
+  }
+
   var self = this;
   process.removeListener('tcp-close', this._closehandler);
 
-
   var retries = 0;
   function closeSocket(){
+    if (self.socket === null) return;
     var ret = tm.tcp_close(self.socket);
     if (ret < 0) {
       if (retries > 3) {
@@ -459,12 +460,11 @@ TCPSocket.prototype.__close = function (tryToClose) {
         retries++;
         console.log("Error closing socket", self.socket, "got return code", ret);
         // try again
-        setTimeout(function(){
-          closeSocket();
-        }, 100);
+        setTimeout(closeSocket, 100);
       }
      
     } else {
+      console.log("closed socket", self.socket, "successfully");
       self.socket = null;
       self.emit('close');
     }
@@ -522,7 +522,6 @@ function connect (port, host, callback, _secure) {
   if (client.socket >= 0) {
     var args = Array.prototype.slice.call(arguments);
     if (args.length === 4) args.pop();      // drop _secure param
-    console.log("connect function called");
     TCPSocket.prototype.connect.apply(client, args);
   } else {
     console.log("tcp connect is null, tcp socket broke");

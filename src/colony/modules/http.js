@@ -169,9 +169,11 @@ function IncomingMessage (type, socket) {
     self.emit('close');
   }
   function _handleData(d) {
-    var nparsed = parser.execute(d.toString('binary'), 0, d.length);
-    if (self._upgrade) self.emit('_upgrade', d.slice(nparsed));
-    else if (nparsed !== d.length) _emitError();
+    if (self.socket) {
+       var nparsed = parser.execute(d.toString('binary'), 0, d.length);
+      if (self._upgrade) self.emit('_upgrade', d.slice(nparsed));
+      else if (nparsed !== d.length) _emitError();
+    }
   }
   function _handleEnd() {
     if (parser.finish() !== 0) _emitError();
