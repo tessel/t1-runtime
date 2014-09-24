@@ -13,8 +13,8 @@ ok(String.fromCharCode(0x2603) != '\x26\x03');
 
 var poo = '💩';
 console.log('#', poo, 'is', poo.length, 'words');
-ok(0xd83d == poo[0]);
-ok(0xdca9 == poo[1]);
+ok("\ud83d" == poo[0]);
+ok("\udca9" == poo[1]);
 ok(0xd83d == poo.charCodeAt(0), poo.charCodeAt(0));
 ok(0xdca9 == poo.charCodeAt(1), poo.charCodeAt(1));
 ok(poo == '\ud83d\udca9');
