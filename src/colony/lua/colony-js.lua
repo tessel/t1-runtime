@@ -197,8 +197,13 @@ str_proto.indexOf = function (str, needle, fromIndex)
 end
 
 str_proto.lastIndexOf = function (str, needle, fromIndex)
-  local clampedIndex = math.max(0, math.min(tonumber(fromIndex) or math.huge, str.length))
-  local start = tm.ucs2_str_lookup_16to8(str, clampedIndex)
+  fromIndex = tonumber(fromIndex)
+  if fromIndex == nil then
+    fromIndex = math.huge
+  elseif fromIndex < 0 then
+    fromIndex = 0
+  end
+  local start = tm.ucs2_str_lookup_16to8(str, fromIndex)
   local locBeg, locEnd = string.find(string.reverse(str), string.reverse(tostring(needle)), #str+1-start, true)
   if locEnd == nil then return -1; else return tm.ucs2_str_lookup_8to16(str, #str+1-locEnd); end
 end
