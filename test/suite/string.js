@@ -39,11 +39,10 @@ tap.eq(s.slice(-1), "f");
 tap.eq(s.slice(-1,-1), "");
 tap.eq(s.slice(3,5), "👀");
 
-//tap.eq(s.slice(3,4), s[3]);
-//tap.eq(s.slice(4,5), s[4]);
-//tap.eq(s.slice(3,4).charCodeAt(0), 0xD83D);
-//tap.eq(s.slice(4,5).charCodeAt(0), 0xDC40);
-
+tap.eq(s.slice(3,4), s[3]);
+tap.eq(s.slice(4,5), s[4]);
+tap.eq(s.slice(3,4).charCodeAt(0), 0xD83D);
+tap.eq(s.slice(4,5).charCodeAt(0), 0xDC40);
 
 tap.eq(s.substring(0,1), "a");
 tap.eq(s.substring(1,3), "bc");
