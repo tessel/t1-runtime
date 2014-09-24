@@ -877,8 +877,7 @@ static int l_tm_utf8_char_encode (lua_State* L)
   if (len < 0) {
     lua_pushnil(L);
   } else {
-    uint8_t* buffer = colony_createbuffer(L, len);
-    memcpy(buffer, (uint8_t*) buf, len);
+    lua_pushlstring(L, (const char*) buf, len);
   };
   return 1;
 }
