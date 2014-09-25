@@ -143,7 +143,10 @@ int do_client_connect(SSL *ssl)
 {
     int ret = SSL_OK;
 
-    send_client_hello(ssl);                 /* send the client hello */
+    int sendRet = send_client_hello(ssl);                 /* send the client hello */
+    if (sendRet != 0) {
+        return sendRet;
+    }
     ssl->bm_read_index = 0;
     ssl->next_state = HS_SERVER_HELLO;
     ssl->hs_status = SSL_NOT_OK;            /* not connected */
@@ -153,6 +156,7 @@ int do_client_connect(SSL *ssl)
     {
         while (ssl->hs_status != SSL_OK)
         {
+            // select call to... free buffers
             ret = ssl_read(ssl, NULL);
             
             if (ret < SSL_OK)

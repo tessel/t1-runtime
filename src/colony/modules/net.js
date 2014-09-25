@@ -178,9 +178,13 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   setImmediate(function () {
     self._restartTimeout();
     if (isIP(host)) {
+      console.log('connecting to IP', host);
+
       doConnect(host);
     } else {
+      console.log('resolving IP', host);
       dns.resolve(host, function onResolve(err, ips) {
+        console.log('host resolved to ip', ips);
         if (err) {
           return self.emit('error', err);
         }
@@ -243,61 +247,119 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         }
       }
 
-      if (self._secure) {
+      if (!self._secure) {
+        connectionStable();
+      } else {
+      // if (self._secure) {
         var hostname = null;
         if (!isIP(host)) {
           hostname = host;
         }
-        var _ = tm.ssl_session_create(ssl_ctx, self.socket, hostname)
-          , ssl = _[0]
-          , ret = _[1]
-        if (ret != 0) {
-          if (ret == -517) {
-            return self.emit('error', new Error('CERT_HAS_EXPIRED'));
-          } else if (ret == -516) {
-            return self.emit('error', new Error('CERT_NOT_YET_VALID'));
-          } else {
-            return self.emit('error', new Error('Could not validate SSL request (error ' + ret + ')'));
-          }
-        }
 
-        var cert = {
-          subjectaltname: (function () {
-            var altnames = [];
-            for (var i = 0; ; i++) {
-              var _ = tm.ssl_session_altname(ssl, i)
-                , altname = _[0]
-                , ret = _[1]
-              if (ret != 0) {
-                break;
-              }
-              altnames.push(altname);
+        // do a select call to try to free some cc3k buffers
+        
+        tm.tcp_readable(self.socket);
+        tm.tcp_readable(self.socket);
+        tm.tcp_readable(self.socket);
+
+        setTimeout(function() {
+          createSession(); 
+        }, 100);
+
+        function createSession() {
+          // var freeCCBuf = tm.net_get_free_buffers(self.socket);
+          // if (freeCCBuf == -2) {
+          //   console.log("no free buffers");
+          //   // wait for cc3k to free buf
+          //   setTimeout(function() {
+          //     // call select to listen for CC3k clearing mem
+          //     tm.tcp_readable(self.socket);
+          //     createSession();
+          //   }, 100);
+          //   return;
+          // } else if(freeCCBuf == -1) {
+          //   // error, socket is bad
+          //   return self.emit('error', new Error('Socket not available'));
+          // } 
+
+          console.log("create session called");
+          var _ = tm.ssl_session_create(ssl_ctx, self.socket, hostname)
+            , ssl = _[0]
+            , ret = _[1]
+            ;
+
+          if (ret != 0) {
+            if (ret == -517) {
+              return self.emit('error', new Error('CERT_HAS_EXPIRED'));
+            } else if (ret == -516) {
+              return self.emit('error', new Error('CERT_NOT_YET_VALID'));
+            } else if (ret == -2) {
+              // console.log("ssl create session out of mem");
+              // cc3k out of mem. wait for buffer to clear up.
+              // setTimeout(function() {
+              // //   // call select to listen for CC3k clearing mem
+              //   tm.tcp_readable(self.socket);
+              //   createSession();
+              // }, 1000);
+              
+              // close socket
+              // do a select call
+              tm.tcp_readable(self.socket);
+              self.destroy();
+              self.__close();
+              return self.emit('error', new Error('Socket out of mem'));
+
+              return;
+            } else {
+              // close socket
+              self.destroy();
+              self.__close();
+              return self.emit('error', new Error('Could not validate SSL request (error ' + ret + ')'));
             }
-            return 'DNS:' + altnames.join(', DNS:');
-          })(),
-          subject: {
-            CN: tm.ssl_session_cn(ssl)[0]
           }
-        }
 
-        if (!tls.checkServerIdentity(host, cert)) {
-          return self.emit('error', new Error('Hostname/IP doesn\'t match certificate\'s altnames'));
-        }
+          var cert = {
+            subjectaltname: (function () {
+              var altnames = [];
+              for (var i = 0; ; i++) {
+                var _ = tm.ssl_session_altname(ssl, i)
+                  , altname = _[0]
+                  , ret = _[1]
+                if (ret != 0) {
+                  break;
+                }
+                altnames.push(altname);
+              }
+              return 'DNS:' + altnames.join(', DNS:');
+            })(),
+            subject: {
+              CN: tm.ssl_session_cn(ssl)[0]
+            }
+          }
 
-        self._ssl = ssl;
+          if (!tls.checkServerIdentity(host, cert)) {
+            return self.emit('error', new Error('Hostname/IP doesn\'t match certificate\'s altnames'));
+          }
+
+          self._ssl = ssl;
+          connectionStable();
+        }
+        
       }
 
-      self._restartTimeout();
-      self.__listen();
-      self.connected = true;
-      if(!self._secure) {
-        self.emit('connect');
-      }
-      else {
-        self.emit('secureConnect');
+      function connectionStable(){
+        self._restartTimeout();
+        self.__listen();
+        self.connected = true;
+        if(!self._secure) {
+          self.emit('connect');
+        } else {
+          self.emit('secureConnect');
+        }
+        
+        self.__send();
       }
       
-      self.__send();
     }
   });
 };
@@ -354,6 +416,7 @@ TCPSocket.prototype._write = function (buf, encoding, cb) {
   } else {
     this._outgoing.push(buf);
   }
+  console.log("_write called with", buf.toString());
   this.__send(cb);
 };
 
@@ -386,9 +449,10 @@ TCPSocket.prototype.__send = function (cb) {
       ret = tm.tcp_write(self.socket, buf, buf.length);
     }
 
+    console.log("writing", buf.toString());
     if (ret == null) {
       return self.emit('error', new Error('Never sent data over socket'));
-    } else if (ret == -2) {
+    } else if (ret == -2 || self._ssl && ret == -256) {
       // cc3000 ran out of buffers. wait until a buffer clears up to send this packet.
       setTimeout(function() {
         // call select to listen for CC3k clearing mem
@@ -398,6 +462,10 @@ TCPSocket.prototype.__send = function (cb) {
     } else if (ret == -11) {
       // EWOULDBLOCK / EAGAIN
       setTimeout(send, 100);
+    } else if (ret == -57) {
+      // socket is inactive
+      // close & open socket
+      console.log("ret is -57");
     } else if (ret < 0) {
       return self.emit('error', new Error("Socket write failed unexpectedly! ("+ret+")"));
     } else {
@@ -414,6 +482,7 @@ TCPSocket.prototype.__readSocket = function(restartTimeout) {
   var buf = '', flag = 0;
   while (self.socket != null && (flag = tm.tcp_readable(self.socket)) > 0) {
     if (self._ssl) {
+      console.log("SSL read");
       var data = tm.ssl_read(self._ssl);
     } else {
       var data = tm.tcp_read(self.socket);
@@ -432,6 +501,7 @@ TCPSocket.prototype.__readSocket = function(restartTimeout) {
     }
 
     // TODO: stop polling if this returns false
+    console.log("GOT", buf.toString());
     self.push(buf);
   }
 
@@ -614,7 +684,7 @@ function createServer (opts, onsocket) {
   var socket = tm.tcp_open();
   
   if (socket < 0) {
-    var err = "ENOENT: Cannot open another socket.";
+    var err = "ENOENT: Cannot open another socket. Got code:"+socket;
     if (socket == -tm.NO_CONNECTION) {
       // wifi is not connected
       err = "ENOTFOUND: Wifi is not connected.";

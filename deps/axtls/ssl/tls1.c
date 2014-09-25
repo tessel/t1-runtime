@@ -963,16 +963,26 @@ static int send_raw_packet(SSL *ssl, uint8_t protocol)
     DISPLAY_BYTES(ssl, "sending %d bytes", ssl->bm_all_data, 
                              pkt_size, pkt_size);
 
+    // do a select call to clear up some buffers
+    // fd_set readSet;        // Socket file descriptors we want to wake up for, using select()
+    // FD_ZERO(&readSet);
+    // FD_SET(ssl->client_fd, &readSet);
+    // struct timeval timeout;
+    // timeout.tv_sec = 10;
+    // timeout.tv_usec = 20000;
+
     while (sent < pkt_size)
     {
         ret = SOCKET_WRITE(ssl->client_fd, 
                         &ssl->bm_all_data[sent], pkt_size-sent);
 
-        if (ret >= 0)
+        if (ret >= 0) {
             sent += ret;
-        else
-        {
-
+        } else if (ret == -2 || ret == -1) {
+            // CC3000 Hack. Expose up HostFlowControlConsumeBuff if buff is out of mem
+            return ret;
+        } else {
+            
 #ifdef WIN32
             if (GetLastError() != WSAEWOULDBLOCK)
 #else
@@ -981,9 +991,9 @@ static int send_raw_packet(SSL *ssl, uint8_t protocol)
                 return SSL_ERROR_CONN_LOST;
         }
 
-        /* keep going until the write buffer has some space */
-        if (sent != pkt_size)
-        {
+        // /* keep going until the write buffer has some space */
+        // // if (sent != pkt_size)
+        // // {
             fd_set wfds;
             FD_ZERO(&wfds);
             FD_SET(ssl->client_fd, &wfds);
@@ -991,7 +1001,7 @@ static int send_raw_packet(SSL *ssl, uint8_t protocol)
             /* block and wait for it */
             if (select(ssl->client_fd + 1, NULL, &wfds, NULL, NULL) < 0)
                 return SSL_ERROR_CONN_LOST;
-        }
+        // // }
     }
 
     SET_SSL_FLAG(SSL_NEED_RECORD);  /* reset for next time */
@@ -1012,7 +1022,6 @@ static int send_raw_packet(SSL *ssl, uint8_t protocol)
 int send_packet(SSL *ssl, uint8_t protocol, const uint8_t *in, int length)
 {
     int ret, msg_length = 0;
-
     /* if our state is bad, don't bother */
     if (ssl->hs_status == SSL_ERROR_DEAD)
         return SSL_ERROR_CONN_LOST;
@@ -1097,9 +1106,10 @@ int send_packet(SSL *ssl, uint8_t protocol, const uint8_t *in, int length)
     }
 
     ssl->bm_index = msg_length;
-    if ((ret = send_raw_packet(ssl, protocol)) <= 0)
-        return ret;
 
+    if ((ret = send_raw_packet(ssl, protocol)) <= 0) 
+        return ret;
+    
     return length;  /* just return what we wanted to send */
 }
 
@@ -1200,6 +1210,17 @@ int basic_read(SSL *ssl, uint8_t **in_data)
     int ret = SSL_OK;
     int read_len, is_client = IS_SET_SSL_FLAG(SSL_IS_CLIENT);
     uint8_t *buf = ssl->bm_data;
+
+    // do some select calls
+    // struct timeval timeout;
+    // timeout.tv_sec = 10;
+    // timeout.tv_usec = 20000;
+    // fd_set wfds;
+    // FD_ZERO(&wfds);
+    // FD_SET(ssl->client_fd, &wfds);
+
+    // /* block and wait for it */
+    // select(ssl->client_fd + 1, NULL, &wfds, NULL, &timeout);
 
     read_len = SOCKET_READ(ssl->client_fd, &buf[ssl->bm_read_index], 
                             ssl->need_bytes-ssl->got_bytes);
