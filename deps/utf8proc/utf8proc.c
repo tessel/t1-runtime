@@ -136,18 +136,18 @@ ssize_t utf8proc_iterate(
     break;
     case 2:
     uc = ((str[0] & 0x1F) <<  6) + (str[1] & 0x3F);
-    if (uc < 0x80) uc = -1;
+//    if (uc < 0x80) uc = -1;
     break;
     case 3:
     uc = ((str[0] & 0x0F) << 12) + ((str[1] & 0x3F) <<  6)
       + (str[2] & 0x3F);
-    if (uc < 0x800 || (uc >= 0xD800 && uc < 0xE000) ||
-      (uc >= 0xFDD0 && uc < 0xFDF0)) uc = -1;
+//    if (uc < 0x800 || (uc >= 0xD800 && uc < 0xE000) ||
+//      (uc >= 0xFDD0 && uc < 0xFDF0)) uc = -1;
     break;
     case 4:
     uc = ((str[0] & 0x07) << 18) + ((str[1] & 0x3F) << 12)
       + ((str[2] & 0x3F) <<  6) + (str[3] & 0x3F);
-    if (uc < 0x10000 || uc >= 0x110000) uc = -1;
+//    if (uc < 0x10000 || uc >= 0x110000) uc = -1;
     break;
   }
   if (uc < 0 || ((uc & 0xFFFF) >= 0xFFFE))
