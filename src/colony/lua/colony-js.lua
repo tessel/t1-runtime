@@ -1020,14 +1020,14 @@ global.String = function (ths, str)
   end
   -- If this is an object construction
   if js_instanceof(ths, global.String) == true then
-    
+
     -- conver to a string
     str = tostring(str)
     -- save the primitive
     getmetatable(ths).__primitive = str;
 
     -- set the length getter for the boxed value
-    js_define_getter(ths, 'length', function() 
+    js_define_getter(ths, 'length', function()
       return str.length
     end)
 
@@ -1352,7 +1352,7 @@ global.Error.captureStackTrace = function (this, err, ctor)
   else
     frame_idx = 1
   end
-  
+
   local info_idx = 2     -- skip ourselves for starters
   while true do
     local frame = nil
@@ -1383,7 +1383,7 @@ js_define_getter(error_constructor.prototype, 'stack', function (this)
     local arr = global:Array(unpack(frames))
     return global.Error.prepareStackTrace(global.Error, this, arr)
   end
-  
+
   local s = this:toString()
   local frame
   local frame_idx = 1
@@ -1723,12 +1723,14 @@ if type(hs) == 'table' then
   end
 
   global.String.prototype.match = function (this, regex)
+
+    if not js_instanceof(regex, global.RegExp) then
+      regex = js_new(global.RegExp, regex)
+    end
+
     -- Match using hsregex
     local cre = getmetatable(regex).cre
     local crestr = getmetatable(regex).crestr
-    if type(cre) ~= 'userdata' then
-      error(js_new(global.TypeError, 'Cannot call RegExp.prototype.match on non-regex'))
-    end
 
     if rawget(regex, 'global') then
       local data = tostring(this)
@@ -1749,32 +1751,17 @@ if type(hs) == 'table' then
         idx = idx + eo
       end
       return js_arr(ret, count)
+    else
+      -- Call regex.exec(str) if the global flag is not true
+      return global.RegExp.prototype.exec(regex, this)
     end
-
-    local data = tostring(this)
-    local rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
-    if rc ~= 0 then
-      return nil
-    end
-    local ret, pos = {}, 0
-    for i=0,hs.regex_nsub(cre) do
-      local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
-      if so == -1 or eo == -1 then
-        table.insert(ret, pos, nil)
-      else
-        table.insert(ret, pos, string.sub(data, so + 1, eo))
-      end
-      pos = pos + 1
-    end
-    return js_arr(ret, pos)
   end
 
-  global.RegExp.prototype.exec = function (regex, subj)
-    -- TODO wrong
-    local cre = getmetatable(regex).cre
-    local crestr = getmetatable(regex).crestr
+  global.RegExp.prototype.exec = function (this, subj)
+    local cre = getmetatable(this).cre
+    local crestr = getmetatable(this).crestr
     if type(cre) ~= 'userdata' then
-      error(js_new(global.TypeError, 'Cannot call RegExp.prototype.match on non-regex'))
+      error(js_new(global.TypeError, 'Cannot call RegExp.prototype.exec on non-regex'))
     end
 
     local data = tostring(subj)
@@ -1783,7 +1770,7 @@ if type(hs) == 'table' then
       return nil
     end
     local ret, len = {}, 0
-    for i=0,hs.regex_nsub(cre) do
+    for i=0, hs.regex_nsub(cre) do
       local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
       if so == -1 or eo == -1 then
         table.insert(ret, len, nil)
@@ -1792,6 +1779,10 @@ if type(hs) == 'table' then
       end
       len = len + 1
     end
+
+    ret.index = hs.regmatch_so(hsmatch, 0)
+    ret.input = data
+
     return js_arr(ret, len)
   end
 
@@ -2083,7 +2074,7 @@ function json_space(str,spacer)
     local lvl = 0       -- the level of indentation
     local sb = ''       -- the spaced stringified json string builder
     local skip = false  -- special case flag for an empty object
-        
+
     -- go through each char and insert spaces and new lines as needed
     for i=0,#str-1 do
       -- for '{' fill the string builder and increment the level
