@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(13);
+tap.count(17);
 
 tap.ok("garbage 09 _ - !@#$%".match(/^[\s\S]+$/), 'regex match');
 

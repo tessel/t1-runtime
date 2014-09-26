@@ -1758,7 +1758,6 @@ if type(hs) == 'table' then
   end
 
   global.RegExp.prototype.exec = function (this, subj)
-    -- TODO wrong
     local cre = getmetatable(this).cre
     local crestr = getmetatable(this).crestr
     local data = tostring(subj)
@@ -1775,10 +1774,6 @@ if type(hs) == 'table' then
     for i=0, hs.regex_nsub(cre) do
       so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
 
-      if index == nil then
-        index = so
-      end
-
       if so == -1 or eo == -1 then
         table.insert(ret, len, nil)
       else
@@ -1787,7 +1782,7 @@ if type(hs) == 'table' then
       len = len + 1
     end
 
-    ret.index = index
+    ret.index = hs.regmatch_so(hsmatch, 0)
     ret.input = data
 
     return js_arr(ret, len)
