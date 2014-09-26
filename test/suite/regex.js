@@ -43,6 +43,10 @@ tap.ok(subj1.match(b), 'matches numbers and whitespace');
 var c = /cav[ea]+t/i;
 tap.ok(subj2.match(c)[0] == 'caveaaAEEAAEeaeaEAEaeeaEEAEEAet', 'matches char classes');
 
+tap.ok(subj1.match('99'), 'matches non-regex values');
+tap.ok(a.exec(subj1).index == 10, 'exec with index attribue');
+tap.ok(a.exec(subj1).input == subj1, 'exec with input attribue');
+
 tap.ok(c.test(subj2), 'test() works')
 
 console.log('#', subj3.replace(/\#+/, '___'));

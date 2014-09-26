@@ -1757,22 +1757,22 @@ if type(hs) == 'table' then
     end
   end
 
-  global.RegExp.prototype.exec = function (regex, subj)
+  global.RegExp.prototype.exec = function (this, subj)
     -- TODO wrong
-    local cre = getmetatable(regex).cre
-    local crestr = getmetatable(regex).crestr
-    if type(cre) ~= 'userdata' then
-      error(js_new(global.TypeError, 'Cannot call RegExp.prototype.match on non-regex'))
-    end
-
+    local cre = getmetatable(this).cre
+    local crestr = getmetatable(this).crestr
     local data = tostring(subj)
     local rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
+    local ret, len = {}, 0
+    local so = 0
+    local eo = 0
+
     if rc ~= 0 then
       return nil
     end
-    local ret, len = {}, 0
-    for i=0,hs.regex_nsub(cre) do
-      local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
+
+    for i=0, hs.regex_nsub(cre) do
+      so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
       if so == -1 or eo == -1 then
         table.insert(ret, len, nil)
       else
@@ -1780,6 +1780,10 @@ if type(hs) == 'table' then
       end
       len = len + 1
     end
+
+    ret['index'] = so
+    ret['input'] = data
+
     return js_arr(ret, len)
   end
 
