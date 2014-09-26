@@ -1763,8 +1763,6 @@ if type(hs) == 'table' then
     local data = tostring(subj)
     local rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
     local ret, len = {}, 0
-    local so = 0
-    local eo = 0
     local index = 0
 
     if rc ~= 0 then
@@ -1772,7 +1770,7 @@ if type(hs) == 'table' then
     end
 
     for i=0, hs.regex_nsub(cre) do
-      so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
+      local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
 
       if so == -1 or eo == -1 then
         table.insert(ret, len, nil)
