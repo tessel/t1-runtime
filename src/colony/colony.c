@@ -104,6 +104,23 @@ uint8_t* colony_createbuffer (lua_State* L, int size)
   return colony_getbufferptr(L, -1, NULL);
 }
 
+/*
+const uint8_t* colony_tolstring (lua_State* L, int index, size_t* buf_len)
+{
+  size_t str_len;
+  const char* str = lua_tolstring(L, index, &str_len);
+  
+  size_t utf8_len;
+  // TODO: split into "preflight" and malloc here?
+  const char* utf8 = tm_str_to_utf8(str, str_len, &utf8_len);
+  lua_pushlstring(L, utf8, utf8_len);
+  if (utf8 != str) free(utf8);
+  lua_replace(L, index);
+  if (buf_len) *buf_len = utf8_len;
+  return (const uint8_t*) utf8;
+}
+*/
+
 const uint8_t* colony_toconstdata (lua_State* L, int index, size_t* buf_len)
 {
   const uint8_t* buf = NULL;
