@@ -18,6 +18,7 @@ exports.resolve = function (domain, type, callback) {
 
   var tries = 3;
   setImmediate(function poll () {
+    console.log("DNS _sync_gethostbyname on domain", domain);
     // CC3000 can flake with cares. Three time's the charm.
   	var ipl = tm._sync_gethostbyname(domain);
   	if (ipl == 0) {

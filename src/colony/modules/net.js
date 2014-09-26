@@ -136,6 +136,7 @@ function normalizeConnectArgs(args) {
     options.port = args[0];
     if (util.isString(args[1])) {
       options.host = args[1];
+      options.hostname = args[2];
     }
   }
 
@@ -143,7 +144,7 @@ function normalizeConnectArgs(args) {
   return util.isFunction(cb) ? [options, cb] : [options];
 }
 
-TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
+TCPSocket.prototype.connect = function (/*options | [port], [host], [hostname], [cb]*/) {
   var self = this;
 
   if (self.socket == null || self.socket < 0) {
@@ -157,6 +158,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   if (opts.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
   var port = +opts.port;
   var host = opts.host || "127.0.0.1";
+  var hostname = opts.hostname || "localhost";
   var cb = args[1];
 
   self.remotePort = port;
@@ -167,35 +169,41 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
 
   if (cb) {
     if (self._secure) {
-      self.once('secureConnect', cb);
+      self.once('secureConnect', function(){
+        cb(self);
+      });
     }
     else {
-      self.once('connect', cb);
+      self.once('connect', function(){
+        cb(self);
+      });
     }
     
   }
 
-  setImmediate(function () {
-    self._restartTimeout();
-    if (isIP(host)) {
-      console.log('connecting to IP', host);
+  setImmediate(function doConnect() {
 
-      doConnect(host);
-    } else {
-      console.log('resolving IP', host);
-      dns.resolve(host, function onResolve(err, ips) {
-        console.log('host resolved to ip', ips);
-        if (err) {
-          return self.emit('error', err);
-        }
-        self._restartTimeout();
-        self.remoteAddress = ips[0];
-        doConnect(self.remoteAddress);
-      })
-    }
+    // self._restartTimeout();
+    // if (isIP(host)) {
+    //   console.log('connecting to IP', host);
+
+    //   doConnect(host);
+    // } else {
+    //   console.log('resolving IP', host);
+    //   dns.resolve(host, function onResolve(err, ips) {
+    //     console.log('host resolved to ip', ips);
+    //     if (err) {
+    //       return self.emit('error', err);
+    //     }
+    //     self._restartTimeout();
+    //     self.remoteAddress = ips[0];
+    //     doConnect(self.remoteAddress);
+    //   })
+    // }
+
     var retries = 0;
-    function doConnect(ip) {
-      var addr = ip.split('.').map(Number);
+    // function doConnect(ip) {
+      var addr = self.remoteAddress.split('.').map(Number);
       addr = (addr[0] << 24) + (addr[1] << 16) + (addr[2] << 8) + addr[3];
 
       var ret = tm.tcp_connect(self.socket, addr, port);
@@ -240,7 +248,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
               self.destroy();
               return self.__close();
             } else {
-              doConnect(ip);
+              doConnect();
             }
           }, 100);
           return;
@@ -251,10 +259,10 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         connectionStable();
       } else {
       // if (self._secure) {
-        var hostname = null;
-        if (!isIP(host)) {
-          hostname = host;
-        }
+        // var hostname = null;
+        // if (!isIP(host)) {
+        //   hostname = host;
+        // }
 
         // do a select call to try to free some cc3k buffers
         
@@ -282,7 +290,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
           //   return self.emit('error', new Error('Socket not available'));
           // } 
 
-          console.log("create session called");
+          console.log("create session called with", hostname);
           var _ = tm.ssl_session_create(ssl_ctx, self.socket, hostname)
             , ssl = _[0]
             , ret = _[1]
@@ -337,7 +345,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
             }
           }
 
-          if (!tls.checkServerIdentity(host, cert)) {
+          if (!tls.checkServerIdentity(hostname, cert)) {
             return self.emit('error', new Error('Hostname/IP doesn\'t match certificate\'s altnames'));
           }
 
@@ -360,7 +368,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         self.__send();
       }
       
-    }
+    // }
   });
 };
 
@@ -416,7 +424,7 @@ TCPSocket.prototype._write = function (buf, encoding, cb) {
   } else {
     this._outgoing.push(buf);
   }
-  console.log("_write called with", buf.toString());
+  // console.log("_write called with", buf.toString());
   this.__send(cb);
 };
 
@@ -449,7 +457,6 @@ TCPSocket.prototype.__send = function (cb) {
       ret = tm.tcp_write(self.socket, buf, buf.length);
     }
 
-    console.log("writing", buf.toString());
     if (ret == null) {
       return self.emit('error', new Error('Never sent data over socket'));
     } else if (ret == -2 || self._ssl && ret == -256) {
@@ -462,10 +469,10 @@ TCPSocket.prototype.__send = function (cb) {
     } else if (ret == -11) {
       // EWOULDBLOCK / EAGAIN
       setTimeout(send, 100);
-    } else if (ret == -57) {
-      // socket is inactive
-      // close & open socket
-      console.log("ret is -57");
+    // } else if (ret == -57) {
+    //   // socket is inactive
+    //   // close & open socket
+    //   console.log("ret is -57");
     } else if (ret < 0) {
       return self.emit('error', new Error("Socket write failed unexpectedly! ("+ret+")"));
     } else {
@@ -482,8 +489,8 @@ TCPSocket.prototype.__readSocket = function(restartTimeout) {
   var buf = '', flag = 0;
   while (self.socket != null && (flag = tm.tcp_readable(self.socket)) > 0) {
     if (self._ssl) {
-      console.log("SSL read");
       var data = tm.ssl_read(self._ssl);
+      // console.log("SSL read", data.toString());
     } else {
       var data = tm.tcp_read(self.socket);
     }
@@ -501,7 +508,7 @@ TCPSocket.prototype.__readSocket = function(restartTimeout) {
     }
 
     // TODO: stop polling if this returns false
-    console.log("GOT", buf.toString());
+    // console.log("GOT", buf.toString());
     self.push(buf);
   }
 
@@ -521,7 +528,7 @@ TCPSocket.prototype.__close = function (tryToClose) {
   function closeSocket(){
     if (self.socket === null) return;
     var ret = tm.tcp_close(self.socket);
-    if (ret < 0) {
+    if (ret < 0 && ret != -57) { // -57 is inactive, socket has already been closed
       if (retries > 3) {
         // tried 3 times and couldn't close, error out
         self.emit('close');
@@ -587,16 +594,43 @@ TCPSocket.prototype.setNoDelay = function (val) {
   if (val) console.warn("Ignoring call to setNoDelay. TCP_NODELAY socket option not supported.");
 };
 
-function connect (port, host, callback, _secure) {
-  var client = new TCPSocket(null, _secure);
-  if (client.socket >= 0) {
-    var args = Array.prototype.slice.call(arguments);
-    if (args.length === 4) args.pop();      // drop _secure param
-    TCPSocket.prototype.connect.apply(client, args);
+function connect (port, hostname, callback, _secure) {
+  // console.log("port", port, "host", host, "cb", callback);
+  if (isIP(host)) {
+    console.log('connecting to IP', hostname);
+    doConnect(host);
   } else {
-    console.log("tcp connect is null, tcp socket broke");
+    console.log('resolving IP', hostname);
+    dns.resolve(hostname, function onResolve(err, ips) {
+      console.log('host resolved to ip', ips);
+      if (err) {
+        throw new Error('ip could not be resolved'+err);
+        // return self.emit('error', err);
+      }
+      // self._restartTimeout();
+      // self.remoteAddress = ips[0];
+      // setTimeout(function(){
+        doConnect(ips[0]);
+      // }, 10000);
+    })
   }
-  return client;
+
+  function doConnect(host) {
+    var client = new TCPSocket(null, _secure);
+    if (client.socket >= 0) {
+      var args = Array.prototype.slice.call([port, host, hostname, callback, _secure]);
+      if (args.length === 5) args.pop();      // drop _secure param
+      console.log("TCPSocket.prototype.connect", args);
+     
+      TCPSocket.prototype.connect.apply(client, args);
+    } else {
+      console.log("tcp connect is null, tcp socket broke");
+    }
+  }
+
+  // callback && callback(client);
+  
+  // return client;
 };
 
 

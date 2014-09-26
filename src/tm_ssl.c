@@ -140,7 +140,7 @@ int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ssl_ctx, tm_s
         TM_DEBUG("do_connect was bad %d", res);
         return res;
     }
-    // TM_DEBUG("do_client_connect");
+    TM_DEBUG("do_client_connect");
 
     /* check the return status */
     if ((res = ssl_handshake_status(ssl)) != SSL_OK)
@@ -152,7 +152,7 @@ int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ssl_ctx, tm_s
         TM_DEBUG("ssl_handshake_status != SSL_OK, is %d", res);
         return res;
     }
-
+    
     if (!quiet)
     {
         const char *common_name = ssl_get_cert_dn(ssl,

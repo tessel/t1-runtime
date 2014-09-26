@@ -412,22 +412,28 @@ function _getPool(agent, opts) {
   }
   
   
-  function addSocket() {
-    var socket = agent._createConnection(opts);
-    socket.on('close', function(){
-      handleDead();
-      socket.destroy();
-    });
-    socket.on('_free', handleFree);
-    socket.once('agentRemove', function () {
-      socket.removeListener('close', handleDead);
-      socket.removeListener('_free', handleFree);
-      removeSocket(socket);
+  function addSocket(cb) {
+    // console.log("adding socket with options", opts);
+    agent._createConnection(opts, function(socket){
+      // console.log("_createConnection callback with", socket);
+      socket.on('close', function(){
+        handleDead();
+        socket.destroy();
+      });
+      socket.on('_free', handleFree);
+      socket.once('agentRemove', function () {
+        socket.removeListener('close', handleDead);
+        socket.removeListener('_free', handleFree);
+        removeSocket(socket);
+      });
+      
+      function handleDead() { removeSocket(socket); }
+      function handleFree() { updateSocket(socket); }
+
+      cb(socket);
     });
     
-    function handleDead() { removeSocket(socket); }
-    function handleFree() { updateSocket(socket); }
-    return socket;
+    // return socket;
   }
   
   function updateSocket(socket) {
@@ -447,7 +453,9 @@ function _getPool(agent, opts) {
   function removeSocket(socket) {
     sockets.splice(sockets.indexOf(socket), 1);
     if (requests.length && sockets.length < agent.maxSockets) {
-      addSocket().emit('_free');
+      addSocket(function(socket) {
+        socket.emit('_free');
+      });//.emit('_free');
     }
     collectGarbage();
   }
@@ -458,12 +466,14 @@ function _getPool(agent, opts) {
       socket = freeSockets.shift();    // LRU
       socket.removeListener('error', handleIdleError);
     } else if (sockets.length < agent.maxSockets) {
-      socket = addSocket();
+      addSocket(function(socket){
+        if (socket) {
+          sockets.push(socket);
+          req._assignSocket(socket);
+        } else requests.push(req);
+      });
     }
-    if (socket) {
-      sockets.push(socket);
-      req._assignSocket(socket);
-    } else requests.push(req);
+    
   };
   
   pool.destroy = function () {
