@@ -1766,6 +1766,7 @@ if type(hs) == 'table' then
     local ret, len = {}, 0
     local so = 0
     local eo = 0
+    local index = 0
 
     if rc ~= 0 then
       return nil
@@ -1773,6 +1774,11 @@ if type(hs) == 'table' then
 
     for i=0, hs.regex_nsub(cre) do
       so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
+
+      if index == nil then
+        index = so
+      end
+
       if so == -1 or eo == -1 then
         table.insert(ret, len, nil)
       else
@@ -1781,8 +1787,8 @@ if type(hs) == 'table' then
       len = len + 1
     end
 
-    ret['index'] = so
-    ret['input'] = data
+    ret.index = index
+    ret.input = data
 
     return js_arr(ret, len)
   end
