@@ -2234,8 +2234,32 @@ function decodeURIComponent (this, str)
   return str
 end
 
+
+function encodeURI(this, str)
+  -- TODO: Check for high/low surrogate pairs
+  return string.gsub (tostring(str), "([^%w,;/:@&='_~#%+%$!%.%?%%-%*%(%)])",
+    function (c) return string.format ("%%%02X", string.byte(c)) end)
+end
+
+function decodeURI(this, str)
+  return string.gsub(tostring(str), "%%(%x%x)", 
+     function(c) return string.char(tonumber(c, 16)) end)
+end
+
+function escape(this, str)
+  return string.gsub(tostring(str), "([^%w@%*_%+%-%./])",
+    function(c) 
+      return string.format ("%%%02X", string.byte(c)) 
+    end);
+end 
+
+
+
 global.encodeURIComponent = encodeURIComponent
 global.decodeURIComponent = decodeURIComponent
+global.encodeURI = encodeURI;
+global.decodeURI = decodeURI;
+global.escape = escape;
 
 
 --[[
