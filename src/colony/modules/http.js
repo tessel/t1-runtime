@@ -414,7 +414,7 @@ function _getPool(agent, opts) {
   
   function addSocket(cb) {
     // console.log("adding socket with options", opts);
-    agent._createConnection(opts, function(socket){
+    agent._createConnection(opts.port, opts.host, function(socket){
       // console.log("_createConnection callback with", socket);
       socket.on('close', function(){
         handleDead();

@@ -136,7 +136,6 @@ function normalizeConnectArgs(args) {
     options.port = args[0];
     if (util.isString(args[1])) {
       options.host = args[1];
-      options.hostname = args[2];
     }
   }
 
@@ -144,7 +143,7 @@ function normalizeConnectArgs(args) {
   return util.isFunction(cb) ? [options, cb] : [options];
 }
 
-TCPSocket.prototype.connect = function (/*options | [port], [host], [hostname], [cb]*/) {
+TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   var self = this;
 
   if (self.socket == null || self.socket < 0) {
@@ -158,7 +157,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [hostname], 
   if (opts.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
   var port = +opts.port;
   var host = opts.host || "127.0.0.1";
-  var hostname = opts.hostname || "localhost";
+  var hostname = self.hostname || "localhost";
   var cb = args[1];
 
   self.remotePort = port;
@@ -594,32 +593,27 @@ TCPSocket.prototype.setNoDelay = function (val) {
   if (val) console.warn("Ignoring call to setNoDelay. TCP_NODELAY socket option not supported.");
 };
 
-function connect (port, hostname, callback, _secure) {
-  // console.log("port", port, "host", host, "cb", callback);
+function connect (port, host, callback, _secure) {
   if (isIP(host)) {
-    // console.log('connecting to IP', hostname);
     doConnect(host);
   } else {
-    // console.log('resolving IP', hostname);
-    dns.resolve(hostname, function onResolve(err, ips) {
+    dns.resolve(host, function onResolve(err, ips) {
       // console.log('host resolved to ip', ips);
       if (err) {
+        // TODO: make this emit an error and not crash
         throw new Error('ip could not be resolved'+err);
         // return self.emit('error', err);
       }
-      // self._restartTimeout();
-      // self.remoteAddress = ips[0];
-      // setTimeout(function(){
-        doConnect(ips[0]);
-      // }, 10000);
+      doConnect(ips[0]);
     })
   }
 
-  function doConnect(host) {
+  function doConnect(hostIp) {
     var client = new TCPSocket(null, _secure);
+    client.hostname = host;
     if (client.socket >= 0) {
-      var args = Array.prototype.slice.call([port, host, hostname, callback, _secure]);
-      if (args.length === 5) args.pop();      // drop _secure param
+      var args = Array.prototype.slice.call([port, hostIp, callback, _secure]);
+      if (args.length === 4) args.pop();      // drop _secure param
       // console.log("TCPSocket.prototype.connect", args);
      
       TCPSocket.prototype.connect.apply(client, args);
