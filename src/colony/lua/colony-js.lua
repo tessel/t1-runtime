@@ -2216,26 +2216,46 @@ global.JSON = js_obj({
 
 function encodeURIComponent (this, str)
   str = tostring(str)
-  str = string.gsub (str, "\n", "\r\n")
-  str = string.gsub (str, "([^%w %-%_%.%~])", function (c)
+  str = string.gsub (str, "([^%w%-%_%.%~%*%(%)'])", function (c)
     return string.format ("%%%02X", string.byte(c))
   end)
-  str = string.gsub (str, " ", "%%20")
   return str
 end
 
 function decodeURIComponent (this, str)
   str = tostring(str)
   str = string.gsub (str, "+", " ")
-  str = string.gsub (str, "%%(%x%x)", function(h)
+  return string.gsub (str, "%%(%x%x)", function(h)
     return string.char(tonumber(h,16))
   end)
-  str = string.gsub (str, "\r\n", "\n")
-  return str
 end
+
+
+function encodeURI(this, str)
+  -- TODO: Check for high/low surrogate pairs
+  return string.gsub (tostring(str), "([^%w,;/:@&='_~#%+%$!%.%?%%-%*%(%)])",
+    function (c) return string.format ("%%%02X", string.byte(c)) end)
+end
+
+function decodeURI(this, str)
+  return string.gsub(tostring(str), "%%(%x%x)", 
+     function(c) return string.char(tonumber(c, 16)) end)
+end
+
+function escape(this, str)
+  return string.gsub(tostring(str), "([^%w@%*_%+%-%./])",
+    function(c) 
+      return string.format ("%%%02X", string.byte(c)) 
+    end);
+end 
+
+
 
 global.encodeURIComponent = encodeURIComponent
 global.decodeURIComponent = decodeURIComponent
+global.encodeURI = encodeURI;
+global.decodeURI = decodeURI;
+global.escape = escape;
 
 
 --[[
