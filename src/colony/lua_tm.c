@@ -874,15 +874,9 @@ uint32_t tm__sync_gethostbyname (const char *domain);
 
 static int l_tm__sync_gethostbyname (lua_State* L)
 {
-#ifdef TM_DEBUG
-  TM_DEBUG("l_tm__sync_gethostbyname");
-#endif
   const char *host = lua_tostring(L, 1);
 
   lua_pushnumber(L, tm__sync_gethostbyname(host));
-#ifdef TM_DEBUG
-  TM_DEBUG("done with tm__sync_gethostbyname");
-#endif
   return 1;
 }
 

@@ -21,7 +21,6 @@
 #include <netdb.h>
 #else
 #include <cc3000.h>
-#include <tm.h>
 #endif
 
 #define INET6_ADDRSTRLEN 46
@@ -105,9 +104,6 @@ uint32_t tm__sync_gethostbyname (const char *domain)
 
     inet_aton("8.8.8.8",&ns1);
  
-#ifdef TM_DEBUG
-  TM_DEBUG("ares_library_init");
-#endif
     status = ares_library_init(ARES_LIB_INIT_ALL);
     if (status != ARES_SUCCESS){
         printf("ares_library_init: %s\n", ares_strerror(status));
