@@ -980,9 +980,9 @@ static int send_raw_packet(SSL *ssl, uint8_t protocol)
     // fd_set readSet;        // Socket file descriptors we want to wake up for, using select()
     // FD_ZERO(&readSet);
     // FD_SET(ssl->client_fd, &readSet);
-    struct timeval timeout;
-    timeout.tv_sec = 10;
-    timeout.tv_usec = 20000;
+    // struct timeval timeout;
+    // timeout.tv_sec = 10;
+    // timeout.tv_usec = 20000;
 #ifdef TM_DEBUG
         TM_DEBUG("going into send_raw_packet loop with %d bytes", ssl->bm_all_data);
 #endif
@@ -1017,7 +1017,7 @@ static int send_raw_packet(SSL *ssl, uint8_t protocol)
             FD_SET(ssl->client_fd, &wfds);
 
             /* block and wait for it */
-            if (select(ssl->client_fd + 1, NULL, &wfds, NULL, &timeout) < 0)
+            if (select(ssl->client_fd + 1, NULL, &wfds, NULL, NULL) < 0)
                 return SSL_ERROR_CONN_LOST;
         // // }
     }

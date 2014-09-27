@@ -290,7 +290,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [hostname], 
           //   return self.emit('error', new Error('Socket not available'));
           // } 
 
-          console.log("create session called with", hostname);
+          // console.log("create session called with", hostname);
           var _ = tm.ssl_session_create(ssl_ctx, self.socket, hostname)
             , ssl = _[0]
             , ret = _[1]
@@ -541,7 +541,7 @@ TCPSocket.prototype.__close = function (tryToClose) {
       }
      
     } else {
-      console.log("closed socket", self.socket, "successfully");
+      // console.log("closed socket", self.socket, "successfully");
       self.socket = null;
       self.emit('close');
     }
@@ -597,12 +597,12 @@ TCPSocket.prototype.setNoDelay = function (val) {
 function connect (port, hostname, callback, _secure) {
   // console.log("port", port, "host", host, "cb", callback);
   if (isIP(host)) {
-    console.log('connecting to IP', hostname);
+    // console.log('connecting to IP', hostname);
     doConnect(host);
   } else {
-    console.log('resolving IP', hostname);
+    // console.log('resolving IP', hostname);
     dns.resolve(hostname, function onResolve(err, ips) {
-      console.log('host resolved to ip', ips);
+      // console.log('host resolved to ip', ips);
       if (err) {
         throw new Error('ip could not be resolved'+err);
         // return self.emit('error', err);
@@ -620,7 +620,7 @@ function connect (port, hostname, callback, _secure) {
     if (client.socket >= 0) {
       var args = Array.prototype.slice.call([port, host, hostname, callback, _secure]);
       if (args.length === 5) args.pop();      // drop _secure param
-      console.log("TCPSocket.prototype.connect", args);
+      // console.log("TCPSocket.prototype.connect", args);
      
       TCPSocket.prototype.connect.apply(client, args);
     } else {
