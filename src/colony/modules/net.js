@@ -64,32 +64,37 @@ function TCPSocket (socket, _secure) {
     this.socket = socket.fd;
     // TODO: respect readable/writable flags
     if (socket.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
-  } else if (socket == null) {
-    if (_secure) ensureSSLCtx();
-    this.socket = tm.tcp_open();
-  } else {
-    this.socket = socket;
-  }
+  } 
+
+  // else if (socket == null) {
+  //   if (_secure) ensureSSLCtx();
+  //   this.socket = tm.tcp_open();
+  // } else {
+  //   this.socket = socket;
+  // }
   this._secure = _secure;
   this._outgoing = [];
   this._sending = false;
   this._queueEnd = false;
+  this.socket = null;
 
   var self = this;
-  if (this.socket < 0) {
-    setImmediate(function () {
-      var err = "ENOENT: Cannot open another socket.";
-      if (self.socket == -tm.NO_CONNECTION) {
-        // wifi is not connected
-        err = "ENOTFOUND: Wifi is not connected.";
-      }
-      self.emit('error', new Error(err));
+  // if (this.socket < 0) {
+  //   setImmediate(function () {
+  //     var err = "ENOENT: Cannot open another socket.";
+  //     if (self.socket == -tm.NO_CONNECTION) {
+  //       // wifi is not connected
+  //       err = "ENOTFOUND: Wifi is not connected.";
+  //     }
+  //     self.emit('error', new Error(err));
 
-      // cleanup
-      self.removeAllListeners();
-    });
-    return;
-  }
+  //     // cleanup
+  //     self.removeAllListeners();
+  //   });
+  //   return;
+  // }
+
+
   self.on('finish', function () {
     // this is called when writing is ended
     // TODO: support allowHalfOpen (if firmware can?)
@@ -146,22 +151,22 @@ function normalizeConnectArgs(args) {
 TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   var self = this;
 
-  if (self.socket == null || self.socket < 0) {
-    console.log("tcp connect has no socket");
-    self.destroy();
-    return self.__close();
-  }
+  // if (self.socket == null || self.socket < 0) {
+  //   console.log("tcp connect has no socket");
+  //   self.destroy();
+  //   return self.__close();
+  // }
 
   var args = normalizeConnectArgs(arguments);
   var opts = args[0];
   if (opts.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
   var port = +opts.port;
   var host = opts.host || "127.0.0.1";
-  var hostname = self.hostname || "localhost";
+  // var hostname = opts.hostname || "localhost";
   var cb = args[1];
-
+  console.log('TCPSocket.connect')
   self.remotePort = port;
-  self.remoteAddress = host;
+  // self.remoteAddress = host;
   // TODO: proper value for these?
   self.localPort = 0;
   self.localAddress = "0.0.0.0";
@@ -180,29 +185,45 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
     
   }
 
-  setImmediate(function doConnect() {
+  if (isIP(host)) {
+    setUpConnection(host);
+  } else {
+    dns.resolve(host, function onResolve(err, ips) {
+      console.log('host resolved to ip', ips);
+      if (err) {
+        // TODO: make this emit an error and not crash
+        throw new Error('ip could not be resolved'+err);
+        // return self.emit('error', err);
+      }
+      setUpConnection(ips[0]);
+    })
+  }
 
-    // self._restartTimeout();
-    // if (isIP(host)) {
-    //   console.log('connecting to IP', host);
+  function setUpConnection(ip) {
+    if (self.socket == null) {
+      if (self._secure) ensureSSLCtx();
+      self.socket = tm.tcp_open();
+    }
 
-    //   doConnect(host);
-    // } else {
-    //   console.log('resolving IP', host);
-    //   dns.resolve(host, function onResolve(err, ips) {
-    //     console.log('host resolved to ip', ips);
-    //     if (err) {
-    //       return self.emit('error', err);
-    //     }
-    //     self._restartTimeout();
-    //     self.remoteAddress = ips[0];
-    //     doConnect(self.remoteAddress);
-    //   })
-    // }
+    if (self.socket < 0) {
+      setImmediate(function () {
+        var err = "ENOENT: Cannot open another socket.";
+        if (self.socket == -tm.NO_CONNECTION) {
+          // wifi is not connected
+          err = "ENOTFOUND: Wifi is not connected.";
+        }
+        self.emit('error', new Error(err));
+
+        // cleanup
+        self.removeAllListeners();
+      });
+
+      return;
+    }
 
     var retries = 0;
-    // function doConnect(ip) {
-      var addr = self.remoteAddress.split('.').map(Number);
+    setImmediate(function doConnect() {
+      var addr = ip.split('.').map(Number);
       addr = (addr[0] << 24) + (addr[1] << 16) + (addr[2] << 8) + addr[3];
 
       var ret = tm.tcp_connect(self.socket, addr, port);
@@ -257,6 +278,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       if (!self._secure) {
         connectionStable();
       } else {
+        console.log("self is secure");
       // if (self._secure) {
         // var hostname = null;
         // if (!isIP(host)) {
@@ -344,7 +366,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
             }
           }
 
-          if (!tls.checkServerIdentity(hostname, cert)) {
+          if (!tls.checkServerIdentity(host, cert)) {
             return self.emit('error', new Error('Hostname/IP doesn\'t match certificate\'s altnames'));
           }
 
@@ -367,8 +389,8 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         self.__send();
       }
       
-    // }
-  });
+    });
+  }
 };
 
 TCPSocket.prototype._read = function (size) {
@@ -594,33 +616,39 @@ TCPSocket.prototype.setNoDelay = function (val) {
 };
 
 function connect (port, host, callback, _secure) {
-  if (isIP(host)) {
-    doConnect(host);
-  } else {
-    dns.resolve(host, function onResolve(err, ips) {
-      // console.log('host resolved to ip', ips);
-      if (err) {
-        // TODO: make this emit an error and not crash
-        throw new Error('ip could not be resolved'+err);
-        // return self.emit('error', err);
-      }
-      doConnect(ips[0]);
-    })
-  }
+  var client = new TCPSocket(null, _secure);
+  var args = Array.prototype.slice.call(arguments);
+  if (args.length === 4) args.pop();      // drop _secure param
+  TCPSocket.prototype.connect.apply(client, args);
+  return client;
 
-  function doConnect(hostIp) {
-    var client = new TCPSocket(null, _secure);
-    client.hostname = host;
-    if (client.socket >= 0) {
-      var args = Array.prototype.slice.call([port, hostIp, callback, _secure]);
-      if (args.length === 4) args.pop();      // drop _secure param
-      // console.log("TCPSocket.prototype.connect", args);
+  // if (isIP(host)) {
+  //   doConnect(host);
+  // } else {
+  //   dns.resolve(host, function onResolve(err, ips) {
+  //     // console.log('host resolved to ip', ips);
+  //     if (err) {
+  //       // TODO: make this emit an error and not crash
+  //       throw new Error('ip could not be resolved'+err);
+  //       // return self.emit('error', err);
+  //     }
+  //     doConnect(ips[0]);
+  //   })
+  // }
+
+  // function doConnect(hostIp) {
+  //   var client = new TCPSocket(null, _secure);
+  //   client.hostname = host;
+  //   if (client.socket >= 0) {
+  //     var args = Array.prototype.slice.call([port, hostIp, callback, _secure]);
+  //     if (args.length === 4) args.pop();      // drop _secure param
+  //     // console.log("TCPSocket.prototype.connect", args);
      
-      TCPSocket.prototype.connect.apply(client, args);
-    } else {
-      console.log("tcp connect is null, tcp socket broke");
-    }
-  }
+  //     TCPSocket.prototype.connect.apply(client, args);
+  //   } else {
+  //     console.log("tcp connect is null, tcp socket broke");
+  //   }
+  // }
 
   // callback && callback(client);
   

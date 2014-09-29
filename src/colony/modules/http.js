@@ -412,9 +412,11 @@ function _getPool(agent, opts) {
   }
   
   
-  function addSocket(cb) {
+  function addSocket() {
+    var socket = agent._createConnection(opts);
+
     // console.log("adding socket with options", opts);
-    agent._createConnection(opts.port, opts.host, function(socket){
+    // agent._createConnection(opts.port, opts.host, function(socket){
       // console.log("_createConnection callback with", socket);
       socket.on('close', function(){
         handleDead();
@@ -430,10 +432,10 @@ function _getPool(agent, opts) {
       function handleDead() { removeSocket(socket); }
       function handleFree() { updateSocket(socket); }
 
-      cb(socket);
-    });
+      // cb(socket);
+    // });
     
-    // return socket;
+    return socket;
   }
   
   function updateSocket(socket) {
@@ -453,9 +455,10 @@ function _getPool(agent, opts) {
   function removeSocket(socket) {
     sockets.splice(sockets.indexOf(socket), 1);
     if (requests.length && sockets.length < agent.maxSockets) {
-      addSocket(function(socket) {
-        socket.emit('_free');
-      });//.emit('_free');
+      // addSocket(function(socket) {
+        // socket.emit('_free');
+      // });//.emit('_free');
+      addSocket().emit('_free');
     }
     collectGarbage();
   }
@@ -466,12 +469,14 @@ function _getPool(agent, opts) {
       socket = freeSockets.shift();    // LRU
       socket.removeListener('error', handleIdleError);
     } else if (sockets.length < agent.maxSockets) {
-      addSocket(function(socket){
+      socket = addSocket();
+
+      // addSocket(function(socket){
         if (socket) {
           sockets.push(socket);
           req._assignSocket(socket);
         } else requests.push(req);
-      });
+      // });
     }
     
   };
