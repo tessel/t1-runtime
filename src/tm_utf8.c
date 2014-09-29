@@ -28,6 +28,7 @@ ssize_t tm_utf8_str_toupper (const uint8_t *buf, ssize_t buf_len, uint8_t **dstp
 	while (buf_len > 0) {
 		ssize_t bytes_read = utf8proc_iterate(ptr, buf_len, &c);
 		if (c == -1) {
+			free(dest);
 			return -1;
 		}
 		ptr += bytes_read;
@@ -61,6 +62,7 @@ ssize_t tm_utf8_str_tolower (const uint8_t *buf, ssize_t buf_len, uint8_t **dstp
 	while (buf_len > 0) {
 		ssize_t bytes_read = utf8proc_iterate(ptr, buf_len, &c);
 		if (c == -1) {
+			free(dest);
 			return -1;
 		}
 		ptr += bytes_read;
@@ -72,4 +74,16 @@ ssize_t tm_utf8_str_tolower (const uint8_t *buf, ssize_t buf_len, uint8_t **dstp
 	}
 	*dstptr = dest;
 	return 0;
+}
+
+size_t tm_str_to_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t ** const dstptr) {
+  // TODO: this is no-op stub, implement for realsies!
+  *dstptr = buf;
+  return buf_len;
+}
+
+size_t tm_str_from_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t ** const dstptr) {
+  // TODO: this is no-op stub, implement for realsies!
+  *dstptr = buf;
+  return buf_len;
 }
