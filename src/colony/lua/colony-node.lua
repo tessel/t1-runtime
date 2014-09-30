@@ -300,10 +300,10 @@ local buffer_proto = js_obj({
       encoding = 'utf8'
     end
     encoding = string.lower(encoding);
-    
+
     local str = tm.buffer_tostring(getmetatable(this).buffer, offset, endOffset);
 
-    if encoding == 'utf8' or encoding == 'utf-8' 
+    if encoding == 'utf8' or encoding == 'utf-8'
       or encoding == 'binary' or encoding == 'ascii' then
       return str;
     elseif encoding == 'base64' then
@@ -313,7 +313,7 @@ local buffer_proto = js_obj({
         return string.format('%02x', string.byte(c));
       end)
       return str;
-    elseif  encoding == 'ucs2' or encoding == 'ucs-2' 
+    elseif  encoding == 'ucs2' or encoding == 'ucs-2'
       or encoding == 'utf16le' or encoding == 'utf-16le' then
       return error(js_new(global.NotImplementedError, 'Encoding not implemented yet: ' + encoding));
     else
@@ -583,220 +583,6 @@ global.Buffer = Buffer
 
 
 --[[
---|| EventEmitter
---]]
-
-local EventEmitter = function (this) end
-
-EventEmitter.prototype.listeners = function (this, type)
-  if not this._events then
-    this._events = js_obj({})
-  end
-  if not this.hasOwnProperty:call(this._events, type) then
-    this._events[type] = js_arr({}, 0)
-  end
-  return this._events[type]
-end
-
-EventEmitter.prototype.addListener = function (this, eventName, f)
-  if (type(f) ~= "function") then
-    error(js_new(global.TypeError, 'Supplied listener is not a function.'));
-  end
-  if (f.listener) then
-    this:emit("newListener", eventName, f.listener);
-  else
-    this:emit("newListener", eventName, f);
-  end
-  if this._maxListeners ~= 0 and this:listeners(eventName):push(f) > (this._maxListeners or 10) then
-    global.console:warn("Possible EventEmitter memory leak detected. Added " + this._events[eventName].length + " listeners on " +eventName+". Use emitter.setMaxListeners() to increase limit.")
-  end
-  return this
-end
-
-EventEmitter.prototype.on = EventEmitter.prototype.addListener
-
-EventEmitter.prototype.once = function (this, eventName, f)
-  local g = nil
-  if (type(f) ~= "function") then
-      error(js_new(global.TypeError, 'Supplied listener is not a function.'));
-  end
-  g = function (this, ...)
-    this:removeListener(eventName, g);
-    f(this, ...)
-  end
-  g.listener = f;
-  this:on(eventName, g)
-end
-
-EventEmitter.prototype.removeListener = function (this, type, f)
-
-  type = tostring(type) or ''
-  if not f then
-    error(js_new(global.TypeError, 'Supplied listener is not a function.'))
-  end
-
-  local i = this:listeners(type):indexOf(f);
-  local callback = f;
-
-  if (f.listener) then
-    callback = f.listener;
-  end
-
-  -- If the listener wasn't found
-  if i ~= -1 then
-    -- the index is the index of the callback listener
-    this:listeners(type):splice(i, 1);
-    this:emit("removeListener", type, callback);
-  end
-
-  return this
-end
-
-EventEmitter.prototype.removeAllListeners = function (this, type)
-
-  -- If no events, just return
-  if (not this._events) then
-    return;
-  end
-
-  -- If no args were passed in, delete all possible listeners
-  if (not type or type.length == 0) then
-    for k in js_pairs(this._events) do
-      if (k ~= "removeListener") then
-        this:removeAllListeners(k);
-      end
-    end
-    this:removeAllListeners('removeListener');
-    this._events = js_obj({});
-    return this;
-  else
-    -- grab listeners for this event
-    local listeners = this:listeners(type);
-
-    -- Remove each of them
-    for k in pairs(listeners) do
-      if listeners[k] then
-        this:removeListener(type, listeners[k]);
-      end
-    end
-    return this;
-  end
-end
-
-EventEmitter.prototype.emit = function (this, type, ...)
-  local count = 0
-  if this._events and this._events[type] then
-    local fns, listeners = {}, this._events[type]
-    for i=0,listeners.length-1 do
-      table.insert(fns, listeners[i])
-    end
-    count = #fns
-    for i=1,#fns do
-      fns[i](this, ...)
-    end
-  end
-  if type == 'error' and count == 0 then
-    local args = table.pack(...)
-    if js_instanceof(args[1], global.Error) then
-      error(args[1])
-    else
-      error(js_new(global.TypeError, 'Uncaught, unspecified "error" event.'))
-    end
-  end
-  return count
-end
-
-EventEmitter.prototype.setMaxListeners = function (this, maxListeners)
-  this._maxListeners = maxListeners;
-  return this;
-end
-
-
-EventEmitter.listenerCount = function(this, emitter, event)
-  local ret;
-
-  if not emitter._events or not emitter._events[event] then
-    ret = 0;
-
-  elseif (type(emitter._events[event]) == "function") then
-    ret = 1;
-
-  else
-    return emitter._events[event].length;
-  end
-
-  return ret;
-end
-
-
---[[
---|| process
---]]
-
-global.process = js_new(EventEmitter)
-global.process.memoryUsage = function (ths)
-  return js_obj({
-    heapUsed=collectgarbage('count')*1024
-  });
-end
-global.process.platform = "tessel"
-global.process.arch = "armv7-m"
-global.process.versions = js_obj({
-  node = "0.10.0",
-  colony = "0.10.0"
-})
-global.process.EventEmitter = EventEmitter
-global.process.argv = js_arr({}, 0)
-global.process.env = js_obj({})
-global.process.exit = function (this, code)
-  tm.exit(code)
-end
-global.process.cwd = function ()
-  return tm.cwd()
-end
-global.process.hrtime = function (this, prev)
-  -- This number exceeds the 53-bit limit on integer representation, but with
-  -- microsecond resolution, there are only ~50 bits of actual data
-  local nanos = tm.timestamp() * 1e3;
-  if prev ~= nil then
-    nanos = nanos - prev[0]*1e9 + prev[1]
-  end
-  return js_arr({[0]=math.floor(nanos / 1e9), nanos % 1e9}, 2)
-end
-global.process.nextTick = global.setImmediate
-global.process.version = global.process.versions.node
-
--- DEPLOY_TIME workaround for setting environmental time
-
-global.Object:defineProperty(global.process.env, 'DEPLOY_TIMESTAMP', {
-  set = function (this, value)
-    tm.timestamp_update((tonumber(value or 0) or 0)*1e3)
-    rawset(this, 'DEPLOY_TIMESTAMP', value)
-  end
-});
-
--- simple process.ref() and process.unref() options
-
-global.process.ref = function ()
-  if global.process.refid == nil then
-    global.process.refid = global:setInterval(function () end, 1e8)
-  end
-end
-
-global.process.unref = function ()
-  if global.process.refid ~= nil then
-    global:clearInterval(global.process.refid)
-    global.process.refid = nil
-  end
-end
-
-global.process.umask = function(ths, value)
-  -- Return standard octal 0022
-  return 18;
-end
-
-
---[[
 --|| global variables
 --]]
 
@@ -848,13 +634,6 @@ function js_wrap_module (module)
     end
   })
   return m
-end
-
-global.process.binding = function (self, key)
-  if key == 'lua' then
-    return js_wrap_module(_G)
-  end
-  return js_wrap_module(require(key))
 end
 
 
@@ -957,7 +736,7 @@ local function require_resolve (origname, root)
       while string.find(name, '/') do
         name = path_dirname(name)
       end
-      
+
       -- On PC, we want to support node_modules from any folder. (Crudely.)
       if not COLONY_EMBED and string.sub(root, 1, 1) == '.' then
         root = path_normalize(path_normalize(os.getenv("PWD")) .. '/' .. root)
