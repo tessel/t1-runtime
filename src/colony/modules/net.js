@@ -17,7 +17,6 @@ var dns = require('dns');
 var Stream = require('stream');
 var tls = require('tls');
 
-var ccOpenSockets = [];
 /**
  * ip/helpers
  */
@@ -66,34 +65,13 @@ function TCPSocket (socket, _secure) {
     if (socket.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
   } 
 
-  // else if (socket == null) {
-  //   if (_secure) ensureSSLCtx();
-  //   this.socket = tm.tcp_open();
-  // } else {
-  //   this.socket = socket;
-  // }
   this._secure = _secure;
   this._outgoing = [];
   this._sending = false;
   this._queueEnd = false;
-  this.socket = null;
+  this.socket = socket || null;
 
   var self = this;
-  // if (this.socket < 0) {
-  //   setImmediate(function () {
-  //     var err = "ENOENT: Cannot open another socket.";
-  //     if (self.socket == -tm.NO_CONNECTION) {
-  //       // wifi is not connected
-  //       err = "ENOTFOUND: Wifi is not connected.";
-  //     }
-  //     self.emit('error', new Error(err));
-
-  //     // cleanup
-  //     self.removeAllListeners();
-  //   });
-  //   return;
-  // }
-
 
   self.on('finish', function () {
     // this is called when writing is ended
@@ -105,7 +83,6 @@ function TCPSocket (socket, _secure) {
     if (socket == self.socket) {
       setImmediate(function () {
         self.__readSocket(true);
-        // console.log('closing', socket, 'against', self.socket)
         self.close();
       });
     }
@@ -151,36 +128,24 @@ function normalizeConnectArgs(args) {
 TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   var self = this;
 
-  // if (self.socket == null || self.socket < 0) {
-  //   console.log("tcp connect has no socket");
-  //   self.destroy();
-  //   return self.__close();
-  // }
-
   var args = normalizeConnectArgs(arguments);
   var opts = args[0];
   if (opts.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
   var port = +opts.port;
   var host = opts.host || "127.0.0.1";
-  // var hostname = opts.hostname || "localhost";
   var cb = args[1];
-  console.log('TCPSocket.connect')
   self.remotePort = port;
-  // self.remoteAddress = host;
+  self.remoteAddress = host;
   // TODO: proper value for these?
   self.localPort = 0;
   self.localAddress = "0.0.0.0";
 
   if (cb) {
     if (self._secure) {
-      self.once('secureConnect', function(){
-        cb(self);
-      });
+      self.once('secureConnect', cb);
     }
     else {
-      self.once('connect', function(){
-        cb(self);
-      });
+      self.once('connect', cb);
     }
     
   }
@@ -189,11 +154,8 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
     setUpConnection(host);
   } else {
     dns.resolve(host, function onResolve(err, ips) {
-      console.log('host resolved to ip', ips);
       if (err) {
-        // TODO: make this emit an error and not crash
-        throw new Error('ip could not be resolved'+err);
-        // return self.emit('error', err);
+        return self.emit('error', err);
       }
       setUpConnection(ips[0]);
     })
@@ -236,7 +198,6 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       }
 
       if (ret < 0) {
-        console.log("tcp_connect is", ret, "trying to close socket number", self.socket);
         var closeRet = tm.tcp_close(self.socket); // -57
         if (closeRet < 0){
           // couldn't close socket, throw an error
@@ -278,13 +239,6 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       if (!self._secure) {
         connectionStable();
       } else {
-        console.log("self is secure");
-      // if (self._secure) {
-        // var hostname = null;
-        // if (!isIP(host)) {
-        //   hostname = host;
-        // }
-
         // do a select call to try to free some cc3k buffers
         
         tm.tcp_readable(self.socket);
@@ -296,22 +250,6 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         }, 100);
 
         function createSession() {
-          // var freeCCBuf = tm.net_get_free_buffers(self.socket);
-          // if (freeCCBuf == -2) {
-          //   console.log("no free buffers");
-          //   // wait for cc3k to free buf
-          //   setTimeout(function() {
-          //     // call select to listen for CC3k clearing mem
-          //     tm.tcp_readable(self.socket);
-          //     createSession();
-          //   }, 100);
-          //   return;
-          // } else if(freeCCBuf == -1) {
-          //   // error, socket is bad
-          //   return self.emit('error', new Error('Socket not available'));
-          // } 
-
-          // console.log("create session called with", hostname);
           var _ = tm.ssl_session_create(ssl_ctx, self.socket, hostname)
             , ssl = _[0]
             , ret = _[1]
@@ -323,16 +261,6 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
             } else if (ret == -516) {
               return self.emit('error', new Error('CERT_NOT_YET_VALID'));
             } else if (ret == -2) {
-              // console.log("ssl create session out of mem");
-              // cc3k out of mem. wait for buffer to clear up.
-              // setTimeout(function() {
-              // //   // call select to listen for CC3k clearing mem
-              //   tm.tcp_readable(self.socket);
-              //   createSession();
-              // }, 1000);
-              
-              // close socket
-              // do a select call
               tm.tcp_readable(self.socket);
               self.destroy();
               self.__close();
@@ -445,7 +373,7 @@ TCPSocket.prototype._write = function (buf, encoding, cb) {
   } else {
     this._outgoing.push(buf);
   }
-  // console.log("_write called with", buf.toString());
+
   this.__send(cb);
 };
 
@@ -490,10 +418,6 @@ TCPSocket.prototype.__send = function (cb) {
     } else if (ret == -11) {
       // EWOULDBLOCK / EAGAIN
       setTimeout(send, 100);
-    // } else if (ret == -57) {
-    //   // socket is inactive
-    //   // close & open socket
-    //   console.log("ret is -57");
     } else if (ret < 0) {
       return self.emit('error', new Error("Socket write failed unexpectedly! ("+ret+")"));
     } else {
@@ -511,7 +435,6 @@ TCPSocket.prototype.__readSocket = function(restartTimeout) {
   while (self.socket != null && (flag = tm.tcp_readable(self.socket)) > 0) {
     if (self._ssl) {
       var data = tm.ssl_read(self._ssl);
-      // console.log("SSL read", data.toString());
     } else {
       var data = tm.tcp_read(self.socket);
     }
@@ -529,7 +452,6 @@ TCPSocket.prototype.__readSocket = function(restartTimeout) {
     }
 
     // TODO: stop polling if this returns false
-    // console.log("GOT", buf.toString());
     self.push(buf);
   }
 
@@ -556,13 +478,11 @@ TCPSocket.prototype.__close = function (tryToClose) {
         self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+ret));
       } else {
         retries++;
-        console.log("Error closing socket", self.socket, "got return code", ret);
         // try again
         setTimeout(closeSocket, 100);
       }
      
     } else {
-      // console.log("closed socket", self.socket, "successfully");
       self.socket = null;
       self.emit('close');
     }
@@ -621,38 +541,6 @@ function connect (port, host, callback, _secure) {
   if (args.length === 4) args.pop();      // drop _secure param
   TCPSocket.prototype.connect.apply(client, args);
   return client;
-
-  // if (isIP(host)) {
-  //   doConnect(host);
-  // } else {
-  //   dns.resolve(host, function onResolve(err, ips) {
-  //     // console.log('host resolved to ip', ips);
-  //     if (err) {
-  //       // TODO: make this emit an error and not crash
-  //       throw new Error('ip could not be resolved'+err);
-  //       // return self.emit('error', err);
-  //     }
-  //     doConnect(ips[0]);
-  //   })
-  // }
-
-  // function doConnect(hostIp) {
-  //   var client = new TCPSocket(null, _secure);
-  //   client.hostname = host;
-  //   if (client.socket >= 0) {
-  //     var args = Array.prototype.slice.call([port, hostIp, callback, _secure]);
-  //     if (args.length === 4) args.pop();      // drop _secure param
-  //     // console.log("TCPSocket.prototype.connect", args);
-     
-  //     TCPSocket.prototype.connect.apply(client, args);
-  //   } else {
-  //     console.log("tcp connect is null, tcp socket broke");
-  //   }
-  // }
-
-  // callback && callback(client);
-  
-  // return client;
 };
 
 
@@ -661,6 +549,10 @@ function connect (port, host, callback, _secure) {
  */
 
 function TCPServer (socket) {
+  if (socket === undefined || socket === null) {
+    // create a new socket
+    socket = tm.tcp_open();
+  }
   TCPSocket.call(this, socket);
 }
 
@@ -738,7 +630,6 @@ function createServer (opts, onsocket) {
   }
   if (opts && opts.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
   var socket = tm.tcp_open();
-  
   if (socket < 0) {
     var err = "ENOENT: Cannot open another socket. Got code:"+socket;
     if (socket == -tm.NO_CONNECTION) {

@@ -23,22 +23,13 @@ static void display_session_id(tm_ssl_session_t ssl);
 
 ssize_t tm_ssl_write (tm_ssl_session_t ssl, uint8_t *buf, size_t buf_len)
 {
-#ifdef CC3000_DEBUG
-    TM_DEBUG("SSL WRITE %d bytes", buf_len);
-#endif
     int ret = ssl_write(ssl, buf, buf_len);
-#ifdef CC3000_DEBUG
-    TM_DEBUG("SSL WRITE finished!");
-#endif
     return ret;
 }
 
 // TODO less than 1024
 ssize_t tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t buf_len)
 {
-#ifdef CC3000_DEBUG
-    TM_DEBUG("tm_ssl_read start");
-#endif
     (void) buf_len;
 	uint8_t *read_buf;
     ssize_t ret = ssl_read(ssl, &read_buf);
@@ -48,9 +39,6 @@ ssize_t tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t buf_len)
     } else {
     	buf_len = 0;
     }
-#ifdef CC3000_DEBUG
-    TM_DEBUG("tm_ssl_read end");
-#endif
     return ret;
 }
 
@@ -59,9 +47,6 @@ extern dir_reg_t cacert_bundle[];
 
 int tm_ssl_context_create (tm_ssl_ctx_t* ctx)
 {
-#ifdef CC3000_DEBUG
-    TM_DEBUG("tm_ssl_context_create start");
-#endif
 #ifdef TLS_VERBOSE
     uint32_t options = SSL_DISPLAY_CERTS;
 #else
@@ -91,23 +76,13 @@ int tm_ssl_context_create (tm_ssl_ctx_t* ctx)
     // }
 
     *ctx = ssl_ctx;
-#ifdef CC3000_DEBUG
-    TM_DEBUG("tm_ssl_context_create end");
-#endif
     return 0;
 }
 
 
 int tm_ssl_context_free (tm_ssl_ctx_t *ctx)
 {
-#ifdef CC3000_DEBUG
-    TM_DEBUG("tm_ssl_context_free start");
-#endif
-
     ssl_ctx_free(*ctx);
-#ifdef CC3000_DEBUG
-    TM_DEBUG("tm_ssl_context_free end");
-#endif
     return 0;
 }
 
@@ -150,8 +125,7 @@ int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ssl_ctx, tm_s
    //  }
 
     // Create SSL context with hostname.
-    TM_DEBUG("tm_ssl_session_create start");
-
+    
     SSL *ssl = ssl_new(ssl_ctx, client_fd);
     ssl->version = SSL_PROTOCOL_VERSION_MAX; /* try top version first */
     if (host_name != NULL) {
@@ -161,11 +135,12 @@ int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ssl_ctx, tm_s
     SET_SSL_FLAG(SSL_IS_CLIENT);
     res = do_client_connect(ssl);
     if (res != SSL_OK) {
-        TM_DEBUG("do_connect was bad %d", res);
+#ifdef CC3000_DEBUG
+        TM_DEBUG("ssl do_connect is bad %d", res);
+#endif
         return res;
     }
-    TM_DEBUG("do_client_connect");
-
+    
     /* check the return status */
     if ((res = ssl_handshake_status(ssl)) != SSL_OK)
     {
@@ -173,7 +148,9 @@ int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ssl_ctx, tm_s
         {
             ssl_display_error(res);
         }
+#ifdef CC3000_DEBUG
         TM_DEBUG("ssl_handshake_status != SSL_OK, is %d", res);
+#endif
         return res;
     }
 
@@ -201,52 +178,30 @@ int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ssl_ctx, tm_s
 
     *session = ssl;
 
-#ifdef CC3000_DEBUG
-    TM_DEBUG("ssl session create finished");
-#endif
     return 0;
 }
 
 int tm_ssl_session_cn (tm_ssl_session_t* session, const char** cn)
 {
-#ifdef CC3000_DEBUG
-    TM_DEBUG("tm_ssl_session_cn start");
-#endif
     *cn = ssl_get_cert_dn(*session, SSL_X509_CERT_COMMON_NAME);
     if (*cn == NULL) {
         return 1;
     }
-#ifdef CC3000_DEBUG
-    TM_DEBUG("tm_ssl_session_cn end");
-#endif
     return 0;
 }
 
 int tm_ssl_session_altname (tm_ssl_session_t* session, size_t index, const char** altname)
 {
-#ifdef CC3000_DEBUG
-    TM_DEBUG("tm_ssl_session_altname start");
-#endif
     *altname = ssl_get_cert_subject_alt_dnsname(*session, index);
     if (*altname == NULL) {
         return 1;
     }
-#ifdef CC3000_DEBUG
-    TM_DEBUG("tm_ssl_session_altname end");
-#endif
     return 0;
 }
 
 int tm_ssl_session_free (tm_ssl_session_t *session)
 {
-#ifdef CC3000_DEBUG
-    TM_DEBUG("tm_ssl_session_free start");
-#endif
     ssl_free(*session);
-#ifdef CC3000_DEBUG
-    TM_DEBUG("tm_ssl_session_free end");
-#endif
-
     return 0;
 }
 

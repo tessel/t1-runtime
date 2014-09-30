@@ -253,7 +253,6 @@ IncomingMessage._addHeaderLine = function(field, value, dest) {
 
 function OutgoingMessage () {
   Writable.call(this);
-  
   this._keepAlive = true;
   this.sendDate = false;        // NOTE: ServerResponse changes default to true
   this._chunked = true;
@@ -327,6 +326,7 @@ OutgoingMessage.prototype.flush = function () {
   // NOTE: will be broken until https://github.com/tessel/runtime/issues/388
   if (this.sendDate === true) lines.push('Date: '+new Date().toUTCString());
   else this.sendDate = !!this.sendDate;   // HACK: don't expose signal above
+  
   lines.push('','');
   this._outbox.write(lines.map(_stripCRLF).join('\r\n'));
   this.headersSent = true;
@@ -415,25 +415,19 @@ function _getPool(agent, opts) {
   function addSocket() {
     var socket = agent._createConnection(opts);
 
-    // console.log("adding socket with options", opts);
-    // agent._createConnection(opts.port, opts.host, function(socket){
-      // console.log("_createConnection callback with", socket);
-      socket.on('close', function(){
-        handleDead();
-        socket.destroy();
-      });
-      socket.on('_free', handleFree);
-      socket.once('agentRemove', function () {
-        socket.removeListener('close', handleDead);
-        socket.removeListener('_free', handleFree);
-        removeSocket(socket);
-      });
-      
-      function handleDead() { removeSocket(socket); }
-      function handleFree() { updateSocket(socket); }
-
-      // cb(socket);
-    // });
+    socket.on('close', function(){
+      handleDead();
+      socket.destroy();
+    });
+    socket.on('_free', handleFree);
+    socket.once('agentRemove', function () {
+      socket.removeListener('close', handleDead);
+      socket.removeListener('_free', handleFree);
+      removeSocket(socket);
+    });
+    
+    function handleDead() { removeSocket(socket); }
+    function handleFree() { updateSocket(socket); }
     
     return socket;
   }
@@ -455,9 +449,6 @@ function _getPool(agent, opts) {
   function removeSocket(socket) {
     sockets.splice(sockets.indexOf(socket), 1);
     if (requests.length && sockets.length < agent.maxSockets) {
-      // addSocket(function(socket) {
-        // socket.emit('_free');
-      // });//.emit('_free');
       addSocket().emit('_free');
     }
     collectGarbage();
@@ -470,15 +461,11 @@ function _getPool(agent, opts) {
       socket.removeListener('error', handleIdleError);
     } else if (sockets.length < agent.maxSockets) {
       socket = addSocket();
-
-      // addSocket(function(socket){
-        if (socket) {
-          sockets.push(socket);
-          req._assignSocket(socket);
-        } else requests.push(req);
-      // });
     }
-    
+    if (socket) {
+      sockets.push(socket);
+      req._assignSocket(socket);
+    } else requests.push(req);
   };
   
   pool.destroy = function () {
@@ -518,7 +505,6 @@ function ClientRequest (opts, _https) {
   if (opts.agent === false) opts.agent = this._getAgent('single');
   else if (!opts.agent) opts.agent = this._getAgent('global');
   opts.method = opts.method.toUpperCase();
-  
   OutgoingMessage.call(this);
   this._mainline = [opts.method, opts.path, 'HTTP/1.1'].join(' ');
   this.setHeader('Host', [opts.host, opts.port].join(':'));
@@ -568,7 +554,9 @@ function ClientRequest (opts, _https) {
       if (close) {
         socket.emit('agentRemove');
         socket.end();
-      } else socket.emit('_free');
+      } else {
+        socket.emit('_free');
+      }
     });
     self.on('error', self.abort);
   });

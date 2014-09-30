@@ -39,10 +39,6 @@
 #include "os_port.h"
 #include "ssl.h"
 
-// #ifdef COLONY_EMBED
-// #include <tm.h>
-// #endif
-
 /* The session expiry time */
 #define SSL_EXPIRY_TIME     (CONFIG_SSL_EXPIRY_TIME*3600)
 
@@ -289,22 +285,12 @@ EXP_FUNC void STDCALL ssl_free(SSL *ssl)
  */
 EXP_FUNC int STDCALL ssl_read(SSL *ssl, uint8_t **in_data)
 {
-// #ifdef CONFIG_PLATFORM_EMBED
-//         send(-9, (void *)NULL, 0, 0);
-// #endif
     int ret = basic_read(ssl, in_data);
-// #ifdef CONFIG_PLATFORM_EMBED
-//         send(-10, (void *)NULL, 0, ret);
-// #endif
     /* check for return code so we can send an alert */
     if (ret < SSL_OK && ret != SSL_CLOSE_NOTIFY)
     {
         if (ret != SSL_ERROR_CONN_LOST)
         {
-// #ifdef CONFIG_PLATFORM_EMBED
-//         send(-11, (void *)NULL, 0, ret);
-//         // CC_DEBUG("ssl read sending alert! ret: %d", ret);
-// #endif
             send_alert(ssl, ret);
 #ifndef CONFIG_SSL_SKELETON_MODE
             /* something nasty happened, so get rid of this session */
@@ -997,9 +983,8 @@ static int send_raw_packet(SSL *ssl, uint8_t protocol)
                 return SSL_ERROR_CONN_LOST;
         }
 
-        // /* keep going until the write buffer has some space */
-        // // if (sent != pkt_size)
-        // // {
+        /* keep going until the write buffer has some space */
+        if (sent != pkt_size) {
             fd_set wfds;
             FD_ZERO(&wfds);
             FD_SET(ssl->client_fd, &wfds);
@@ -1007,7 +992,7 @@ static int send_raw_packet(SSL *ssl, uint8_t protocol)
             /* block and wait for it */
             if (select(ssl->client_fd + 1, NULL, &wfds, NULL, NULL) < 0)
                 return SSL_ERROR_CONN_LOST;
-        // // }
+        }
     }
 
     SET_SSL_FLAG(SSL_NEED_RECORD);  /* reset for next time */
@@ -1217,17 +1202,6 @@ int basic_read(SSL *ssl, uint8_t **in_data)
     int read_len, is_client = IS_SET_SSL_FLAG(SSL_IS_CLIENT);
     uint8_t *buf = ssl->bm_data;
 
-    // do some select calls
-    // struct timeval timeout;
-    // timeout.tv_sec = 10;
-    // timeout.tv_usec = 20000;
-    // fd_set wfds;
-    // FD_ZERO(&wfds);
-    // FD_SET(ssl->client_fd, &wfds);
-
-    // /* block and wait for it */
-    // select(ssl->client_fd + 1, NULL, &wfds, NULL, &timeout);
-
     read_len = SOCKET_READ(ssl->client_fd, &buf[ssl->bm_read_index], 
                             ssl->need_bytes-ssl->got_bytes);
 
@@ -1392,15 +1366,8 @@ int basic_read(SSL *ssl, uint8_t **in_data)
               ret = SSL_CLOSE_NOTIFY;
               // CC3000 workaround: socket is closed too quickly after this. or mabye we can't write after reading. i donno.
 
-              // #ifdef CONFIG_PLATFORM_EMBED
-              //   send(-8, (void *)NULL, 0, 0);
-              // #endif
-              
               // send_alert(ssl, SSL_ALERT_CLOSE_NOTIFY);
               
-              // #ifdef CONFIG_PLATFORM_EMBED
-              //   send(-12, (void *)NULL, 0, 0);
-              // #endif
               SET_SSL_FLAG(SSL_SENT_CLOSE_NOTIFY);
             }
             else 
