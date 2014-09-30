@@ -169,9 +169,11 @@ function IncomingMessage (type, socket) {
     self.emit('close');
   }
   function _handleData(d) {
-    var nparsed = parser.execute(d.toString('binary'), 0, d.length);
-    if (self._upgrade) self.emit('_upgrade', d.slice(nparsed));
-    else if (nparsed !== d.length) _emitError();
+    if (self.socket) {
+       var nparsed = parser.execute(d.toString('binary'), 0, d.length);
+      if (self._upgrade) self.emit('_upgrade', d.slice(nparsed));
+      else if (nparsed !== d.length) _emitError();
+    }
   }
   function _handleEnd() {
     if (parser.finish() !== 0) _emitError();
@@ -251,7 +253,6 @@ IncomingMessage._addHeaderLine = function(field, value, dest) {
 
 function OutgoingMessage () {
   Writable.call(this);
-  
   this._keepAlive = true;
   this.sendDate = false;        // NOTE: ServerResponse changes default to true
   this._chunked = true;
@@ -325,6 +326,7 @@ OutgoingMessage.prototype.flush = function () {
   // NOTE: will be broken until https://github.com/tessel/runtime/issues/388
   if (this.sendDate === true) lines.push('Date: '+new Date().toUTCString());
   else this.sendDate = !!this.sendDate;   // HACK: don't expose signal above
+  
   lines.push('','');
   this._outbox.write(lines.map(_stripCRLF).join('\r\n'));
   this.headersSent = true;
@@ -412,6 +414,7 @@ function _getPool(agent, opts) {
   
   function addSocket() {
     var socket = agent._createConnection(opts);
+
     socket.on('close', function(){
       handleDead();
       socket.destroy();
@@ -425,6 +428,7 @@ function _getPool(agent, opts) {
     
     function handleDead() { removeSocket(socket); }
     function handleFree() { updateSocket(socket); }
+    
     return socket;
   }
   
@@ -501,7 +505,6 @@ function ClientRequest (opts, _https) {
   if (opts.agent === false) opts.agent = this._getAgent('single');
   else if (!opts.agent) opts.agent = this._getAgent('global');
   opts.method = opts.method.toUpperCase();
-  
   OutgoingMessage.call(this);
   this._mainline = [opts.method, opts.path, 'HTTP/1.1'].join(' ');
   this.setHeader('Host', [opts.host, opts.port].join(':'));
@@ -551,7 +554,9 @@ function ClientRequest (opts, _https) {
       if (close) {
         socket.emit('agentRemove');
         socket.end();
-      } else socket.emit('_free');
+      } else {
+        socket.emit('_free');
+      }
     });
     self.on('error', self.abort);
   });

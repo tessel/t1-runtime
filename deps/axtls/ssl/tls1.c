@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <errno.h>
 #include "os_port.h"
 #include "ssl.h"
 
@@ -286,7 +287,6 @@ EXP_FUNC void STDCALL ssl_free(SSL *ssl)
 EXP_FUNC int STDCALL ssl_read(SSL *ssl, uint8_t **in_data)
 {
     int ret = basic_read(ssl, in_data);
-
     /* check for return code so we can send an alert */
     if (ret < SSL_OK && ret != SSL_CLOSE_NOTIFY)
     {
@@ -965,14 +965,17 @@ static int send_raw_packet(SSL *ssl, uint8_t protocol)
 
     while (sent < pkt_size)
     {
+
         ret = SOCKET_WRITE(ssl->client_fd, 
                         &ssl->bm_all_data[sent], pkt_size-sent);
 
-        if (ret >= 0)
+        if (ret >= 0) {
             sent += ret;
-        else
-        {
-
+        } else if (ret == -EPERM) {
+            // CC3000 Hack. Expose up HostFlowControlConsumeBuff if buff is out of mem
+            return ret;
+        } else {
+            
 #ifdef WIN32
             if (GetLastError() != WSAEWOULDBLOCK)
 #else
@@ -982,8 +985,7 @@ static int send_raw_packet(SSL *ssl, uint8_t protocol)
         }
 
         /* keep going until the write buffer has some space */
-        if (sent != pkt_size)
-        {
+        if (sent != pkt_size) {
             fd_set wfds;
             FD_ZERO(&wfds);
             FD_SET(ssl->client_fd, &wfds);
@@ -1012,7 +1014,6 @@ static int send_raw_packet(SSL *ssl, uint8_t protocol)
 int send_packet(SSL *ssl, uint8_t protocol, const uint8_t *in, int length)
 {
     int ret, msg_length = 0;
-
     /* if our state is bad, don't bother */
     if (ssl->hs_status == SSL_ERROR_DEAD)
         return SSL_ERROR_CONN_LOST;
@@ -1097,9 +1098,10 @@ int send_packet(SSL *ssl, uint8_t protocol, const uint8_t *in, int length)
     }
 
     ssl->bm_index = msg_length;
-    if ((ret = send_raw_packet(ssl, protocol)) <= 0)
-        return ret;
 
+    if ((ret = send_raw_packet(ssl, protocol)) <= 0) 
+        return ret;
+    
     return length;  /* just return what we wanted to send */
 }
 
@@ -1363,7 +1365,10 @@ int basic_read(SSL *ssl, uint8_t **in_data)
                buf[1] == SSL_ALERT_CLOSE_NOTIFY)
             {
               ret = SSL_CLOSE_NOTIFY;
-              send_alert(ssl, SSL_ALERT_CLOSE_NOTIFY);
+              // CC3000 workaround: socket is closed too quickly after this. or mabye we can't write after reading. i donno.
+
+              // send_alert(ssl, SSL_ALERT_CLOSE_NOTIFY);
+              
               SET_SSL_FLAG(SSL_SENT_CLOSE_NOTIFY);
             }
             else 
