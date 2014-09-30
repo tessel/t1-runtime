@@ -24,9 +24,9 @@ UDP.prototype.bind = function (port, cb) {
   this._bound = true;
   var ret = tm.udp_listen(this.socket, port || 0);
   if (ret < 0) {
-    var err = "ENOENT cannot listen to socket.";
-    if (ret == -tm.NO_CONNECTION) {
-      err = "Wifi is not connected";
+    var err = "ENOENT: Cannot listen to socket.";
+    if (ret == -tm.ENETUNREACH) {
+      err = "ENETUNREACH: Wifi is not connected.";
     }
     self.emit('error', new Error(err));
     return;
