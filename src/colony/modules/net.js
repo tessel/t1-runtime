@@ -69,7 +69,7 @@ function TCPSocket (socket, _secure) {
   this._outgoing = [];
   this._sending = false;
   this._queueEnd = false;
-  this.socket = socket || null;
+  this.socket = (socket === undefined) ? null : socket;
 
   var self = this;
 
