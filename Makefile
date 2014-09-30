@@ -13,6 +13,8 @@ else
 		ninja -C out/$(CONFIG)
 endif
 
+NODE_FILES = deps/node/lib/events.js deps/node/lib/domain.js
+
 .PHONY: all test test-colony test-node
 
 all: colony
@@ -26,6 +28,7 @@ nuke:
 
 update:
 	git submodule update --init --recursive
+	cp $(NODE_FILES) src/colony/modules/
 	npm install
 
 test: test-node test-colony
