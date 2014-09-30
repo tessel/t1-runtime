@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <errno.h>
 #include "os_port.h"
 #include "ssl.h"
 
@@ -970,7 +971,7 @@ static int send_raw_packet(SSL *ssl, uint8_t protocol)
 
         if (ret >= 0) {
             sent += ret;
-        } else if (ret == -2 || ret == -1) {
+        } else if (ret == -EPERM) {
             // CC3000 Hack. Expose up HostFlowControlConsumeBuff if buff is out of mem
             return ret;
         } else {

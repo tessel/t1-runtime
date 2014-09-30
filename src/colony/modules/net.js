@@ -170,9 +170,9 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
     if (self.socket < 0) {
       setImmediate(function () {
         var err = "ENOENT: Cannot open another socket.";
-        if (self.socket == -tm.NO_CONNECTION) {
+        if (self.socket == -tm.ENETUNREACH) {
           // wifi is not connected
-          err = "ENOTFOUND: Wifi is not connected.";
+          err = "ENETUNREACH: Wifi is not connected.";
         }
         self.emit('error', new Error(err));
 
@@ -189,17 +189,17 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       addr = (addr[0] << 24) + (addr[1] << 16) + (addr[2] << 8) + addr[3];
 
       var ret = tm.tcp_connect(self.socket, addr, port);
-      if (ret == -tm.NO_CONNECTION) {
+      if (ret == -tm.ENETUNREACH) {
         // we're not connected to the internet
-        self.emit('error', new Error("No wifi connection"));
+        self.emit('error', new Error("ENETUNREACH: Wifi is not connected"));
         // force the cleanup
         self.destroy();
         return self.__close(); // need to call close otherwise we keep listening for the tcp-close event
       }
 
       if (ret < 0) {
-        var closeRet = tm.tcp_close(self.socket); // -57
-        if (closeRet < 0){
+        var closeRet = tm.tcp_close(self.socket); // returns -57 if socket is already closed
+        if (closeRet < 0 && closeRet != -tm.ENOTCONN){ 
           // couldn't close socket, throw an error
           self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+closeRet));
           self.destroy();
@@ -219,9 +219,9 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
 
             if (self.socket < 0) {
               var err = "ENOENT: Cannot open another socket.";
-              if (self.socket == -tm.NO_CONNECTION) {
+              if (self.socket == -tm.ENETUNREACH) {
                 // wifi is not connected
-                err = "ENOTFOUND: Wifi is not connected.";
+                err = "ENETUNREACH: Wifi is not connected.";
               }
               self.emit('error', new Error(err));
 
@@ -471,7 +471,7 @@ TCPSocket.prototype.__close = function (tryToClose) {
   function closeSocket(){
     if (self.socket === null) return;
     var ret = tm.tcp_close(self.socket);
-    if (ret < 0 && ret != -57) { // -57 is inactive, socket has already been closed
+    if (ret < 0 && ret != -tm.ENOTCONN) { // -57 is inactive, socket has already been closed
       if (retries > 3) {
         // tried 3 times and couldn't close, error out
         self.emit('close');
@@ -632,9 +632,9 @@ function createServer (opts, onsocket) {
   var socket = tm.tcp_open();
   if (socket < 0) {
     var err = "ENOENT: Cannot open another socket. Got code:"+socket;
-    if (socket == -tm.NO_CONNECTION) {
+    if (socket == -tm.ENETUNREACH) {
       // wifi is not connected
-      err = "ENOTFOUND: Wifi is not connected.";
+      err = "ENETUNREACH: Wifi is not connected.";
     }
     throw new Error(err);
   }
