@@ -23,6 +23,26 @@
 /* Used to call functions in the rapidjson namespace */
 using namespace rapidjson;
 
+struct StateReaderHandler : public BaseReaderHandler<> {
+    StateReaderHandler() : rh_() {}
+
+    void Default() { rh_.Default(rh_.State); }
+    void Null() { rh_.Null(rh_.State); }
+    void Bool(bool value) { rh_.Bool(rh_.State, value); }
+    void Int(int value) { rh_.Int(rh_.State, value); }
+    void Uint(unsigned value) { rh_.Uint(rh_.State, value); }
+    void Int64(int64_t value) { rh_.Int64(rh_.State, value); }
+    void Uint64(uint64_t value) { rh_.Uint64(rh_.State, value); }
+    void Double(double value) { rh_.Double(rh_.State, value); }
+    void String(const Ch* str, SizeType size, bool copy) { rh_.String(rh_.State, str, size, copy); }
+    void StartObject() { rh_.StartObject(rh_.State); }
+    void EndObject(SizeType size) { rh_.EndObject(rh_.State, size); }
+    void StartArray() { rh_.StartArray(rh_.State); }
+    void EndArray(SizeType size) { rh_.EndArray(rh_.State, size); }
+
+    tm_json_r_handler_t rh_;
+};
+
 /* Converts string to input stream and feeds it to rapidjson Parse function */
 extern "C" parse_error_t tm_json_parse(tm_json_r_handler_t rh,const char* json_s) {
 
@@ -32,8 +52,11 @@ extern "C" parse_error_t tm_json_parse(tm_json_r_handler_t rh,const char* json_s
   // create a defaults flags GenericReader object
   Reader reader;
 
+  StateReaderHandler handler;
+  handler.rh_ = rh;
+
   // call rapidjson's Parser using the input stream and the given handler
-  reader.Parse(is,rh);
+  reader.Parse(is,handler);
 
   // return the error code and the offset
   parse_error_t ret;

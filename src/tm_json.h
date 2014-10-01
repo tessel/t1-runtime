@@ -20,19 +20,20 @@ extern "C" {
 
 /* A collection of function pointers needed by Reader in rapidJSON */
 typedef struct tm_json_r_handler {
-  void (*Default)(void);
-  void (*Null)(void);
-  void (*Bool)(bool);
-  void (*Int)(int);
-  void (*Uint)(unsigned);
-  void (*Int64)(int64_t);
-  void (*Uint64)(uint64_t);
-  void (*Double)(double);
-  void (*String)(const char*,size_t,bool);
-  void (*StartObject)();
-  void (*EndObject)(size_t);
-  void (*StartArray)(void);
-  void (*EndArray)(size_t);
+  void *State;
+  void (*Default)(void*);
+  void (*Null)(void*);
+  void (*Bool)(void*, bool);
+  void (*Int)(void*, int);
+  void (*Uint)(void*, unsigned);
+  void (*Int64)(void*, int64_t);
+  void (*Uint64)(void*, uint64_t);
+  void (*Double)(void*, double);
+  void (*String)(void*, const char*,size_t,bool);
+  void (*StartObject)(void*);
+  void (*EndObject)(void*, size_t);
+  void (*StartArray)(void*);
+  void (*EndArray)(void*, size_t);
 } tm_json_r_handler_t;
 
 /* Writer and StringBuffer for the JSON writing */
