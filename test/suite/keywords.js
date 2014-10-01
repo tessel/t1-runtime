@@ -1,4 +1,4 @@
-console.log('1..1')
+console.log('1..2')
 
 // first lua keywords
 var a = {};
@@ -26,3 +26,17 @@ a.while = 1;
 a.error = 1;
 
 console.log('ok', 1)
+
+var repeat;
+repeat = true;
+while (repeat) {
+    repeat = false;
+}
+repeat = true;
+for (; repeat; ){
+	repeat = false;
+}
+do {
+} while (repeat);
+
+console.log('ok');
