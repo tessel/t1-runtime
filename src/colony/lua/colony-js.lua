@@ -2129,10 +2129,10 @@ end
 -- Parses the string into a lua table
 function json_parse(value)
 
-  -- rapidjson will throw an error if non-objects are passed in
-  -- this circumvents those errors
-  if value == 'true' or value == 'false' or tonumber(value) then
-    return value
+  -- workaround to deal with rapidjson non objects directly in
+  if string.sub(value,0,1) ~= '{' then
+    value = '{"k":'..value..'}'
+    return json_parse(value).k
   end
 
   -- parse the value and set the lua table based off callbacks
