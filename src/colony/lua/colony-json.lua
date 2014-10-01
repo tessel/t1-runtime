@@ -1,115 +1,107 @@
 local rapidjson = require('rapidjson')
 local js_tostring = colony.js_tostring
 
--- Added rapidjson globals
--- TODO: eliminate zem
-stack = {}
-lua_table = nil
-cur_table = nil
-on_key = true
-prev_k = nil
-is_arr = false
-arr_lvl = 0
-
 -- Callback when a default value is parsed in json
-function json_read_default()
-  if is_arr then
-    lua_table[arr_lvl] = ''
-    arr_lvl = arr_lvl + 1
+function json_read_default(json_state)
+  if json_state.is_arr then
+    json_state.lua_table[json_state.arr_lvl] = ''
+    json_state.arr_lvl = json_state.arr_lvl + 1
   else
-    lua_table[prev_k] = ''
-    on_key = true
+    json_state.lua_table[json_state.prev_k] = ''
+    json_state.on_key = true
   end
 end
 
 -- Callback when a null value is parsed in json
-function json_read_null()
-  if is_arr then
-    lua_table[arr_lvl] = js_null
-    arr_lvl = arr_lvl + 1
+function json_read_null(json_state)
+  if json_state.is_arr then
+    json_state.lua_table[json_state.arr_lvl] = js_null
+    json_state.arr_lvl = json_state.arr_lvl + 1
   else
-    lua_table[prev_k] = js_null
-    on_key = true
+    json_state.lua_table[json_state.prev_k] = js_null
+    json_state.on_key = true
   end
 end
 
 -- Callback when a boolean is parsed in json
-function json_read_value(value) json_read_double(value) end
+function json_read_value(json_state, value)
+  json_read_double(json_state, value)
+end
 
 -- Callback when a double is parsed in json
-function json_read_double(value)
-  if is_arr then
-    lua_table[arr_lvl] = value
-    arr_lvl = arr_lvl + 1
+function json_read_double(json_state, value)
+  if json_state.is_arr then
+    json_state.lua_table[json_state.arr_lvl] = value
+    json_state.arr_lvl = json_state.arr_lvl + 1
   else
-    lua_table[prev_k] = value
-    on_key = true
+    json_state.lua_table[json_state.prev_k] = value
+    json_state.on_key = true
   end
 end
 
 -- Callback when a string is parsed in json
-function json_read_string(value)
-  if is_arr then
-    lua_table[arr_lvl] = value
-    arr_lvl = arr_lvl + 1
-  elseif on_key then
-    lua_table[value] = value
-    prev_k = value
-    on_key = false
+function json_read_string(json_state, value)
+  if json_state.is_arr then
+    json_state.lua_table[json_state.arr_lvl] = value
+    json_state.arr_lvl = json_state.arr_lvl + 1
+  elseif json_state.on_key then
+    json_state.lua_table[value] = value
+    json_state.prev_k = value
+    json_state.on_key = false
   else
-    lua_table[prev_k] = value
-    on_key = true
+    json_state.lua_table[json_state.prev_k] = value
+    json_state.on_key = true
   end
 end
 
 -- Callback when the start of an object is parsed in json
-function json_read_start_object()
-  if lua_table == nil then
-    lua_table = js_obj({})
+function json_read_start_object(json_state)
+  if json_state.lua_table == nil then
+    json_state.lua_table = js_obj({})
   else
-    local parent_table = js_obj({})
-    parent_table[prev_k] = lua_table
-    table.insert(stack, parent_table)
-    lua_table = js_obj({})
+    local parent_table = {}
+    parent_table[json_state.prev_k] = json_state.lua_table
+    table.insert(json_state.stack, parent_table)
+    json_state.lua_table = js_obj({})
   end
-  on_key = true
+  json_state.on_key = true
 end
 
 -- Callback when the end of an object is parsed in json
-function json_read_end_object(value)
-  local parent_table = table.remove(stack, #stack)
+function json_read_end_object(json_state, value)
+  local parent_table = table.remove(json_state.stack, #json_state.stack)
   if parent_table ~= nil then
     for k,v in pairs(parent_table) do
-      v[k] = lua_table
-      lua_table = parent_table[k]
+      v[k] = json_state.lua_table
+      json_state.lua_table = parent_table[k]
     end
   end
-  on_key = true
+  json_state.on_key = true
 end
 
 -- Callback when the start of an array is parsed in json
-function json_read_start_array()
-  if lua_table == nil then
-    lua_table = js_arr({},0)
+function json_read_start_array(json_state)
+  if json_state.lua_table == nil then
+    json_state.lua_table = js_arr({},0)
   else
     local parent_table = {}
-    parent_table[prev_k] = lua_table
-    table.insert(stack, parent_table)
-    lua_table = js_arr({},0)
+    parent_table[json_state.prev_k] = json_state.lua_table
+    table.insert(json_state.stack, parent_table)
+    json_state.lua_table = js_arr({},0)
   end
-  is_arr = true
+  json_state.is_arr = true
 end
 
 -- Callback when the end of an array is parsed in json
-function json_read_end_array(value)
-  local parent_table = table.remove(stack, #stack)
+function json_read_end_array(json_state, value)
+  local parent_table = table.remove(json_state.stack, #json_state.stack)
   if parent_table ~= nil then
     for k,v in pairs(parent_table) do
-      v[k] = lua_table
-      lua_table = parent_table[k]
+      v[k] = json_state.lua_table
+      json_state.lua_table = parent_table[k]
     end
   end
-  is_arr = false
+  json_state.is_arr = false
 end
 
 -- Parses the string into a lua table
@@ -121,19 +113,21 @@ function json_parse(value)
     return value
   end
 
+  -- clear the globals for the next round
+  local json_state = {
+    lua_table = nil,
+    stack = {},
+    on_key = true,
+    prev_k = nil,
+    is_arr = false,
+    arr_lvl = 0,
+  }
+
   -- parse the value and set the lua table based off callbacks
-  rapidjson.parse(value)
+  rapidjson.parse(json_state, value)
 
   -- reference it from here so we can clear the globals for another round
-  local lua_table_cpy = lua_table
-
-  -- clear the globals for the next round
-  lua_table = nil
-  cur_table = nil
-  on_key = true
-  prev_k = nil
-  is_arr = false
-  arr_lvl = 0
+  local lua_table_cpy = json_state.lua_table
 
   -- return the parsed object to lua
   return lua_table_cpy
