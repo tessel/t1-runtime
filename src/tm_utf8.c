@@ -76,31 +76,39 @@ ssize_t tm_utf8_str_tolower (const uint8_t *buf, ssize_t buf_len, uint8_t **dstp
 	return 0;
 }
 
+#define IS_LEAD(uchar) (uchar > 0xD800 && uchar < 0xDC00)
+#define IS_TRAIL(uchar) (uchar > 0xDC00 && uchar <= 0xDFFF)
+
 size_t tm_str_to_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t ** const dstptr) {
   uint8_t* utf8 = malloc(buf_len+1);    // NOTE: we know utf8 always same or shorter
   size_t utf8_len = 0;
   
-  int32_t hchar = 0;
+  int32_t hchar = 0;    // stores half of surrogate pair
   ssize_t buf_pos = 0;
   while (buf_pos < buf_len) {
     int32_t uchar;
 		buf_pos += utf8proc_iterate(buf + buf_pos, buf_len - buf_pos, &uchar);
     assert(uchar >= 0);     // internal strings should never be malformed, 0xFFFD replacement increases length
     // NOTE: this follows new behavior http://blog.nodejs.org/2014/06/16/openssl-and-breaking-utf-8-change/
-    if (hchar && uchar > 0xDC00 && uchar <= 0xDFFF) {
-      uchar = hchar + (uchar & 0x03FF);
-      hchar = 0;
-    } else if (hchar) {
-      utf8_len += utf8proc_encode_char(0xFFFD, utf8 + utf8_len);
+    if (hchar) {
+      if (IS_TRAIL(uchar)) {
+        // proper case — combine lead+trail into non-surrogate
+        uchar = hchar + (uchar & 0x03FF);
+      } else {
+        // emit (preceding) unpaired lead as unknown character
+        utf8_len += utf8proc_encode_char(0xFFFD, utf8 + utf8_len);
+      }
       hchar = 0;
     }
-    if (uchar > 0xD800 && uchar < 0xDC00) {
+    if (IS_LEAD(uchar)) {
+      // lead surrogate — don't emit, but store
       hchar = 0x010000 + ((uchar & 0x03FF) << 10);
     } else {
-      utf8_len += utf8proc_encode_char(uchar, utf8 + utf8_len);
+      utf8_len += utf8proc_encode_char(IS_TRAIL(uchar) ? 0xFFFD : uchar, utf8 + utf8_len);
     }
   }
   if (hchar) {
+    // string ends with unpaired lead
     utf8_len += utf8proc_encode_char(0xFFFD, utf8 + utf8_len);
   }
   utf8[utf8_len] = '\0';      // always NUL-terminate (perhaps redundantly, which is harmless)
