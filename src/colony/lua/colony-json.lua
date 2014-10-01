@@ -5,16 +5,14 @@ local js_tostring = colony.js_tostring
 function json_parse(value)
 
   -- workaround to deal with rapidjson non objects directly in
-  if string.sub(value,1,1) ~= '{' then
+  if string.sub(value,1,1) ~= '{' and string.sub(value,1,1) ~= '[' then
     value = '{"value":'..value..'}'
     return json_parse(value).value
   end
 
   -- clear the globals for the next round
   local json_state = {
-    stack = {},
     ret = nil,
-    on_key = true,
     prev_k = nil
   }
 
