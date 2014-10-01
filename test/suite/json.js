@@ -67,7 +67,7 @@ var objs = [
 ]
 
 // parsing testing
-console.log('Parsing tesing');
+console.log('# parsing tesing');
 tap.ok(JSON.parse("{\"hi\": 5}").hasOwnProperty, 'json object is real object');
 tap.ok(JSON.parse("[0, 1, 2]").slice, 'json array is real array');
 for (var i in objs) {
@@ -134,7 +134,7 @@ for (var i in objs) {
 }
 
 // stringify testing
-console.log('Stringify tesing');
+console.log('# stringify tesing');
 for (var i in objs) {
   tap.ok(JSON.stringify(objs[i][1],objs[i][4],objs[i][5]) == objs[i][2],objs[i][3]);
 }

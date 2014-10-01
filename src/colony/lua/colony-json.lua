@@ -126,6 +126,15 @@ function json_stringify (value, ...)
     spacer = arg[1]['indent']
   end
 
+  if not spacer then
+    spacer = ''
+  elseif type(spacer) == 'number' then
+    spacer = string.rep(' ', spacer)
+  else
+    spacer = tostring(spacer)
+  end
+  spacer = string.sub(spacer, 1, 10)
+
   -- does what stringify does but can be called recursively
   function json_recurse (handler, value)
 
@@ -223,7 +232,7 @@ function json_stringify (value, ...)
 
   -- setup and parse if a table is present
   elseif type(value) == 'table' then
-    local wh = rapidjson.create_writer()
+    local wh = rapidjson.create_writer(spacer)
     local status, err = pcall(json_recurse,wh,value)
     if not status then
       rapidjson.destroy(wh)
@@ -231,86 +240,17 @@ function json_stringify (value, ...)
     end
     local str = rapidjson.result(wh)
     rapidjson.destroy(wh)
-    if spacer then str = json_space(str,spacer) end
     str = string.gsub(str,'%[null%]','%[%]')
     return tostring(str)
 
   -- if an unsupported type is stringified write empty object and return
   else
-    local wh = rapidjson.create_writer()
+    local wh = rapidjson.create_writer(spacer)
     rapidjson.object_start(wh)
     rapidjson.object_end(wh)
     local str = rapidjson.result(wh)
     rapidjson.destroy(wh)
     return tostring(str)
-  end
-
-end
-
--- Takes stringified json and returns the spaced version
-function json_space(str,spacer)
-
-  -- does the actual filling of the string
-  function space_fill(filler)
-
-    local lvl = 0       -- the level of indentation
-    local sb = ''       -- the spaced stringified json string builder
-    local skip = false  -- special case flag for an empty object
-
-    -- go through each char and insert spaces and new lines as needed
-    for i=0,#str-1 do
-      -- for '{' fill the string builder and increment the level
-      if str[i] == '{' then
-        if str[i+1] == '}' then
-          sb = sb..'{}'
-          skip = true
-        else
-          lvl = lvl + 1
-          sb = sb..str[i]..'\n'
-          for j=1,lvl do sb = sb..filler end
-        end
-      -- for '[' fill the string builder and increment the level
-      elseif str[i] == '[' then
-        sb = sb..str[i]..'\n'
-        lvl = lvl + 1
-        for j=1,lvl do sb = sb..filler end
-      -- for any comma place a new line and then filler
-      elseif str[i] == ',' then
-        sb = sb..str[i]..'\n'
-        for j=1,lvl do sb = sb..filler end
-      -- for any colon place a space between the key and value
-      elseif str[i] == ':' then
-        sb = sb..': '
-      -- for '}' or ']' place the new line, the filler, then the brace
-      elseif str[i] == ']' or str[i] == '}' then
-        lvl = lvl - 1
-        if skip then
-          skip = false
-        else
-          sb = sb..'\n'
-          for j=1,lvl do sb = sb..filler end
-          sb = sb..str[i]
-        end
-      -- for any non special char just add it to the builder
-      else
-        sb = sb..str[i]
-      end
-    end
-
-    return sb
-
-  end
-
-  -- return the string with the number of spaces inserted
-  if type(spacer) == 'number' then
-    local filler = ''
-    for i=1,spacer do filler = filler..' ' end
-    return js_tostring(space_fill(filler))
-
-  -- return the string with the string inserted
-  elseif type(spacer) == 'string' then
-    if #spacer > 10 then spacer = string.sub(spacer,0,10) end
-    return js_tostring(space_fill(spacer))
   end
 
 end

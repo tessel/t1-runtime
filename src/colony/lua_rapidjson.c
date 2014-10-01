@@ -133,7 +133,10 @@ static int tm_json_read(lua_State *L) {
 
 /* Creates the writting handler for the writing functions to work */
 static int tm_json_create(lua_State *L) {
-  tm_json_w_handler_t wh = tm_json_write_create();
+  size_t len;
+  const char* indentation = lua_tolstring(L, 1, &len);
+
+  tm_json_w_handler_t wh = tm_json_write_create(indentation, len);
   void* addr = lua_newuserdata(L, sizeof(tm_json_w_handler_t));
   memcpy(addr,&wh,sizeof(tm_json_w_handler_t));
   return 1;
