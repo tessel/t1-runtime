@@ -2029,8 +2029,15 @@ function json_stringify (value, ...)
     return 'null'
 
   -- initial return if only a boolean, number, or string are present
-  elseif type(value) == 'boolean' or type(value) == 'number' or type(value) == 'string' then
+  elseif type(value) == 'boolean' or type(value) == 'number' then
     return tostring(value)
+
+  -- initial return if only a sting is passed in
+  elseif type(value) == 'string' then
+    local val = {}
+    val.k = value
+    local str = json_stringify(val);
+    return string.sub(str,6,-2)
 
   -- setup and parse if a table is present
   elseif type(value) == 'table' then

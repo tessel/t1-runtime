@@ -1,7 +1,7 @@
 var tap = require('../tap');
 var buf = require('buffer');
 
-tap.count(82);
+tap.count(78);
 
 // little empty tester
 function is_empty(obj) {
@@ -42,7 +42,7 @@ var objs = [
   { 1:[],                                       2:'[]',                              3:'empty array',                4:null,            5:null },
   { 1:[0, 1, 2],                                2:'[0,1,2]',                         3:'array',                      4:null,            5:null },
   { 1:[3,"a"],                                  2:'[3,"a"]',                         3:'mixed array',                4:null,            5:null },
-  { 1:[3,false,3.454,"a","a"],                  2:'[3,false,3.454,"a","a"]',         3:'repeat value array',         4:null,            5:null },
+  { 1:[[],"11"],                                2:'[[],"11"]',                       3:'arr in arr then value',      4:null,            5:null },
   { 1:[[[],[],[]],[[],[[1,2]]]],                2:'[[[],[],[]],[[],[[1,2]]]]',       3:'super nested arrays',        4:null,            5:null },
   { 1:foo2,                                     2:'{"a":2,"b":[false,true,"a"]}',    3:'sringify lvl 1 array',       4:null,            5:null },
   { 1:{},                                       2:'{}',                              3:'empty object',               4:null,            5:null },
