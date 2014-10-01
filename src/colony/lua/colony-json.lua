@@ -2,14 +2,9 @@ local rapidjson = require('rapidjson')
 local js_tostring = colony.js_tostring
 
 function json_parse(value)
-  -- Parse non-object primitives with a wrapper.
-  if string.sub(value,1,1) ~= '{' and string.sub(value,1,1) ~= '[' then
-    value = '{"value":\n'..value..'\n}'
-    return json_parse(value).value
-  end
-
   -- Parse into a Lua structure.
-  return rapidjson.parse(tostring(value))
+  -- Non-object primitives require a wrapper.
+  return rapidjson.parse(tostring('{"value":\n'..value..'\n}')).value
 end
 
 -- Checks initial type and recurses through object if it needs to
