@@ -1052,6 +1052,10 @@ global.String.fromCharCode = function (this, ...)
   local str = ''
   for i=1,args.length do
     local uint16 = math.floor(math.abs(tonumbervalue(args[i]))) % (2^16)
+    -- TODO not this
+    if uint16 > 255 then
+      uint16 = 255
+    end
     str = str .. string.char(uint16)
   end
   return str
