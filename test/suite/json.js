@@ -1,7 +1,7 @@
 var tap = require('../tap');
 var buf = require('buffer');
 
-tap.count(82);
+tap.count(87);
 
 // little empty tester
 function is_empty(obj) {
@@ -89,7 +89,7 @@ for (var i in objs) {
         for (var j in parsed) { tap.ok(parsed[parseInt(j)]==objs[i][1][parseInt(j)],objs[i][3]+' at index '+j); }
         break;
       case 8:
-        tap.ok(is_empty(parsed)==false,objs[i][3]);
+        tap.eq(JSON.stringify(parsed), objs[i][2], objs[i][3]);
         break;
       case 9:
         for (var j in parsed) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }

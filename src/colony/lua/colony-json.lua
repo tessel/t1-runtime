@@ -1,12 +1,15 @@
 local rapidjson = require('rapidjson')
 local js_tostring = colony.js_tostring
 
+function is_arr (arr)
+  return global.Array:isArray(arr)
+end
+
 -- Callback when a default value is parsed in json
 function json_read_default(json_state)
   local lua_table = json_state.stack[#json_state.stack]
-  if json_state.is_arr then
-    lua_table[json_state.arr_lvl] = ''
-    json_state.arr_lvl = json_state.arr_lvl + 1
+  if is_arr(lua_table) then
+    lua_table[lua_table.length] = ''
   else
     lua_table[json_state.prev_k] = ''
     json_state.on_key = true
@@ -16,9 +19,8 @@ end
 -- Callback when a null value is parsed in json
 function json_read_null(json_state)
   local lua_table = json_state.stack[#json_state.stack]
-  if json_state.is_arr then
-    lua_table[json_state.arr_lvl] = js_null
-    json_state.arr_lvl = json_state.arr_lvl + 1
+  if is_arr(lua_table) then
+    lua_table[lua_table.length] = js_null
   else
     lua_table[json_state.prev_k] = js_null
     json_state.on_key = true
@@ -33,9 +35,8 @@ end
 -- Callback when a double is parsed in json
 function json_read_double(json_state, value)
   local lua_table = json_state.stack[#json_state.stack]
-  if json_state.is_arr then
-    lua_table[json_state.arr_lvl] = value
-    json_state.arr_lvl = json_state.arr_lvl + 1
+  if is_arr(lua_table) then
+    lua_table[lua_table.length] = value
   else
     lua_table[json_state.prev_k] = value
     json_state.on_key = true
@@ -45,9 +46,8 @@ end
 -- Callback when a string is parsed in json
 function json_read_string(json_state, value)
   local lua_table = json_state.stack[#json_state.stack]
-  if json_state.is_arr then
-    lua_table[json_state.arr_lvl] = value
-    json_state.arr_lvl = json_state.arr_lvl + 1
+  if is_arr(lua_table) then
+    lua_table[lua_table.length] = value
   elseif json_state.on_key then
     lua_table[value] = value
     json_state.prev_k = value
@@ -66,7 +66,11 @@ function json_read_start_object(json_state)
     table.insert(json_state.stack, lua_table)
   else
     local new_table = js_obj({})
-    lua_table[json_state.prev_k] = new_table
+    if is_arr(lua_table) then
+      lua_table[lua_table.length] = new_table
+    else
+      lua_table[json_state.prev_k] = new_table
+    end
     table.insert(json_state.stack, new_table)
   end
   json_state.on_key = true
@@ -89,10 +93,13 @@ function json_read_start_array(json_state)
     table.insert(json_state.stack, lua_table)
   else
     local new_arr = js_arr({},0)
-    lua_table[json_state.prev_k] = new_arr
+    if is_arr(lua_table) then
+      lua_table[lua_table.length] = new_arr
+    else
+      lua_table[json_state.prev_k] = new_arr
+    end
     table.insert(json_state.stack, new_arr)
   end
-  json_state.is_arr = true
 end
 
 -- Callback when the end of an array is parsed in json
@@ -101,7 +108,6 @@ function json_read_end_array(json_state, value)
   -- if parent_table ~= nil then
   --   json_state.lua_table = parent_table
   -- end
-  json_state.is_arr = false
 end
 
 -- Parses the string into a lua table
@@ -118,9 +124,7 @@ function json_parse(value)
     stack = {},
     ret = nil,
     on_key = true,
-    prev_k = nil,
-    is_arr = false,
-    arr_lvl = 0
+    prev_k = nil
   }
 
   -- parse the value and set the lua table based off callbacks
