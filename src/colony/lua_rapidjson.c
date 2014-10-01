@@ -33,30 +33,6 @@ void colony_array_length (lua_State* L, int pos)
   lua_getfield(L, pos, "length");
 }
 
-static size_t prelude (lua_State* L)
-{
-  lua_getfield(L, 1, "stack");          // (json_state.stack)
-  size_t len = lua_objlen(L, -1);       // (json_state.stack)
-  lua_rawgeti(L, -1, len);               // (json_state.stack, lua_table)
-  return len;
-}
-
-static void stack_push (lua_State* L, int pos)
-{
-  size_t len = lua_objlen(L, pos);       // (json_state.stack)
-  lua_rawseti(L, pos, len + 1);
-}
-
-static void stack_pop (lua_State *L, int pos)
-{
-  size_t len = lua_objlen(L, pos);
-  lua_pushnil(L);
-  if (pos < 0) {
-    pos -= 1;
-  }
-  lua_rawseti(L, pos, len);
-}
-
 typedef struct {
   lua_State* L;
   int on_key;
@@ -83,8 +59,6 @@ static void cb_Null(void* state_) {
   //   json_state.on_key = true
   // end
 
-  prelude(L);
-
   if (colony_isarray(L, -1)) {
     colony_array_length(L, -1);
     lua_pushnil(L);           // (json_state.stack, lua_table, arr_lvl, value)
@@ -96,8 +70,6 @@ static void cb_Null(void* state_) {
 
     state->on_key = 1;
   }
-
-  lua_pop(L, 2);
 
   assert(top == lua_gettop(L));
 }
@@ -117,8 +89,6 @@ static void cb_Bool(void* state_, bool value) {
   //   json_state.on_key = true
   // end
 
-  prelude(L);
-
   if (colony_isarray(L, -1)) {
     colony_array_length(L, -1);
     lua_pushboolean(L, value);           // (json_state.stack, lua_table, arr_lvl, value)
@@ -130,8 +100,6 @@ static void cb_Bool(void* state_, bool value) {
 
     state->on_key = 1;
   }
-
-  lua_pop(L, 2);
 
   assert(top == lua_gettop(L));
 }
@@ -151,8 +119,6 @@ static void cb_Double(void* state_, double value) {
   //   json_state.on_key = true
   // end
 
-  prelude(L);
-
   if (colony_isarray(L, -1)) {
     colony_array_length(L, -1);
     lua_pushnumber(L, value);           // (json_state.stack, lua_table, arr_lvl, value)
@@ -164,8 +130,6 @@ static void cb_Double(void* state_, double value) {
 
     state->on_key = 1;
   }
-
-  lua_pop(L, 2);
 
   assert(top == lua_gettop(L));
 }
@@ -201,8 +165,6 @@ static void cb_String(void* state_, const char* value, size_t str_len, bool set)
   //   json_state.on_key = true
   // end
 
-  prelude(L);
-
   if (colony_isarray(L, -1)) {
     colony_array_length(L, -1);
     lua_pushlstring(L, value, str_len);           // (json_state.stack, lua_table, arr_lvl, value)
@@ -219,8 +181,6 @@ static void cb_String(void* state_, const char* value, size_t str_len, bool set)
 
     state->on_key = 1;
   }
-
-  lua_pop(L, 2);
 
   assert(top == lua_gettop(L));
 }
@@ -242,11 +202,8 @@ static void cb_StartObject(void* state_) {
   // end
   // json_state.on_key = true
 
-  size_t len = prelude(L);
-
   if (lua_isnil(L, -1)) {
     colony_createobj(L, 0, 0);                   // (json_state.stack, lua_table, lua_table)
-    stack_push(L, -3);
   } else {
     colony_createobj(L, 0, 0);               // (json_state.stack, lua_table, new_table)
     if (colony_isarray(L, -2)) {
@@ -256,14 +213,10 @@ static void cb_StartObject(void* state_) {
     }
     lua_pushvalue(L, -2);                    // (json_state.stack, lua_table, new_table, prev_k, new_table)
     lua_settable(L, -4);                     // (json_state.stack, lua_table, new_table)
-
-    stack_push(L, -3);
   }
-  lua_pop(L, 2);
-
   state->on_key = 1;
 
-  assert(top == lua_gettop(L));
+  assert(top + 1 == lua_gettop(L));
 }
 
 /* Callback to Lua for parsing end of an object */
@@ -275,14 +228,10 @@ static void cb_EndObject(void* state_, size_t value) {
   // json_state.ret = table.remove(json_state.stack, #json_state.stack)
   // json_state.on_key = true
 
-  size_t len = prelude(L);                  // (json_state.stack, lua_table)
   lua_setfield(L, 1, "ret");                // (json_state.stack)
-  stack_pop(L, -1);
-  lua_pop(L, 1);
-
   state->on_key = 1;
 
-  assert(top == lua_gettop(L));
+  assert(top - 1 == lua_gettop(L));
 
 }
 
@@ -303,11 +252,8 @@ static void cb_StartArray(void* state_) {
   // end
   // json_state.is_arr = true
 
-  size_t len = prelude(L);
-
   if (lua_isnil(L, -1)) {
     colony_createarray(L, 0);                   // (json_state.stack, lua_table, lua_table)
-    stack_push(L, -3);
   } else {
     colony_createarray(L, 0);               // (json_state.stack, lua_table, new_table)
     if (colony_isarray(L, -2)) {
@@ -317,13 +263,9 @@ static void cb_StartArray(void* state_) {
     }
     lua_pushvalue(L, -2);                    // (json_state.stack, lua_table, new_table, prev_k, new_table)
     lua_settable(L, -4);                     // (json_state.stack, lua_table, new_table)
-
-    stack_push(L, -3);
   }
 
-  lua_pop(L, 2);
-
-  assert(top == lua_gettop(L));
+  assert(top + 1 == lua_gettop(L));
 }
 
 /* Callback to Lua for parsing end of an array */
@@ -335,14 +277,10 @@ static void cb_EndArray(void* state_, size_t value) {
   // json_state.ret = table.remove(json_state.stack, #json_state.stack)
   // json_state.is_arr = false
 
-  size_t len = prelude(L);                  // (json_state.stack, lua_table)
   lua_setfield(L, 1, "ret");                // (json_state.stack)
-  stack_pop(L, -1);
-  lua_pop(L, 1);
-
   state->on_key = 1;
 
-  assert(top == lua_gettop(L));
+  assert(top - 1 == lua_gettop(L));
 }
 
 /* Calls Lua to deal with any error that occurs when parsing */
@@ -383,7 +321,10 @@ static int tm_json_read(lua_State *L) {
   rh.EndArray = cb_EndArray;
 
   // call rapidjson to parse the string
+  int top = lua_gettop(L);
+  lua_pushnil(L);
   parse_error_t parse_err = tm_json_parse(rh,value);
+  lua_settop(L, top);
 
   // if there's an error deal with it
   if(parse_err.code) { on_error(L,value,parse_err); }
