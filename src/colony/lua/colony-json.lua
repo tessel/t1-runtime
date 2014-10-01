@@ -59,10 +59,10 @@ function json_read_start_object(json_state)
   if json_state.lua_table == nil then
     json_state.lua_table = js_obj({})
   else
-    local parent_table = {}
-    parent_table[json_state.prev_k] = json_state.lua_table
-    table.insert(json_state.stack, parent_table)
-    json_state.lua_table = js_obj({})
+    table.insert(json_state.stack, json_state.lua_table)
+    local new_table = js_obj({})
+    json_state.lua_table[json_state.prev_k] = new_table
+    json_state.lua_table = new_table
   end
   json_state.on_key = true
 end
@@ -71,10 +71,7 @@ end
 function json_read_end_object(json_state, value)
   local parent_table = table.remove(json_state.stack, #json_state.stack)
   if parent_table ~= nil then
-    for k,v in pairs(parent_table) do
-      v[k] = json_state.lua_table
-      json_state.lua_table = parent_table[k]
-    end
+      json_state.lua_table = parent_table
   end
   json_state.on_key = true
 end
@@ -84,10 +81,10 @@ function json_read_start_array(json_state)
   if json_state.lua_table == nil then
     json_state.lua_table = js_arr({},0)
   else
-    local parent_table = {}
-    parent_table[json_state.prev_k] = json_state.lua_table
-    table.insert(json_state.stack, parent_table)
-    json_state.lua_table = js_arr({},0)
+    table.insert(json_state.stack, json_state.lua_table)
+    local new_arr = js_arr({},0)
+    json_state.lua_table[json_state.prev_k] = new_arr
+    json_state.lua_table = new_arr
   end
   json_state.is_arr = true
 end
@@ -96,10 +93,7 @@ end
 function json_read_end_array(json_state, value)
   local parent_table = table.remove(json_state.stack, #json_state.stack)
   if parent_table ~= nil then
-    for k,v in pairs(parent_table) do
-      v[k] = json_state.lua_table
-      json_state.lua_table = parent_table[k]
-    end
+    json_state.lua_table = parent_table
   end
   json_state.is_arr = false
 end
