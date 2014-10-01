@@ -79,8 +79,9 @@ ssize_t tm_utf8_str_tolower (const uint8_t *buf, ssize_t buf_len, uint8_t **dstp
 #define IS_LEAD(uchar) (uchar > 0xD800 && uchar < 0xDC00)
 #define IS_TRAIL(uchar) (uchar > 0xDC00 && uchar <= 0xDFFF)
 
-size_t tm_str_to_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t ** const dstptr) {
-  uint8_t* utf8 = malloc(buf_len+1);    // NOTE: we know utf8 always same or shorter
+size_t tm_str_to_utf8 (const uint8_t* buf, size_t str_len, const uint8_t ** const dstptr) {
+  size_t buf_len = str_len + 1;       // add null terminator
+  uint8_t* utf8 = malloc(buf_len);    // NOTE: we know utf8 always same or shorter
   size_t utf8_len = 0;
   
   int32_t hchar = 0;    // stores half of surrogate pair
@@ -107,11 +108,6 @@ size_t tm_str_to_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t ** cons
       utf8_len += utf8proc_encode_char(IS_TRAIL(uchar) ? 0xFFFD : uchar, utf8 + utf8_len);
     }
   }
-  if (hchar) {
-    // string ends with unpaired lead
-    utf8_len += utf8proc_encode_char(0xFFFD, utf8 + utf8_len);
-  }
-  utf8[utf8_len] = '\0';      // always NUL-terminate (perhaps redundantly, which is harmless)
   *dstptr = utf8;
   return utf8_len;
 }
