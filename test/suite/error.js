@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(33);
+tap.count(34);
 
 try {
 	throw new Error('ok')
@@ -40,6 +40,11 @@ CAPTURER(err);
 tap.ok(/CAPTURER/.test(err.stack), "expected callsite in trace");
 CAPTURER(err, CAPTURER);
 tap.ok(!/CAPTURER/.test(err.stack), "excludable via argument");
+
+// non-Error stacktraces
+var obj = {};
+CAPTURER(obj);
+tap.ok(/CAPTURER/.test(obj.stack), "expected callsite in object trace");
 
 // stack formatting
 var prepErr, prepArr;

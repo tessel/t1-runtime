@@ -1372,27 +1372,23 @@ global.Error.captureStackTrace = function (this, err, ctor)
     end
     info_idx = info_idx + 1
   end
-  getmetatable(err).frames = frames
+  
+  js_define_getter(err, 'stack', function (this)
+    if (global.Error.prepareStackTrace) then
+      -- NOTE: https://code.google.com/p/v8/wiki/JavaScriptStackTraceApi states that this will
+      --       actually be called when error is *created*. node seems to match this claim, however,
+      --       in Chrome 37.0.2062.94 console you have to call .stack to trigger. This seems simpler.
+      local arr = global:Array(unpack(frames))
+      return global.Error.prepareStackTrace(global.Error, this, arr)
+    end
+
+    local s = this:toString()
+    for i, frame in ipairs(frames) do
+      s = s .. "\n    at " .. frame:toString()
+    end
+    return s
+  end)
 end
-
-js_define_getter(error_constructor.prototype, 'stack', function (this)
-  local frames = getmetatable(this).frames or {}
-  if (global.Error.prepareStackTrace) then
-    -- NOTE: https://code.google.com/p/v8/wiki/JavaScriptStackTraceApi states that this will
-    --       actually be called when error is *created*. node seems to match this claim, however,
-    --       in Chrome 37.0.2062.94 console you have to call .stack to trigger. This seems simpler.
-    local arr = global:Array(unpack(frames))
-    return global.Error.prepareStackTrace(global.Error, this, arr)
-  end
-
-  local s = this:toString()
-  local frame
-  local frame_idx = 1
-  for i, frame in ipairs(frames) do
-    s = s .. "\n    at " .. frame:toString()
-  end
-  return s
-end)
 
 
 -- Console
