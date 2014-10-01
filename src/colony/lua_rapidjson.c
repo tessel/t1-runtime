@@ -33,11 +33,14 @@ void colony_array_length (lua_State* L, int pos)
   lua_getfield(L, pos, "length");
 }
 
-typedef struct {
-  lua_State* L;
-  int on_key;
-} tm_json_cb_state_t;
+static void state_key_get (lua_State* L) { lua_pushvalue(L, 2); }
+static void state_key_set (lua_State* L) { lua_replace(L, 2); }
 
+static void state_ret_get (lua_State* L) { lua_pushvalue(L, 3); }
+static void state_ret_set (lua_State* L) { lua_replace(L, 3); }
+
+static int state_iskey_get (lua_State* L) { return lua_toboolean(L, 4); }
+static void state_iskey_set (lua_State* L, int val) { lua_pushboolean(L, val); lua_replace(L, 4); }
 
 /* Callback to Lua for parsing default values */
 static void cb_Default(void* state_) {
@@ -45,9 +48,8 @@ static void cb_Default(void* state_) {
 }
 
 /* Callback to Lua for parsing nulls */
-static void cb_Null(void* state_) {
-  tm_json_cb_state_t* state = (tm_json_cb_state_t*) state_;
-  lua_State* L = state->L;
+static void cb_Null(void* state) {
+  lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
   if (colony_isarray(L, -1)) {
@@ -55,20 +57,19 @@ static void cb_Null(void* state_) {
     lua_pushnil(L);                         // (arr, arr_len, value)
     lua_settable(L, -3);                    // (arr)
   } else {
-    lua_getfield(L, 1, "prev_k");           // (obj, key)
+    state_key_get(L);                       // (obj, key)
     lua_pushnil(L);                         // (obj, key, value)
     lua_settable(L, -3);                    // (obj)
 
-    state->on_key = 1;
+    state_iskey_set(L, 1);
   }
 
   assert(top == lua_gettop(L));
 }
 
 /* Callback to Lua for parsing booleans */
-static void cb_Bool(void* state_, bool value) {
-  tm_json_cb_state_t* state = (tm_json_cb_state_t*) state_;
-  lua_State* L = state->L;
+static void cb_Bool(void* state, bool value) {
+  lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
   if (colony_isarray(L, -1)) {
@@ -76,20 +77,19 @@ static void cb_Bool(void* state_, bool value) {
     lua_pushboolean(L, value);              // (arr, arr_len, value)
     lua_settable(L, -3);                    // (arr)
   } else {
-    lua_getfield(L, 1, "prev_k");           // (obj, key)
+    state_key_get(L);                       // (obj, key)
     lua_pushboolean(L, value);              // (obj, key, value)
     lua_settable(L, -3);                    // (obj)
 
-    state->on_key = 1;
+    state_iskey_set(L, 1);
   }
 
   assert(top == lua_gettop(L));
 }
 
 /* Callback to Lua for parsing doubles */
-static void cb_Double(void* state_, double value) {
-  tm_json_cb_state_t* state = (tm_json_cb_state_t*) state_;
-  lua_State* L = state->L;
+static void cb_Double(void* state, double value) {
+  lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
   if (colony_isarray(L, -1)) {
@@ -97,58 +97,56 @@ static void cb_Double(void* state_, double value) {
     lua_pushnumber(L, value);               // (arr, arr_len, value)
     lua_settable(L, -3);                    // (arr)
   } else {
-    lua_getfield(L, 1, "prev_k");           // (obj, key)
+    state_key_get(L);                       // (obj, key)
     lua_pushnumber(L, value);               // (obj, key, value)
     lua_settable(L, -3);                    // (obj)
 
-    state->on_key = 1;
+    state_iskey_set(L, 1);
   }
 
   assert(top == lua_gettop(L));
 }
 
 /* Callback to Lua for parsing ints */
-static void cb_Int(void* state_, int value) { cb_Double(state_, value); }
+static void cb_Int(void* state, int value) { cb_Double(state, value); }
 
 /* Callback to Lua for parsing unsigned ints */
-static void cb_Uint(void* state_, unsigned value) { cb_Double(state_, value); }
+static void cb_Uint(void* state, unsigned value) { cb_Double(state, value); }
 
 /* Callback to Lua for parsing 64 bit ints */
-static void cb_Int64(void* state_, int64_t value) { cb_Double(state_, value); }
+static void cb_Int64(void* state, int64_t value) { cb_Double(state, value); }
 
 /* Callback to Lua for parsing unsigned 64 bit ints */
-static void cb_Uint64(void* state_, uint64_t value) { cb_Double(state_,value); }
+static void cb_Uint64(void* state, uint64_t value) { cb_Double(state,value); }
 
 /* Callback to Lua for parsing strings */
-static void cb_String(void* state_, const char* value, size_t str_len, bool set) {
-  tm_json_cb_state_t* state = (tm_json_cb_state_t*) state_;
-  lua_State* L = state->L;
+static void cb_String(void* state, const char* value, size_t str_len, bool set) {
+  lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
   if (colony_isarray(L, -1)) {
     colony_array_length(L, -1);             // (arr, arr_len)
     lua_pushlstring(L, value, str_len);     // (arr, arr_len, str)
     lua_settable(L, -3);                    // (arr)
-  } else if (state->on_key) {
+  } else if (state_iskey_get(L)) {
     lua_pushlstring(L, value, str_len);     // (obj, value)
-    lua_setfield(L, 1, "prev_k");           // (obj)
+    state_key_set(L);                       // (obj)
 
-    state->on_key = 0;
+    state_iskey_set(L, 0);
   } else {
-    lua_getfield(L, 1, "prev_k");           // (obj, key)
+    state_key_get(L);                       // (obj, key)
     lua_pushlstring(L, value, str_len);     // (obj, key, value)
     lua_settable(L, -3);                    // (obj)
 
-    state->on_key = 1;
+    state_iskey_set(L, 1);
   }
 
   assert(top == lua_gettop(L));
 }
 
 /* Callback to Lua for parsing start of an object */
-static void cb_StartObject(void* state_) {
-  tm_json_cb_state_t* state = (tm_json_cb_state_t*) state_;
-  lua_State* L = state->L;
+static void cb_StartObject(void* state) {
+  lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
   if (lua_isnil(L, -1)) {
@@ -158,33 +156,31 @@ static void cb_StartObject(void* state_) {
     if (colony_isarray(L, -2)) {
       colony_array_length(L, -2);           // (arr, obj2, arr_len)
     } else {
-      lua_getfield(L, 1, "prev_k");         // (obj, obj2, key)
+      state_key_get(L);                     // (obj)
     }
     lua_pushvalue(L, -2);                   // (obj, obj2, value, obj2)
     lua_settable(L, -4);                    // (obj, obj2)
   }
-  state->on_key = 1;
+  state_iskey_set(L, 1);
 
   assert(top + 1 == lua_gettop(L));
 }
 
 /* Callback to Lua for parsing end of an object */
-static void cb_EndObject(void* state_, size_t value) {
-  tm_json_cb_state_t* state = (tm_json_cb_state_t*) state_;
-  lua_State* L = state->L;
+static void cb_EndObject(void* state, size_t value) {
+  lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
-  lua_setfield(L, 1, "ret");                // pops stack
-  state->on_key = 1;
+  state_ret_set(L);                         // pops stack
+  state_iskey_set(L, 1);
 
   assert(top - 1 == lua_gettop(L));
 
 }
 
 /* Callback to Lua for parsing start of an array */
-static void cb_StartArray(void* state_) {
-  tm_json_cb_state_t* state = (tm_json_cb_state_t*) state_;
-  lua_State* L = state->L;
+static void cb_StartArray(void* state) {
+  lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
   if (lua_isnil(L, -1)) {
@@ -194,7 +190,7 @@ static void cb_StartArray(void* state_) {
     if (colony_isarray(L, -2)) {
       colony_array_length(L, -2);           // (arr, arr2, arr_len)
     } else {
-      lua_getfield(L, 1, "prev_k");         // (obj, arr, key)
+      state_key_get(L);                     // (obj)
     }
     lua_pushvalue(L, -2);                   // (obj, arr, value, arr)
     lua_settable(L, -4);                    // (obj, arr)
@@ -204,13 +200,12 @@ static void cb_StartArray(void* state_) {
 }
 
 /* Callback to Lua for parsing end of an array */
-static void cb_EndArray(void* state_, size_t value) {
-  tm_json_cb_state_t* state = (tm_json_cb_state_t*) state_;
-  lua_State* L = state->L;
+static void cb_EndArray(void* state, size_t value) {
+  lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
-  lua_setfield(L, 1, "ret");                // (obj) -> ()
-  state->on_key = 1;
+  state_ret_set(L);                         // (obj) -> ()
+  state_iskey_set(L, 1);
 
   assert(top - 1 == lua_gettop(L));
 }
@@ -228,16 +223,19 @@ static void on_error(lua_State *L, const char* val, parse_error_t err) {
 static int tm_json_read(lua_State *L) {
 
   // get the string to parse
-  const char* value = lua_tostring(L, 2);
+  const char* value = lua_tostring(L, 1);
 
-  // create the reader handler
+  // Widen bottom of stack for key and return value state.
+  lua_pushnil(L);
+  lua_insert(L, 2); // key
+  lua_pushnil(L);
+  lua_insert(L, 3); // return value
+  lua_pushnil(L);
+  lua_insert(L, 4); // is key?
+
+  // create the reader callback handler
   tm_json_r_handler_t rh;
-  tm_json_cb_state_t state;
-  state.L = L;
-  state.on_key = 0;
-
-  // set the handler function pointers
-  rh.State = &state;
+  rh.State = L;
   rh.Default = cb_Default;
   rh.Null = cb_Null;
   rh.Bool = cb_Bool;
@@ -261,9 +259,15 @@ static int tm_json_read(lua_State *L) {
   // if there's an error deal with it
   if(parse_err.code) { on_error(L,value,parse_err); }
 
-  // return the parsed string (eventually)
+  // return the parsed string
+  state_ret_get(L);
   return 1;
 }
+
+
+/*
+ * stringify
+ */
 
 /* Creates the writting handler for the writing functions to work */
 static int tm_json_create(lua_State *L) {

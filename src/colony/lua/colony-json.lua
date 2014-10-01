@@ -1,30 +1,15 @@
 local rapidjson = require('rapidjson')
 local js_tostring = colony.js_tostring
 
--- Parses the string into a lua table
 function json_parse(value)
-
-  -- workaround to deal with rapidjson non objects directly in
+  -- Parse non-object primitives with a wrapper.
   if string.sub(value,1,1) ~= '{' and string.sub(value,1,1) ~= '[' then
-    value = '{"value":'..value..'}'
+    value = '{"value":\n'..value..'\n}'
     return json_parse(value).value
   end
 
-  -- clear the globals for the next round
-  local json_state = {
-    ret = nil,
-    prev_k = nil
-  }
-
-  -- parse the value and set the lua table based off callbacks
-  rapidjson.parse(json_state, value)
-
-  -- reference it from here so we can clear the globals for another round
-  local lua_table_cpy = json_state.ret
-
-  -- return the parsed object to lua
-  return lua_table_cpy
-
+  -- Parse into a Lua structure.
+  return rapidjson.parse(tostring(value))
 end
 
 -- Checks initial type and recurses through object if it needs to
