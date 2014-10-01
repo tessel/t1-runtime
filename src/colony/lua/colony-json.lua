@@ -4,10 +4,10 @@ local js_tostring = colony.js_tostring
 -- Parses the string into a lua table
 function json_parse(value)
 
-  -- rapidjson will throw an error if non-objects are passed in
-  -- this circumvents those errors
-  if value == 'true' or value == 'false' or tonumber(value) then
-    return value
+  -- workaround to deal with rapidjson non objects directly in
+  if string.sub(value,1,1) ~= '{' then
+    value = '{"value":'..value..'}'
+    return json_parse(value).value
   end
 
   -- clear the globals for the next round
@@ -147,7 +147,7 @@ function json_stringify (value, ...)
   end
   local str = rapidjson.result(wh)
   rapidjson.destroy(wh)
-  str = string.gsub(str,'%[null%]','%[%]') -- array workaround
+  -- str = string.gsub(str,'%[null%]','%[%]') -- array workaround
   return tostring(str)
 
 end

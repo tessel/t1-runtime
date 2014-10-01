@@ -1,13 +1,7 @@
 var tap = require('../tap');
 var buf = require('buffer');
 
-tap.count(87);
-
-// little empty tester
-function is_empty(obj) {
-  for(var i in obj) { if(obj.hasOwnProperty(i)) { return false; } }
-  return true;
-}
+tap.count(68);
 
 // testing vars
 var foo1 = {foundation: "Mozilla", model: "box", week: 45, transport: "car", month: 7};
@@ -55,88 +49,38 @@ var objs = [
   { 1:foo8,                                     2:foo9,                              3:'array object mess',          4:null,            5:null },
   { 1:fooA,                                     2:fooB,                              3:'input file test',            4:null,            5:null },
   { 1:{"hi":5},                                 2:'{\n  "hi": 5\n}',                 3:'spacer string',              4:null,            5:'  ' },
-  { 1:{"hi":5},                                 2:'{\n123456789A"hi": 5\n}',         3:'spacer string long',         4:null,            5:'123456789AB' },
   { 1:{"hi":5},                                 2:'{\n   "hi": 5\n}',                3:'spacer number',              4:null,            5:3 },
   { 1:foo4,                                     2:foo5,                              3:'super nested spacer',        4:null,            5:' ' },
   { 1:foo1,                                     2:'{"month":7,"transport":"car"}',   3:'replacer array',             4:censor_arr,      5:null },
-  { 1:foo1,                                     2:'{"week":45,"month":7}',           3:'replacer function',          4:censor,          5:null },
   { 1:{a: function () {}, b: 5},                2:'{"b":5}',                         3:'function',                   4:null,            5:null },
   { 1:[1,function(){},2],                       2:'[1,null,2]',                      3:'function in array',          4:null,            5:null },
   { 1:new buf.Buffer([11,22,33,44]),            2:'[11,22,33,44]',                   3:'buffer',                     4:null,            5:null },
-  { 1:NaN,                                      2:'NaN',                             3:'NaN',                        4:null,            5:null },
-  { 1:Infinity,                                 2:'Infinity',                        3:'Infinity',                   4:null,            5:null },
-  { 1:-Infinity,                                2:'-Infinity',                       3:'-Infinity',                  4:null,            5:null },
+  { 1:NaN,                                      2:'null',                            3:'NaN',                        4:null,            5:null },
+  { 1:Infinity,                                 2:'null',                            3:'Infinity',                   4:null,            5:null },
+  { 1:-Infinity,                                2:'null',                            3:'-Infinity',                  4:null,            5:null },
+  { 1:[[],"11"],                                2:'[[],"11"]',                       3:'arr in arr then value',      4:null,            5:null },
+  { 1:'hello\n',                                2:'"hello\\n"',                      3:'non object string',          4:null,            5:null },
+]
+
+var objs2 = [
+  { 1:{"hi":5},                                 2:'{\n123456789A"hi": 5\n}',         3:'spacer string long',         4:null,            5:'123456789AB' },
+  { 1:foo1,                                     2:'{"month":45,"week":7}',           3:'replacer function',          4:censor,          5:null },
 ]
 
 // parsing testing
 console.log('# parsing tesing');
 tap.ok(JSON.parse("{\"hi\": 5}").hasOwnProperty, 'json object is real object');
 tap.ok(JSON.parse("[0, 1, 2]").slice, 'json array is real array');
+
 for (var i in objs) {
-  if(parseInt(i) < 4 || parseInt(i) > 19) {
-    // note thse cases are not tested in parse
-  } else {
-    var parsed = JSON.parse(objs[i][2]);
-    switch(parseInt(i)) {
-      case 4:
-        tap.ok(is_empty(parsed)==true,objs[i][3]);
-        break;
-      case 5:
-        for (var j in parsed) { tap.ok(parsed[parseInt(j)]==parseInt(j),objs[i][3]+' at index '+j); }
-				break;
-      case 6:
-      case 7:
-        for (var j in parsed) { tap.ok(parsed[parseInt(j)]==objs[i][1][parseInt(j)],objs[i][3]+' at index '+j); }
-        break;
-      case 8:
-        tap.eq(JSON.stringify(parsed), objs[i][2], objs[i][3]);
-        break;
-      case 9:
-        for (var j in parsed) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
-        for (var j in parsed.b) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' key b at index '+j); }
-				break;
-      case 10:
-      case 11:
-        tap.ok(is_empty(parsed)==true,objs[i][3]);
-        break;
-      case 12:
-      case 13:
-        tap.ok(parsed.hi==5,objs[i][3]);
-				break;
-      case 14:
-        tap.ok(is_empty(parsed.a)==true,objs[i][3]);
-				break;
-      case 15:
-        for (var j in parsed) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
-        for (var j in parsed.b) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' key b at key '+j); }
-				break;
-      case 16:
-        tap.ok(parsed.a.b.c.d==1,objs[i][3]);
-        break;
-      case 17:
-        for (var j in parsed) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
-        for (var j in parsed.location) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
-        for (var j in parsed.location.city) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
-        for (var j in parsed.location.state) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
-				break;
-      case 18:
-        for (var j in parsed) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
-        for (var j in parsed.a) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
-				break;
-      case 19:
-        for (var j in parsed) {
-          tap.ok(parsed[j].name==objs[i][1][j].name,objs[i][3]+' at key '+j+' name');
-          tap.ok(parsed[j].type==objs[i][1][j].type,objs[i][3]+' at key '+j+' type');
-        }
-        break;
-      default:
-				break;
-    }
-  }
+  var obj = JSON.parse(objs[i][2])
+  var res = JSON.stringify(obj, objs[i][4], objs[i][5]);
+  tap.eq(res, objs[i][2], objs[i][3]);
+
+  tap.eq(JSON.stringify(objs[i][1], objs[i][4], objs[i][5]), objs[i][2], objs[i][3]);
 }
 
-// stringify testing
-console.log('# stringify tesing');
-for (var i in objs) {
-  tap.ok(JSON.stringify(objs[i][1],objs[i][4],objs[i][5]) == objs[i][2],objs[i][3]);
+for (var i in objs2) {
+  var res = JSON.stringify(objs[i][1], objs[i][4], objs[i][5]);
+  tap.eq(res, objs[i][2], objs[i][3]);
 }
