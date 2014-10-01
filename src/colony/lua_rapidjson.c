@@ -50,23 +50,14 @@ static void cb_Null(void* state_) {
   lua_State* L = state->L;
   int top = lua_gettop(L);
 
-  // local lua_table = json_state.stack[#json_state.stack]
-  // if json_state.is_arr then
-  //   lua_table[json_state.arr_lvl] = js_null
-  //   json_state.arr_lvl = json_state.arr_lvl + 1
-  // else
-  //   lua_table[json_state.prev_k] = js_null
-  //   json_state.on_key = true
-  // end
-
   if (colony_isarray(L, -1)) {
-    colony_array_length(L, -1);
-    lua_pushnil(L);           // (json_state.stack, lua_table, arr_lvl, value)
-    lua_settable(L, -3);                  // (json_state.stack, lua_table)
+    colony_array_length(L, -1);             // (arr, arr_len)
+    lua_pushnil(L);                         // (arr, arr_len, value)
+    lua_settable(L, -3);                    // (arr)
   } else {
-    lua_getfield(L, 1, "prev_k");       // (json_state.stack, lua_table, prev_k)
-    lua_pushnil(L);           // (json_state.stack, lua_table, prev_k, value)
-    lua_settable(L, -3);                  // (json_state.stack, lua_table)
+    lua_getfield(L, 1, "prev_k");           // (obj, key)
+    lua_pushnil(L);                         // (obj, key, value)
+    lua_settable(L, -3);                    // (obj)
 
     state->on_key = 1;
   }
@@ -80,23 +71,14 @@ static void cb_Bool(void* state_, bool value) {
   lua_State* L = state->L;
   int top = lua_gettop(L);
 
-  // local lua_table = json_state.stack[#json_state.stack]
-  // if json_state.is_arr then
-  //   lua_table[json_state.arr_lvl] = value
-  //   json_state.arr_lvl = json_state.arr_lvl + 1
-  // else
-  //   lua_table[json_state.prev_k] = value
-  //   json_state.on_key = true
-  // end
-
   if (colony_isarray(L, -1)) {
-    colony_array_length(L, -1);
-    lua_pushboolean(L, value);           // (json_state.stack, lua_table, arr_lvl, value)
-    lua_settable(L, -3);                  // (json_state.stack, lua_table)
+    colony_array_length(L, -1);             // (arr, arr_len)
+    lua_pushboolean(L, value);              // (arr, arr_len, value)
+    lua_settable(L, -3);                    // (arr)
   } else {
-    lua_getfield(L, 1, "prev_k");       // (json_state.stack, lua_table, prev_k)
-    lua_pushboolean(L, value);           // (json_state.stack, lua_table, prev_k, value)
-    lua_settable(L, -3);                  // (json_state.stack, lua_table)
+    lua_getfield(L, 1, "prev_k");           // (obj, key)
+    lua_pushboolean(L, value);              // (obj, key, value)
+    lua_settable(L, -3);                    // (obj)
 
     state->on_key = 1;
   }
@@ -110,23 +92,14 @@ static void cb_Double(void* state_, double value) {
   lua_State* L = state->L;
   int top = lua_gettop(L);
 
-  // local lua_table = json_state.stack[#json_state.stack]
-  // if json_state.is_arr then
-  //   lua_table[json_state.arr_lvl] = value
-  //   json_state.arr_lvl = json_state.arr_lvl + 1
-  // else
-  //   lua_table[json_state.prev_k] = value
-  //   json_state.on_key = true
-  // end
-
   if (colony_isarray(L, -1)) {
-    colony_array_length(L, -1);
-    lua_pushnumber(L, value);           // (json_state.stack, lua_table, arr_lvl, value)
-    lua_settable(L, -3);                  // (json_state.stack, lua_table)
+    colony_array_length(L, -1);             // (arr, arr_len)
+    lua_pushnumber(L, value);               // (arr, arr_len, value)
+    lua_settable(L, -3);                    // (arr)
   } else {
-    lua_getfield(L, 1, "prev_k");       // (json_state.stack, lua_table, prev_k)
-    lua_pushnumber(L, value);           // (json_state.stack, lua_table, prev_k, value)
-    lua_settable(L, -3);                  // (json_state.stack, lua_table)
+    lua_getfield(L, 1, "prev_k");           // (obj, key)
+    lua_pushnumber(L, value);               // (obj, key, value)
+    lua_settable(L, -3);                    // (obj)
 
     state->on_key = 1;
   }
@@ -152,32 +125,19 @@ static void cb_String(void* state_, const char* value, size_t str_len, bool set)
   lua_State* L = state->L;
   int top = lua_gettop(L);
 
-  // local lua_table = json_state.stack[#json_state.stack]
-  // if json_state.is_arr then
-  //   lua_table[json_state.arr_lvl] = value
-  //   json_state.arr_lvl = json_state.arr_lvl + 1
-  // elseif json_state.on_key then
-  //   lua_table[value] = value
-  //   json_state.prev_k = value
-  //   json_state.on_key = false
-  // else
-  //   lua_table[json_state.prev_k] = value
-  //   json_state.on_key = true
-  // end
-
   if (colony_isarray(L, -1)) {
-    colony_array_length(L, -1);
-    lua_pushlstring(L, value, str_len);           // (json_state.stack, lua_table, arr_lvl, value)
-    lua_settable(L, -3);                  // (json_state.stack, lua_table)
+    colony_array_length(L, -1);             // (arr, arr_len)
+    lua_pushlstring(L, value, str_len);     // (arr, arr_len, str)
+    lua_settable(L, -3);                    // (arr)
   } else if (state->on_key) {
-    lua_pushlstring(L, value, str_len);
-    lua_setfield(L, 1, "prev_k");
+    lua_pushlstring(L, value, str_len);     // (obj, value)
+    lua_setfield(L, 1, "prev_k");           // (obj)
 
     state->on_key = 0;
   } else {
-    lua_getfield(L, 1, "prev_k");       // (json_state.stack, lua_table, prev_k)
-    lua_pushlstring(L, value, str_len);           // (json_state.stack, lua_table, prev_k, value)
-    lua_settable(L, -3);                  // (json_state.stack, lua_table)
+    lua_getfield(L, 1, "prev_k");           // (obj, key)
+    lua_pushlstring(L, value, str_len);     // (obj, key, value)
+    lua_settable(L, -3);                    // (obj)
 
     state->on_key = 1;
   }
@@ -191,28 +151,17 @@ static void cb_StartObject(void* state_) {
   lua_State* L = state->L;
   int top = lua_gettop(L);
 
-  // local lua_table = json_state.stack[#json_state.stack]
-  // if lua_table == nil then
-  //   lua_table = js_obj({})
-  //   table.insert(json_state.stack, lua_table)
-  // else
-  //   local new_table = js_obj({})
-  //   lua_table[json_state.prev_k] = new_table
-  //   table.insert(json_state.stack, new_table)
-  // end
-  // json_state.on_key = true
-
   if (lua_isnil(L, -1)) {
-    colony_createobj(L, 0, 0);                   // (json_state.stack, lua_table, lua_table)
+    colony_createobj(L, 0, 0);              // (nil, obj2)
   } else {
-    colony_createobj(L, 0, 0);               // (json_state.stack, lua_table, new_table)
+    colony_createobj(L, 0, 0);              // (obj, obj2)
     if (colony_isarray(L, -2)) {
-      colony_array_length(L, -2);
+      colony_array_length(L, -2);           // (arr, obj2, arr_len)
     } else {
-      lua_getfield(L, 1, "prev_k");            // (json_state.stack, lua_table, new_table, prev_k)
+      lua_getfield(L, 1, "prev_k");         // (obj, obj2, key)
     }
-    lua_pushvalue(L, -2);                    // (json_state.stack, lua_table, new_table, prev_k, new_table)
-    lua_settable(L, -4);                     // (json_state.stack, lua_table, new_table)
+    lua_pushvalue(L, -2);                   // (obj, obj2, value, obj2)
+    lua_settable(L, -4);                    // (obj, obj2)
   }
   state->on_key = 1;
 
@@ -225,10 +174,7 @@ static void cb_EndObject(void* state_, size_t value) {
   lua_State* L = state->L;
   int top = lua_gettop(L);
 
-  // json_state.ret = table.remove(json_state.stack, #json_state.stack)
-  // json_state.on_key = true
-
-  lua_setfield(L, 1, "ret");                // (json_state.stack)
+  lua_setfield(L, 1, "ret");                // pops stack
   state->on_key = 1;
 
   assert(top - 1 == lua_gettop(L));
@@ -241,28 +187,17 @@ static void cb_StartArray(void* state_) {
   lua_State* L = state->L;
   int top = lua_gettop(L);
 
-  // local lua_table = json_state.stack[#json_state.stack]
-  // if lua_table == nil then
-  //   lua_table = js_arr({},0)
-  //   table.insert(json_state.stack, lua_table)
-  // else
-  //   local new_arr = js_arr({},0)
-  //   lua_table[json_state.prev_k] = new_arr
-  //   table.insert(json_state.stack, new_arr)
-  // end
-  // json_state.is_arr = true
-
   if (lua_isnil(L, -1)) {
-    colony_createarray(L, 0);                   // (json_state.stack, lua_table, lua_table)
+    colony_createarray(L, 0);               // (nil, arr)
   } else {
-    colony_createarray(L, 0);               // (json_state.stack, lua_table, new_table)
+    colony_createarray(L, 0);               // (obj, arr)
     if (colony_isarray(L, -2)) {
-      colony_array_length(L, -2);
+      colony_array_length(L, -2);           // (arr, arr2, arr_len)
     } else {
-      lua_getfield(L, 1, "prev_k");            // (json_state.stack, lua_table, new_table, prev_k)
+      lua_getfield(L, 1, "prev_k");         // (obj, arr, key)
     }
-    lua_pushvalue(L, -2);                    // (json_state.stack, lua_table, new_table, prev_k, new_table)
-    lua_settable(L, -4);                     // (json_state.stack, lua_table, new_table)
+    lua_pushvalue(L, -2);                   // (obj, arr, value, arr)
+    lua_settable(L, -4);                    // (obj, arr)
   }
 
   assert(top + 1 == lua_gettop(L));
@@ -274,10 +209,7 @@ static void cb_EndArray(void* state_, size_t value) {
   lua_State* L = state->L;
   int top = lua_gettop(L);
 
-  // json_state.ret = table.remove(json_state.stack, #json_state.stack)
-  // json_state.is_arr = false
-
-  lua_setfield(L, 1, "ret");                // (json_state.stack)
+  lua_setfield(L, 1, "ret");                // (obj) -> ()
   state->on_key = 1;
 
   assert(top - 1 == lua_gettop(L));
