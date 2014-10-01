@@ -2130,7 +2130,7 @@ end
 function json_parse(value)
 
   -- workaround to deal with rapidjson non objects directly in
-  if string.sub(value,0,1) ~= '{' then
+  if string.sub(value,1,1) ~= '{' then
     value = '{"k":'..value..'}'
     return json_parse(value).k
   end

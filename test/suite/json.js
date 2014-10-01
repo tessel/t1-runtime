@@ -38,6 +38,7 @@ var objs = [
   { 1:true,                                     2:'true',                            3:'non object bool',            4:null,            5:null },
   { 1:3,                                        2:'3',                               3:'non object number',          4:null,            5:null },
   { 1:7.42,                                     2:'7.42',                            3:'non object double',          4:null,            5:null },
+  { 1:'hello\n',                                2:'"hello\\n"',                      3:'non object string',          4:null,            5:null },
   { 1:[],                                       2:'[]',                              3:'empty array',                4:null,            5:null },
   { 1:[0, 1, 2],                                2:'[0,1,2]',                         3:'array',                      4:null,            5:null },
   { 1:[3,"a"],                                  2:'[3,"a"]',                         3:'mixed array',                4:null,            5:null },
@@ -70,57 +71,72 @@ console.log('Parsing tesing');
 tap.ok(JSON.parse("{\"hi\": 5}").hasOwnProperty, 'json object is real object');
 tap.ok(JSON.parse("[0, 1, 2]").slice, 'json array is real array');
 for (var i in objs) {
-  if(parseInt(i) < 4 || parseInt(i) > 19) {
+  if(parseInt(i) > 19) {
     // note thse cases are not tested in parse
   } else {
     var parsed = JSON.parse(objs[i][2]);
     switch(parseInt(i)) {
+      case 0:
+        tap.ok(parsed==undefined,objs[i][3]);
+        break;
+      case 1:
+        tap.ok(parsed==objs[i][1],objs[i][3]);
+        break;
+      case 2:
+        tap.ok(parsed==objs[i][1],objs[i][3]);
+        break;
+      case 3:
+        tap.ok(parsed==objs[i][1],objs[i][3]);
+        break;
       case 4:
-        tap.ok(is_empty(parsed)==true,objs[i][3]);
+        tap.ok(parsed==objs[i][1],objs[i][3]);
         break;
       case 5:
+        tap.ok(is_empty(parsed)==true,objs[i][3]);
+        break;
+      case 6:
         for (var j in parsed) { tap.ok(parsed[parseInt(j)]==parseInt(j),objs[i][3]+' at index '+j); }
 				break;
-      case 6:
       case 7:
+      case 8:
         for (var j in parsed) { tap.ok(parsed[parseInt(j)]==objs[i][1][parseInt(j)],objs[i][3]+' at index '+j); }
         break;
-      case 8:
+      case 9:
         tap.ok(is_empty(parsed)==false,objs[i][3]);
         break;
-      case 9:
+      case 10:
         for (var j in parsed) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
         for (var j in parsed.b) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' key b at index '+j); }
 				break;
-      case 10:
       case 11:
+      case 12:
         tap.ok(is_empty(parsed)==true,objs[i][3]);
         break;
-      case 12:
       case 13:
+      case 14:
         tap.ok(parsed.hi==5,objs[i][3]);
 				break;
-      case 14:
+      case 15:
         tap.ok(is_empty(parsed.a)==true,objs[i][3]);
 				break;
-      case 15:
+      case 16:
         for (var j in parsed) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
         for (var j in parsed.b) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' key b at key '+j); }
 				break;
-      case 16:
+      case 17:
         tap.ok(parsed.a.b.c.d==1,objs[i][3]);
         break;
-      case 17:
+      case 18:
         for (var j in parsed) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
         for (var j in parsed.location) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
         for (var j in parsed.location.city) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
         for (var j in parsed.location.state) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
 				break;
-      case 18:
+      case 19:
         for (var j in parsed) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
         for (var j in parsed.a) { tap.ok(parsed.j==objs[i][1].j,objs[i][3]+' at key '+j); }
 				break;
-      case 19:
+      case 20:
         for (var j in parsed) {
           tap.ok(parsed[j].name==objs[i][1][j].name,objs[i][3]+' at key '+j+' name');
           tap.ok(parsed[j].type==objs[i][1][j].type,objs[i][3]+' at key '+j+' type');
