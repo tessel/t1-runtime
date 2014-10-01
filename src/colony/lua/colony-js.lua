@@ -113,8 +113,9 @@ num_proto.toString = function (this, radix)
   return tm.itoa(this, radix)
 end
 
+-- https://people.mozilla.org/~jorendorff/es6-draft.html#sec-number.prototype.tofixed
 num_proto.toFixed = function (num, n)
-  return string.format("%." .. tonumber(n) .. "f", num)
+  return string.format("%." .. (tonumber(n or 0) or 0) .. "f", num)
 end
 
 -- string prototype
