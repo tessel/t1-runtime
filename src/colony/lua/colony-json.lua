@@ -112,6 +112,34 @@ function json_read_end_array(value)
   is_arr = false
 end
 
+-- Parses the string into a lua table
+function json_parse(value)
+
+  -- rapidjson will throw an error if non-objects are passed in
+  -- this circumvents those errors
+  if value == 'true' or value == 'false' or tonumber(value) then
+    return value
+  end
+
+  -- parse the value and set the lua table based off callbacks
+  rapidjson.parse(value)
+
+  -- reference it from here so we can clear the globals for another round
+  local lua_table_cpy = lua_table
+
+  -- clear the globals for the next round
+  lua_table = nil
+  cur_table = nil
+  on_key = true
+  prev_k = nil
+  is_arr = false
+  arr_lvl = 0
+
+  -- return the parsed object to lua
+  return lua_table_cpy
+
+end
+
 -- Checks initial type and recurses through object if it needs to
 function json_stringify (value, ...)
 
@@ -232,34 +260,6 @@ function json_stringify (value, ...)
   rapidjson.destroy(wh)
   str = string.gsub(str,'%[null%]','%[%]') -- array workaround
   return tostring(str)
-
-end
-
--- Parses the string into a lua table
-function json_parse(value)
-
-  -- rapidjson will throw an error if non-objects are passed in
-  -- this circumvents those errors
-  if value == 'true' or value == 'false' or tonumber(value) then
-    return value
-  end
-
-  -- parse the value and set the lua table based off callbacks
-  rapidjson.parse(value)
-
-  -- reference it from here so we can clear the globals for another round
-  local lua_table_cpy = lua_table
-
-  -- clear the globals for the next round
-  lua_table = nil
-  cur_table = nil
-  on_key = true
-  prev_k = nil
-  is_arr = false
-  arr_lvl = 0
-
-  -- return the parsed object to lua
-  return lua_table_cpy
 
 end
 
