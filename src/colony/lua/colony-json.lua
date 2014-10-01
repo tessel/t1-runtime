@@ -222,36 +222,16 @@ function json_stringify (value, ...)
     end
   end
 
-  -- initial return if only nil present
-  if type(value) == 'nil' then
-    return 'null'
-
-  -- initial return if only a boolean, number, or string are present
-  elseif type(value) == 'boolean' or type(value) == 'number' or type(value) == 'string' then
-    return tostring(value)
-
-  -- setup and parse if a table is present
-  elseif type(value) == 'table' then
-    local wh = rapidjson.create_writer(spacer)
-    local status, err = pcall(json_recurse,wh,value)
-    if not status then
-      rapidjson.destroy(wh)
-      error(err)
-    end
-    local str = rapidjson.result(wh)
+  local wh = rapidjson.create_writer(spacer)
+  local status, err = pcall(json_recurse,wh,value)
+  if not status then
     rapidjson.destroy(wh)
-    str = string.gsub(str,'%[null%]','%[%]')
-    return tostring(str)
-
-  -- if an unsupported type is stringified write empty object and return
-  else
-    local wh = rapidjson.create_writer(spacer)
-    rapidjson.object_start(wh)
-    rapidjson.object_end(wh)
-    local str = rapidjson.result(wh)
-    rapidjson.destroy(wh)
-    return tostring(str)
+    error(err)
   end
+  local str = rapidjson.result(wh)
+  rapidjson.destroy(wh)
+  str = string.gsub(str,'%[null%]','%[%]') -- array workaround
+  return tostring(str)
 
 end
 

@@ -56,7 +56,13 @@ public:
     PrettyWriter& Uint(unsigned u)      { PrettyPrefix(kNumberType); Base::WriteUint(u);        return *this; }
     PrettyWriter& Int64(int64_t i64)    { PrettyPrefix(kNumberType); Base::WriteInt64(i64);     return *this; }
     PrettyWriter& Uint64(uint64_t u64)  { PrettyPrefix(kNumberType); Base::WriteUint64(u64);    return *this; }
-    PrettyWriter& Double(double d)      { PrettyPrefix(kNumberType); Base::WriteDouble(d);      return *this; }
+    PrettyWriter& Double(double d)      {
+        if (d != d) { Base::os_.Put('N'); Base::os_.Put('a'); Base::os_.Put('N'); } // NaN
+        else if (d>0 && d/d != d/d) { Base::os_.Put('I'); Base::os_.Put('n'); Base::os_.Put('f'); Base::os_.Put('i'); Base::os_.Put('n'); Base::os_.Put('i'); Base::os_.Put('t'); Base::os_.Put('y'); } // Infinity
+        else if (d<0 && d/d != d/d) { Base::os_.Put('-'); Base::os_.Put('I'); Base::os_.Put('n'); Base::os_.Put('f'); Base::os_.Put('i'); Base::os_.Put('n'); Base::os_.Put('i'); Base::os_.Put('t'); Base::os_.Put('y'); } // -Infinity
+        else { PrettyPrefix(kNumberType); Base::WriteDouble(d); }
+        return *this;
+    }
 
     PrettyWriter& String(const Ch* str, SizeType length, bool copy = false) {
         (void)copy;
@@ -163,7 +169,8 @@ protected:
             level->valueCount++;
         }
         else
-            RAPIDJSON_ASSERT(type == kObjectType || type == kArrayType);
+            // RAPIDJSON_ASSERT(type == kObjectType || type == kArrayType);
+            return;
     }
 
     void WriteIndent()  {

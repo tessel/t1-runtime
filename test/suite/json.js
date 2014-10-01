@@ -64,6 +64,8 @@ var objs = [
   { 1:[1,function(){},2],                       2:'[1,null,2]',                      3:'function in array',          4:null,            5:null },
   { 1:new buf.Buffer([11,22,33,44]),            2:'[11,22,33,44]',                   3:'buffer',                     4:null,            5:null },
   { 1:NaN,                                      2:'NaN',                             3:'NaN',                        4:null,            5:null },
+  { 1:Infinity,                                 2:'Infinity',                        3:'Infinity',                   4:null,            5:null },
+  { 1:-Infinity,                                2:'-Infinity',                       3:'-Infinity',                  4:null,            5:null },
 ]
 
 // parsing testing
