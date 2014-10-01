@@ -62,27 +62,41 @@
     },
 
     {
-      "target_name": "rapidjson",
-      "product_name": "rapidjson",
+      "target_name": "yajl",
+      "product_name": "yajl",
       "type": "static_library",
       "defines": [
       ],
-      "include_dirs": [
-        "<(rapidjson_path)/include",
+      "sources": [
+        "<(yajl_path)/src/yajl.c",
+        "<(yajl_path)/src/yajl_alloc.c",
+        "<(yajl_path)/src/yajl_buf.c",
+        "<(yajl_path)/src/yajl_encode.c",
+        "<(yajl_path)/src/yajl_gen.c",
+        "<(yajl_path)/src/yajl_lex.c",
+        "<(yajl_path)/src/yajl_parser.c",
+        "<(yajl_path)/src/yajl_tree.c",
+        "<(yajl_path)/src/yajl_version.c",
       ],
+      "include_dirs": [
+        "<(yajl_path)/src",
+        "<(yajl_inc_path)"
+      ],
+
+      # yajl plays fast with enums
       'cflags': [
+        '-Wno-enum-conversion',
       ],
       'xcode_settings': {
         'OTHER_CFLAGS': [
+          '-Wno-enum-conversion',
         ],
       },
 
       'direct_dependent_settings': {
-        'defines': [
-          "__STDC_CONSTANT_MACROS",
-        ], 
         'include_dirs': [
-          "<(rapidjson_path)/include",
+          "<(yajl_path)/src",
+          "<(yajl_inc_path)"
         ]
       }
     },
@@ -459,34 +473,6 @@
     },
 
     {
-      "target_name": "libtm-cxx",
-      "product_name": "tm-cxx",
-      "type": "static_library",
-      'cflags': [
-        '-Wall', '-Wextra', '-Werror',
-        '-fno-rtti', '-fno-exceptions', '-nostdlib',
-      ],
-      'xcode_settings': {
-        'OTHER_CPLUSPLUSFLAGS': [
-          '-fno-rtti', '-fno-exceptions', '-nostdlib',
-        ]
-      },
-      'cflags!': [
-        '-std=c99',
-      ],
-      'sources': [
-        'src/std.cpp',
-        'src/tm_json.cpp',
-      ],
-      "include_dirs": [
-        'src/',
-      ],
-      'dependencies': [
-        "rapidjson",
-      ],
-    },
-
-    {
       "target_name": "libtm",
       "product_name": "tm",
       "type": "static_library",
@@ -524,18 +510,18 @@
       ],
       "include_dirs": [
         'src/',
+        '<(yajl_inc_path)',
       ],
       'dependencies': [
         "http_parser",
         "hsregex",
-        "rapidjson",
+        "yajl",
         "c-ares",
         "fortuna",
         "dlmalloc",
         "utf8proc",
         "miniz",
         "approxidate",
-        'libtm-cxx',
       ],
       'direct_dependent_settings': {
         'include_dirs': [

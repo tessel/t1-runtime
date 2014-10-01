@@ -21,7 +21,7 @@
 #include "lua_tm.h"
 #include "lua_hsregex.h"
 #include "lua_bit.h"
-#include "lua_rapidjson.h"
+#include "lua_yajl.h"
 
 #include "colony.h"
 #include "dlmalloc.h"
@@ -202,9 +202,9 @@ int colony_runtime_open ()
   // hsregex
   lua_pushcfunction(L, luaopen_hsregex);
   lua_setfield(L, -2, "hsregex");
-  // rapidjson
-  lua_pushcfunction(L, lua_open_rapidjson);
-  lua_setfield(L, -2, "rapidjson");
+  // yajl
+  lua_pushcfunction(L, luaopen_yajl);
+  lua_setfield(L, -2, "yajl");
   // Load lib/*.lua files into memory.
   for (int i = 0; dir_runtime_lib[i].path != NULL; i++) {
     lua_pushlstring(L, dir_runtime_lib[i].path, strchr(dir_runtime_lib[i].path, '.') - dir_runtime_lib[i].path);
