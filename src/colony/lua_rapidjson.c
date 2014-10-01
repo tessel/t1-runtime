@@ -25,7 +25,7 @@ typedef struct {
 void cb_Default(void* state_) {
   tm_json_cb_state_t* state = (tm_json_cb_state_t*) state_;
   lua_getfield(state->L, LUA_GLOBALSINDEX, "json_read_default");
-  lua_rawgeti(state->L, LUA_REGISTRYINDEX, state->state_idx);
+  lua_pushvalue(state->L, 1);
   lua_call(state->L,1,0);
 }
 
@@ -33,7 +33,7 @@ void cb_Default(void* state_) {
 void cb_Null(void* state_) {
   tm_json_cb_state_t* state = (tm_json_cb_state_t*) state_;
   lua_getfield(state->L, LUA_GLOBALSINDEX, "json_read_null");
-  lua_rawgeti(state->L, LUA_REGISTRYINDEX, state->state_idx);
+  lua_pushvalue(state->L, 1);
   lua_call(state->L,1,0);
 }
 
@@ -41,7 +41,7 @@ void cb_Null(void* state_) {
 void cb_Bool(void* state_, bool value) {
   tm_json_cb_state_t* state = (tm_json_cb_state_t*) state_;
   lua_getfield(state->L, LUA_GLOBALSINDEX, "json_read_value");
-  lua_rawgeti(state->L, LUA_REGISTRYINDEX, state->state_idx);
+  lua_pushvalue(state->L, 1);
   lua_pushboolean(state->L,value);
   lua_call(state->L,2,0);
 }
@@ -50,7 +50,7 @@ void cb_Bool(void* state_, bool value) {
 void cb_Double(void* state_, double value) {
   tm_json_cb_state_t* state = (tm_json_cb_state_t*) state_;
   lua_getfield(state->L, LUA_GLOBALSINDEX, "json_read_double");
-  lua_rawgeti(state->L, LUA_REGISTRYINDEX, state->state_idx);
+  lua_pushvalue(state->L, 1);
   lua_pushnumber(state->L,value);
   lua_call(state->L,2,0);
 }
@@ -71,7 +71,7 @@ void cb_Uint64(void* state_, uint64_t value) { cb_Double(state_,value); }
 void cb_String(void* state_, const char* value, size_t len, bool set) {
   tm_json_cb_state_t* state = (tm_json_cb_state_t*) state_;
   lua_getfield(state->L, LUA_GLOBALSINDEX, "json_read_string");
-  lua_rawgeti(state->L, LUA_REGISTRYINDEX, state->state_idx);
+  lua_pushvalue(state->L, 1);
   lua_pushstring(state->L,value);
   lua_pushnumber(state->L,len);
   lua_pushboolean(state->L,set);
@@ -82,7 +82,7 @@ void cb_String(void* state_, const char* value, size_t len, bool set) {
 void cb_StartObject(void* state_) {
   tm_json_cb_state_t* state = (tm_json_cb_state_t*) state_;
   lua_getfield(state->L, LUA_GLOBALSINDEX, "json_read_start_object");
-  lua_rawgeti(state->L, LUA_REGISTRYINDEX, state->state_idx);
+  lua_pushvalue(state->L, 1);
   lua_call(state->L,1,0);
 }
 
@@ -90,7 +90,7 @@ void cb_StartObject(void* state_) {
 void cb_EndObject(void* state_, size_t value) {
   tm_json_cb_state_t* state = (tm_json_cb_state_t*) state_;
   lua_getfield(state->L, LUA_GLOBALSINDEX, "json_read_end_object");
-  lua_rawgeti(state->L, LUA_REGISTRYINDEX, state->state_idx);
+  lua_pushvalue(state->L, 1);
   lua_pushnumber(state->L,value);
   lua_call(state->L,2,0);
 }
@@ -99,7 +99,7 @@ void cb_EndObject(void* state_, size_t value) {
 void cb_StartArray(void* state_) {
   tm_json_cb_state_t* state = (tm_json_cb_state_t*) state_;
   lua_getfield(state->L, LUA_GLOBALSINDEX, "json_read_start_array");
-  lua_rawgeti(state->L, LUA_REGISTRYINDEX, state->state_idx);
+  lua_pushvalue(state->L, 1);
   lua_call(state->L,1,0);
 }
 
@@ -107,7 +107,7 @@ void cb_StartArray(void* state_) {
 void cb_EndArray(void* state_, size_t value) {
   tm_json_cb_state_t* state = (tm_json_cb_state_t*) state_;
   lua_getfield(state->L, LUA_GLOBALSINDEX, "json_read_end_array");
-  lua_rawgeti(state->L, LUA_REGISTRYINDEX, state->state_idx);
+  lua_pushvalue(state->L, 1);
   lua_pushnumber(state->L,value);
   lua_call(state->L,2,0);
 }
@@ -127,8 +127,9 @@ static int tm_json_read(lua_State *L) {
   // get the string to parse
   const char* value = lua_tostring(L, 2);
 
-  lua_pushvalue(L, 1);
-  int state_idx = luaL_ref(L, LUA_REGISTRYINDEX);
+  // lua_pushvalue(state->L, 1);
+  // int state_idx = luaL_ref(L, LUA_REGISTRYINDEX);
+  int state_idx = -1;
 
   // create the reader handler
   tm_json_r_handler_t rh;
@@ -158,7 +159,7 @@ static int tm_json_read(lua_State *L) {
   // if there's an error deal with it
   if(parse_err.code) { on_error(L,value,parse_err); }
 
-  luaL_unref(L, LUA_REGISTRYINDEX, state_idx);
+  // luaL_unref(L, LUA_REGISTRYINDEX, state_idx);
 
   // return the parsed string (eventually)
   return 1;
