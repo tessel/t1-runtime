@@ -1042,14 +1042,18 @@ global.String = function (ths, str)
     -- save the primitive
     getmetatable(ths).__primitive = str;
 
-    -- set the length getter for the boxed value
+    -- setup the length property for the boxed value
+    js_define_setter(ths, 'length', function() end)
     js_define_getter(ths, 'length', function()
       return str.length
     end)
 
     -- set the boxed object properties
-    for i = 0, #str-1 do
-      ths[i] = str.charAt(str, i);
+    for i = 0, str.length-1 do
+      js_define_setter(ths, i, function() end)
+      js_define_getter(ths, i, function()
+        return str[i]
+      end)
     end
 
     -- return the object
