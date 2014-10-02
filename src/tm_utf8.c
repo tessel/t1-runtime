@@ -109,7 +109,7 @@ size_t tm_str_to_utf8 (const uint8_t* buf, size_t str_len, const uint8_t ** cons
     }
   }
   *dstptr = utf8;
-  return utf8_len;
+  return utf8_len - 1;
 }
 
 size_t tm_str_from_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t ** const dstptr) {
