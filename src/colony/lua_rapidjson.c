@@ -48,6 +48,7 @@ static void state_iskey_set (lua_State* L, int val) { lua_pushboolean(L, val); l
 static void cb_Default (void* state_)
 {
   // ignore
+  (void) state_;
 }
 
 /* Callback to Lua for parsing nulls */
@@ -126,8 +127,10 @@ static void cb_Int64 (void* state, int64_t value) { cb_Double(state, value); }
 static void cb_Uint64 (void* state, uint64_t value) { cb_Double(state,value); }
 
 /* Callback to Lua for parsing strings */
-static void cb_String (void* state, const char* value, size_t str_len, bool set)
+static void cb_String (void* state, const char* value, size_t str_len, bool docopy)
 {
+  (void) docopy;
+
   lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
@@ -177,6 +180,8 @@ static void cb_StartObject (void* state)
 /* Callback to Lua for parsing end of an object */
 static void cb_EndObject (void* state, size_t value)
 {
+  (void) value;
+
   lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
@@ -210,7 +215,10 @@ static void cb_StartArray (void* state)
 }
 
 /* Callback to Lua for parsing end of an array */
-static void cb_EndArray (void* state, size_t value) {
+static void cb_EndArray (void* state, size_t value)
+{
+  (void) value;
+
   lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
