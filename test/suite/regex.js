@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(13);
+tap.count(17);
 
 tap.ok("garbage 09 _ - !@#$%".match(/^[\s\S]+$/), 'regex match');
 
@@ -42,6 +42,11 @@ tap.ok(subj1.match(b), 'matches numbers and whitespace');
 
 var c = /cav[ea]+t/i;
 tap.ok(subj2.match(c)[0] == 'caveaaAEEAAEeaeaEAEaeeaEEAEEAet', 'matches char classes');
+
+tap.ok(subj1.match('99'), 'matches non-regex values');
+tap.ok(a.exec(subj1).index == 10, 'exec with index attribute');
+tap.ok(a.exec(subj1).input == subj1, 'exec with input attribute');
+tap.ok(b.exec(subj1).index == 10, 'exec with index attribute and submatch');
 
 tap.ok(c.test(subj2), 'test() works')
 

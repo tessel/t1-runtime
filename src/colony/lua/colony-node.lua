@@ -34,7 +34,6 @@ local js_getter_index = colony.js_getter_index
 local js_define_getter = colony.js_define_getter
 local js_define_setter = colony.js_define_setter
 local js_proto_get = colony.js_proto_get
-local js_func_proxy = colony.js_func_proxy
 
 local obj_proto = colony.obj_proto
 local num_proto = colony.num_proto
@@ -61,7 +60,6 @@ end
 _G._colony_unhandled_exception = function (e)
   if e ~= nil and e.stack then
     -- runtime errors
-    tm.log(22, e:toString())
     tm.log(22, e.stack)
   elseif e ~= nil and type(e.toString) == 'function' then
     tm.log(22, e:toString())
@@ -598,7 +596,7 @@ EventEmitter.prototype.addListener = function (this, eventName, f)
     this:emit("newListener", eventName, f);
   end
   if this._maxListeners ~= 0 and this:listeners(eventName):push(f) > (this._maxListeners or 10) then
-    global.console:warn("Possible EventEmitter memory leak detected. " + this._events[eventName].length + " listeners added. Use emitter.setMaxListeners() to increase limit.")
+    global.console:warn("Possible EventEmitter memory leak detected. Added " + this._events[eventName].length + " listeners on " +eventName+". Use emitter.setMaxListeners() to increase limit.")
   end
   return this
 end

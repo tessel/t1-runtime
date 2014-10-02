@@ -70,9 +70,6 @@ end
 -- built-in prototypes
 
 local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_proto, date_proto = {}, {}, {}, {}, {}, {}, {}, {}
-funcproxies = {}
-
-_G.funcproxies = funcproxies
 
 -- NOTE: js_proto_get defined in colony_init.c
 -- NOTE: js_getter_index defined in colony_init.c
@@ -90,10 +87,15 @@ end
 
 function js_define_setter (self, key, fn)
   if type(self) == 'function' then
-    self = js_func_proxy(self)
+    mt = self.__mt
+    if not mt then
+      self.__mt = {}
+      mt = self.__mt
+    end
+  else
+    mt = get_unique_metatable(self)
   end
 
-  local mt = get_unique_metatable(self)
   rawset(self, key, nil)
   if not mt.getters then
     mt.getters = {}
@@ -108,11 +110,17 @@ function js_define_setter (self, key, fn)
 end
 
 function js_define_getter (self, key, fn)
+  local mt
   if type(self) == 'function' then
-    self = js_func_proxy(self)
+    mt = self.__mt
+    if not mt then
+      self.__mt = {}
+      mt = self.__mt
+    end
+  else
+    mt = get_unique_metatable(self)
   end
-
-  local mt = get_unique_metatable(self)
+  
   rawset(self, key, nil)
   if not mt.getters then
     mt.getters = {}
@@ -293,36 +301,12 @@ js_obj(date_proto)
 -- so when we access an __index or __newindex, we
 -- set up an intermediary object to handle it
 
-setmetatable(funcproxies, {__mode = 'k'})
-
-function js_func_proxy (fn)
-  local proxy = rawget(funcproxies, fn)
-  if not proxy then
-    proxy = js_obj({})
-    proxy.__proto__ = func_proto
-    rawset(funcproxies, fn, proxy)
-  end
-  return proxy
-end
-
 func_mt.__index = function (self, key)
   if key == 'prototype' then
-    local proxy = js_func_proxy(self)
-    if proxy.prototype == nil then
-      proxy.prototype = js_obj({constructor = self})
-    end
-    return proxy.prototype
-  end
-
-  local proxy = rawget(funcproxies, self)
-  if proxy then
-    return js_proto_get(self, proxy, key)
+    self.prototype = js_obj({constructor = self})
+    return self.prototype
   end
   return js_proto_get(self, func_proto, key)
-end
-func_mt.__newindex = function (this, key, value)
-  local proxy = js_func_proxy(this)
-  proxy[key] = value
 end
 func_mt.__tostring = js_tostring
 func_mt.__tovalue = js_valueof
@@ -438,16 +422,13 @@ local function js_next (a, b, c)
   local k = b
   repeat
     k = next(a, k)
-  until (len == nil or type(k) ~= 'number') and not (k == 'length' and mt.proto == arr_proto)
+  until (len == nil or type(k) ~= 'number') and not (k == 'length' and mt.proto == arr_proto) and not (type(a) == 'function' and k == '__mt')
   return k
 end
 
 -- pairs
 
 function js_pairs (arg)
-  if type(arg) == 'function' then
-    arg = js_func_proxy(arg)
-  end
   if type(arg) == 'string' then
     -- todo what
     return js_next, {}
@@ -610,7 +591,6 @@ colony.js_getter_index = js_getter_index
 colony.js_define_getter = js_define_getter
 colony.js_define_setter = js_define_setter
 colony.js_proto_get = js_proto_get
-colony.js_func_proxy = js_func_proxy
 colony.js_with = js_with
 
 colony.obj_proto = obj_proto

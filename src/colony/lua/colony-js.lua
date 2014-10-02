@@ -37,7 +37,6 @@ local js_getter_index = colony.js_getter_index
 local js_define_getter = colony.js_define_getter
 local js_define_setter = colony.js_define_setter
 local js_proto_get = colony.js_proto_get
-local js_func_proxy = colony.js_func_proxy
 local js_with = colony.js_with
 
 local obj_proto = colony.obj_proto
@@ -114,8 +113,9 @@ num_proto.toString = function (this, radix)
   return tm.itoa(this, radix)
 end
 
+-- https://people.mozilla.org/~jorendorff/es6-draft.html#sec-number.prototype.tofixed
 num_proto.toFixed = function (num, n)
-  return string.format("%." .. tonumber(n) .. "f", num)
+  return string.format("%." .. (tonumber(n or 0) or 0) .. "f", num)
 end
 
 -- string prototype
@@ -289,7 +289,7 @@ obj_proto.toString = function (this)
   elseif type(this) == 'function' then
     return '[object Function]'
 
-  elseif getmetatable(this) and getmetatable(this).error_stack ~= nil then
+  elseif getmetatable(this) and getmetatable(this).error then
     return '[object Error]'
   elseif type(this) == 'boolean' then
     return '[object Boolean]'
@@ -330,10 +330,6 @@ obj_proto.hasOwnProperty = function (ths, p)
 
   if type(ths) == 'boolean' then
     return false
-  end
-
-  if type(ths) == 'function' then
-    ths = js_func_proxy(ths)
   end
 
   if getmetatable(ths) and getmetatable(ths).buffer then
@@ -506,25 +502,41 @@ arr_proto.concat = function (this, ...)
 end
 
 arr_proto.sort = function (this, fn)
-  local len = this.length
+  -- shift from 0-based to 1-based index
   table.insert(this, 1, this[0])
   rawset(this, 0, nil)
+
+  -- sort
   table.sort(this, function (a, b)
-    if not b then
-      return 0
+    -- handle nil values
+    if b == nil and a ~= nil then
+      return true
     end
-    local ret
+    if a == nil and b ~= nil then
+      return false
+    end
+
     if not fn then
-      ret = a < b
+      return (tostring(a) < tostring(b))
     else
-      ret = fn(this, a, b)
+      local comp = fn(this, a, b)
+      local tcomp = type(comp)
+      if tcomp == "number" then
+        return comp < 0
+      elseif tcomp == "boolean" then
+        if a == b then
+          return false
+        end
+        return not comp
+      end
     end
-    return ret
   end)
-  local zero = rawget(this, 1)
+
+  --  unshift
+  local tmp = rawget(this, 1)
   table.remove(this, 1)
-  rawset(this, 0, zero)
-  rawset(this, 'length', len)
+  rawset(this, 0, tmp)
+
   return this
 end
 
@@ -884,9 +896,6 @@ global.Object.create = function (this, proto, props)
 end
 
 global.Object.defineProperty = function (this, obj, prop, config)
-  if type(obj) == 'function' then
-    obj = js_func_proxy(obj)
-  end
   if type(obj) ~= 'table' then
     error(js_new(global.TypeError, 'Object.defineProperty called on non-object'))
   end
@@ -920,12 +929,7 @@ end
 global.Object.keys = function (this, obj)
   local a = {}
 
-  -- Use function proxy for object variables.
-  if type(obj) == 'function' then
-    obj = js_func_proxy(obj)
-  end
-
-  if type(obj) ~= 'table' then
+  if type(obj) ~= 'table' and type(obj) ~= 'function' then
     error(js_new(global.TypeError, 'Object.keys called on non-object'))
   end
 
@@ -948,10 +952,6 @@ end
 
 global.Object.getOwnPropertyNames = function (this, obj)
   local a = js_arr({}, 0)
-  -- TODO debug this one:
-  if type(obj) == 'function' then
-    obj = js_func_proxy(obj)
-  end
   for k,v in js_pairs(obj) do
     a:push(k)
   end
@@ -1027,14 +1027,14 @@ global.String = function (ths, str)
   end
   -- If this is an object construction
   if js_instanceof(ths, global.String) == true then
-    
+
     -- conver to a string
     str = tostring(str)
     -- save the primitive
     getmetatable(ths).__primitive = str;
 
     -- set the length getter for the boxed value
-    js_define_getter(ths, 'length', function() 
+    js_define_getter(ths, 'length', function()
       return str.length
     end)
 
@@ -1244,32 +1244,26 @@ global.Math = js_obj({
 
 -- Error
 
-local function error_constructor (this, str)
-  local stack = tostring(debug.traceback())
-  if not global.process.debug then
-    stack = string.gsub(stack, "\t%[[TC]%].-\n", '')
+local function error_constructor (this, str, ctor)
+  getmetatable(this).__tostring = js_tostring
+  getmetatable(this).error = true
+  if str ~= nil then
+    this.message = str
   end
-
-  getmetatable(this).__tostring = function (this)
-    return this.message
-  end
-  getmetatable(this).error_stack = stack
-
-  this.name = 'Error'
-  this.type = 'Error'
-  this.message = str
-  this.stack = stack
+  global.Error.captureStackTrace(global.Error, this, ctor)
 end
 
-error_constructor.prototype.captureStackTrace = function ()
-  return {}
-end
+error_constructor.prototype.name = "Error"
+error_constructor.prototype.message = ""
 
 error_constructor.prototype.toString = function (this)
   if not this then
     return '(undefined)'
+  elseif this.message then
+    return this.name .. ": " .. this.message
+  else
+     return this.name
   end
-  return this.name .. ": " .. this.message
 end
 
 local function error_class (name)
@@ -1279,9 +1273,8 @@ local function error_class (name)
       return js_new(constructor, str)
     end
 
-    error_constructor(this, str)
+    error_constructor(this, str, constructor)
     this.name = name
-    this.type = name
   end
   constructor.name = name
 
@@ -1297,6 +1290,116 @@ global.SyntaxError = error_class('SyntaxError')
 global.TypeError = error_class('TypeError')
 global.URIError = error_class('URIError')
 global.NotImplementedError = error_class('NotImplementedError')
+
+
+-- NOTE: this constructor mimics v8's undocumented parameters/properties
+local function CallSite (this, rcvr, fun, pos)
+  this.receiver = rcvr
+  this.fun = fun
+  this.pos = pos            -- (nvw) I think in v8 this is actually character/byte offset, not line number
+end
+
+local function make_callsite (frame, ctx)
+  local callsite = js_new(CallSite, ctx, frame.func, frame.currentline)
+  getmetatable(callsite).frame = frame
+  return callsite
+end
+
+CallSite.name = 'CallSite'    -- (nvw) not sure why this is needed?
+
+CallSite.prototype.toString = function (this)
+  local frame = getmetatable(this).frame
+  local name = frame.name or "<anonymous>"
+  local file = string.gsub(frame.short_src, "%[[TC]%]. ", '')
+  return name .. " (" .. file .. ":" .. frame.currentline .. ")"
+end
+
+CallSite.prototype.getThis = function (this)
+  return this.receiver
+end
+
+CallSite.prototype.getTypeName = function (this)
+  return this.receiver and this.receiver.constructor.name
+end
+
+CallSite.prototype.getFunction = function (this)
+  return this.fun
+end
+
+CallSite.prototype.getFunctionName = function (this)
+  return this.fun.name
+end
+
+CallSite.prototype.getFileName = function (this)
+  return getmetatable(callsite).short_src
+end
+
+CallSite.prototype.getLineNumber = function (this)
+  return getmetatable(callsite).currentline
+end
+
+-- (nvw) I'm not sure if/how we can fully implement these
+local function callsite_tbd () end
+CallSite.prototype.getMethodName = callsite_tbd
+CallSite.prototype.getColumnNumber = callsite_tbd
+CallSite.prototype.getEvalOrigin = callsite_tbd
+CallSite.prototype.isToplevel = callsite_tbd
+CallSite.prototype.isEval = callsite_tbd
+CallSite.prototype.isNative = callsite_tbd
+CallSite.prototype.isConstructor = callsite_tbd
+
+
+global.Error.stackTraceLimit = 10
+
+global.Error.captureStackTrace = function (this, err, ctor)
+  local frames = {}
+  local frame_idx
+  if ctor then
+    frame_idx = 0
+  else
+    frame_idx = 1
+  end
+
+  local info_idx = 2     -- skip ourselves for starters
+  while true do
+    local frame = nil
+    if frame_idx <= global.Error.stackTraceLimit then
+      frame = debug.getinfo(info_idx)
+    end
+    if not frame then
+      break
+    end
+    if frame_idx > 0 then
+      local k, v = debug.getlocal(info_idx, 1)
+      frames[frame_idx] = make_callsite(frame, v)
+      frame_idx = frame_idx + 1
+    elseif frame.func == ctor then
+      frame_idx = 1
+    end
+    info_idx = info_idx + 1
+  end
+  getmetatable(err).frames = frames
+end
+
+js_define_getter(error_constructor.prototype, 'stack', function (this)
+  local frames = getmetatable(this).frames or {}
+  if (global.Error.prepareStackTrace) then
+    -- NOTE: https://code.google.com/p/v8/wiki/JavaScriptStackTraceApi states that this will
+    --       actually be called when error is *created*. node seems to match this claim, however,
+    --       in Chrome 37.0.2062.94 console you have to call .stack to trigger. This seems simpler.
+    local arr = global:Array(unpack(frames))
+    return global.Error.prepareStackTrace(global.Error, this, arr)
+  end
+
+  local s = this:toString()
+  local frame
+  local frame_idx = 1
+  for i, frame in ipairs(frames) do
+    s = s .. "\n    at " .. frame:toString()
+  end
+  return s
+end)
+
 
 -- Console
 
@@ -1627,12 +1730,14 @@ if type(hs) == 'table' then
   end
 
   global.String.prototype.match = function (this, regex)
+
+    if not js_instanceof(regex, global.RegExp) then
+      regex = js_new(global.RegExp, regex)
+    end
+
     -- Match using hsregex
     local cre = getmetatable(regex).cre
     local crestr = getmetatable(regex).crestr
-    if type(cre) ~= 'userdata' then
-      error(js_new(global.TypeError, 'Cannot call RegExp.prototype.match on non-regex'))
-    end
 
     if rawget(regex, 'global') then
       local data = tostring(this)
@@ -1653,32 +1758,17 @@ if type(hs) == 'table' then
         idx = idx + eo
       end
       return js_arr(ret, count)
+    else
+      -- Call regex.exec(str) if the global flag is not true
+      return global.RegExp.prototype.exec(regex, this)
     end
-
-    local data = tostring(this)
-    local rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
-    if rc ~= 0 then
-      return nil
-    end
-    local ret, pos = {}, 0
-    for i=0,hs.regex_nsub(cre) do
-      local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
-      if so == -1 or eo == -1 then
-        table.insert(ret, pos, nil)
-      else
-        table.insert(ret, pos, string.sub(data, so + 1, eo))
-      end
-      pos = pos + 1
-    end
-    return js_arr(ret, pos)
   end
 
-  global.RegExp.prototype.exec = function (regex, subj)
-    -- TODO wrong
-    local cre = getmetatable(regex).cre
-    local crestr = getmetatable(regex).crestr
+  global.RegExp.prototype.exec = function (this, subj)
+    local cre = getmetatable(this).cre
+    local crestr = getmetatable(this).crestr
     if type(cre) ~= 'userdata' then
-      error(js_new(global.TypeError, 'Cannot call RegExp.prototype.match on non-regex'))
+      error(js_new(global.TypeError, 'Cannot call RegExp.prototype.exec on non-regex'))
     end
 
     local data = tostring(subj)
@@ -1687,7 +1777,7 @@ if type(hs) == 'table' then
       return nil
     end
     local ret, len = {}, 0
-    for i=0,hs.regex_nsub(cre) do
+    for i=0, hs.regex_nsub(cre) do
       local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
       if so == -1 or eo == -1 then
         table.insert(ret, len, nil)
@@ -1696,6 +1786,10 @@ if type(hs) == 'table' then
       end
       len = len + 1
     end
+
+    ret.index = hs.regmatch_so(hsmatch, 0)
+    ret.input = data
+
     return js_arr(ret, len)
   end
 
@@ -1753,26 +1847,46 @@ global.JSON = js_obj({
 
 function encodeURIComponent (this, str)
   str = tostring(str)
-  str = string.gsub (str, "\n", "\r\n")
-  str = string.gsub (str, "([^%w %-%_%.%~])", function (c)
+  str = string.gsub (str, "([^%w%-%_%.%~%*%(%)'])", function (c)
     return string.format ("%%%02X", string.byte(c))
   end)
-  str = string.gsub (str, " ", "%%20")
   return str
 end
 
 function decodeURIComponent (this, str)
   str = tostring(str)
   str = string.gsub (str, "+", " ")
-  str = string.gsub (str, "%%(%x%x)", function(h)
+  return string.gsub (str, "%%(%x%x)", function(h)
     return string.char(tonumber(h,16))
   end)
-  str = string.gsub (str, "\r\n", "\n")
-  return str
 end
+
+
+function encodeURI(this, str)
+  -- TODO: Check for high/low surrogate pairs
+  return string.gsub (tostring(str), "([^%w,;/:@&='_~#%+%$!%.%?%%-%*%(%)])",
+    function (c) return string.format ("%%%02X", string.byte(c)) end)
+end
+
+function decodeURI(this, str)
+  return string.gsub(tostring(str), "%%(%x%x)",
+     function(c) return string.char(tonumber(c, 16)) end)
+end
+
+function escape(this, str)
+  return string.gsub(tostring(str), "([^%w@%*_%+%-%./])",
+    function(c)
+      return string.format ("%%%02X", string.byte(c))
+    end);
+end
+
+
 
 global.encodeURIComponent = encodeURIComponent
 global.decodeURIComponent = decodeURIComponent
+global.encodeURI = encodeURI;
+global.decodeURI = decodeURI;
+global.escape = escape;
 
 
 --[[

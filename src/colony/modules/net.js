@@ -17,7 +17,6 @@ var dns = require('dns');
 var Stream = require('stream');
 var tls = require('tls');
 
-
 /**
  * ip/helpers
  */
@@ -64,24 +63,16 @@ function TCPSocket (socket, _secure) {
     this.socket = socket.fd;
     // TODO: respect readable/writable flags
     if (socket.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
-  } else if (socket == null) {
-    if (_secure) ensureSSLCtx();
-    this.socket = tm.tcp_open();
-  } else {
-    this.socket = socket;
-  }
+  } 
+
   this._secure = _secure;
   this._outgoing = [];
   this._sending = false;
   this._queueEnd = false;
+  this.socket = (socket === undefined) ? null : socket;
 
   var self = this;
-  if (this.socket < 0) {
-    setImmediate(function () {
-      self.emit('error', new Error("ENOENT: Cannot open another socket."));
-    });
-    return;
-  }
+
   self.on('finish', function () {
     // this is called when writing is ended
     // TODO: support allowHalfOpen (if firmware can?)
@@ -92,7 +83,6 @@ function TCPSocket (socket, _secure) {
     if (socket == self.socket) {
       setImmediate(function () {
         self.__readSocket(true);
-        // console.log('closing', socket, 'against', self.socket)
         self.close();
       });
     }
@@ -137,13 +127,13 @@ function normalizeConnectArgs(args) {
 
 TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   var self = this;
+
   var args = normalizeConnectArgs(arguments);
   var opts = args[0];
   if (opts.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
   var port = +opts.port;
   var host = opts.host || "127.0.0.1";
   var cb = args[1];
-
   self.remotePort = port;
   self.remoteAddress = host;
   // TODO: proper value for these?
@@ -160,102 +150,175 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
     
   }
 
-  setImmediate(function () {
-    self._restartTimeout();
-    if (isIP(host)) {
-      doConnect(host);
-    } else {
-      dns.resolve(host, function onResolve(err, ips) {
-        if (err) {
-          return self.emit('error', err);
-        }
-        self._restartTimeout();
-        self.remoteAddress = ips[0];
-        doConnect(self.remoteAddress);
-      })
+  if (isIP(host)) {
+    setUpConnection(host);
+  } else {
+    dns.resolve(host, function onResolve(err, ips) {
+      if (err) {
+        return self.emit('error', err);
+      }
+      setUpConnection(ips[0]);
+    })
+  }
+
+  function setUpConnection(ip) {
+    if (self.socket == null) {
+      if (self._secure) ensureSSLCtx();
+      self.socket = tm.tcp_open();
     }
+
+    if (self.socket < 0) {
+      setImmediate(function () {
+        var err = "ENOENT: Cannot open another socket.";
+        if (self.socket == -tm.ENETUNREACH) {
+          // wifi is not connected
+          err = "ENETUNREACH: Wifi is not connected.";
+        }
+        self.emit('error', new Error(err));
+
+        // cleanup
+        self.removeAllListeners();
+      });
+
+      return;
+    }
+
     var retries = 0;
-    function doConnect(ip) {
+    setImmediate(function doConnect() {
       var addr = ip.split('.').map(Number);
       addr = (addr[0] << 24) + (addr[1] << 16) + (addr[2] << 8) + addr[3];
 
       var ret = tm.tcp_connect(self.socket, addr, port);
-      if (ret >= 1) {
+      if (ret == -tm.ENETUNREACH) {
         // we're not connected to the internet
-        return self.emit('error', new Error("Lost connection"));
+        self.emit('error', new Error("ENETUNREACH: Wifi is not connected"));
+        // force the cleanup
+        self.destroy();
+        return self.__close(); // need to call close otherwise we keep listening for the tcp-close event
       }
+
       if (ret < 0) {
-        tm.tcp_close(self.socket); // -57
+        var closeRet = tm.tcp_close(self.socket); // returns -57 if socket is already closed
+        if (closeRet < 0 && closeRet != -tm.ENOTCONN){ 
+          // couldn't close socket, throw an error
+          self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+closeRet));
+          self.destroy();
+          return self.__close(false);
+        }
+
         if (retries > 3) {
-          return self.emit('error', new Error('ENOENT Cannot connect to ' + ip + ' Got: err'+ret));
+          self.emit('error', new Error('ENOENT Cannot connect to ' + ip + ' Got: err'+ret));
+          // force the cleanup
+          self.destroy();
+          return self.__close();
         } else {
           retries++;
           setTimeout(function(){
             // wait for tcp socket to actually close
             self.socket = tm.tcp_open();
-            doConnect(ip);
+
+            if (self.socket < 0) {
+              var err = "ENOENT: Cannot open another socket.";
+              if (self.socket == -tm.ENETUNREACH) {
+                // wifi is not connected
+                err = "ENETUNREACH: Wifi is not connected.";
+              }
+              self.emit('error', new Error(err));
+
+              // force the close
+              self.destroy();
+              return self.__close();
+            } else {
+              doConnect();
+            }
           }, 100);
           return;
         }
       }
 
-      if (self._secure) {
-        var hostname = null;
-        if (!isIP(host)) {
-          hostname = host;
-        }
-        var _ = tm.ssl_session_create(ssl_ctx, self.socket, hostname)
-          , ssl = _[0]
-          , ret = _[1]
-        if (ret != 0) {
-          if (ret == -517) {
-            return self.emit('error', new Error('CERT_HAS_EXPIRED'));
-          } else if (ret == -516) {
-            return self.emit('error', new Error('CERT_NOT_YET_VALID'));
-          } else {
-            return self.emit('error', new Error('Could not validate SSL request (error ' + ret + ')'));
-          }
-        }
+      if (!self._secure) {
+        connectionStable();
+      } else {
+        // do a select call to try to free some cc3k buffers
+        
+        tm.tcp_readable(self.socket);
+        tm.tcp_readable(self.socket);
+        tm.tcp_readable(self.socket);
 
-        var cert = {
-          subjectaltname: (function () {
-            var altnames = [];
-            for (var i = 0; ; i++) {
-              var _ = tm.ssl_session_altname(ssl, i)
-                , altname = _[0]
-                , ret = _[1]
-              if (ret != 0) {
-                break;
-              }
-              altnames.push(altname);
+        setTimeout(function() {
+          createSession(); 
+        }, 100);
+
+        function createSession() {
+          var _ = tm.ssl_session_create(ssl_ctx, self.socket, hostname)
+            , ssl = _[0]
+            , ret = _[1]
+            ;
+
+          if (ret != 0) {
+            if (ret == -517) {
+              return self.emit('error', new Error('CERT_HAS_EXPIRED'));
+            } else if (ret == -516) {
+              return self.emit('error', new Error('CERT_NOT_YET_VALID'));
+            } else if (ret == -2) {
+              tm.tcp_readable(self.socket);
+              self.destroy();
+              self.__close();
+              return self.emit('error', new Error('Socket out of mem'));
+
+              return;
+            } else {
+              // close socket
+              self.destroy();
+              self.__close();
+              return self.emit('error', new Error('Could not validate SSL request (error ' + ret + ')'));
             }
-            return 'DNS:' + altnames.join(', DNS:');
-          })(),
-          subject: {
-            CN: tm.ssl_session_cn(ssl)[0]
           }
-        }
 
-        if (!tls.checkServerIdentity(host, cert)) {
-          return self.emit('error', new Error('Hostname/IP doesn\'t match certificate\'s altnames'));
-        }
+          var cert = {
+            subjectaltname: (function () {
+              var altnames = [];
+              for (var i = 0; ; i++) {
+                var _ = tm.ssl_session_altname(ssl, i)
+                  , altname = _[0]
+                  , ret = _[1]
+                if (ret != 0) {
+                  break;
+                }
+                altnames.push(altname);
+              }
+              return 'DNS:' + altnames.join(', DNS:');
+            })(),
+            subject: {
+              CN: tm.ssl_session_cn(ssl)[0]
+            }
+          }
 
-        self._ssl = ssl;
+          if (!tls.checkServerIdentity(host, cert)) {
+            return self.emit('error', new Error('Hostname/IP doesn\'t match certificate\'s altnames'));
+          }
+
+          self._ssl = ssl;
+          connectionStable();
+        }
+        
       }
 
-      self._restartTimeout();
-      self.__listen();
-      self.connected = true;
-      if(!self._secure) {
-        self.emit('connect');
-      }
-      else {
-        self.emit('secureConnect');
+      function connectionStable(){
+        self._restartTimeout();
+        self.__listen();
+        self.connected = true;
+        if(!self._secure) {
+          self.emit('connect');
+        } else {
+          self.emit('secureConnect');
+        }
+        
+        self.__send();
       }
       
-      self.__send();
-    }
-  });
+    });
+  }
 };
 
 TCPSocket.prototype._read = function (size) {
@@ -265,21 +328,23 @@ TCPSocket.prototype._read = function (size) {
 TCPSocket.prototype.__listen = function () {
   var self = this;
   this.__listenid = setTimeout(function loop () {
+    if (self._sending) {
+      // retry soon
+      setTimeout(loop, 100);
+      return;
+    }
+
     self.__listenid = null;
     // ~HACK: set a watchdog to fire end event if not re-polled
     var failsafeEnd = setImmediate(function () {
       self.emit('end');
     });
 
-    if (self._sending) {
-      return;
-    }
-
     var flag = self.__readSocket(true);
 
     // Check error condition.
     if (flag < 0) {
-      // self.emit('error', new Error('Socket closed.'));
+      self.emit('error', new Error('Socket closed.'));
       self.destroy();
       return;
     }
@@ -297,7 +362,6 @@ var WRITE_PACKET_SIZE = 1024;
 
 TCPSocket.prototype._write = function (buf, encoding, cb) {
   var self = this;
-  
   if (!Buffer.isBuffer(buf)) {
     buf = new Buffer(buf);
   }
@@ -309,6 +373,7 @@ TCPSocket.prototype._write = function (buf, encoding, cb) {
   } else {
     this._outgoing.push(buf);
   }
+
   this.__send(cb);
 };
 
@@ -325,6 +390,7 @@ TCPSocket.prototype.__send = function (cb) {
 
   var self = this;
   var buf = this._outgoing.shift();
+
   (function send () {
     if (self.socket == null) {
       // most likely we ran out of memory or needed to send an EWOULDBLOCK / EAGAIN
@@ -342,7 +408,7 @@ TCPSocket.prototype.__send = function (cb) {
 
     if (ret == null) {
       return self.emit('error', new Error('Never sent data over socket'));
-    } else if (ret == -2) {
+    } else if (ret == -2 || self._ssl && ret == -256) {
       // cc3000 ran out of buffers. wait until a buffer clears up to send this packet.
       setTimeout(function() {
         // call select to listen for CC3k clearing mem
@@ -365,7 +431,6 @@ TCPSocket.prototype.__send = function (cb) {
 
 TCPSocket.prototype.__readSocket = function(restartTimeout) {
   var self = this;
-
   var buf = '', flag = 0;
   while (self.socket != null && (flag = tm.tcp_readable(self.socket)) > 0) {
     if (self._ssl) {
@@ -394,11 +459,38 @@ TCPSocket.prototype.__readSocket = function(restartTimeout) {
 }
 
 
-TCPSocket.prototype.__close = function () {
+TCPSocket.prototype.__close = function (tryToClose) {
+  if (this.socket == null) {
+    return;
+  }
+
+  var self = this;
   process.removeListener('tcp-close', this._closehandler);
-  tm.tcp_close(this.socket);
-  this.socket = null;
-  this.emit('close');
+
+  var retries = 0;
+  function closeSocket(){
+    if (self.socket === null) return;
+    var ret = tm.tcp_close(self.socket);
+    if (ret < 0 && ret != -tm.ENOTCONN) { // -57 is inactive, socket has already been closed
+      if (retries > 3) {
+        // tried 3 times and couldn't close, error out
+        self.emit('close');
+        self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+ret));
+      } else {
+        retries++;
+        // try again
+        setTimeout(closeSocket, 100);
+      }
+     
+    } else {
+      self.socket = null;
+      self.emit('close');
+    }
+  }
+
+  if (tryToClose !== false) {
+    closeSocket();
+  }
 }
 
 TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
@@ -410,15 +502,14 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
     }
     self.emit('end')
     if (self.socket != null) {
-
       // if there is still data left, wait until its sent before we end
       if (self._outgoing.length || self._sending) {
         self._queueEnd = true;
       } else {
         self.__close();
-      }
-      
+      } 
     }
+    self.removeAllListeners();
   });
 };
 
@@ -458,6 +549,10 @@ function connect (port, host, callback, _secure) {
  */
 
 function TCPServer (socket) {
+  if (socket === undefined || socket === null) {
+    // create a new socket
+    socket = tm.tcp_open();
+  }
   TCPSocket.call(this, socket);
 }
 
@@ -534,7 +629,17 @@ function createServer (opts, onsocket) {
     opts = null;
   }
   if (opts && opts.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
-  var server = new TCPServer(tm.tcp_open());
+  var socket = tm.tcp_open();
+  if (socket < 0) {
+    var err = "ENOENT: Cannot open another socket. Got code:"+socket;
+    if (socket == -tm.ENETUNREACH) {
+      // wifi is not connected
+      err = "ENETUNREACH: Wifi is not connected.";
+    }
+    throw new Error(err);
+  }
+
+  var server = new TCPServer(socket);
   onsocket && server.on('connection', onsocket);
   return server;
 };

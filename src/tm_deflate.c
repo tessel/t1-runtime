@@ -127,10 +127,6 @@ int tm_deflate_write (tm_deflate_t _deflator, const uint8_t* in, size_t in_len, 
   *out_total = 0;
 
   if (deflator->state == TM_HEADER && deflator->type == TM_GZIP) {
-    // Minimum chunk value is 10 bytes
-    if (in_len < 10) {
-      return EINVAL;
-    }
 
     uint8_t hdr[10] = {
       0x1F, 0x8B,	/* magic */
@@ -281,9 +277,12 @@ int tm_inflate_write (tm_inflate_t _inflator, const uint8_t* in, size_t in_len, 
   }
 
   if (inflator->state == TM_TRAILER && inflator->type == TM_GZIP) {
-    // Minimum chunk value is 8 bytes
+    // if the ending chunk is too small, exit out
     if (in_len < 8) {
-      return EINVAL;
+      *in_total = in_len;
+      inflator->state = TM_END;
+      *out_total += 0;
+      return 0;
     }
 
     // Checks crc32.

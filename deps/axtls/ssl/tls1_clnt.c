@@ -143,16 +143,30 @@ int do_client_connect(SSL *ssl)
 {
     int ret = SSL_OK;
 
-    send_client_hello(ssl);                 /* send the client hello */
+    int sendRet = send_client_hello(ssl);                 /* send the client hello */
+    if (sendRet != 0) {
+        return sendRet;
+    }
     ssl->bm_read_index = 0;
     ssl->next_state = HS_SERVER_HELLO;
     ssl->hs_status = SSL_NOT_OK;            /* not connected */
+
+
+    struct timeval timeout;
+    timeout.tv_sec = 10;
+    timeout.tv_usec = 20000;
 
     /* sit in a loop until it all looks good */
     if (!IS_SET_SSL_FLAG(SSL_CONNECT_IN_PARTS))
     {
         while (ssl->hs_status != SSL_OK)
         {
+            fd_set wfds;
+            FD_ZERO(&wfds);
+            FD_SET(ssl->client_fd, &wfds);
+
+            // select call to... free buffers
+            select(ssl->client_fd + 1, NULL, &wfds, NULL, &timeout);
             ret = ssl_read(ssl, NULL);
             
             if (ret < SSL_OK)
