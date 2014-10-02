@@ -13,7 +13,7 @@ else
 		ninja -C out/$(CONFIG)
 endif
 
-.PHONY: all
+.PHONY: all test
 
 all:
 
@@ -27,6 +27,9 @@ nuke:
 update:
 	git submodule update --init --recursive
 	npm install
+
+test:
+	@./node_modules/.bin/tap -e './out/Release/colony' test/suite/*.js test/issues/*.js test/net/*.js
 
 
 # Targets
