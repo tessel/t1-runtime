@@ -15,7 +15,7 @@ endif
 
 .PHONY: all test
 
-all:
+all: colony
 
 clean:
 	ninja -v -C out/Debug -t clean
