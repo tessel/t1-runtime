@@ -1,0 +1,20 @@
+description: OS X
+badge_token: QsFQ9CsYegvj7x78qiit
+
+language: objective-c
+before_install:
+  - brew update
+  - brew tap tcr/tcr
+  - brew install python gyp ninja gcc-arm
+  - brew install node || true
+  - git config credential.helper store
+  - git clone https://github.com/tessel/colony-lua.git deps/colony-lua
+install:
+  - git submodule update --init
+  - npm install
+script:
+  - make colony
+  - npm test
+
+git:
+  submodules: false
