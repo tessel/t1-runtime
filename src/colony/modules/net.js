@@ -473,6 +473,11 @@ TCPSocket.prototype.__close = function (tryToClose) {
     var ret = tm.tcp_close(self.socket);
     if (ret < 0 && ret != -tm.ENOTCONN) { // -57 is inactive, socket has already been closed
       if (retries > 3) {
+        if (ssl_ctx != null){
+          console.log("freeing ssl context");
+          tm.ssl_context_free(ssl_ctx);
+          ssl_ctx = null;
+        }
         // tried 3 times and couldn't close, error out
         self.emit('close');
         self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+ret));
@@ -483,6 +488,11 @@ TCPSocket.prototype.__close = function (tryToClose) {
       }
      
     } else {
+      if (ssl_ctx != null){
+        console.log("freeing ssl context");
+        tm.ssl_context_free(ssl_ctx);
+        ssl_ctx = null;
+      }
       self.socket = null;
       self.emit('close');
     }

@@ -165,6 +165,7 @@ void DISPLAY_BYTES(SSL *ssl, const char *format,
  */
 EXP_FUNC SSL_CTX *STDCALL ssl_ctx_new(uint32_t options, int num_sessions)
 {
+    printf("creating ssl ctx\n");
     SSL_CTX *ssl_ctx = (SSL_CTX *)calloc(1, sizeof (SSL_CTX));
     ssl_ctx->options = options;
     RNG_initialize();
