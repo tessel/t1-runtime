@@ -1375,7 +1375,7 @@ global.Error.captureStackTrace = function (this, err, ctor)
     end
     info_idx = info_idx + 1
   end
-  
+
   js_define_getter(err, 'stack', function (this)
     if (global.Error.prepareStackTrace) then
       -- NOTE: https://code.google.com/p/v8/wiki/JavaScriptStackTraceApi states that this will
@@ -1686,7 +1686,9 @@ if type(hs) == 'table' then
       error(js_new(global.Error, 'Too many capturing subgroups (max ' .. hsmatchc .. ', compiled ' .. hs.regex_nsub(cre) .. ')'))
     end
 
-    local o = {source=source}
+    local o = {}
+    o.source = source
+    o.lastIndex = 0
     o.global = (flags and string.find(flags, "g") and true)
     o.ignoreCase = (flags and string.find(flags, "i") and true)
     o.multiline = (flags and string.find(flags, "m") and true)
@@ -1777,9 +1779,12 @@ if type(hs) == 'table' then
       error(js_new(global.TypeError, 'Cannot call RegExp.prototype.exec on non-regex'))
     end
 
-    local data = tostring(subj)
+    local input = tostring(subj)
+    local data = string.sub(input, this.lastIndex + 1)
     local rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
     if rc ~= 0 then
+      -- Reset .lastIndex when no match found
+      this.lastIndex = 0
       return nil
     end
     local ret, len = {}, 0
@@ -1793,8 +1798,12 @@ if type(hs) == 'table' then
       len = len + 1
     end
 
-    ret.index = hs.regmatch_so(hsmatch, 0)
-    ret.input = data
+    ret.index = this.lastIndex + hs.regmatch_so(hsmatch, 0)
+    ret.input = input
+
+    if this.global then
+      this.lastIndex = this.lastIndex + hs.regmatch_eo(hsmatch, 0)
+    end
 
     return js_arr(ret, len)
   end
