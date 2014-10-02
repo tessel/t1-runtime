@@ -1683,7 +1683,9 @@ if type(hs) == 'table' then
       error(js_new(global.Error, 'Too many capturing subgroups (max ' .. hsmatchc .. ', compiled ' .. hs.regex_nsub(cre) .. ')'))
     end
 
-    local o = {source=source}
+    local o = {}
+    o.source = source
+    o.lastIndex = 0
     o.global = (flags and string.find(flags, "g") and true)
     o.ignoreCase = (flags and string.find(flags, "i") and true)
     o.multiline = (flags and string.find(flags, "m") and true)
@@ -1761,7 +1763,8 @@ if type(hs) == 'table' then
       error(js_new(global.TypeError, 'Cannot call RegExp.prototype.exec on non-regex'))
     end
 
-    local data = tostring(subj)
+    local input = tostring(subj)
+    local data = string.sub(input, this.lastIndex + 1)
     local rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
     if rc ~= 0 then
       return nil
@@ -1777,8 +1780,9 @@ if type(hs) == 'table' then
       len = len + 1
     end
 
-    ret.index = hs.regmatch_so(hsmatch, 0)
-    ret.input = data
+    ret.index = this.lastIndex + hs.regmatch_so(hsmatch, 0)
+    ret.input = input
+    this.lastIndex = this.lastIndex + hs.regmatch_eo(hsmatch, 0)
 
     return js_arr(ret, len)
   end
