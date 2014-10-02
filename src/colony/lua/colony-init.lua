@@ -42,12 +42,6 @@ function table.augment (t1,t2)
   return t1
 end
 
-if not table.pack then
-  function table.pack(...)
-    return { length = select("#", ...), ... }
-  end
-end
-
 if not setfenv then -- Lua 5.2
   -- based on http://lua-users.org/lists/lua-l/2010-06/msg00314.html
   -- this assumes f is a function

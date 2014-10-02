@@ -17,6 +17,13 @@ local colony = require('colony')
 -- This is temporary until we can do global._arr in C extension methods
 _G._colony = colony
 
+-- polyfill
+if not table.pack then
+  function table.pack(...)
+    return { n = select("#", ...), ... }
+  end
+end
+
 -- "Precache" builtin library code as functions.
 -- This gets moved into colony.cache when run, as do all modules.
 colony.precache = {}
