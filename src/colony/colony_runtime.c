@@ -108,6 +108,16 @@ int tm_checked_call(lua_State *L, int nargs)
   // Run checked call.
   lua_insert(L, err_func);
   int r = lua_pcall(L, nargs, 0, err_func);
+
+  if (r != 0) {
+    if (r == LUA_ERRMEM) {
+      tm_logf(SYS_ERR, "Error: Out of memory\n");
+    } else {
+      tm_logf(SYS_ERR, "lua_pcall error %i\n", r);
+    }
+    tm_runtime_exit_longjmp(255);
+  }
+
   lua_remove(L, err_func);
   return r;
 }
@@ -187,7 +197,7 @@ int colony_runtime_open ()
 #ifdef ENABLE_NET
   // http_parser
   lua_pushcfunction(L, luaopen_http_parser);
-  lua_setfield(L, -2, "http_parser");
+  lua_setfield(L, -2, "http_parser_lua");
 #endif
   // hsregex
   lua_pushcfunction(L, luaopen_hsregex);

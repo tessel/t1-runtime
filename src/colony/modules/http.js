@@ -8,7 +8,7 @@
 // except according to those terms.
 
 var tm = process.binding('tm');
-var http_parser = process.binding('http_parser');
+var http_parser = process.binding('http_parser_lua');
 
 var url = require('url');
 var util = require('util');
@@ -109,35 +109,37 @@ function IncomingMessage (type, socket) {
   this.socket = this.connection = socket;
   // TODO: finish timeout forwarding/handling/cleanup! (and implement other occurences)
   this.setTimeout = socket.setTimeout.bind(socket);
+  var self = this;
 
-  function js_wrap_function (fn) {
+  function parserCallback (fn) {
     return function () {
-      return fn.apply(null, [this].concat(arguments));
+      if (self.socket) {
+        return fn.apply(null, [this].concat(arguments));
+      }
     }
   }
 
-  var self = this;
   var parser = http_parser.new(type, {
-    onMessageBegin: js_wrap_function(function () {
+    onMessageBegin: parserCallback(function () {
       self.emit('_messageBegin');
     }),
-    onUrl: js_wrap_function(function (url) {
+    onUrl: parserCallback(function (url) {
       self.url = url;
     }),
-    onHeaderField: js_wrap_function(function (field) {
+    onHeaderField: parserCallback(function (field) {
       var arr = (self._headersComplete) ? self.rawTrailers : self.rawHeaders;
       if (arr.length + 1 > self._maxRawHeaders) return;
       arr.push(field);
     }),
-    onHeaderValue: js_wrap_function(function (value) {
+    onHeaderValue: parserCallback(function (value) {
       var arr = (self._headersComplete) ? self.rawTrailers : self.rawHeaders,
-          key = arr[arr.length - 1].toLowerCase();
+        key = arr[arr.length - 1].toLowerCase();
       if (arr.length + 1 > self._maxRawHeaders) return;
       arr.push(value);
       var obj = (self._headersComplete) ? self.trailers : self.headers;
       IncomingMessage._addHeaderLine(key, value, obj);
     }),
-    onHeadersComplete: js_wrap_function(function (info) {
+    onHeadersComplete: parserCallback(function (info) {
       self.method = info.method;
       self.statusCode = info.status_code;
       self.httpVersionMajor = info.version_major;
@@ -149,11 +151,11 @@ function IncomingMessage (type, socket) {
       else self._unplug();
       return (self._noContent) ? 1 : 0;
     }),
-    onBody: js_wrap_function(function (body) {
+    onBody: parserCallback(function (body) {
       var glad = self.push(body);
       if (!glad) socket.pause();
     }),
-    onMessageComplete: js_wrap_function(function () {
+    onMessageComplete: parserCallback(function () {
       self.push(null);
       self._unplug();
     })
@@ -167,9 +169,11 @@ function IncomingMessage (type, socket) {
     self.emit('close');
   }
   function _handleData(d) {
-    var nparsed = parser.execute(d.toString('binary'), 0, d.length);
-    if (self._upgrade) self.emit('_upgrade', d.slice(nparsed));
-    else if (nparsed !== d.length) _emitError();
+    if (self.socket) {
+       var nparsed = parser.execute(d.toString('binary'), 0, d.length);
+      if (self._upgrade) self.emit('_upgrade', d.slice(nparsed));
+      else if (nparsed !== d.length) _emitError();
+    }
   }
   function _handleEnd() {
     if (parser.finish() !== 0) _emitError();
@@ -249,7 +253,6 @@ IncomingMessage._addHeaderLine = function(field, value, dest) {
 
 function OutgoingMessage () {
   Writable.call(this);
-  
   this._keepAlive = true;
   this.sendDate = false;        // NOTE: ServerResponse changes default to true
   this._chunked = true;
@@ -264,7 +267,9 @@ function OutgoingMessage () {
       self._chunked = false;
       self.flush();
     }
-    if (this._chunked) self._outbox.write('0\r\n'+this._trailer+'\r\n');
+    if (this._chunked) {
+      self._outbox.write('0\r\n'+this._trailer+'\r\n');
+    }
   });
 }
 
@@ -321,6 +326,7 @@ OutgoingMessage.prototype.flush = function () {
   // NOTE: will be broken until https://github.com/tessel/runtime/issues/388
   if (this.sendDate === true) lines.push('Date: '+new Date().toUTCString());
   else this.sendDate = !!this.sendDate;   // HACK: don't expose signal above
+  
   lines.push('','');
   this._outbox.write(lines.map(_stripCRLF).join('\r\n'));
   this.headersSent = true;
@@ -408,7 +414,11 @@ function _getPool(agent, opts) {
   
   function addSocket() {
     var socket = agent._createConnection(opts);
-    socket.on('close', handleDead);
+
+    socket.on('close', function(){
+      handleDead();
+      socket.destroy();
+    });
     socket.on('_free', handleFree);
     socket.once('agentRemove', function () {
       socket.removeListener('close', handleDead);
@@ -418,6 +428,7 @@ function _getPool(agent, opts) {
     
     function handleDead() { removeSocket(socket); }
     function handleFree() { updateSocket(socket); }
+    
     return socket;
   }
   
@@ -431,6 +442,7 @@ function _getPool(agent, opts) {
         freeSockets.push(socket);
       } else socket.end();
       removeSocket(socket);
+      socket.destroy();
     }
   }
   
@@ -493,7 +505,6 @@ function ClientRequest (opts, _https) {
   if (opts.agent === false) opts.agent = this._getAgent('single');
   else if (!opts.agent) opts.agent = this._getAgent('global');
   opts.method = opts.method.toUpperCase();
-  
   OutgoingMessage.call(this);
   this._mainline = [opts.method, opts.path, 'HTTP/1.1'].join(' ');
   this.setHeader('Host', [opts.host, opts.port].join(':'));
@@ -520,7 +531,9 @@ function ClientRequest (opts, _https) {
     response.once('_error', function (e) {
       self.emit('error', e);
     });
-    if (opts.method === 'CONNECT') response._upgrade = true;      // parser can't detect (2xx vs. 101)
+    if (opts.method === 'CONNECT') {
+      response._upgrade = true;      // parser can't detect (2xx vs. 101)
+    } 
     response.once('_upgrade', function (head) {
       var event = (opts.method === 'CONNECT') ? 'connect' : 'upgrade',
           handled = self.emit(event, response, socket, head);
@@ -541,7 +554,9 @@ function ClientRequest (opts, _https) {
       if (close) {
         socket.emit('agentRemove');
         socket.end();
-      } else socket.emit('_free');
+      } else {
+        socket.emit('_free');
+      }
     });
     self.on('error', self.abort);
   });

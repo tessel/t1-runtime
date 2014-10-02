@@ -159,7 +159,8 @@ int tm_tcp_readable (tm_socket_t sock)
     if (select(sock+1, &readset, NULL, NULL, &tv) <= 0) {
         return 0;
     }
-    return FD_ISSET(sock, &readset);
+
+    return FD_ISSET(sock, &readset) != 0 ? 1 : 0;
 }
 
 int tm_tcp_listen (tm_socket_t sock, uint16_t port)

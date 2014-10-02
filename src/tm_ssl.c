@@ -76,7 +76,6 @@ int tm_ssl_context_create (tm_ssl_ctx_t* ctx)
     // }
 
     *ctx = ssl_ctx;
-
     return 0;
 }
 
@@ -126,14 +125,22 @@ int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ssl_ctx, tm_s
    //  }
 
     // Create SSL context with hostname.
+    
     SSL *ssl = ssl_new(ssl_ctx, client_fd);
     ssl->version = SSL_PROTOCOL_VERSION_MAX; /* try top version first */
     if (host_name != NULL) {
         strncpy((char*) &ssl->host_name, host_name, 255);
     }
-    SET_SSL_FLAG(SSL_IS_CLIENT);
-    do_client_connect(ssl);
 
+    SET_SSL_FLAG(SSL_IS_CLIENT);
+    res = do_client_connect(ssl);
+    if (res != SSL_OK) {
+#ifdef CC3000_DEBUG
+        TM_DEBUG("ssl do_connect is bad %d", res);
+#endif
+        return res;
+    }
+    
     /* check the return status */
     if ((res = ssl_handshake_status(ssl)) != SSL_OK)
     {
@@ -141,7 +148,9 @@ int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ssl_ctx, tm_s
         {
             ssl_display_error(res);
         }
-
+#ifdef CC3000_DEBUG
+        TM_DEBUG("ssl_handshake_status != SSL_OK, is %d", res);
+#endif
         return res;
     }
 

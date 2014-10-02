@@ -18,7 +18,7 @@
 /*
 local function js_proto_get (self, proto, key)
    if key == '__proto__' then return proto; end
-   proto = rawget(funcproxies, proto) or proto
+   proto = proto
    return rawget(proto, key) or (getmetatable(proto) and getmetatable(proto).__index and getmetatable(proto).__index(self, key, proto)) or nil
 end
 */
@@ -31,6 +31,9 @@ end
 
 static int js_proto_get (lua_State* L)
 {
+	luaL_argcheck(L, !lua_isnil(L, 1), 1, "non-nil value expected");
+	luaL_argcheck(L, !lua_isnil(L, 2), 2, "non-nil value expected");
+
 	// stack: self, proto, key
 
 	// if key == '__proto__' then return proto; end
@@ -41,17 +44,8 @@ static int js_proto_get (lua_State* L)
 		return 1;
 	}
 
-	// proto = rawget(funcproxies, proto) or proto
-	if (lua_isfunction(L, 2)) {
-		lua_getglobal(L, "funcproxies");
-		lua_pushvalue(L, 2);
-		lua_rawget(L, -2);
-		if (lua_isnil(L, -1)) {
-			return 1;
-		}
-	} else {
-		lua_pushvalue(L, 2);
-	}
+	// proto = proto
+	lua_pushvalue(L, 2);
 
 	// -- self, proto, key ... proto
 	lua_pushvalue(L, 3);

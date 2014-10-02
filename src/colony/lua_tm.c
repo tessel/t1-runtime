@@ -1287,6 +1287,10 @@ LUALIB_API int luaopen_tm (lua_State *L)
   luaL_setfieldnumber(L, "RAW", TM_RAW);
   luaL_setfieldnumber(L, "ZLIB", TM_ZLIB);
   luaL_setfieldnumber(L, "GZIP", TM_GZIP);
+  luaL_setfieldnumber(L, "UNZIP", TM_UNZIP);
+
+  luaL_setfieldnumber(L, "ENETUNREACH", ENETUNREACH);
+  luaL_setfieldnumber(L, "ENOTCONN", CC_ENOTCONN);
 
   luaL_setfieldnumber(L, "FS_TYPE_INVALID", TM_FS_TYPE_INVALID);
   luaL_setfieldnumber(L, "FS_TYPE_FILE", TM_FS_TYPE_FILE);

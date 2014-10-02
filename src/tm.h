@@ -31,6 +31,9 @@ void tm_logf(char level, const char* format, ...);
 #define SYS_LOG 20
 #define SYS_ERR 22
 
+// cc error codes
+#define CC_ENOTCONN 57
+
 #define TM_DEBUG(str, ...) tm_logf(SYS_DBG, str, ##__VA_ARGS__)
 #define TM_LOG(str, ...) tm_logf(SYS_LOG, str, ##__VA_ARGS__)
 #define TM_ERR(str, ...) tm_logf(SYS_ERR, str, ##__VA_ARGS__)
@@ -148,7 +151,8 @@ typedef void* tm_inflate_t;
 enum {
   TM_RAW = 0,
   TM_ZLIB = 1,
-  TM_GZIP = 2
+  TM_GZIP = 2,
+  TM_UNZIP = 3
 } tm_flate_t;
 
 size_t tm_deflate_alloc_size ();
