@@ -2,7 +2,7 @@ local rapidjson = require('rapidjson')
 local js_tostring = colony.js_tostring
 
 -- called by lua_rapidjson.c when a parsing error occurs
-function json_error(val,code,offset)
+local function json_error (val,code,offset)
 
   -- error message starting string
   -- TODO: replicate node messages more closely
@@ -38,14 +38,14 @@ function json_error(val,code,offset)
 
 end
 
-function json_parse (value)
+local function json_parse (value)
   -- Parse into a Lua structure.
   -- Non-object primitives require a wrapper.
-  return rapidjson.parse('{"value":\n' .. tostring(value) .. '\n}').value
+  return rapidjson.parse('{"value":\n' .. tostring(value) .. '\n}', json_error).value
 end
 
 -- Checks initial type and recurses through object if it needs to
-function json_stringify (value, replacer, spacer)
+local function json_stringify (value, replacer, spacer)
   local val_copy = {}     -- copies of hits in the replacer array
   local call_ext = false  -- whether to call an external replacer function
 
@@ -57,6 +57,7 @@ function json_stringify (value, replacer, spacer)
   end
   spacer = string.sub(spacer, 1, 10)
 
+  -- Call writer.
   local wh = rapidjson.create_writer(spacer)
   local status, err = pcall(rapidjson.write_value, wh, value, replacer)
   if not status then
@@ -65,7 +66,7 @@ function json_stringify (value, replacer, spacer)
   end
   local str = rapidjson.result(wh)
   rapidjson.destroy(wh)
-  
+
   return tostring(str)
 
 end

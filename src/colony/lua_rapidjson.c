@@ -35,14 +35,14 @@ size_t colony_array_length_i (lua_State* L, int pos)
 
 // Simple methods for referring to the state maintained carried by JSON parsing.
 
-static void state_key_get (lua_State* L) { lua_pushvalue(L, 2); }
-static void state_key_set (lua_State* L) { lua_replace(L, 2); }
+static void state_key_get (lua_State* L) { lua_pushvalue(L, 3); }
+static void state_key_set (lua_State* L) { lua_replace(L, 3); }
 
-static void state_ret_get (lua_State* L) { lua_pushvalue(L, 3); }
-static void state_ret_set (lua_State* L) { lua_replace(L, 3); }
+static void state_ret_get (lua_State* L) { lua_pushvalue(L, 4); }
+static void state_ret_set (lua_State* L) { lua_replace(L, 4); }
 
-static int state_iskey_get (lua_State* L) { return lua_toboolean(L, 4); }
-static void state_iskey_set (lua_State* L, int val) { lua_pushboolean(L, val); lua_replace(L, 4); }
+static int state_iskey_get (lua_State* L) { return lua_toboolean(L, 5); }
+static void state_iskey_set (lua_State* L, int val) { lua_pushboolean(L, val); lua_replace(L, 5); }
 
 /* Callback to Lua for parsing default values */
 static void cb_Default (void* state_)
@@ -223,7 +223,7 @@ static void cb_EndArray (void* state, size_t value) {
 /* Calls Lua to deal with any error that occurs when parsing */
 static void on_error (lua_State *L, const char* val, parse_error_t err)
 {
-  lua_getfield(L, LUA_GLOBALSINDEX,"json_error");
+  lua_pushvalue(L, 2);
   lua_pushstring(L,val);
   lua_pushnumber(L,err.code);
   lua_pushnumber(L,err.offset);
@@ -235,14 +235,15 @@ static int tm_json_read(lua_State *L)
 {
   // get the string to parse
   const char* value = lua_tostring(L, 1);
+  // index 2 is json_error
 
   // Widen bottom of stack for key and return value state.
   lua_pushnil(L);
-  lua_insert(L, 2); // key
+  lua_insert(L, 3); // key
   lua_pushnil(L);
-  lua_insert(L, 3); // return value
+  lua_insert(L, 4); // return value
   lua_pushnil(L);
-  lua_insert(L, 4); // is key?
+  lua_insert(L, 5); // is key?
 
   // create the reader callback handler
   tm_json_r_handler_t rh;
