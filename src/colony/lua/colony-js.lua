@@ -1372,7 +1372,7 @@ global.Error.captureStackTrace = function (this, err, ctor)
     end
     info_idx = info_idx + 1
   end
-  
+
   js_define_getter(err, 'stack', function (this)
     if (global.Error.prepareStackTrace) then
       -- NOTE: https://code.google.com/p/v8/wiki/JavaScriptStackTraceApi states that this will
@@ -1767,6 +1767,8 @@ if type(hs) == 'table' then
     local data = string.sub(input, this.lastIndex + 1)
     local rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
     if rc ~= 0 then
+      -- Reset .lastIndex when no match found
+      this.lastIndex = 0
       return nil
     end
     local ret, len = {}, 0
@@ -1782,7 +1784,10 @@ if type(hs) == 'table' then
 
     ret.index = this.lastIndex + hs.regmatch_so(hsmatch, 0)
     ret.input = input
-    this.lastIndex = this.lastIndex + hs.regmatch_eo(hsmatch, 0)
+
+    if this.global then
+      this.lastIndex = this.lastIndex + hs.regmatch_eo(hsmatch, 0)
+    end
 
     return js_arr(ret, len)
   end
