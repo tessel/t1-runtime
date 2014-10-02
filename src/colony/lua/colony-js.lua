@@ -1693,6 +1693,19 @@ if type(hs) == 'table' then
     o.unicode = (flags and string.find(flags, "u") and true)
     o.sticky = (flags and string.find(flags, "y") and true)
 
+    -- Set a metatable on the created regex.
+    -- This way we can add a handler when the regex obj gets GC'ed
+    -- and then in turn force hsregex to free the created regex.
+    -- If we free this before hand, we're not guaranteed that the
+    -- regex won't get used later.
+    -- Had to add a `debug` here in order to set the metatable on userdata.
+    debug.setmetatable(cre, {
+      __gc = function(self)
+        -- force regex to free after it goes out of context
+        hs.regfree(self)
+      end
+    })
+
     setmetatable(o, {
       __index=global.RegExp.prototype,
       __tostring=js_tostring,

@@ -125,6 +125,8 @@ static int l_re_exec (lua_State* L)
   size_t data_len;
   chr* data = toregexstr(input, input_len, &data_len);
   int rc = re_exec(cre, data, data_len, NULL, pmatchlen, pmatch, flags);
+  
+  free(data);
   lua_pushnumber(L, rc);
   return 1;
 }
