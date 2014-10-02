@@ -13,9 +13,9 @@
 --
 
 local bit = require('bit32')
-local yajl = require('yajl')
 local _, hs = pcall(require, 'hsregex')
 local tm = require('tm')
+local rapidjson = require('rapidjson')
 
 -- locals
 
@@ -1013,6 +1013,8 @@ global.Array.isArray = function (ths, a)
   return (getmetatable(a) or {}).proto == arr_proto
 end
 
+_G.colony_isarray = global.Array.isArray
+
 -- String
 
 global.String = function (ths, str)
@@ -1053,6 +1055,10 @@ global.String.fromCharCode = function (this, ...)
   local str = ''
   for i=1,args.length do
     local uint16 = math.floor(math.abs(tonumbervalue(args[i]))) % (2^16)
+    -- TODO not this
+    if uint16 > 255 then
+      uint16 = 255
+    end
     str = str .. string.char(uint16)
   end
   return str
@@ -1816,20 +1822,73 @@ end
 --|| json library
 --]]
 
-yajl.null = nil
+global.JSON = js_obj({})
 
-global.JSON = js_obj({
-  parse = function (ths, arg)
-    return yajl.to_value(tostring(arg))
-  end,
-  stringify = function (ths, arg, replacer, space)
-    return yajl.to_string(arg, {
-      replacer = replacer or nil,
-      indent = space or nil
-    })
-  end,
-})
+-- Called by parsing code when a parsing error occurs.
+local function json_error (val,code,offset)
+  -- error message starting string
+  -- TODO: replicate node messages more closely
+  error_msg = {
+    'end of input',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'end of input ',
+    'token ',
+    'token after ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+  }
 
+  -- format the offset of the value that's failing
+  local token = ''
+  if val[offset] then
+    token = val[offset]
+  elseif val[#val-1] then
+    token = val[#val-1]
+  end
+
+  -- throw a new error
+  error(js_new(global.SyntaxError,'Unexpected '..error_msg[code]..token))
+
+end
+
+-- Parse JSON into an object.
+global.JSON.parse = function (this, value)
+  -- Non-object primitives require this wrapper.
+  return rapidjson.parse('{"value":\n' .. tostring(value) .. '\n}', json_error).value
+end
+
+-- Stringify an object.
+global.JSON.stringify = function (this, value, replacer, spacer)
+  -- Fix spacer argument
+  if type(spacer) == 'number' then
+    spacer = string.rep(' ', spacer)
+  else
+    spacer = tostring(spacer or '')
+  end
+  spacer = string.sub(spacer, 1, 10)
+
+  -- Call writer.
+  local wh = rapidjson.create_writer(spacer)
+  local status, err = pcall(rapidjson.write_value, wh, value, replacer)
+  if not status then
+    rapidjson.destroy(wh)
+    error(err)
+  end
+  local str = rapidjson.result(wh)
+  rapidjson.destroy(wh)
+
+  -- Return code.
+  return tostring(str)
+end
 
 --[[
 --|| encode
@@ -1859,16 +1918,16 @@ function encodeURI(this, str)
 end
 
 function decodeURI(this, str)
-  return string.gsub(tostring(str), "%%(%x%x)",
+  return string.gsub(tostring(str), "%%(%x%x)", 
      function(c) return string.char(tonumber(c, 16)) end)
 end
 
 function escape(this, str)
   return string.gsub(tostring(str), "([^%w@%*_%+%-%./])",
-    function(c)
-      return string.format ("%%%02X", string.byte(c))
+    function(c) 
+      return string.format ("%%%02X", string.byte(c)) 
     end);
-end
+end 
 
 
 
