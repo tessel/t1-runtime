@@ -316,7 +316,6 @@ static int tm_json_writer (lua_State *L)
   const int IDX_HANDLER = 1;
   const int IDX_VALUE = 2;
   const int IDX_REPLACER = 3;
-  const int IDX_REPFN = 4;
 
   tm_json_w_handler_t* wh = (tm_json_w_handler_t*) lua_touserdata(L, IDX_HANDLER);
 
