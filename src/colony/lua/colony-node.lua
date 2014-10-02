@@ -805,13 +805,13 @@ function js_wrap_module (module)
           local args = table.pack(module[key](...))
 
           -- single-arg returns, return single arg
-          if args.length < 2 then
+          if args.n < 2 then
             return args[1]
           end
 
           -- multiple arg returns return array to JS
-          local len = args.length
-          args['length'] = nil
+          local len = args.n
+          args.n = nil
           args[0] = table.remove(args, 1)
           return js_arr(args, len);
         end
