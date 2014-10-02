@@ -408,7 +408,11 @@ arr_proto.shift = function (this)
   local len = tonumber(rawget(this, 'length'))
   local ret = rawget(this, 0)
   if len > 0 then
-    rawset(this, 0, table.remove(this, 1) or nil)
+    if len > 1 then
+      rawset(this, 0, table.remove(this, 1))
+    else
+      rawset(this, 0, nil)
+    end
     rawset(this, 'length', len - 1)
   end
   return ret
