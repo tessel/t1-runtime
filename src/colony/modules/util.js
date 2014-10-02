@@ -109,12 +109,6 @@ function inspect(obj, opts) {
     if (~opts._.parents.indexOf(obj)) return shortString(obj, 'Circular');
     else opts._.parents.push(obj);
     ++opts._.depth;
-//    try {
-//      return inspect(obj, opts);
-//    } finally {
-//      --opts._.depth;
-//    }
-    // WORKAROUND: https://github.com/tessel/runtime/issues/304
     obj = inspect(obj, opts);
     --opts._.depth;
     opts._.parents.pop();
