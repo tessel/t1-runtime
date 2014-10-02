@@ -1063,7 +1063,7 @@ global.String.fromCharCode = function (this, ...)
   local str = ''
   for i=1,args.length do
     local uint16 = math.floor(math.abs(tonumbervalue(args[i]))) % (2^16)
-    str = str .. tm.utf8_char_encode(uint16)
+    str = str .. tm.utf8_char_encode(uint16)    -- even without tm.str_from_utf8 this will work
   end
   return str
 end
