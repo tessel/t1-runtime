@@ -7,6 +7,16 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-exports.Buffer = Buffer;
+var util = require('util'),
+    _log = process.binding('tm').log;
 
-exports.INSPECT_MAX_BYTES = 50;
+function fmt_log() {
+  var lvl = this,
+      str = util.format.apply(util, arguments)
+  _log(lvl, str);
+}
+
+exports.log = fmt_log.bind(10);
+exports.info = fmt_log.bind(11);
+exports.warn = fmt_log.bind(12);
+exports.error = fmt_log.bind(13);

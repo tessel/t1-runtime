@@ -98,6 +98,8 @@ do
   local Readable = colony.run('stream').Readable
   local Writable = colony.run('stream').Writable
 
+  colony.global.console = colony.run('console')
+
   colony.global.process.stdout = colony.js_new(Writable)
   colony.global.process.stdout._write = function (this, chunk, encoding, callback)
     tm.log(10, chunk)

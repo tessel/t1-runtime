@@ -1297,7 +1297,6 @@ global.TypeError = error_class('TypeError')
 global.URIError = error_class('URIError')
 global.NotImplementedError = error_class('NotImplementedError')
 
-
 -- NOTE: this constructor mimics v8's undocumented parameters/properties
 local function CallSite (this, rcvr, fun, pos)
   this.receiver = rcvr
@@ -1401,107 +1400,6 @@ global.Error.captureStackTrace = function (this, err, ctor)
     return s
   end)
 end
-
-
--- Console
-
-local function objtostring (obj, sset)
-  -- Special function for buffers
-  if getmetatable(obj) and getmetatable(obj).buffer then
-    local sourceBuffer = getmetatable(obj).buffer
-    local sourceBufferLength = getmetatable(obj).bufferlen
-
-    if type(strtype) == 'string' and string.lower(strtype) == 'utf8' then
-      local str = ''
-      for i=0,sourceBufferLength-1 do
-        str = str .. string.char(obj[i])
-      end
-      return str
-    end
-
-    local out = {'<Buffer'}
-    for i=0,math.min(sourceBufferLength or 0, 51)-1 do
-      table.insert(out, string.format("%02x", obj[i]))
-    end
-    if sourceBufferLength > 51 then
-      table.insert(out, '...')
-    end
-    return table.concat(out, ' ') + '>'
-  end
-
-  if getmetatable(obj) and getmetatable(obj).date then
-    return obj:toString()
-  end
-
-  local vals = {}
-  rawset(sset, obj, true)
-  for k in js_pairs(obj) do
-    local v = obj[k]
-    if rawget(sset, v) ~= true then
-      if type(v) == 'table' then
-        rawset(sset, v, true)
-      end
-      if type(v) == 'string' then
-        v = '\'' + v + '\''
-      elseif type(v) == 'table' then
-        v = objtostring(v, sset)
-      elseif type(v) == 'function' then
-        v = '[Function]'
-      elseif global.Array:isArray(obj) and v == nil then
-        v = ''
-      else
-        v = tostring(v)
-      end
-    else
-      v = '[Circular]'
-    end
-    if global.Array:isArray(obj) then
-      table.insert(vals, v)
-    else
-      table.insert(vals, k + ": " + v)
-    end
-  end
-  if global.Array:isArray(obj) then
-    if #vals == 0 then
-      return "[]"
-    end
-    -- table.insert(vals, 1, table.remove(vals))
-    return "[ " + table.concat(vals, ", ") + " ]"
-  else
-    if #vals == 0 then
-      return "{}"
-    end
-    return "{ " + table.concat(vals, ", ") + " }"
-  end
-end
-
-local function logger (level, ...)
-  local parts = {}
-  for i=1,select('#',...) do
-    local x = select(i,...)
-    if js_typeof(x) == 'object' and x ~= nil then
-      parts[#parts+1] = objtostring(x, {})
-    else
-      parts[#parts+1] = tostring(x)
-    end
-  end
-  tm.log(level, table.concat(parts, ' '))
-end
-
-global.console = js_obj({
-  log = function (self, ...)
-    logger(10, ...)
-  end,
-  info = function (self, ...)
-    logger(11, ...)
-  end,
-  warn = function (self, ...)
-    logger(12, ...)
-  end,
-  error = function (self, ...)
-    logger(13, ...)
-  end
-});
 
 -- parseFloat, parseInt, isNan, Infinity
 

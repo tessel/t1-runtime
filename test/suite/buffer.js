@@ -166,3 +166,8 @@ var len = buf.write('\u00bd + \u00bc = \u00be', 4);
 console.log('#', len + " bytes: " + buf.toString('utf8', 4, 4 + len));
 tap.ok(len == 12, 'written length is 12 byes')
 tap.ok(buf.slice(4, 4 + 12).toString() == '\u00bd + \u00bc = \u00be', 'result was written')
+
+// inspecting
+tap.ok(require('buffer').INSPECT_MAX_BYTES === 50, 'default INSPECT_MAX_BYTES is 50')
+require('buffer').INSPECT_MAX_BYTES = 2;
+tap.ok(Buffer([1,2,3]).inspect() === '<Buffer 01 02 ...>', 'inspect follows custom limit')
