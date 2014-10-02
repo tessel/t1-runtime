@@ -145,7 +145,6 @@
             'src/colony/lua/cli.lua',
             'src/colony/lua/colony-init.lua',
             'src/colony/lua/colony-js.lua',
-            'src/colony/lua/colony-json.lua',
             'src/colony/lua/colony-node.lua',
             'src/colony/lua/colony.lua',
             'src/colony/lua/preload.lua',

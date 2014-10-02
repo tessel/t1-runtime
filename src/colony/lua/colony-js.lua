@@ -15,6 +15,7 @@
 local bit = require('bit32')
 local _, hs = pcall(require, 'hsregex')
 local tm = require('tm')
+local rapidjson = require('rapidjson')
 
 -- locals
 
@@ -1825,16 +1826,73 @@ end
 --|| json library
 --]]
 
-local json = require('colony-json')
+global.JSON = js_obj({})
 
-global.JSON = js_obj({
-  parse = function (ths, arg)
-    return json.parse(tostring(arg))
-  end,
-  stringify = function (ths, arg, replacer, space)
-    return json.stringify(arg, replacer, space)
-  end,
-})
+-- Called by parsing code when a parsing error occurs.
+local function json_error (val,code,offset)
+  -- error message starting string
+  -- TODO: replicate node messages more closely
+  error_msg = {
+    'end of input',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'end of input ',
+    'token ',
+    'token after ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+  }
+
+  -- format the offset of the value that's failing
+  local token = ''
+  if val[offset] then
+    token = val[offset]
+  elseif val[#val-1] then
+    token = val[#val-1]
+  end
+
+  -- throw a new error
+  error(js_new(global.SyntaxError,'Unexpected '..error_msg[code]..token))
+
+end
+
+-- Parse JSON into an object.
+global.JSON.parse = function (this, value)
+  -- Non-object primitives require this wrapper.
+  return rapidjson.parse('{"value":\n' .. tostring(value) .. '\n}', json_error).value
+end
+
+-- Stringify an object.
+global.JSON.stringify = function (this, value, replacer, spacer)
+  -- Fix spacer argument
+  if type(spacer) == 'number' then
+    spacer = string.rep(' ', spacer)
+  else
+    spacer = tostring(spacer or '')
+  end
+  spacer = string.sub(spacer, 1, 10)
+
+  -- Call writer.
+  local wh = rapidjson.create_writer(spacer)
+  local status, err = pcall(rapidjson.write_value, wh, value, replacer)
+  if not status then
+    rapidjson.destroy(wh)
+    error(err)
+  end
+  local str = rapidjson.result(wh)
+  rapidjson.destroy(wh)
+
+  -- Return code.
+  return tostring(str)
+end
 
 --[[
 --|| encode
