@@ -33,6 +33,8 @@ size_t colony_array_length_i (lua_State* L, int pos)
   return ret;
 }
 
+// Simple methods for referring to the state maintained carried by JSON parsing.
+
 static void state_key_get (lua_State* L) { lua_pushvalue(L, 2); }
 static void state_key_set (lua_State* L) { lua_replace(L, 2); }
 
@@ -43,12 +45,14 @@ static int state_iskey_get (lua_State* L) { return lua_toboolean(L, 4); }
 static void state_iskey_set (lua_State* L, int val) { lua_pushboolean(L, val); lua_replace(L, 4); }
 
 /* Callback to Lua for parsing default values */
-static void cb_Default(void* state_) {
+static void cb_Default (void* state_)
+{
   // ignore
 }
 
 /* Callback to Lua for parsing nulls */
-static void cb_Null(void* state) {
+static void cb_Null (void* state)
+{
   lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
@@ -68,7 +72,8 @@ static void cb_Null(void* state) {
 }
 
 /* Callback to Lua for parsing booleans */
-static void cb_Bool(void* state, bool value) {
+static void cb_Bool (void* state, bool value)
+{
   lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
@@ -88,7 +93,8 @@ static void cb_Bool(void* state, bool value) {
 }
 
 /* Callback to Lua for parsing doubles */
-static void cb_Double(void* state, double value) {
+static void cb_Double (void* state, double value)
+{
   lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
@@ -108,19 +114,20 @@ static void cb_Double(void* state, double value) {
 }
 
 /* Callback to Lua for parsing ints */
-static void cb_Int(void* state, int value) { cb_Double(state, value); }
+static void cb_Int (void* state, int value) { cb_Double(state, value); }
 
 /* Callback to Lua for parsing unsigned ints */
-static void cb_Uint(void* state, unsigned value) { cb_Double(state, value); }
+static void cb_Uint (void* state, unsigned value) { cb_Double(state, value); }
 
 /* Callback to Lua for parsing 64 bit ints */
-static void cb_Int64(void* state, int64_t value) { cb_Double(state, value); }
+static void cb_Int64 (void* state, int64_t value) { cb_Double(state, value); }
 
 /* Callback to Lua for parsing unsigned 64 bit ints */
-static void cb_Uint64(void* state, uint64_t value) { cb_Double(state,value); }
+static void cb_Uint64 (void* state, uint64_t value) { cb_Double(state,value); }
 
 /* Callback to Lua for parsing strings */
-static void cb_String(void* state, const char* value, size_t str_len, bool set) {
+static void cb_String (void* state, const char* value, size_t str_len, bool set)
+{
   lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
@@ -145,7 +152,8 @@ static void cb_String(void* state, const char* value, size_t str_len, bool set) 
 }
 
 /* Callback to Lua for parsing start of an object */
-static void cb_StartObject(void* state) {
+static void cb_StartObject (void* state)
+{
   lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
@@ -167,7 +175,8 @@ static void cb_StartObject(void* state) {
 }
 
 /* Callback to Lua for parsing end of an object */
-static void cb_EndObject(void* state, size_t value) {
+static void cb_EndObject (void* state, size_t value)
+{
   lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
@@ -179,7 +188,8 @@ static void cb_EndObject(void* state, size_t value) {
 }
 
 /* Callback to Lua for parsing start of an array */
-static void cb_StartArray(void* state) {
+static void cb_StartArray (void* state)
+{
   lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
@@ -200,7 +210,7 @@ static void cb_StartArray(void* state) {
 }
 
 /* Callback to Lua for parsing end of an array */
-static void cb_EndArray(void* state, size_t value) {
+static void cb_EndArray (void* state, size_t value) {
   lua_State* L = (lua_State*) state;
   int top = lua_gettop(L);
 
@@ -211,7 +221,8 @@ static void cb_EndArray(void* state, size_t value) {
 }
 
 /* Calls Lua to deal with any error that occurs when parsing */
-static void on_error(lua_State *L, const char* val, parse_error_t err) {
+static void on_error (lua_State *L, const char* val, parse_error_t err)
+{
   lua_getfield(L, LUA_GLOBALSINDEX,"json_error");
   lua_pushstring(L,val);
   lua_pushnumber(L,err.code);
@@ -220,8 +231,8 @@ static void on_error(lua_State *L, const char* val, parse_error_t err) {
 }
 
 /* Parsing function called by lua to turn JSON strings to a Lua table */
-static int tm_json_read(lua_State *L) {
-
+static int tm_json_read(lua_State *L)
+{
   // get the string to parse
   const char* value = lua_tostring(L, 1);
 
@@ -270,7 +281,8 @@ static int tm_json_read(lua_State *L) {
  */
 
 /* Creates the writting handler for the writing functions to work */
-static int tm_json_create(lua_State *L) {
+static int tm_json_create (lua_State *L)
+{
   size_t len;
   const char* indentation = lua_tolstring(L, 1, &len);
 
@@ -280,67 +292,9 @@ static int tm_json_create(lua_State *L) {
   return 1;
 }
 
-/* Allows Lua call rapidjson's ability to write strings */
-static int tm_json_to_string (lua_State *L) {
-  tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
-  const char* value = lua_tostring(L, 2);
-  tm_json_write_string(*wh,value, 0);
-  return 1;
-}
-
-/* Allows Lua call rapidjson's ability to write booleans */
-static int tm_json_to_boolean(lua_State *L) {
-  tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
-  int value = lua_toboolean(L, 2);
-  tm_json_write_boolean(*wh,value);
-  return 1;
-}
-
-/* Allows Lua call rapidjson's ability to write numbers */
-static int tm_json_to_number(lua_State *L) {
-  tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
-  lua_Number value = lua_tonumber(L, 2);
-  tm_json_write_number(*wh,value);
-  return 1;
-}
-
-/* Allows Lua call rapidjson's ability to write null values */
-static int tm_json_to_null(lua_State *L) {
-  tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
-  tm_json_write_null(*wh);
-  return 1;
-}
-
-/* Allows Lua call rapidjson's ability to write the start of objects */
-static int tm_json_start_object(lua_State *L) {
-  tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
-  tm_json_write_object_start(*wh);
-  return 1;
-}
-
-/* Allows Lua call rapidjson's ability to write the end of objects */
-static int tm_json_end_object(lua_State *L) {
-  tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
-  tm_json_write_object_end(*wh);
-  return 1;
-}
-
-/* Allows Lua call rapidjson's ability to write the start of arrays */
-static int tm_json_start_array(lua_State *L) {
-  tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
-  tm_json_write_array_start(*wh);
-  return 1;
-}
-
-/* Allows Lua call rapidjson's ability to write the end of arrays */
-static int tm_json_end_array(lua_State *L) {
-  tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
-  tm_json_write_array_end(*wh);
-  return 1;
-}
-
 /* Allows Lua call rapidjson's ability to write out what's in it's buffer */
-static int tm_json_result(lua_State *L) {
+static int tm_json_result (lua_State *L)
+{
   tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
   const char* str = tm_json_write_result(*wh);
   lua_pushstring(L, str);
@@ -348,45 +302,58 @@ static int tm_json_result(lua_State *L) {
 }
 
 /* Allows Lua call rapidjson's ability to destroy the writing handler */
-static int tm_json_destroy(lua_State *L) {
+static int tm_json_destroy (lua_State *L)
+{
   tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
   tm_json_write_destroy(*wh);
   return 1;
 }
 
-static int tm_json_writer (lua_State *L) {
-  tm_json_w_handler_t* wh = (tm_json_w_handler_t*)lua_touserdata(L, 1);
+/* Write a Lua value into rapidjson */
+static int tm_json_writer (lua_State *L)
+{
+  const int IDX_HANDLER = 1;
+  const int IDX_VALUE = 2;
+  const int IDX_REPLACER = 3;
+  const int IDX_REPFN = 4;
 
-  switch (lua_type(L, 2)) {
-    case LUA_TNIL:
+  tm_json_w_handler_t* wh = (tm_json_w_handler_t*) lua_touserdata(L, IDX_HANDLER);
+
+  switch (lua_type(L, IDX_VALUE)) {
+    case LUA_TNIL: {
       tm_json_write_null(*wh);
       break;
+    }
 
-    case LUA_TBOOLEAN:
-      tm_json_write_boolean(*wh, lua_toboolean(L, 2));
+    case LUA_TBOOLEAN: {
+      tm_json_write_boolean(*wh, lua_toboolean(L, IDX_VALUE));
       break;
+    }
 
-    case LUA_TNUMBER:
-      tm_json_write_number(*wh, lua_tonumber(L, 2));
+    case LUA_TNUMBER: {
+      tm_json_write_number(*wh, lua_tonumber(L, IDX_VALUE));
       break;
+    }
 
     case LUA_TSTRING: {
       size_t str_len = 0;
-      const char* str = lua_tolstring(L, 2, &str_len);
+      const char* str = lua_tolstring(L, IDX_VALUE, &str_len);
       tm_json_write_string(*wh, str, str_len);
       break;
     }
 
     case LUA_TTABLE: {
       // TODO buffer should use .toJSON()
-      if (colony_isarray(L, 2) || colony_isbuffer(L, 2)) {
+      if (colony_isarray(L, IDX_VALUE) || colony_isbuffer(L, IDX_VALUE)) {
         tm_json_write_array_start(*wh);
-        for (int i = 0; i < colony_array_length_i(L, 2); i++) {
+
+        size_t value_len = colony_array_length_i(L, IDX_VALUE);
+        for (size_t i = 0; i < value_len; i++) {
           // Get value in array or buffer.
           lua_pushnumber(L, i);
-          lua_gettable(L, 2);               // (value[i])
+          lua_gettable(L, IDX_VALUE);               // (value[i])
 
-          // Call replacer function.
+          // If a replacer function is given, call it.
           if (lua_isfunction(L, 3)) {
             lua_pushvalue(L, 3);            // (value[i], fn)
             lua_pushvalue(L, 2);            // (value[i], fn, value)
@@ -397,8 +364,8 @@ static int tm_json_writer (lua_State *L) {
           }
 
           // Only recursively solve for serializable values.
-          // TODO don't need this switch?
           switch (lua_type(L, -1)) {
+            // Convert exotic variable types to null.
             case LUA_TFUNCTION:
             case LUA_TTHREAD:
             case LUA_TUSERDATA:
@@ -406,10 +373,11 @@ static int tm_json_writer (lua_State *L) {
               break;
 
             default:
-              lua_pushvalue(L, 4);          // (value[i], recurser)
+              lua_pushcfunction(L, tm_json_writer);
               lua_pushvalue(L, 1);          // (value[i], recurser, handler)
               lua_pushvalue(L, -3);         // (value[i], recurser, handler, value[i])
-              lua_call(L, 2, 0);            // (value[i])
+              lua_pushvalue(L, 3);
+              lua_call(L, 3, 0);            // (value[i])
               break;
           }
           
@@ -419,16 +387,31 @@ static int tm_json_writer (lua_State *L) {
       } else {
         tm_json_write_object_start(*wh);
 
-        lua_pushvalue(L, 5);
-        lua_pushvalue(L, 2);
-        lua_call(L, 1, 1);
-        lua_replace(L, 2);
+        // Replacer array with keys.
+        if (lua_type(L, IDX_REPLACER) == LUA_TTABLE) {
+          lua_createtable(L, 0, 0);
+
+          size_t replacer_len = colony_array_length_i(L, IDX_REPLACER);
+          for (size_t i = 0; i < replacer_len; i++) {
+            lua_pushnumber(L, i);           // (table, i)
+            lua_gettable(L, IDX_REPLACER);  // (table, key)
+            lua_tostring(L, -1); // cast to string
+            lua_pushvalue(L, -1);           // (table, key, key)
+            lua_gettable(L, IDX_VALUE);     // (table, key, value)
+            if (!lua_isnil(L, -1)) {
+              lua_settable(L, -3);          // (table)
+            } else {
+              lua_pop(L, 2);                // (table)
+            }
+          }
+          lua_replace(L, IDX_VALUE);
+        }
 
         /* table is in the stack at index 't' */
         lua_pushnil(L);  /* first key */
-        while (lua_next(L, 2) != 0) {       // (value[i])
+        while (lua_next(L, IDX_VALUE) != 0) {       // (value[i])
 
-          // Call replacer function.
+          // If a replacer function is given, call it.
           if (lua_isfunction(L, 3)) {
             lua_pushvalue(L, 3);            // (value[i], fn)
             lua_pushvalue(L, 2);            // (value[i], fn, value)
@@ -439,6 +422,7 @@ static int tm_json_writer (lua_State *L) {
           }
 
           switch (lua_type(L, -1)) {
+            // Convert exotic variable types to null.
             case LUA_TFUNCTION:
             case LUA_TTHREAD:
             case LUA_TUSERDATA:
@@ -452,10 +436,11 @@ static int tm_json_writer (lua_State *L) {
 
               tm_json_write_string(*wh, key, key_len);
 
-              lua_pushvalue(L, 4);          // (value[i], recurser)
+              lua_pushcfunction(L, tm_json_writer);
               lua_pushvalue(L, 1);          // (value[i], recurser, handler)
               lua_pushvalue(L, -3);         // (value[i], recurser, handler, value[i])
-              lua_call(L, 2, 0);            // (value[i])
+              lua_pushvalue(L, 3);
+              lua_call(L, 3, 0);            // (value[i])
               break;
           }
           
@@ -466,19 +451,19 @@ static int tm_json_writer (lua_State *L) {
       break;
     }
 
+    // Expose exotic variables as "{}""
     default:
       tm_json_write_object_start(*wh);
       tm_json_write_object_end(*wh);
       break;
   }
 
-  lua_pushnumber(L, 1);
-  return 1;
+  return 0;
 }
 
 /* Creates and pushes to a table the function that Lua needs to access */
-int lua_open_rapidjson(lua_State *L) {
-
+int lua_open_rapidjson (lua_State *L)
+{
   lua_createtable(L, 0, 0);
 
   lua_pushcfunction(L, tm_json_read);
@@ -486,30 +471,6 @@ int lua_open_rapidjson(lua_State *L) {
 
   lua_pushcfunction(L, tm_json_create);
   lua_setfield(L, -2, "create_writer");
-
-  lua_pushcfunction(L, tm_json_to_string);
-  lua_setfield(L, -2, "to_string");
-
-  lua_pushcfunction(L, tm_json_to_boolean);
-  lua_setfield(L, -2, "to_boolean");
-
-  lua_pushcfunction(L, tm_json_to_number);
-  lua_setfield(L, -2, "to_number");
-
-  lua_pushcfunction(L, tm_json_to_null);
-  lua_setfield(L, -2, "to_null");
-
-  lua_pushcfunction(L, tm_json_start_object);
-  lua_setfield(L, -2, "object_start");
-
-  lua_pushcfunction(L, tm_json_end_object);
-  lua_setfield(L, -2, "object_end");
-
-  lua_pushcfunction(L, tm_json_start_array);
-  lua_setfield(L, -2, "array_start");
-
-  lua_pushcfunction(L, tm_json_end_array);
-  lua_setfield(L, -2, "array_end");
 
   lua_pushcfunction(L, tm_json_result);
   lua_setfield(L, -2, "result");
