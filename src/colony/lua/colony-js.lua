@@ -894,7 +894,7 @@ global.Object.create = function (this, proto, props)
 end
 
 global.Object.defineProperty = function (this, obj, prop, config)
-  if type(obj) ~= 'table' then
+  if type(obj) ~= 'table' and type(obj) ~= 'function' then
     error(js_new(global.TypeError, 'Object.defineProperty called on non-object'))
   end
   if config.value ~= nil then
