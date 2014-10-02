@@ -135,7 +135,7 @@ function inspect(obj, opts) {
   }
   
   var typeName = objectToString(obj).slice('[object '.length, -1);
-  if (typeof obj === 'userdata') {       // HACK: avoid https://github.com/tessel/runtime/issues/305
+  if (typeof obj === 'userdata') {       // gracefully handle any situations like https://github.com/tessel/runtime/issues/305
     typeName = 'Userdata';
   } else if (typeName === 'Object') {    // WORKAROUND: https://github.com/tessel/runtime/issues/302
     if (obj instanceof Date) typeName = 'Date';
