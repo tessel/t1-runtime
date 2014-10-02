@@ -67,11 +67,12 @@ var objs2 = [
   { 1:foo1,                                     2:'{"month":45,"week":7}',           3:'replacer function',          4:censor,          5:null },
 ]
 
-// parsing testing
+// Simple parsing testing
 console.log('# parsing tesing');
 tap.ok(JSON.parse("{\"hi\": 5}").hasOwnProperty, 'json object is real object');
 tap.ok(JSON.parse("[0, 1, 2]").slice, 'json array is real array');
 
+// string->parse->stringify should equal original string
 for (var i in objs) {
   var obj = JSON.parse(objs[i][2])
   var res = JSON.stringify(obj, objs[i][4], objs[i][5]);
@@ -80,7 +81,19 @@ for (var i in objs) {
   tap.eq(JSON.stringify(objs[i][1], objs[i][4], objs[i][5]), objs[i][2], objs[i][3]);
 }
 
+// stringified object should equal corresponding string
 for (var i in objs2) {
   var res = JSON.stringify(objs[i][1], objs[i][4], objs[i][5]);
   tap.eq(res, objs[i][2], objs[i][3]);
 }
+
+var d = new Date(42);
+tap.eq(JSON.stringify({
+  toJSON: function () { return "foo"; }
+}), "\"foo\"", 'toJSON called on dates');
+
+var a = { toJSON: function () { return "hello"; }}
+tap.eq(JSON.stringify(a), '"hello"', 'toJSON called on objects')
+
+var a = { toJSON: function () { return { toJSON: function () { return 5; }}; }}
+tap.eq(JSON.stringify(a), '{}', 'toJSON isnt recursive')

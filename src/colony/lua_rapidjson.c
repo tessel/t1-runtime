@@ -316,9 +316,12 @@ static int tm_json_writer (lua_State *L)
   const int IDX_HANDLER = 1;
   const int IDX_VALUE = 2;
   const int IDX_REPLACER = 3;
+  const int IDX_OPT_KEY = 4;
 
   tm_json_w_handler_t* wh = (tm_json_w_handler_t*) lua_touserdata(L, IDX_HANDLER);
+  int tojson_called = 0;
 
+tojson_loop:
   switch (lua_type(L, IDX_VALUE)) {
     case LUA_TNIL: {
       tm_json_write_null(*wh);
@@ -385,6 +388,22 @@ static int tm_json_writer (lua_State *L)
         }
         tm_json_write_array_end(*wh);
       } else {
+        // Attempt to call .toJSON to override value.
+        // If a toJSON method exists, call method, replace IDX_VALUE and loop.
+        if (!tojson_called && lua_type(L, -1) == LUA_TTABLE) {
+          lua_getfield(L, IDX_VALUE, "toJSON");
+          if (lua_isfunction(L, -1) != 0) {
+            lua_pushvalue(L, IDX_VALUE);            // val for `this`
+            lua_pushvalue(L, IDX_OPT_KEY);
+            lua_call(L, 2, 1);
+            lua_replace(L, IDX_VALUE);
+            tojson_called = 1;
+            goto tojson_loop;
+          } else {
+            lua_pop(L, 1);
+          }
+        }
+
         tm_json_write_object_start(*wh);
 
         // Replacer array with keys.
@@ -440,7 +459,8 @@ static int tm_json_writer (lua_State *L)
               lua_pushvalue(L, 1);          // (value[i], recurser, handler)
               lua_pushvalue(L, -3);         // (value[i], recurser, handler, value[i])
               lua_pushvalue(L, 3);
-              lua_call(L, 3, 0);            // (value[i])
+              lua_pushlstring(L, key, key_len);
+              lua_call(L, 4, 0);            // (value[i])
               break;
           }
           
