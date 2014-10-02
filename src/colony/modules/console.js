@@ -8,7 +8,7 @@
 // except according to those terms.
 
 var util = require('util'),
-    _log = process._log;
+    _log = process.binding('tm').log;
 
 function fmt_log() {
   var lvl = this,

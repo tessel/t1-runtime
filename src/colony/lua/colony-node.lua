@@ -746,7 +746,6 @@ global.process.versions = js_obj({
   colony = "0.10.0"
 })
 global.process.EventEmitter = EventEmitter
-global.process._log = function (ths, ...) tm.log(...) end   -- HACK: needed by modules/console.js
 global.process.argv = js_arr({}, 0)
 global.process.env = js_obj({})
 global.process.exit = function (this, code)
