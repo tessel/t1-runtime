@@ -57,7 +57,7 @@ parse_error_t tm_json_parse(tm_json_r_handler_t,const char*);
 
 /* Writing prototypes */
 tm_json_w_handler_t tm_json_write_create(const char* indentation, size_t indent_count);
-int tm_json_write_string (tm_json_w_handler_t, const char*);
+int tm_json_write_string (tm_json_w_handler_t wh, const char* value, size_t len);
 int tm_json_write_boolean (tm_json_w_handler_t, int);
 int tm_json_write_number (tm_json_w_handler_t, double);
 int tm_json_write_null (tm_json_w_handler_t);

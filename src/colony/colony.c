@@ -44,6 +44,33 @@ void colony_createobj (lua_State* L, int size, int proto)
   lua_call(L,1,1);
 }
 
+int colony_isarray (lua_State* L, int index)
+{
+  lua_getglobal(L, "colony_isarray");
+  lua_pushnil(L);
+  if (index < 0) {
+    index -= 2;
+  }
+  lua_pushvalue(L, index);
+  lua_call(L, 2, 1);
+  int ret = lua_tonumber(L, -1);
+  lua_pop(L, 1);
+  return ret;
+}
+
+int colony_isbuffer (lua_State *L, int index)
+{
+  int ret = 0;
+  if (lua_getmetatable(L, index)) {
+    lua_getfield(L, -1, "buffer");
+    if (!lua_isnil(L, -1)) {
+      ret = 1;
+    }
+    lua_pop(L, 1);
+  }
+  return ret;
+}
+
 static uint8_t* colony_getbufferptr (lua_State *L, int index, size_t* buf_len)
 {
   uint8_t* buf = NULL;

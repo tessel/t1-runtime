@@ -1012,6 +1012,8 @@ global.Array.isArray = function (ths, a)
   return (getmetatable(a) or {}).proto == arr_proto
 end
 
+_G.colony_isarray = global.Array.isArray
+
 -- String
 
 global.String = function (ths, str)
@@ -1830,10 +1832,7 @@ global.JSON = js_obj({
     return json.parse(tostring(arg))
   end,
   stringify = function (ths, arg, replacer, space)
-    return json.stringify(arg, {
-      replacer = replacer or nil,
-      indent = space or nil
-    })
+    return json.stringify(arg, replacer, space)
   end,
 })
 

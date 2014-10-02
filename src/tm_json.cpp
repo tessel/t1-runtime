@@ -86,9 +86,9 @@ extern "C" tm_json_w_handler_t tm_json_write_create(const char* indentation, siz
 }
 
 /* Writes out a String using rapidjson functions */
-extern "C" int tm_json_write_string(tm_json_w_handler_t wh, const char* value) {
+extern "C" int tm_json_write_string(tm_json_w_handler_t wh, const char* value, size_t len) {
   PrettyWriter<StringBuffer>* w = static_cast<PrettyWriter<StringBuffer>*>(wh.writer);
-  w->String(value);
+  w->String(value, len);
   return 0;
 }
 
