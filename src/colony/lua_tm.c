@@ -58,7 +58,7 @@ const char* colony_tolstring (lua_State* L, int index, size_t* res_len)
   const uint8_t* str = (const uint8_t*) lua_tolstring(L, index, &str_len);
   
   const uint8_t* utf8;
-  size_t utf8_len = tm_str_to_utf8(str, str_len, &utf8);
+  size_t utf8_len = tm_str_to_utf8(str, str_len + 1, &utf8) - 1;    // compensate for NUL byte at end
   lua_pushlstring(L, (const char*) utf8, utf8_len);
   if (utf8 != str) free((uint8_t*) utf8);
   lua_replace(L, index);
