@@ -23,11 +23,19 @@ local bit = require('bit32')
 --   logger:write('\n\n')
 -- end, 'c', 1000)
 
--- lua methods
+local function js_toprimitive (val)
+  if type(val) == 'table' then
+    val = val:valueOf()
+    if type(val) == 'table' then
+      val = tostring(val)
+    end
+  end
+  return val
+end
 
 -- tonumber that returns NaN instead of nil
 _G.tonumbervalue = function (val)
-  val = tonumber(val)
+  val = tonumber(js_toprimitive(val))
   if val == nil then
     return 0/0
   else
@@ -35,29 +43,13 @@ _G.tonumbervalue = function (val)
   end
 end
 
-function table.augment (t1,t2)
-  for i=1,#t2 do
-    t1[#t1+1] = t2[i]
+_G.tointegervalue = function (val)
+  val = tonumber(js_toprimitive(val))
+  if val == nil then
+    return 0/0
+  else
+    return math.floor(val)
   end
-  return t1
-end
-
-if not setfenv then -- Lua 5.2
-  -- based on http://lua-users.org/lists/lua-l/2010-06/msg00314.html
-  -- this assumes f is a function
-  local function findenv(f)
-    local level = 1
-    repeat
-      local name, value = debug.getupvalue(f, level)
-      if name == '_ENV' then return level, value end
-      level = level + 1
-    until name == nil
-    return nil end
-  getfenv = function (f) return(select(2, findenv(f)) or _G) end
-  setfenv = function (f, t)
-    local level = findenv(f)
-    if level then debug.setupvalue(f, level, t) end
-    return f end
 end
 
 -- built-in prototypes
@@ -259,6 +251,12 @@ local js_obj_mt = {
   __newindex = js_obj_newindex,
   __tostring = js_tostring,
   __tovalue = js_valueof,
+  __lt = function (a, b)
+    return js_toprimitive(a) < js_toprimitive(b)
+  end,
+  __sub = function (a, b)
+    return js_toprimitive(a) + js_toprimitive(b)
+  end,
   proto = obj_proto,
   shared = true
 };
@@ -477,6 +475,10 @@ function js_new (f, ...)
     end,
     __tostring = js_tostring,
     __tovalue = js_valueof,
+    __sub = function (a, b)
+      return js_toprimitive(a) - js_toprimitive(b)
+    end,
+    -- TODO more primitive methods!
     proto = f.prototype
   }
   setmetatable(o, mt)

@@ -470,7 +470,7 @@ arr_proto.slice = function (this, start, len)
     len = this.length or 0
   end
   local j = 0
-  for i=start or 0,len-1 do
+  for i=tonumber(start) or 0,len-1 do
     a[j] = this[i]
     j = j + 1
   end
@@ -1102,8 +1102,7 @@ global.Math = js_obj({
   ceil = luafunctor(math.ceil),
   clz32 = function (this, x)
     -- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/clz32
-    x = tonumber(x) or 0
-    local value = bit.tobit(math.floor(x))
+    local value = bit.rshift(tointegervalue(x) or 0, 0)
     if value then
       return 32 - #(tm.itoa(value, 2) or '')
     else
