@@ -75,7 +75,7 @@ local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_
 
 local function js_setter_index (proto)
   return function (self, key, value)
-    local mt = getmetatable(self)
+    local mt = type(self) == 'function' and rawget(self, '__mt') or getmetatable(self)
     local setter = mt.setters[key]
     if setter then
       return setter(self, value)
@@ -88,7 +88,7 @@ function js_define_setter (self, key, fn)
   if type(self) == 'function' then
     mt = self.__mt
     if not mt then
-      self.__mt = {}
+      self.__mt = { proto = func_proto }
       mt = self.__mt
     end
   else
@@ -113,7 +113,7 @@ function js_define_getter (self, key, fn)
   if type(self) == 'function' then
     mt = self.__mt
     if not mt then
-      self.__mt = {}
+      self.__mt = { proto = func_proto }
       mt = self.__mt
     end
   else
@@ -305,10 +305,19 @@ func_mt.__index = function (self, key)
     self.prototype = js_obj({constructor = self})
     return self.prototype
   end
+  if rawget(self, '__mt') and rawget(self, '__mt').__index then
+    return rawget(self, '__mt').__index(self, key)
+  end
   return js_proto_get(self, func_proto, key)
 end
 func_mt.__tostring = js_tostring
 func_mt.__tovalue = js_valueof
+func_mt.__newindex = function (self, key, value)
+  if rawget(self, '__mt') and rawget(self, '__mt').__newindex then
+    return rawget(self, '__mt').__newindex(self, key, value)
+  end
+  rawset(self, key, value)
+end
 -- func_mt.__tostring = function ()
 --   return "[Function]"
 -- end
