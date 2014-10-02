@@ -7,13 +7,13 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#ifndef _LUA_YAJL_H_
-#define _LUA_YAJL_H_
+#ifndef _LUA_RAPIDJSON_H_
+#define _LUA_RAPIDJSON_H_
 
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
 
-LUALIB_API int luaopen_yajl(lua_State *L);
+int lua_open_rapidjson(lua_State *L);
 
 #endif

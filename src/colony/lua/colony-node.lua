@@ -739,6 +739,10 @@ end
 global.process.cwd = function ()
   return tm.cwd()
 end
+global.process.hrtime = function ()
+  local nanos = tm.timestamp() * 1e3;
+  return js_arr({[0]=math.floor(nanos / 1e9), nanos % 1e9}, 2)
+end
 global.process.nextTick = global.setImmediate
 global.process.version = global.process.versions.node
 
