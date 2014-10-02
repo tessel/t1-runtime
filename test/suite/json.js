@@ -1,7 +1,7 @@
 var tap = require('../tap');
 var buf = require('buffer');
 
-tap.count(68);
+tap.count(72);
 
 // testing vars
 var foo1 = {foundation: "Mozilla", model: "box", week: 45, transport: "car", month: 7};
@@ -65,6 +65,7 @@ var objs = [
 var objs2 = [
   { 1:{"hi":5},                                 2:'{\n123456789A"hi": 5\n}',         3:'spacer string long',         4:null,            5:'123456789AB' },
   { 1:foo1,                                     2:'{"month":45,"week":7}',           3:'replacer function',          4:censor,          5:null },
+  { 1:[[], {}, [null], [0], [[{}]], "14121269654077727"], 2:'[[],{},[null],[0],[[{}]],"14121269654077727"]', 3:'complex object', 4:null, 5:null},
 ]
 
 // Simple parsing testing
@@ -97,3 +98,5 @@ tap.eq(JSON.stringify(a), '"hello"', 'toJSON called on objects')
 
 var a = { toJSON: function () { return { toJSON: function () { return 5; }}; }}
 tap.eq(JSON.stringify(a), '{}', 'toJSON isnt recursive')
+
+var arr = JSON.parse("[[], {}, [null], [0], [[{}]], \"14121269654077727\"]");
