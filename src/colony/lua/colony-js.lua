@@ -1066,8 +1066,15 @@ global.String = function (ths, str)
 end
 global.String.prototype = str_proto
 str_proto.constructor = global.String
-global.String.fromCharCode = function (ths, ord)
-  return tostring(tm.utf8_char_encode(ord and (ord % 0x10000) or 0))
+global.String.fromCharCode = function (this, ...)
+  -- http://es5.github.io/x15.5.html#x15.5.3.2
+  local args = table.pack(...)
+  local str = ''
+  for i=1,args.length do
+    local uint16 = math.floor(math.abs(tonumbervalue(args[i]))) % (2^16)
+    str = str .. tm.utf8_char_encode(uint16)    -- even without tm.str_from_utf8 this will work
+  end
+  return str
 end
 
 -- Math
