@@ -198,9 +198,6 @@ int colony_runtime_open ()
   lua_getglobal(L, "package");
   lua_getfield(L, -1, "preload");
   lua_remove(L, -2);
-  // bit32
-  lua_pushcfunction(L, luaopen_bit);
-  lua_setfield(L, -2, "bit32");
   // tm
   lua_pushcfunction(L, luaopen_tm);
   lua_setfield(L, -2, "tm");
