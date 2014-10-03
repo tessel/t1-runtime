@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(35);
+tap.count(37);
 
 tap.eq(String.fromCharCode(0x1A), '\u001A');
 tap.eq(String.fromCharCode(0x1A), '\x1A');
@@ -27,9 +27,9 @@ tap.eq(escape('!@#hello$%^'), '%21@%23hello%24%25%5E', 'Escaping non-special cha
 
 
 // decodeURI
-tap.eq(decodeURI("https://developer.mozilla.org/ru/docs/JavaScript_%D1%88%D0%B5%D0%BB%D0%BB%D1%8B"), "https://developer.mozilla.org/ru/docs/JavaScript_шеллы", "Decoding is not working properly")
+tap.eq(decodeURI("https://developer.mozilla.org/ru/docs/JavaScript_%D1%88%D0%B5%D0%BB%D0%BB%D1%8B"), "https://developer.mozilla.org/ru/docs/JavaScript_шеллы", "decodeURI works properly")
 var url = "http:// the original_ . example.com"
-tap.eq(url, decodeURI(encodeURI(url)), "Decoding an Encoded URI returns the original string");
+tap.eq(url, decodeURI(encodeURI(url)), "URI round trips");
 tap.eq(decodeURI(a), a.toString(), "Decoding an object returns the string representation of the object");
 var b = 1;
 tap.eq(decodeURI(b), b.toString(), "Decoding an number just returns the string representation of the number");
@@ -48,14 +48,13 @@ tap.eq(unescape(esc), raw, 'unescape');
 
 tap.eq(String.fromCharCode(0x1A), '\u001A')
 tap.eq(String.fromCharCode(0x1A), '\x1A');
-
-console.log('#', String.fromCharCode(0x2603), 'is', String.fromCharCode(0x2603).length, 'words');
+tap.eq(String.fromCharCode(0x2603).length, 1);
 tap.eq(String.fromCharCode(0x2603), '☃');
 tap.eq(String.fromCharCode(0x2603), '\u2603');
 tap.ok(String.fromCharCode(0x2603) != '\x26\x03');
 
 var poo = '💩';
-console.log('#', poo, 'is', poo.length, 'words');
+tap.eq(poo.length, 2);
 tap.eq("\ud83d", poo[0]);
 tap.eq("\udca9", poo[1]);
 tap.eq(0xd83d, poo.charCodeAt(0), poo.charCodeAt(0));
