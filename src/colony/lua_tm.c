@@ -659,13 +659,13 @@ static int l_tm_buffer_copy (lua_State *L)
   return 0;
 }
 
-static int l_tm_buffer_tostring (lua_State *L)
+static int l_tm_buffer_tobytestring (lua_State *L)
 {
-  uint8_t *source = (uint8_t *) lua_touserdata(L, 1);
+  const char *source = lua_touserdata(L, 1);
   size_t offset = (int) lua_tonumber(L, 2);
   size_t endOffset = (int) lua_tonumber(L, 3);
   source += offset;
-  colony_pushlutf8(L, (char *) source, endOffset-offset);
+  lua_pushlstring(L, source, endOffset-offset);
   return 1;
 }
 
@@ -1347,7 +1347,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "buffer_get", l_tm_buffer_get },
     { "buffer_fill", l_tm_buffer_fill },
     { "buffer_copy", l_tm_buffer_copy },
-    { "buffer_tostring", l_tm_buffer_tostring },
+    { "buffer_tobytestring", l_tm_buffer_tobytestring },
     { "buffer_read_uint8", l_tm_buffer_read_uint8 },
     { "buffer_read_uint16le", l_tm_buffer_read_uint16le },
     { "buffer_read_uint16be", l_tm_buffer_read_uint16be },
