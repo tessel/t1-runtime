@@ -300,12 +300,13 @@ local buffer_proto = js_obj({
       encoding = 'utf8'
     end
     encoding = string.lower(encoding);
+    
+    local str = tm.buffer_tobytestring(getmetatable(this).buffer, offset, endOffset);
 
-    local str = tm.buffer_tostring(getmetatable(this).buffer, offset, endOffset);
-
-    if encoding == 'utf8' or encoding == 'utf-8'
-      or encoding == 'binary' or encoding == 'ascii' then
-      return str;
+    if encoding == 'binary' or encoding == 'ascii' then
+      return str;      -- TODO: ascii needs 0 and >127 replaced!
+    elseif encoding == 'utf8' or encoding == 'utf-8' then
+      return tm.str_to_utf8(str);
     elseif encoding == 'base64' then
       return to_base64(str);
     elseif encoding == 'hex' then
