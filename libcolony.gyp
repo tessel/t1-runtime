@@ -103,6 +103,7 @@
             'src/colony/modules/assert.js',
             'src/colony/modules/buffer.js',
             'src/colony/modules/child_process.js',
+            'src/colony/modules/console.js',
             'src/colony/modules/crypto.js',
             'src/colony/modules/dgram.js',
             'src/colony/modules/dns.js',

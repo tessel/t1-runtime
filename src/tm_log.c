@@ -15,9 +15,15 @@
 #include <unistd.h>
 void tm_log(char level, const char* string, unsigned length) {
 	char linebreak = '\n';
-	int r = fwrite(string, 1, length, stdout);
-	r = fwrite(&linebreak, 1, 1, stdout);
-	(void) r;
+	if (level != 13) {
+		int r = fwrite(string, 1, length, stdout);
+		r = fwrite(&linebreak, 1, 1, stdout);
+		(void) r;
+	} else {
+		int r = fwrite(string, 1, length, stderr);
+		r = fwrite(&linebreak, 1, 1, stderr);
+		(void) r;
+	}
 }
 #endif
 

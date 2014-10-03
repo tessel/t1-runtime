@@ -95,9 +95,93 @@ function debuglog(set) {
   return debugs[set];
 };
 
-// TODO: Make it work like Node's inspect
-function inspect(object) {
-  console.log(object);
+// NOTE/TODO: this one is probably a good candidate for copy-pasta'ing out of joyent/node sources?
+function inspect(obj, opts) {
+  opts = extend({
+    showHidden: false,
+    depth: 2,
+    colors: false,    // TODO: colors not supported
+    customInspect: true,
+    _: {depth:0,parents:[obj]}
+  }, opts);
+  
+  function recurse(obj) {
+    if (~opts._.parents.indexOf(obj)) return shortString(obj, 'Circular');
+    else opts._.parents.push(obj);
+    ++opts._.depth;
+    obj = inspect(obj, opts);
+    --opts._.depth;
+    opts._.parents.pop();
+    return obj;
+  }
+  function indent(n, s) {
+    var t = '\n';
+    while (n-->0) t += ' ';
+    return t+s;
+  }
+  function shortString(obj, typeName) {
+    switch (typeName) {
+      case 'Undefined':
+      case 'Boolean':
+      case 'Number':
+      case 'String':
+      case 'RegExp':
+      case 'Date':
+      case 'Null':
+        return ''+obj;
+      default:
+        return '['+typeName+']';
+    }
+  }
+  
+  var typeName = objectToString(obj).slice('[object '.length, -1);
+  if (typeof obj === 'userdata') {       // gracefully handle any situations like https://github.com/tessel/runtime/issues/305
+    typeName = 'Userdata';
+  }
+  if (opts._.depth > opts.depth || isNullOrUndefined(obj) || typeName === 'Userdata') return shortString(obj, typeName);
+  else if (opts.customInspect && typeof obj.inspect === 'function') return obj.inspect();
+  else {
+    if (typeName === 'Array') return '[ '+obj.map(recurse).join(', ')+' ]';
+    else if (typeName === 'Object' || typeName === 'Arguments') return '{' +
+      Object[(opts.showHidden) ? 'getOwnPropertyNames' : 'keys'](obj).map(function (k) {
+        return indent(opts._.depth+1, k +' : '+recurse(obj[k]));
+      }).join(',') + indent(opts._.depth, '}');
+    else return ''+obj;
+  }
+}
+
+
+function format(fmt) {
+  var arr = [], args = arguments, i = 0;
+
+  // Format string.
+  if (typeof fmt == 'string' && fmt.indexOf('%') > -1) {
+    i = 1;
+    arr[arr.length] = fmt.replace(/%[sdj%]/g, function (m) {
+      if (i >= args.length)
+        return (m[1] === '%') ? '%' : m;
+      var arg = args[i]
+      i = i + 1;
+      switch (m[1]) {
+        case '%': return "%";
+        case 's': return arg;
+        case 'd': return Number(arg);
+        case 'j': return JSON.stringify(arg);
+      }
+    });
+  }
+
+  // Normal arguments.
+  while (i < args.length) {
+    var a = args[i], t = typeof a;
+    if (t == 'boolean' || t == 'number' || t == 'string' || t == 'undefined') {
+      arr[arr.length] = a;
+    } else {
+      arr[arr.length] = inspect(a);
+    }
+    i = i + 1;
+  }
+  return arr.join(' ');
 }
 
 function extend(origin, add) {
@@ -128,7 +212,8 @@ exports.isArray = isArray;
 exports.isFunction = isFunction;
 exports.isDate = isDate;
 exports.isRegExp = isRegExp;
-exports.dir = exports.inspect = inspect;
+exports.inspect = inspect;
+exports.format = format;
 exports.isNullOrUndefined = isNullOrUndefined;
 exports.isUndefined = isUndefined;
 exports.debuglog = debuglog;

@@ -329,6 +329,21 @@ local buffer_proto = js_obj({
     end
     return js_arr(arr, len)
   end,
+  inspect = function (this)
+    local sourceBuffer = getmetatable(this).buffer
+    local sourceBufferLength = getmetatable(this).bufferlen
+
+    local out = {'<Buffer'}
+    local maxbytes = colony.run('buffer').INSPECT_MAX_BYTES    -- HACK: need *module* object
+    -- NOTE: we differ from current node.js, see https://github.com/joyent/node/issues/7995
+    for i=0,math.min(sourceBufferLength or 0, maxbytes)-1 do
+      table.insert(out, string.format("%02x", this[i]))
+    end
+    if sourceBufferLength > maxbytes then
+      table.insert(out, '...')
+    end
+    return table.concat(out, ' ') + '>'
+  end,
 
   -- Internal use only
   _random = function (this)
