@@ -152,26 +152,36 @@ function inspect(obj, opts) {
 
 
 function format(fmt) {
-  var rev_vals = Array.prototype.slice.call(arguments, 1).reverse();   // (reversed so we can push/pop instead of shift/unshift)
-  if (typeof fmt !== 'string') {
-    rev_vals.push(fmt);
-    fmt = null;
+  var arr = [], args = arguments, i = 0;
+
+  // Format string.
+  if (typeof fmt == 'string' && fmt.indexOf('%') > -1) {
+    i = 1;
+    arr[arr.length] = fmt.replace(/%[sdj%]/g, function (m) {
+      if (i >= args.length)
+        return (m[1] === '%') ? '%' : m;
+      var arg = args[i]
+      i = i + 1;
+      switch (m[1]) {
+        case '%': return "%";
+        case 's': return arg;
+        case 'd': return Number(arg);
+        case 'j': return JSON.stringify(arg);
+      }
+    });
   }
-  var str = fmt && fmt.replace(/%[sdj%]/g, function (m) {
-    if (!rev_vals.length) return (m[1] === '%') ? '%' : m;
-    else switch (m[1]) {
-      case '%': return "%";
-      case 's': return rev_vals.pop();
-      case 'd': return Number(rev_vals.pop());
-      case 'j': return JSON.stringify(rev_vals.pop());
+
+  // Normal arguments.
+  while (i < args.length) {
+    var a = args[i], t = typeof a;
+    if (t == 'boolean' || t == 'number' || t == 'string' || t == 'undefined') {
+      arr[arr.length] = a;
+    } else {
+      arr[arr.length] = inspect(a);
     }
-  });
-  if (rev_vals.length) {
-    rev_vals = rev_vals.map(inspect);
-    if (fmt !== null) rev_vals.push(str);
-    str = rev_vals.reverse().join(' ');
+    i = i + 1;
   }
-  return str;
+  return arr.join(' ');
 }
 
 function extend(origin, add) {

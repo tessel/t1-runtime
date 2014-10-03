@@ -10,13 +10,15 @@
 var util = require('util'),
     _log = process.binding('tm').log;
 
-function fmt_log() {
-  var lvl = this,
-      str = util.format.apply(util, arguments)
-  _log(lvl, str);
+exports.log = function () {
+	_log(10, util.format.apply(util, arguments));
 }
-
-exports.log = fmt_log.bind(10);
-exports.info = fmt_log.bind(11);
-exports.warn = fmt_log.bind(12);
-exports.error = fmt_log.bind(13);
+exports.info = function () {
+	_log(11, util.format.apply(util, arguments));
+}
+exports.warn = function () {
+	_log(12, util.format.apply(util, arguments));
+}
+exports.error = function () {
+	_log(13, util.format.apply(util, arguments));
+}
