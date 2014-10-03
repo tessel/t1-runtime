@@ -9,6 +9,7 @@ before_install:
   - brew install node || true
   - git config credential.helper store
   - git clone https://github.com/tessel/colony-lua.git deps/colony-lua
+  - npm config set spin=false
 install:
   - git submodule update --init
   - npm install
