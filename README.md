@@ -6,7 +6,7 @@ This is the runtime and JavaScript engine that runs on Tessel, built on Lua's VM
 git clone --recursive https://github.com/tessel/runtime.git
 ```
 
-Building the firmware requires [gcc-arm-embedded](https://launchpad.net/gcc-arm-embedded), [gyp](https://code.google.com/p/gyp/), and [ninja](http://martine.github.io/ninja/).
+Building the firmware requires [gyp](https://code.google.com/p/gyp/), and [ninja](http://martine.github.io/ninja/), and [gcc-arm-embedded](https://launchpad.net/gcc-arm-embedded) when building for embedded.
 
 #### OS X
 
@@ -14,7 +14,8 @@ To install quickly on a Mac with [Brew](http://brew.sh):
 
 ```
 brew tap tessel/tools
-brew install gcc-arm gyp ninja
+brew install gyp ninja
+brew install gcc-arm # to build for embedded
 ```
 
 #### Ubuntu 14.04
@@ -22,7 +23,8 @@ brew install gcc-arm gyp ninja
 All dependencies are in the Ubuntu 14.04 repositories:
 
 ```
-sudo apt-get install git nodejs npm nodejs-legacy gcc-arm-none-eabi gyp ninja-build
+sudo apt-get install git nodejs npm nodejs-legacy gyp ninja-build
+sudo apt-get install gcc-arm-none-eabi # to build for embedded
 ```
 
 ## Building
