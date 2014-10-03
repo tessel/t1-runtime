@@ -1851,7 +1851,7 @@ global.JSON = js_obj({
 
 function encodeURIComponent (this, str)
   str = tostring(str)
-  str = string.gsub (str, "([^%w%-%_%.%~%*%(%)'])", function (c)
+  str = string.gsub (tm.str_to_utf8(str), "([^%w%-%_%.%~%*%(%)'])", function (c)
     return string.format ("%%%02X", string.byte(c))
   end)
   return str
@@ -1860,21 +1860,23 @@ end
 function decodeURIComponent (this, str)
   str = tostring(str)
   str = string.gsub (str, "+", " ")
-  return string.gsub (str, "%%(%x%x)", function(h)
+  utf8 = string.gsub (str, "%%(%x%x)", function(h)
     return string.char(tonumber(h,16))
   end)
+  return tm.str_from_utf8(utf8) 
 end
 
 
 function encodeURI(this, str)
-  -- TODO: Check for high/low surrogate pairs
-  return string.gsub (tostring(str), "([^%w,;/:@&='_~#%+%$!%.%?%%-%*%(%)])",
+  str = tostring(str)
+  return string.gsub (tm.str_to_utf8(str), "([^%w,;/:@&='_~#%+%$!%.%?%%-%*%(%)])",
     function (c) return string.format ("%%%02X", string.byte(c)) end)
 end
 
 function decodeURI(this, str)
-  return string.gsub(tostring(str), "%%(%x%x)",
+  utf8 = string.gsub(tostring(str), "%%(%x%x)",
      function(c) return string.char(tonumber(c, 16)) end)
+  return tm.str_from_utf8(utf8)
 end
 
 function escape(this, str)

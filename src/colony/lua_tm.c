@@ -998,6 +998,23 @@ static int l_tm_ucs2_str_lookup_8to16 (lua_State* L)
   return 1;
 }
 
+static int l_tm_str_to_utf8 (lua_State* L)
+{
+  size_t utf8_len;
+  const char* utf8 = colony_tolstring(L, 1, &utf8_len);
+  lua_pushlstring(L, utf8, utf8_len);
+  return 1;
+}
+
+static int l_tm_str_from_utf8 (lua_State* L)
+{
+  size_t utf8_len;
+  const char* utf8 = lua_tolstring(L, 1, &utf8_len);
+  colony_pushlstring(L, utf8, utf8_len);
+  return 1;
+}
+
+
 
 #ifdef ENABLE_NET
 
@@ -1382,6 +1399,9 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "ucs2_str_charat", l_tm_ucs2_str_charat },
     { "ucs2_str_lookup_16to8", l_tm_ucs2_str_lookup_16to8 },
     { "ucs2_str_lookup_8to16", l_tm_ucs2_str_lookup_8to16 },
+    { "str_to_utf8", l_tm_str_to_utf8 },
+    { "str_from_utf8", l_tm_str_from_utf8 },
+    
     
     // deflate
     { "deflate_start", l_tm_deflate_start },

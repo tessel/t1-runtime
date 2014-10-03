@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(29);
+tap.count(33);
 
 tap.eq(String.fromCharCode(0x1A), '\u001A');
 tap.eq(String.fromCharCode(0x1A), '\x1A');
@@ -33,6 +33,15 @@ tap.eq(url, decodeURI(encodeURI(url)), "Decoding an Encoded URI returns the orig
 tap.eq(decodeURI(a), a.toString(), "Decoding an object returns the string representation of the object");
 var b = 1;
 tap.eq(decodeURI(b), b.toString(), "Decoding an number just returns the string representation of the number");
+
+// unicode uri encode/decode
+var raw = "\0AϨ👀\0";
+var enc = "%00A%CF%A8%F0%9F%91%80%00";
+tap.eq(encodeURI(raw), enc);
+tap.eq(decodeURI(enc), raw);
+tap.eq(encodeURIComponent(raw), enc);
+tap.eq(decodeURIComponent(enc), raw);
+
 
 
 tap.eq(String.fromCharCode(0x1A), '\u001A')
