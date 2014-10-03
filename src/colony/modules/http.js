@@ -264,7 +264,7 @@ function OutgoingMessage () {
   var self = this;
   this.once('finish', function () {
     if (!self.headersSent) {
-      self._chunked = false;
+      if (self instanceof ClientRequest) self._chunked = false;
       self.flush();
     }
     if (this._chunked) {
