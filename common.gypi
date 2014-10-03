@@ -6,7 +6,7 @@
     "axtls_path": "./deps/axtls",
     "axtls_inc_path": "./deps/axtls-inc",
     "c_ares_path": "./deps/c-ares",
-    "colony_lua_path": "./deps/colony-lua",
+    "colony_lua_path": "./deps/colony-luajit",
     "fortuna_path": "./deps/fortuna",
     "fortuna_inc_path": "./deps/fortuna-inc",
     "dlmalloc_path": "./deps/dlmalloc",
@@ -93,13 +93,13 @@
           }],
           [ 'OS!="arm"', {
             'cflags': [
-              '-O0',
+              '-Ofast',
               '-g',
               '-ftrapv'
             ],
             'xcode_settings': {
               'OTHER_CFLAGS': [
-                '-O0',
+                '-Ofast',
                 '-g',
                 '-ftrapv'
               ]
