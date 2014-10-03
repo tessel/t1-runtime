@@ -1041,10 +1041,12 @@ global.String = function (ths, str)
 
     -- set the boxed object properties
     for i = 0, str.length-1 do
-      js_define_setter(ths, i, function() end)
-      js_define_getter(ths, i, function()
-        return str[i]
-      end)
+      -- TODO: this would make properly read-only, but breaks a test relying on Object.keys…
+      --js_define_setter(ths, i, function() end)
+      --js_define_getter(ths, i, function()
+      --  return str[i]
+      --end)
+      ths[i] = str[i]
     end
 
     -- return the object
