@@ -13,9 +13,9 @@
 --
 
 local bit = require('bit32')
-local yajl = require('yajl')
 local _, hs = pcall(require, 'hsregex')
 local tm = require('tm')
+local rapidjson = require('rapidjson')
 
 -- locals
 
@@ -267,7 +267,7 @@ end
 str_proto.concat = function (this, ...)
   local args1 = table.pack(...)
   local ret = tostring(this)
-  for i=1,args1.length do
+  for i=1,args1.n do
     ret = ret .. args1[i]
   end
   return ret
@@ -354,7 +354,7 @@ func_proto.call = function (func, ths, ...)
 end
 
 function augmentargs (t1, offn, t2)
-  for i=1,t2.length do
+  for i=1,t2.n do
     t1[offn+i] = t2[i]
   end
   return t1
@@ -365,8 +365,8 @@ func_proto.bind = function (func, ths1, ...)
   return function (ths2, ...)
     local argset, args2 = {}, table.pack(...)
     augmentargs(argset, 0, args1)
-    augmentargs(argset, args1.length, args2)
-    return func(ths1, unpack(argset, 1, args1.length + args2.length))
+    augmentargs(argset, args1.n, args2)
+    return func(ths1, unpack(argset, 1, args1.n + args2.n))
   end
 end
 
@@ -392,7 +392,7 @@ end
 arr_proto.push = function (this, ...)
   local args = table.pack(...)
   local len = tonumber(rawget(this, 'length'))
-  for i=1,args.length do
+  for i=1,args.n do
     rawset(this, len, args[i])
     len = len + 1
   end
@@ -414,7 +414,11 @@ arr_proto.shift = function (this)
   local len = tonumber(rawget(this, 'length'))
   local ret = rawget(this, 0)
   if len > 0 then
-    rawset(this, 0, table.remove(this, 1) or nil)
+    if len > 1 then
+      rawset(this, 0, table.remove(this, 1))
+    else
+      rawset(this, 0, nil)
+    end
     rawset(this, 'length', len - 1)
   end
   return ret
@@ -445,7 +449,7 @@ arr_proto.splice = function (this, i, del, ...)
   end
 
   local args = table.pack(...)
-  for j=1,args.length do
+  for j=1,args.n do
     if i == 0 then
       arr_proto.unshift(this, args[j])
     else
@@ -453,7 +457,7 @@ arr_proto.splice = function (this, i, del, ...)
     end
     i = i + 1
   end
-  rawset(this, 'length', original_len - del_len + args.length)
+  rawset(this, 'length', original_len - del_len + args.n)
   return js_arr(ret, del_len)
 end
 
@@ -476,7 +480,7 @@ arr_proto.slice = function (this, start, len)
     len = this.length or 0
   end
   local j = 0
-  for i=start or 0,len-1 do
+  for i=tonumber(start) or 0,len-1 do
     a[j] = this[i]
     j = j + 1
   end
@@ -489,7 +493,7 @@ arr_proto.concat = function (this, ...)
     arr:push(this[i])
   end
   local args1 = table.pack(...)
-  for i=1,args1.length do
+  for i=1,args1.n do
     if global.Array:isArray(args1[i]) then
       for j=0,(args1[i].length or 0)-1 do
         arr:push(args1[i][j])
@@ -543,7 +547,7 @@ end
 arr_proto.join = function (this, ...)
   local args = table.pack(...)
   local str = ','
-  if args.length >= 1 then
+  if args.n >= 1 then
     if args[1] == nil then
       str = 'null'
     else
@@ -607,7 +611,7 @@ arr_proto.map = function (this, fn, ...)
   -- setting to global has the same observable semantics.
   local t = global
 
-  if args.length > 0 then
+  if args.n > 0 then
     t = args[1]
   end
 
@@ -625,7 +629,7 @@ arr_proto.filter = function (this, fn, ...)
   -- setting to global has the same observable semantics.
   local t = global
 
-  if args.length > 0 then
+  if args.n > 0 then
     t = args[1]
   end
 
@@ -650,7 +654,7 @@ arr_proto.reduce = function (this, callback, ...)
   local isValueSet = false
 
   local args = table.pack(...)
-  if args.length > 0 then
+  if args.n > 0 then
     value = args[1]
     isValueSet = true
   end
@@ -684,7 +688,7 @@ arr_proto.forEach = function (this, fn, ...)
   -- setting to global has the same observable semantics.
   local t = global
 
-  if args.length > 0 then
+  if args.n > 0 then
     t = args[1]
   end
 
@@ -714,7 +718,7 @@ arr_proto.some = function (this, fn, ...)
   -- setting to global has the same observable semantics.
   local t = global
 
-  if args.length > 0 then
+  if args.n > 0 then
     t = args[1]
   end
 
@@ -742,7 +746,7 @@ arr_proto.every = function (this, callbackfn, ...)
   -- setting to global has the same observable semantics.
   local t = global
 
-  if args.length > 0 then
+  if args.n > 0 then
     t = args[1]
   end
 
@@ -765,7 +769,7 @@ arr_proto.filter = function (this, fn, ...)
   -- setting to global has the same observable semantics.
   local t = global
 
-  if args.length > 0 then
+  if args.n > 0 then
     t = args[1]
   end
 
@@ -823,45 +827,48 @@ end
 global.Number.prototype = num_proto
 num_proto.constructor = global.Number
 
-global.Number.isFinite = function(this, arg)
-  if type(arg) == 'number' then
-    return arg ~= math.huge and arg ~= -math.huge and not global.isNaN(this, arg)
-  else
-    return false
-  end
+-- https://people.mozilla.org/~jorendorff/es6-draft.html#sec-properties-of-the-number-constructor
+-- note that isNaN: arg ~= arg
+
+global.Number.EPSILON = 2.220446049250313e-16
+
+global.Number.isFinite = function (this, arg)
+  return type(arg) == 'number' and arg == arg and math.abs(arg) ~= math.huge
+end
+
+global.Number.isInteger = function (this, arg)
+  return type(arg) == 'number' and arg == arg and math.abs(arg) ~= math.huge and math.floor(arg) == arg
 end
 
 global.Number.isNaN = function (this, arg)
-  if type(arg) == 'number' then
-    return global.isNaN(this, arg)
-  else
-    return false
-  end
+  return type(arg) == 'number' and arg ~= arg
 end
 
 global.Number.isSafeInteger = function (this, arg)
-  if type(arg) == 'number' then
-    if global.Number.isFinite(this, arg) then
-      if math.floor(arg) == arg then
-        return math.abs(arg) <= 9007199254740991
-      else
-        return false
-      end
-    else
-      return false
-    end
-  else
-    return false
-  end
+  return type(arg) == 'number' and arg == arg and math.abs(arg) ~= math.huge and math.floor(arg) == arg and math.abs(arg) <= 9007199254740991
+end
+
+global.Number.MAX_SAFE_INTEGER = 9007199254740991
+
+global.Number.MAX_VALUE = 1.7976931348623157e+308
+
+global.Number.NaN = 0/0
+
+global.Number.NEGATIVE_INFINITY = -math.huge
+
+global.Number.MIN_SAFE_INTEGER = -9007199254740991
+
+global.Number.MIN_VALUE = 5e-322
+
+global.Number.parseFloat = function (this, str)
+  return global.parseFloat(this, str)
 end
 
 global.Number.parseInt = function (this, str, radix)
   return global.parseInt(this, str, radix)
 end
 
-global.Number.parseFloat = function (this, str)
-  return global.parseFloat(this, str)
-end
+global.Number.POSITIVE_INFINITY = -math.huge
 
 -- Object
 
@@ -896,7 +903,7 @@ global.Object.create = function (this, proto, props)
 end
 
 global.Object.defineProperty = function (this, obj, prop, config)
-  if type(obj) ~= 'table' then
+  if type(obj) ~= 'table' and type(obj) ~= 'function' then
     error(js_new(global.TypeError, 'Object.defineProperty called on non-object'))
   end
   if config.value ~= nil then
@@ -999,8 +1006,8 @@ func_proto.constructor = global.Function
 
 global.Array = function (ths, ...)
   local a = table.pack(...)
-  local len = a.length
-  a.length = nil
+  local len = a.n
+  a.n = nil
   if len == 1 and type(a[1]) == 'number' then
     local len = tonumber(a[1])
     return js_arr({}, len)
@@ -1018,6 +1025,8 @@ arr_proto.constructor = global.Array
 global.Array.isArray = function (ths, a)
   return (getmetatable(a) or {}).proto == arr_proto
 end
+
+_G.colony_isarray = global.Array.isArray
 
 -- String
 
@@ -1063,7 +1072,7 @@ global.String.fromCharCode = function (this, ...)
   -- http://es5.github.io/x15.5.html#x15.5.3.2
   local args = table.pack(...)
   local str = ''
-  for i=1,args.length do
+  for i=1,args.n do
     local uint16 = math.floor(math.abs(tonumbervalue(args[i]))) % (2^16)
     str = str .. tm.utf8_char_encode(uint16)    -- even without tm.str_from_utf8 this will work
   end
@@ -1114,8 +1123,7 @@ global.Math = js_obj({
   ceil = luafunctor(math.ceil),
   clz32 = function (this, x)
     -- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/clz32
-    x = tonumber(x) or 0
-    local value = bit.tobit(math.floor(x))
+    local value = bit.rshift(tointegervalue(x) or 0, 0)
     if value then
       return 32 - #(tm.itoa(value, 2) or '')
     else
@@ -1144,7 +1152,7 @@ global.Math = js_obj({
   hypot = function (this, ...)
     -- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/hypot
     local y, args = 0, table.pack(...)
-    for i=1,args.length do
+    for i=1,args.n do
       local arg = tonumber(args[i])
       if type(arg) ~= 'number' then
         return 0/0 -- NaN
@@ -1297,7 +1305,6 @@ global.TypeError = error_class('TypeError')
 global.URIError = error_class('URIError')
 global.NotImplementedError = error_class('NotImplementedError')
 
-
 -- NOTE: this constructor mimics v8's undocumented parameters/properties
 local function CallSite (this, rcvr, fun, pos)
   this.receiver = rcvr
@@ -1384,128 +1391,23 @@ global.Error.captureStackTrace = function (this, err, ctor)
     end
     info_idx = info_idx + 1
   end
-  getmetatable(err).frames = frames
+
+  js_define_getter(err, 'stack', function (this)
+    if (global.Error.prepareStackTrace) then
+      -- NOTE: https://code.google.com/p/v8/wiki/JavaScriptStackTraceApi states that this will
+      --       actually be called when error is *created*. node seems to match this claim, however,
+      --       in Chrome 37.0.2062.94 console you have to call .stack to trigger. This seems simpler.
+      local arr = global:Array(unpack(frames))
+      return global.Error.prepareStackTrace(global.Error, this, arr)
+    end
+
+    local s = this:toString()
+    for i, frame in ipairs(frames) do
+      s = s .. "\n    at " .. frame:toString()
+    end
+    return s
+  end)
 end
-
-js_define_getter(error_constructor.prototype, 'stack', function (this)
-  local frames = getmetatable(this).frames or {}
-  if (global.Error.prepareStackTrace) then
-    -- NOTE: https://code.google.com/p/v8/wiki/JavaScriptStackTraceApi states that this will
-    --       actually be called when error is *created*. node seems to match this claim, however,
-    --       in Chrome 37.0.2062.94 console you have to call .stack to trigger. This seems simpler.
-    local arr = global:Array(unpack(frames))
-    return global.Error.prepareStackTrace(global.Error, this, arr)
-  end
-
-  local s = this:toString()
-  local frame
-  local frame_idx = 1
-  for i, frame in ipairs(frames) do
-    s = s .. "\n    at " .. frame:toString()
-  end
-  return s
-end)
-
-
--- Console
-
-local function objtostring (obj, sset)
-  -- Special function for buffers
-  if getmetatable(obj) and getmetatable(obj).buffer then
-    local sourceBuffer = getmetatable(obj).buffer
-    local sourceBufferLength = getmetatable(obj).bufferlen
-
-    if type(strtype) == 'string' and string.lower(strtype) == 'utf8' then
-      local str = ''
-      for i=0,sourceBufferLength-1 do
-        str = str .. string.char(obj[i])
-      end
-      return str
-    end
-
-    local out = {'<Buffer'}
-    for i=0,math.min(sourceBufferLength or 0, 51)-1 do
-      table.insert(out, string.format("%02x", obj[i]))
-    end
-    if sourceBufferLength > 51 then
-      table.insert(out, '...')
-    end
-    return table.concat(out, ' ') + '>'
-  end
-
-  if getmetatable(obj) and getmetatable(obj).date then
-    return obj:toString()
-  end
-
-  local vals = {}
-  rawset(sset, obj, true)
-  for k in js_pairs(obj) do
-    local v = obj[k]
-    if rawget(sset, v) ~= true then
-      if type(v) == 'table' then
-        rawset(sset, v, true)
-      end
-      if type(v) == 'string' then
-        v = '\'' + v + '\''
-      elseif type(v) == 'table' then
-        v = objtostring(v, sset)
-      elseif type(v) == 'function' then
-        v = '[Function]'
-      elseif global.Array:isArray(obj) and v == nil then
-        v = ''
-      else
-        v = tostring(v)
-      end
-    else
-      v = '[Circular]'
-    end
-    if global.Array:isArray(obj) then
-      table.insert(vals, v)
-    else
-      table.insert(vals, k + ": " + v)
-    end
-  end
-  if global.Array:isArray(obj) then
-    if #vals == 0 then
-      return "[]"
-    end
-    -- table.insert(vals, 1, table.remove(vals))
-    return "[ " + table.concat(vals, ", ") + " ]"
-  else
-    if #vals == 0 then
-      return "{}"
-    end
-    return "{ " + table.concat(vals, ", ") + " }"
-  end
-end
-
-local function logger (level, ...)
-  local parts = {}
-  for i=1,select('#',...) do
-    local x = select(i,...)
-    if js_typeof(x) == 'object' and x ~= nil then
-      parts[#parts+1] = objtostring(x, {})
-    else
-      parts[#parts+1] = tostring(x)
-    end
-  end
-  tm.log(level, table.concat(parts, ' '))
-end
-
-global.console = js_obj({
-  log = function (self, ...)
-    logger(10, ...)
-  end,
-  info = function (self, ...)
-    logger(11, ...)
-  end,
-  warn = function (self, ...)
-    logger(12, ...)
-  end,
-  error = function (self, ...)
-    logger(13, ...)
-  end
-});
 
 -- parseFloat, parseInt, isNan, Infinity
 
@@ -1699,12 +1601,27 @@ if type(hs) == 'table' then
       error(js_new(global.Error, 'Too many capturing subgroups (max ' .. hsmatchc .. ', compiled ' .. hs.regex_nsub(cre) .. ')'))
     end
 
-    local o = {source=source}
+    local o = {}
+    o.source = source
+    o.lastIndex = 0
     o.global = (flags and string.find(flags, "g") and true)
     o.ignoreCase = (flags and string.find(flags, "i") and true)
     o.multiline = (flags and string.find(flags, "m") and true)
     o.unicode = (flags and string.find(flags, "u") and true)
     o.sticky = (flags and string.find(flags, "y") and true)
+
+    -- Set a metatable on the created regex.
+    -- This way we can add a handler when the regex obj gets GC'ed
+    -- and then in turn force hsregex to free the created regex.
+    -- If we free this before hand, we're not guaranteed that the
+    -- regex won't get used later.
+    -- Had to add a `debug` here in order to set the metatable on userdata.
+    debug.setmetatable(cre, {
+      __gc = function(self)
+        -- force regex to free after it goes out of context
+        hs.regfree(self)
+      end
+    })
 
     setmetatable(o, {
       __index=global.RegExp.prototype,
@@ -1777,9 +1694,12 @@ if type(hs) == 'table' then
       error(js_new(global.TypeError, 'Cannot call RegExp.prototype.exec on non-regex'))
     end
 
-    local data = tostring(subj)
+    local input = tostring(subj)
+    local data = string.sub(input, this.lastIndex + 1)
     local rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
     if rc ~= 0 then
+      -- Reset .lastIndex when no match found
+      this.lastIndex = 0
       return nil
     end
     local ret, len = {}, 0
@@ -1793,8 +1713,12 @@ if type(hs) == 'table' then
       len = len + 1
     end
 
-    ret.index = hs.regmatch_so(hsmatch, 0)
-    ret.input = data
+    ret.index = this.lastIndex + hs.regmatch_so(hsmatch, 0)
+    ret.input = input
+
+    if this.global then
+      this.lastIndex = this.lastIndex + hs.regmatch_eo(hsmatch, 0)
+    end
 
     return js_arr(ret, len)
   end
@@ -1832,20 +1756,73 @@ end
 --|| json library
 --]]
 
-yajl.null = nil
+global.JSON = js_obj({})
 
-global.JSON = js_obj({
-  parse = function (ths, arg)
-    return yajl.to_value(tostring(arg))
-  end,
-  stringify = function (ths, arg, replacer, space)
-    return yajl.to_string(arg, {
-      replacer = replacer or nil,
-      indent = space or nil
-    })
-  end,
-})
+-- Called by parsing code when a parsing error occurs.
+local function json_error (val,code,offset)
+  -- error message starting string
+  -- TODO: replicate node messages more closely
+  error_msg = {
+    'end of input',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'end of input ',
+    'token ',
+    'token after ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+    'token ',
+  }
 
+  -- format the offset of the value that's failing
+  local token = ''
+  if val[offset] then
+    token = val[offset]
+  elseif val[#val-1] then
+    token = val[#val-1]
+  end
+
+  -- throw a new error
+  error(js_new(global.SyntaxError,'Unexpected '..error_msg[code]..token))
+
+end
+
+-- Parse JSON into an object.
+global.JSON.parse = function (this, value)
+  -- Non-object primitives require this wrapper.
+  return rapidjson.parse('{"value":\n' .. tostring(value) .. '\n}', json_error).value
+end
+
+-- Stringify an object.
+global.JSON.stringify = function (this, value, replacer, spacer)
+  -- Fix spacer argument
+  if type(spacer) == 'number' then
+    spacer = string.rep(' ', spacer)
+  else
+    spacer = tostring(spacer or '')
+  end
+  spacer = string.sub(spacer, 1, 10)
+
+  -- Call writer.
+  local wh = rapidjson.create_writer(spacer)
+  local status, err = pcall(rapidjson.write_value, wh, value, replacer)
+  if not status then
+    rapidjson.destroy(wh)
+    error(err)
+  end
+  local str = rapidjson.result(wh)
+  rapidjson.destroy(wh)
+
+  -- Return code.
+  return tostring(str)
+end
 
 --[[
 --|| encode

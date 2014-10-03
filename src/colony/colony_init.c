@@ -106,7 +106,13 @@ static int js_getter_index (lua_State* L)
 		lua_pushvalue(L, 3);
 	}
 
-	if (lua_getmetatable(L, -1) == 0) {
+	if (lua_isfunction(L, -1)) {
+		lua_pushliteral(L, "__mt");
+		lua_rawget(L, -2);
+		if (lua_isnil(L, -1)) {
+			return 1;
+		}
+	} else if (lua_getmetatable(L, -1) == 0) {
 		lua_pushnil(L);
 		return 1;
 	}

@@ -5,7 +5,7 @@ CONFIG ?= Release
 
 ifeq ($(ARM),1)
 	compile = \
-		AR=arm-none-eabi-ar AR_host=arm-none-eabi-ar AR_target=arm-none-eabi-ar CC=arm-none-eabi-gcc gyp $(1) --depth=. -f ninja-arm -D builtin_section=.rodata -D enable_ssl=$(ENABLE_TLS) -D enable_net=$(ENABLE_NET) &&\
+		AR=arm-none-eabi-ar AR_host=arm-none-eabi-ar AR_target=arm-none-eabi-ar CC=arm-none-eabi-gcc CXX=arm-none-eabi-g++ gyp $(1) --depth=. -f ninja-arm -D builtin_section=.rodata -D enable_ssl=$(ENABLE_TLS) -D enable_net=$(ENABLE_NET) &&\
 		ninja -C out/$(CONFIG)
 else
     compile = \
@@ -13,9 +13,9 @@ else
 		ninja -C out/$(CONFIG)
 endif
 
-.PHONY: all
+.PHONY: all test
 
-all:
+all: colony
 
 clean:
 	ninja -v -C out/Debug -t clean
@@ -27,6 +27,9 @@ nuke:
 update:
 	git submodule update --init --recursive
 	npm install
+
+test:
+	@./node_modules/.bin/tap -e './out/Release/colony' test/suite/*.js test/issues/*.js test/net/*.js
 
 
 # Targets

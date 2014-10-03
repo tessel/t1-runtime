@@ -7,6 +7,13 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-exports.Buffer = Buffer;
+#ifndef _LUA_RAPIDJSON_H_
+#define _LUA_RAPIDJSON_H_
 
-exports.INSPECT_MAX_BYTES = 50;
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+
+int lua_open_rapidjson(lua_State *L);
+
+#endif

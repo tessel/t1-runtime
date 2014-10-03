@@ -329,6 +329,21 @@ local buffer_proto = js_obj({
     end
     return js_arr(arr, len)
   end,
+  inspect = function (this)
+    local sourceBuffer = getmetatable(this).buffer
+    local sourceBufferLength = getmetatable(this).bufferlen
+
+    local out = {'<Buffer'}
+    local maxbytes = colony.run('buffer').INSPECT_MAX_BYTES    -- HACK: need *module* object
+    -- NOTE: we differ from current node.js, see https://github.com/joyent/node/issues/7995
+    for i=0,math.min(sourceBufferLength or 0, maxbytes)-1 do
+      table.insert(out, string.format("%02x", this[i]))
+    end
+    if sourceBufferLength > maxbytes then
+      table.insert(out, '...')
+    end
+    return table.concat(out, ' ') + '>'
+  end,
 
   -- Internal use only
   _random = function (this)
@@ -742,6 +757,15 @@ end
 global.process.cwd = function ()
   return tm.cwd()
 end
+global.process.hrtime = function (this, prev)
+  -- This number exceeds the 53-bit limit on integer representation, but with
+  -- microsecond resolution, there are only ~50 bits of actual data
+  local nanos = tm.timestamp() * 1e3;
+  if prev ~= nil then
+    nanos = nanos - prev[0]*1e9 + prev[1]
+  end
+  return js_arr({[0]=math.floor(nanos / 1e9), nanos % 1e9}, 2)
+end
 global.process.nextTick = global.setImmediate
 global.process.version = global.process.versions.node
 
@@ -808,13 +832,13 @@ function js_wrap_module (module)
           local args = table.pack(module[key](...))
 
           -- single-arg returns, return single arg
-          if args.length < 2 then
+          if args.n < 2 then
             return args[1]
           end
 
           -- multiple arg returns return array to JS
-          local len = args.length
-          args['length'] = nil
+          local len = args.n
+          args.n = nil
           args[0] = table.remove(args, 1)
           return js_arr(args, len);
         end

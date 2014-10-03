@@ -7,13 +7,18 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#ifndef _LUA_YAJL_H_
-#define _LUA_YAJL_H_
+var util = require('util'),
+    _log = process.binding('tm').log;
 
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-
-LUALIB_API int luaopen_yajl(lua_State *L);
-
-#endif
+exports.log = function () {
+	_log(10, util.format.apply(util, arguments));
+}
+exports.info = function () {
+	_log(11, util.format.apply(util, arguments));
+}
+exports.warn = function () {
+	_log(12, util.format.apply(util, arguments));
+}
+exports.error = function () {
+	_log(13, util.format.apply(util, arguments));
+}

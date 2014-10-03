@@ -24,11 +24,19 @@ local tm = require('tm')
 --   logger:write('\n\n')
 -- end, 'c', 1000)
 
--- lua methods
+local function js_toprimitive (val)
+  if type(val) == 'table' then
+    val = val:valueOf()
+    if type(val) == 'table' then
+      val = tostring(val)
+    end
+  end
+  return val
+end
 
 -- tonumber that returns NaN instead of nil
 _G.tonumbervalue = function (val)
-  val = tonumber(val)
+  val = tonumber(js_toprimitive(val))
   if val == nil then
     return 0/0
   else
@@ -36,35 +44,13 @@ _G.tonumbervalue = function (val)
   end
 end
 
-function table.augment (t1,t2)
-  for i=1,#t2 do
-    t1[#t1+1] = t2[i]
+_G.tointegervalue = function (val)
+  val = tonumber(js_toprimitive(val))
+  if val == nil then
+    return 0/0
+  else
+    return math.floor(val)
   end
-  return t1
-end
-
-if not table.pack then
-  function table.pack(...)
-    return { length = select("#", ...), ... }
-  end
-end
-
-if not setfenv then -- Lua 5.2
-  -- based on http://lua-users.org/lists/lua-l/2010-06/msg00314.html
-  -- this assumes f is a function
-  local function findenv(f)
-    local level = 1
-    repeat
-      local name, value = debug.getupvalue(f, level)
-      if name == '_ENV' then return level, value end
-      level = level + 1
-    until name == nil
-    return nil end
-  getfenv = function (f) return(select(2, findenv(f)) or _G) end
-  setfenv = function (f, t)
-    local level = findenv(f)
-    if level then debug.setupvalue(f, level, t) end
-    return f end
 end
 
 -- built-in prototypes
@@ -76,7 +62,7 @@ local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_
 
 local function js_setter_index (proto)
   return function (self, key, value)
-    local mt = getmetatable(self)
+    local mt = type(self) == 'function' and rawget(self, '__mt') or getmetatable(self)
     local setter = mt.setters[key]
     if setter then
       return setter(self, value)
@@ -89,7 +75,7 @@ function js_define_setter (self, key, fn)
   if type(self) == 'function' then
     mt = self.__mt
     if not mt then
-      self.__mt = {}
+      self.__mt = { proto = func_proto }
       mt = self.__mt
     end
   else
@@ -114,7 +100,7 @@ function js_define_getter (self, key, fn)
   if type(self) == 'function' then
     mt = self.__mt
     if not mt then
-      self.__mt = {}
+      self.__mt = { proto = func_proto }
       mt = self.__mt
     end
   else
@@ -266,6 +252,12 @@ local js_obj_mt = {
   __newindex = js_obj_newindex,
   __tostring = js_tostring,
   __tovalue = js_valueof,
+  __lt = function (a, b)
+    return js_toprimitive(a) < js_toprimitive(b)
+  end,
+  __sub = function (a, b)
+    return js_toprimitive(a) + js_toprimitive(b)
+  end,
   proto = obj_proto,
   shared = true
 };
@@ -306,10 +298,19 @@ func_mt.__index = function (self, key)
     self.prototype = js_obj({constructor = self})
     return self.prototype
   end
+  if rawget(self, '__mt') and rawget(self, '__mt').__index then
+    return rawget(self, '__mt').__index(self, key)
+  end
   return js_proto_get(self, func_proto, key)
 end
 func_mt.__tostring = js_tostring
 func_mt.__tovalue = js_valueof
+func_mt.__newindex = function (self, key, value)
+  if rawget(self, '__mt') and rawget(self, '__mt').__newindex then
+    return rawget(self, '__mt').__newindex(self, key, value)
+  end
+  rawset(self, key, value)
+end
 -- func_mt.__tostring = function ()
 --   return "[Function]"
 -- end
@@ -485,6 +486,10 @@ function js_new (f, ...)
     end,
     __tostring = js_tostring,
     __tovalue = js_valueof,
+    __sub = function (a, b)
+      return js_toprimitive(a) - js_toprimitive(b)
+    end,
+    -- TODO more primitive methods!
     proto = f.prototype
   }
   setmetatable(o, mt)
