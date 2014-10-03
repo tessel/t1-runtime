@@ -263,12 +263,19 @@ function OutgoingMessage () {
   
   var self = this;
   this.once('finish', function () {
-    if (!self.headersSent) {
-      if (self instanceof ClientRequest) self._chunked = false;
-      self.flush();
-    }
-    if (this._chunked) {
-      self._outbox.write('0\r\n'+this._trailer+'\r\n');
+    // Workaround for us being slow on socket writes/having to deal with HW interrupts.
+    // If we do have a socket, make sure that the socket stream hasn't ended.
+    // Otherwise we try to write the ending chunks after we already have a response
+    // and the socket has been closed.
+    if (self._socket == null 
+      || (self._socket && self._socket._destroy !== true)) {
+      if (!self.headersSent) {
+        if (self instanceof ClientRequest) self._chunked = false;
+        self.flush();
+      }
+      if (self._chunked) {
+        self._outbox.write('0\r\n'+self._trailer+'\r\n');
+      }
     }
   });
 }
@@ -280,6 +287,7 @@ OutgoingMessage.prototype._assignSocket = function (socket) {
   //       new/idle sockets get assigned syncronously by Agent.
   //       ClientRequest re-emits a public event asyncronously.
   this.emit('_socket-SYNC', socket);
+  this._socket = socket;
   this._outbox.pipe(socket);
   // TODO: setTimeout/setNoDelay/setSocketKeepAlive
 };
@@ -440,7 +448,9 @@ function _getPool(agent, opts) {
       if (agent._keepAlive && freeSockets.length < agent.maxFreeSockets) {
         socket.on('error', handleIdleError);
         freeSockets.push(socket);
-      } else socket.end();
+      } else {
+        socket.end();
+      }
       removeSocket(socket);
       socket.destroy();
     }
@@ -557,6 +567,7 @@ function ClientRequest (opts, _https) {
       } else {
         socket.emit('_free');
       }
+
     });
     self.on('error', self.abort);
   });

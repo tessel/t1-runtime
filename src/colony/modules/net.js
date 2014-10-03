@@ -494,6 +494,8 @@ TCPSocket.prototype.__close = function (tryToClose) {
 }
 
 TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
+  this._destroy = true;
+  
   var self = this;
   setImmediate(function () {
     if (self.__listenid != null) {
