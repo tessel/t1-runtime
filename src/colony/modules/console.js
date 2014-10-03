@@ -22,3 +22,6 @@ exports.warn = function () {
 exports.error = function () {
 	_log(13, util.format.apply(util, arguments));
 }
+exports.trace = function () {
+  // no-op
+}
