@@ -1880,6 +1880,7 @@ function decodeURI(this, str)
 end
 
 function escape(this, str)
+  -- TODO: this needs to loop over str.length UCS-2 charcodes, not CESU-8 or UTF-8!
   return string.gsub(tostring(str), "([^%w@%*_%+%-%./])",
     function(c)
       return string.format ("%%%02X", string.byte(c))
