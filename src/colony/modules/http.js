@@ -440,8 +440,11 @@ function _getPool(agent, opts) {
       if (agent._keepAlive && freeSockets.length < agent.maxFreeSockets) {
         socket.on('error', handleIdleError);
         freeSockets.push(socket);
-      } else socket.end();
+      } else {
+        socket.end();
+      }
       removeSocket(socket);
+
       socket.destroy();
     }
   }
@@ -557,6 +560,15 @@ function ClientRequest (opts, _https) {
       } else {
         socket.emit('_free');
       }
+
+      socket.once('end', function(){
+        // Workaround for us being slow on socket writes.
+        // Make sure that we dont fire the `finish` event, otherwise 
+        // the server has sent a response BEFORE we finished writing 
+        // and we've already closed the socket.
+        self.removeAllListeners('finish');
+      });
+
     });
     self.on('error', self.abort);
   });
