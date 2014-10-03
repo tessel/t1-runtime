@@ -1897,6 +1897,13 @@ function escape(this, str)
   return table.concat(res)
 end
 
+function unescape(this, str)
+  function getstr(c)
+    -- correctly CESU-8, since c is either 8- or 16-bit only
+    return tm.utf8_char_encode(tonumber(c, 16))
+  end
+  return string.gsub(string.gsub(tostring(str), "%%(%x%x)", getstr), "%%u(%x%x%x%x)", getstr)
+end
 
 
 global.encodeURIComponent = encodeURIComponent
@@ -1904,6 +1911,7 @@ global.decodeURIComponent = decodeURIComponent
 global.encodeURI = encodeURI;
 global.decodeURI = decodeURI;
 global.escape = escape;
+global.unescape = unescape;
 
 
 --[[
