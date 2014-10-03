@@ -263,12 +263,14 @@ function OutgoingMessage () {
   
   var self = this;
   this.once('finish', function () {
-    if (!self.headersSent) {
-      self._chunked = false;
-      self.flush();
-    }
-    if (this._chunked) {
-      self._outbox.write('0\r\n'+this._trailer+'\r\n');
+    if (self._socket && self._socket._destroy !== true) {
+      if (!self.headersSent) {
+        self._chunked = false;
+        self.flush();
+      }
+      if (this._chunked) {
+        self._outbox.write('0\r\n'+this._trailer+'\r\n');
+      }
     }
   });
 }
@@ -280,6 +282,7 @@ OutgoingMessage.prototype._assignSocket = function (socket) {
   //       new/idle sockets get assigned syncronously by Agent.
   //       ClientRequest re-emits a public event asyncronously.
   this.emit('_socket-SYNC', socket);
+  this._socket = socket;
   this._outbox.pipe(socket);
   // TODO: setTimeout/setNoDelay/setSocketKeepAlive
 };
@@ -444,7 +447,6 @@ function _getPool(agent, opts) {
         socket.end();
       }
       removeSocket(socket);
-
       socket.destroy();
     }
   }
@@ -560,14 +562,6 @@ function ClientRequest (opts, _https) {
       } else {
         socket.emit('_free');
       }
-
-      socket.once('end', function(){
-        // Workaround for us being slow on socket writes.
-        // Make sure that we dont fire the `finish` event, otherwise 
-        // the server has sent a response BEFORE we finished writing 
-        // and we've already closed the socket.
-        self.removeAllListeners('finish');
-      });
 
     });
     self.on('error', self.abort);
