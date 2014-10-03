@@ -263,13 +263,18 @@ function OutgoingMessage () {
   
   var self = this;
   this.once('finish', function () {
-    if (self._socket && self._socket._destroy !== true) {
+    // Workaround for us being slow on socket writes/having to deal with HW interrupts.
+    // If we do have a socket, make sure that the socket stream hasn't ended.
+    // Otherwise we try to write the ending chunks after we already have a response
+    // and the socket has been closed.
+    if (self._socket === undefined 
+      || (self._socket && self._socket._destroy !== true)) {
       if (!self.headersSent) {
         self._chunked = false;
         self.flush();
       }
-      if (this._chunked) {
-        self._outbox.write('0\r\n'+this._trailer+'\r\n');
+      if (self._chunked) {
+        self._outbox.write('0\r\n'+self._trailer+'\r\n');
       }
     }
   });
