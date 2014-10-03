@@ -8,7 +8,7 @@
 // except according to those terms.
 
 var tm = process.binding('tm');
-var http_parser = process.binding('http_parser_lua');
+var http_parser = {}; // process.binding('http_parser_lua');
 
 var url = require('url');
 var util = require('util');

@@ -271,7 +271,7 @@ static int l_regex_replace (lua_State *L)
       lua_call(L, 4 + cre->re_nsub, 1);
 
       size_t sect_len = 0;
-      const char* sect = luaL_tolstring(L, -1, &sect_len);
+      const char* sect = lua_tolstring(L, -1, &sect_len);
       lua_remove(L, -1);
       stringbuilder_append(&b, sect, sect_len);
     } else {
