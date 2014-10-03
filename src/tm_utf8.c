@@ -112,8 +112,31 @@ size_t tm_str_to_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t ** cons
   return utf8_len;
 }
 
-size_t tm_str_from_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t ** const dstptr) {
-  // TODO: this is no-op stub, implement for realsies!
+size_t tm_str_from_utf8 (const uint8_t* utf8, size_t utf8_len, const uint8_t ** const dstptr) {
+  size_t buf_len = utf8_len;
+  // TODO: increase buf_len to fit actual split pairs (4 bytes become 6) and replaced non-characters (3 bytes per byte in bad sequence)
+  buf_len += utf8_len / 2 + 6;    // HACK: this is just a glorified/dynamic fudge factor
+  uint8_t* buf = malloc(buf_len);
+  
+  size_t buf_pos = 0;
+  ssize_t utf8_pos = 0;
+  while (utf8_pos < utf8_len) {
+    assert(buf_pos + 6 < buf_len);        // bail if fudge factor was insufficiently generous
+    int32_t uchar;
+    ssize_t bytes_read = utf8proc_iterate(utf8 + utf8_pos, utf8_len - utf8_pos, &uchar);
+    if (uchar < 0) {
+      bytes_read = 1;
+      uchar = 0xFFFD;
+    }
+    if (bytes_read < 4) {
+      buf_pos += utf8proc_encode_char(uchar, buf + buf_pos);
+    } else {
+      uchar -= 0x010000;
+      buf_pos += utf8proc_encode_char(0xD800 + (uchar >> 10), buf + buf_pos);
+      buf_pos += utf8proc_encode_char(0xDC00 + (uchar & 0x03FF), buf + buf_pos);
+    }
+    utf8_pos += bytes_read;
+  }
   *dstptr = buf;
-  return buf_len;
+  return buf_pos;
 }
