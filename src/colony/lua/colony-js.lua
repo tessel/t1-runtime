@@ -1880,11 +1880,21 @@ function decodeURI(this, str)
 end
 
 function escape(this, str)
-  -- TODO: this needs to loop over str.length UCS-2 charcodes, not CESU-8 or UTF-8!
-  return string.gsub(tostring(str), "([^%w@%*_%+%-%./])",
-    function(c)
-      return string.format ("%%%02X", string.byte(c))
-    end);
+  local res = {}
+  for i = 0, str.length-1 do
+    local c = str:charCodeAt(i)
+    local s
+    if c < 256 then
+      s = string.char(c)
+      if string.find(s, '[A-Za-z0-9@*_+-./]') == nil then
+        s = string.format("%%%02X", c)
+      end
+    else
+      s = string.format ("%%u%04X", c)
+    end
+    res[i+1] = s
+  end
+  return table.concat(res)
 end
 
 
