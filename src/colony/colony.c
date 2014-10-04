@@ -53,7 +53,7 @@ int colony_isarray (lua_State* L, int index)
   }
   lua_pushvalue(L, index);
   lua_call(L, 2, 1);
-  int ret = lua_tonumber(L, -1);
+  int ret = lua_toboolean(L, -1);
   lua_pop(L, 1);
   return ret;
 }
