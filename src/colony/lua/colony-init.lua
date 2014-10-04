@@ -15,7 +15,6 @@
 -- requires
 -- $ luarocks install bit32
 
-local bit = require('bit32')
 local tm = require('tm')
 
 -- local logger = assert(io.open('colony.log', 'w+'))
