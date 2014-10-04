@@ -1,7 +1,7 @@
 var tap = require('../tap');
 var buf = require('buffer');
 
-tap.count(72);
+tap.count(75);
 
 // testing vars
 var foo1 = {foundation: "Mozilla", model: "box", week: 45, transport: "car", month: 7};
@@ -46,8 +46,6 @@ var objs = [
   { 1:foo3,                                     2:'{"a":3,"b":{"1":false,"x":54}}',  3:'lvl 1 object',               4:null,            5:null },
   { 1:foo4,                                     2:'{"a":{"b":{"c":{"d":1}}}}',       3:'super nested objects',       4:null,            5:null },
   { 1:foo6,                                     2:foo7,                              3:'realistic object',           4:null,            5:null },
-  { 1:foo8,                                     2:foo9,                              3:'array object mess',          4:null,            5:null },
-  { 1:fooA,                                     2:fooB,                              3:'input file test',            4:null,            5:null },
   { 1:{"hi":5},                                 2:'{\n  "hi": 5\n}',                 3:'spacer string',              4:null,            5:'  ' },
   { 1:{"hi":5},                                 2:'{\n   "hi": 5\n}',                3:'spacer number',              4:null,            5:3 },
   { 1:foo4,                                     2:foo5,                              3:'super nested spacer',        4:null,            5:' ' },
@@ -66,6 +64,9 @@ var objs2 = [
   { 1:{"hi":5},                                 2:'{\n123456789A"hi": 5\n}',         3:'spacer string long',         4:null,            5:'123456789AB' },
   { 1:foo1,                                     2:'{"month":45,"week":7}',           3:'replacer function',          4:censor,          5:null },
   { 1:[[], {}, [null], [0], [[{}]], "14121269654077727"], 2:'[[],{},[null],[0],[[{}]],"14121269654077727"]', 3:'complex object', 4:null, 5:null},
+  { 1:foo1,                                     2:'{"month":7,"transport":"car"}',   3:'replacer array',             4:censor_arr,      5:null },
+  { 1:foo8,                                     2:foo9,                              3:'array object mess',          4:null,            5:null },
+  { 1:fooA,                                     2:fooB,                              3:'input file test',            4:null,            5:null },
 ]
 
 // Simple parsing testing
