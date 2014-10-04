@@ -301,20 +301,20 @@ local buffer_proto = js_obj({
     end
     encoding = string.lower(encoding);
     
-    local str = tm.buffer_tobytestring(getmetatable(this).buffer, offset, endOffset);
+    local buf = tm.buffer_tobytestring(getmetatable(this).buffer, offset, endOffset);
 
     if encoding == 'binary' or encoding == 'ascii' then
-      return str;      -- TODO: ascii needs 0 and >127 replaced!
+      return buf;      -- TODO: ascii needs 0 and >127 replaced!
     elseif encoding == 'utf8' or encoding == 'utf-8' then
-      return tm.str_to_utf8(str);
+      return tm.str_from_utf8(buf);
     elseif encoding == 'base64' then
-      return to_base64(str);
+      return to_base64(buf);
     elseif encoding == 'hex' then
-      str = string.gsub(str, '(.)', function (c)
+      buf = string.gsub(buf, '(.)', function (c)
         return string.format('%02x', string.byte(c));
       end)
-      return str;
-    elseif  encoding == 'ucs2' or encoding == 'ucs-2'
+      return buf;
+    elseif  encoding == 'ucs2' or encoding == 'ucs-2' 
       or encoding == 'utf16le' or encoding == 'utf-16le' then
       return error(js_new(global.NotImplementedError, 'Encoding not implemented yet: ' + encoding));
     else
