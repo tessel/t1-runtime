@@ -310,10 +310,10 @@ local buffer_proto = js_obj({
     elseif encoding == 'base64' then
       return to_base64(buf);
     elseif encoding == 'hex' then
-      buf = string.gsub(buf, '(.)', function (c)
+      local str = string.gsub(buf, '(.)', function (c)
         return string.format('%02x', string.byte(c));
       end)
-      return buf;
+      return str;
     elseif  encoding == 'ucs2' or encoding == 'ucs-2' 
       or encoding == 'utf16le' or encoding == 'utf-16le' then
       return error(js_new(global.NotImplementedError, 'Encoding not implemented yet: ' + encoding));
