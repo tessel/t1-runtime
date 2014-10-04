@@ -23,7 +23,10 @@ all: colony
 clean: clean-luajit
 	ninja -v -C out/Debug -t clean
 	ninja -v -C out/Release -t clean
+
+clean-luajit:
 	cd deps/colony-luajit; make clean
+	rm out/Release/obj/colony-lua.gen/libluajit.o || true
 
 clean-luajit:
 	cd deps/colony-luajit; make clean
