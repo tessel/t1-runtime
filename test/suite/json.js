@@ -26,6 +26,10 @@ function censor(key, value) {
   return value;
 }
 
+function object_equivalence (a, b) {
+  return Object.keys(a).sort().join(',') == Object.keys(b).sort().join(',');
+}
+
 //  1:objects                                   2:string                             3:message                       4:replacer         5:spacer
 var objs = [
   { 1:null,                                     2:'null',                            3:'non object null',            4:null,            5:null },
@@ -49,7 +53,6 @@ var objs = [
   { 1:{"hi":5},                                 2:'{\n  "hi": 5\n}',                 3:'spacer string',              4:null,            5:'  ' },
   { 1:{"hi":5},                                 2:'{\n   "hi": 5\n}',                3:'spacer number',              4:null,            5:3 },
   { 1:foo4,                                     2:foo5,                              3:'super nested spacer',        4:null,            5:' ' },
-  { 1:foo1,                                     2:'{"month":7,"transport":"car"}',   3:'replacer array',             4:censor_arr,      5:null },
   { 1:{a: function () {}, b: 5},                2:'{"b":5}',                         3:'function',                   4:null,            5:null },
   { 1:[1,function(){},2],                       2:'[1,null,2]',                      3:'function in array',          4:null,            5:null },
   { 1:new buf.Buffer([11,22,33,44]),            2:'[11,22,33,44]',                   3:'buffer',                     4:null,            5:null },
@@ -62,6 +65,9 @@ var objs = [
 
 var objs2 = [
   { 1:{"hi":5},                                 2:'{\n123456789A"hi": 5\n}',         3:'spacer string long',         4:null,            5:'123456789AB' },
+];
+
+var objs3 = [
   { 1:foo1,                                     2:'{"month":45,"week":7}',           3:'replacer function',          4:censor,          5:null },
   { 1:[[], {}, [null], [0], [[{}]], "14121269654077727"], 2:'[[],{},[null],[0],[[{}]],"14121269654077727"]', 3:'complex object', 4:null, 5:null},
   { 1:foo1,                                     2:'{"month":7,"transport":"car"}',   3:'replacer array',             4:censor_arr,      5:null },
@@ -85,8 +91,16 @@ for (var i in objs) {
 
 // stringified object should equal corresponding string
 for (var i in objs2) {
-  var res = JSON.stringify(objs[i][1], objs[i][4], objs[i][5]);
-  tap.eq(res, objs[i][2], objs[i][3]);
+  var res = JSON.stringify(objs2[i][1], objs2[i][4], objs2[i][5]);
+  tap.eq(res, objs2[i][2], objs2[i][3]);
+}
+
+// object should equal original object when stringified then parsed
+for (var i in objs3) {
+  var res = JSON.stringify(objs3[i][1], objs3[i][4], objs3[i][5]);
+  var obj = JSON.parse(res);
+  var obj2 = JSON.parse(objs3[i][2]);
+  tap.ok(object_equivalence(obj, obj2), objs3[i][3]);
 }
 
 var d = new Date(42);
