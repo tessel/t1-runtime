@@ -325,9 +325,38 @@ static int tm_json_writer (lua_State *L)
   const int IDX_VALUE = 2;
   const int IDX_REPLACER = 3;
   const int IDX_OPT_KEY = 4;
+  const int IDX_OPT_THIS = 5;
 
   tm_json_w_handler_t* wh = (tm_json_w_handler_t*) lua_touserdata(L, IDX_HANDLER);
   int tojson_called = 0;
+
+  // If a replacer function is given, call it.
+  if (lua_isfunction(L, IDX_REPLACER)) {
+    lua_pushvalue(L, IDX_REPLACER);            // (value[i], fn)
+    lua_pushvalue(L, IDX_OPT_THIS);            // (value[i], fn, value)
+    if (lua_isnil(L, IDX_OPT_KEY)) {
+      lua_pushliteral(L, "");
+    } else {
+      lua_pushvalue(L, IDX_OPT_KEY);             // (value[i], fn, value, i)
+    }
+    lua_pushvalue(L, IDX_VALUE);               // (value[i], fn, value, i, value[i])
+    lua_call(L, 3, 1);                         // (value[i])
+    if (lua_isnil(L, -1)) {
+      lua_pop(L, 1);
+      return 0;
+    }
+    lua_replace(L, 2);
+  }
+
+  if (!lua_isnil(L, IDX_OPT_KEY)) {
+    // Write key string.
+    lua_pushvalue(L, IDX_OPT_KEY);
+    size_t key_len = 0;
+    const char* key = lua_tolstring(L, -1, &key_len);
+    lua_pop(L, 1);
+
+    tm_json_write_string(*wh, key, key_len);
+  }
 
 tojson_loop:
   switch (lua_type(L, IDX_VALUE)) {
@@ -387,8 +416,10 @@ tojson_loop:
               lua_pushcfunction(L, tm_json_writer);
               lua_pushvalue(L, 1);          // (value[i], recurser, handler)
               lua_pushvalue(L, -3);         // (value[i], recurser, handler, value[i])
-              lua_pushvalue(L, 3);
-              lua_call(L, 3, 0);            // (value[i])
+              lua_pushvalue(L, IDX_REPLACER);
+              lua_pushnil(L);
+              lua_pushvalue(L, IDX_VALUE);  // this
+              lua_call(L, 5, 0);            // (value[i])
               break;
           }
           
@@ -437,17 +468,6 @@ tojson_loop:
         /* table is in the stack at index 't' */
         lua_pushnil(L);  /* first key */
         while (lua_next(L, IDX_VALUE) != 0) {       // (value[i])
-
-          // If a replacer function is given, call it.
-          if (lua_isfunction(L, 3)) {
-            lua_pushvalue(L, 3);            // (value[i], fn)
-            lua_pushvalue(L, 2);            // (value[i], fn, value)
-            lua_pushnumber(L, -3);          // (value[i], fn, value, i)
-            lua_pushvalue(L, -2);           // (value[i], fn, value, i, value[i])
-            lua_call(L, 3, 1);              // (value[i])
-            lua_remove(L, -2);
-          }
-
           switch (lua_type(L, -1)) {
             // Convert exotic variable types to null.
             case LUA_TFUNCTION:
@@ -456,19 +476,13 @@ tojson_loop:
               break;
 
             default:
-              lua_pushvalue(L, -2);
-              size_t key_len = 0;
-              const char* key = lua_tolstring(L, -1, &key_len);
-              lua_pop(L, 1);
-
-              tm_json_write_string(*wh, key, key_len);
-
               lua_pushcfunction(L, tm_json_writer);
               lua_pushvalue(L, 1);          // (value[i], recurser, handler)
               lua_pushvalue(L, -3);         // (value[i], recurser, handler, value[i])
-              lua_pushvalue(L, 3);
-              lua_pushlstring(L, key, key_len);
-              lua_call(L, 4, 0);            // (value[i])
+              lua_pushvalue(L, IDX_REPLACER);
+              lua_pushvalue(L, -6);
+              lua_pushvalue(L, IDX_VALUE);  // this
+              lua_call(L, 5, 0);            // (value[i])
               break;
           }
           

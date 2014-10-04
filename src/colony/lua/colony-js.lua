@@ -1804,7 +1804,7 @@ global.JSON.stringify = function (this, value, replacer, spacer)
 
   -- Call writer.
   local wh = rapidjson.create_writer(spacer)
-  local status, err = pcall(rapidjson.write_value, wh, value, replacer)
+  local status, err = pcall(rapidjson.write_value, wh, value, replacer, nil, {[""] = value})
   if not status then
     rapidjson.destroy(wh)
     error(err)
