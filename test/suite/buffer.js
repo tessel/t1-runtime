@@ -160,6 +160,8 @@ tap.ok(new Buffer(new Buffer('hello world').toString('hex'), 'hex').toString() =
 console.log('#', new Buffer('hello world').toString('hex'))
 console.log('#', new Buffer(new Buffer('hello world').toString('hex'), 'hex'))
 
+console.log(Buffer([0, 65, 130]).toString('binary'));
+
 // write
 var buf = new Buffer(256);
 var len = buf.write('\u00bd + \u00bc = \u00be', 4);

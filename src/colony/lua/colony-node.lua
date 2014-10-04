@@ -304,7 +304,12 @@ local buffer_proto = js_obj({
     local buf = tm.buffer_tobytestring(getmetatable(this).buffer, offset, endOffset);
 
     if encoding == 'binary' or encoding == 'ascii' then
-      return buf;      -- TODO: ascii needs 0 and >127 replaced!
+      -- TODO: ascii needs 0 and >127 replaced!
+      --local str = string.gsub(buf, '([^\\0-\\127])', function (c)
+      --  print('here', string.byte(c))
+      --end)
+      --return str
+      return buf
     elseif encoding == 'utf8' or encoding == 'utf-8' then
       return tm.str_from_utf8(buf);
     elseif encoding == 'base64' then
