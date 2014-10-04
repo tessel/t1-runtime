@@ -40,3 +40,5 @@ uint8_t* colony_tobuffer (lua_State* L, int index, size_t* buf_len);
 void colony_ipc_emit (lua_State* L, char *type, void* data, size_t size);
 int colony_isbuffer (lua_State *L, int index);
 int colony_isarray (lua_State* L, int index);
+
+LUALIB_API const char *colony_tolstring (lua_State *L, int idx, size_t *len);
