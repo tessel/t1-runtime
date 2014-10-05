@@ -200,8 +200,8 @@ static int l_regex_replace (lua_State *L)
   int repeat_flag = lua_toboolean(L, -1);
 
   // matches
-  int pmatch_len = lua_tonumber(L, 4);
-  regmatch_t* pmatch = (regmatch_t*) calloc(1, sizeof(regmatch_t) * pmatch_len);
+  size_t pmatch_len = cre->re_nsub + 1;
+  regmatch_t* pmatch = (regmatch_t*) calloc(1, sizeof(regmatch_t) * (pmatch_len));
 
   size_t w_input_len = 0;
   chr* orig_w_input = toregexstr(input, input_len, &w_input_len);
@@ -327,8 +327,8 @@ static int l_regex_split (lua_State *L)
   regex_t* cre = (regex_t*) lua_touserdata(L, -1);
 
   // matches
-  int pmatch_len = lua_tonumber(L, 3);
-  regmatch_t* pmatch = (regmatch_t*) calloc(1, sizeof(regmatch_t) * pmatch_len);
+  size_t pmatch_len = cre->re_nsub + 1;
+  regmatch_t* pmatch = (regmatch_t*) calloc(1, sizeof(regmatch_t) * (pmatch_len));
 
   size_t w_input_len = 0;
   chr* orig_w_input = toregexstr(input, input_len, &w_input_len);
