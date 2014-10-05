@@ -1572,10 +1572,7 @@ end
 -- regexp library
 
 if type(hs) == 'table' then
-  local hsmatchc = 100
-  local hsmatch = hs.regmatch_create(hsmatchc)
-
-  _G._HSMATCH = hsmatch
+  local hsmatchc = 100;
 
   global.RegExp = function (this, source, flags)
     -- hsregex requires special flags handling
@@ -1633,7 +1630,7 @@ if type(hs) == 'table' then
     if not js_instanceof(input, global.RegExp) then
       error(js_new(global.Error, 'Cannot call String.prototype.split on non-regex'))
     end
-    local arr, len = hs.regex_split(this, input)
+    local arr, len = hs.regex_split(this, input, hsmatchc)
     return js_arr(arr, len)
   end
 
@@ -1641,7 +1638,7 @@ if type(hs) == 'table' then
     if not js_instanceof(regex, global.RegExp) then
       error(js_new(global.Error, 'Cannot call String.prototype.replace on non-regex'))
     end
-    return hs.regex_replace(this, regex, out)
+    return hs.regex_replace(this, regex, out, hsmatchc)
   end
 
   global.String.prototype.match = function (this, regex)
@@ -1653,6 +1650,7 @@ if type(hs) == 'table' then
     -- Match using hsregex
     local cre = getmetatable(regex).cre
     local crestr = getmetatable(regex).crestr
+    local hsmatch = hs.regmatch_create(hsmatchc)
 
     if rawget(regex, 'global') then
       local data = tostring(this)
@@ -1685,6 +1683,7 @@ if type(hs) == 'table' then
     if type(cre) ~= 'userdata' then
       error(js_new(global.TypeError, 'Cannot call RegExp.prototype.exec on non-regex'))
     end
+    local hsmatch = hs.regmatch_create(hsmatchc)
 
     local input = tostring(subj)
     local data = string.sub(input, this.lastIndex + 1)
@@ -1720,6 +1719,7 @@ if type(hs) == 'table' then
     if type(cre) ~= 'userdata' then
       error(js_new(global.TypeError, 'Cannot call RegExp.prototype.match on non-regex'))
     end
+    local hsmatch = hs.regmatch_create(hsmatchc)
 
     -- TODO optimize by capturing no subgroups?
     local rc = hs.re_exec(cre, tostring(subj), nil, hsmatchc, hsmatch, 0)

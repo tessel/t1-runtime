@@ -1,3 +1,7 @@
+var tap = require('../tap')
+
+tap.count(1)
+
 /**
  * The main path matching regexp utility.
  *
@@ -152,5 +156,4 @@ function pathtoRegexp (path, keys, options) {
 };
 
 
-console.log(pathtoRegexp('/a/:param').source);
-console.log("^\\/a\\/([^\\\\/]+?)(?:\\/(?=$))?$")
+tap.eq(pathtoRegexp('/a/:param').source, "^\\/a\\/([^\\\\/]+?)(?:\\/(?=$))?$", 'nested regexps work')
