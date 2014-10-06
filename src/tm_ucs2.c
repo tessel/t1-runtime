@@ -24,6 +24,11 @@ uint32_t tm_ucs2_str_codeat (const uint8_t* buf, size_t buf_len, size_t index)
 			: dst & 0xFFFF;
 }
 
+size_t tm_ucs2_char_encode (uint32_t c, uint8_t* buf)
+{
+	return utf8proc_encode_char(c, buf);
+}
+
 // convert UCS-2 index to offset in CESU-8 string
 size_t tm_ucs2_str_lookup_16to8 (const uint8_t* buf, size_t len, size_t ucs2_index, size_t* seq_len)
 {
