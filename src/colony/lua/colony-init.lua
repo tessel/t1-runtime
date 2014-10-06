@@ -323,7 +323,7 @@ func_mt.proto = func_proto
 
 str_mt.getters = {
   length = function (this)
-    return tm.ucs2_str_lookup_8to16(this, #this+1)
+    return tm.str_lookup_LuaToJs(this, #this+1)
   end
 }
 str_mt.__index = function (self, key)
@@ -335,7 +335,7 @@ str_mt.__index = function (self, key)
     return getter(self, key)
   end
   if (tonumber(key) == key) then
-    local off, len = tm.ucs2_str_lookup_16to8(self, key)
+    local off, len = tm.str_lookup_JsToLua(self, key)
     if len > 0 then
       return string.sub(self, off, off+len-1)
     else

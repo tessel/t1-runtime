@@ -10,7 +10,7 @@ inline int32_t tm_utf8_char_toupper (const uint32_t c)
 	return c_case == -1 ? c : c_case;
 }
 
-ssize_t tm_utf8_str_toupper (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr)
+ssize_t tm_utf8_toupper (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr)
 {
 	// This is silly, don't do this.
 	if (buf_len < 0) {
@@ -44,7 +44,7 @@ inline int32_t tm_utf8_char_tolower (const uint32_t c)
 	return c_case == -1 ? c : c_case;
 }
 
-ssize_t tm_utf8_str_tolower (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr)
+ssize_t tm_utf8_tolower (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr)
 {
 	// This is silly, don't do this.
 	if (buf_len < 0) {

@@ -2,7 +2,7 @@
 
 #include "tm.h"
 
-uint32_t tm_ucs2_str_codeat (const uint8_t* buf, size_t buf_len, size_t index)
+uint32_t tm_str_codeat (const uint8_t* buf, size_t buf_len, size_t index)
 {
 	const uint8_t* ptr = buf;
 	int32_t dst = 0;
@@ -24,13 +24,13 @@ uint32_t tm_ucs2_str_codeat (const uint8_t* buf, size_t buf_len, size_t index)
 			: dst & 0xFFFF;
 }
 
-size_t tm_ucs2_char_encode (uint32_t c, uint8_t* buf)
+size_t tm_str_fromcode (uint32_t c, uint8_t* buf)
 {
 	return utf8proc_encode_char(c, buf);
 }
 
 // convert UCS-2 index to offset in CESU-8 string
-size_t tm_ucs2_str_lookup_16to8 (const uint8_t* buf, size_t len, size_t ucs2_index, size_t* seq_len)
+size_t tm_str_lookup_JsToLua (const uint8_t* buf, size_t len, size_t ucs2_index, size_t* seq_len)
 {
   const uint8_t* const orig_buf = buf;
   ssize_t bytes_read;
@@ -60,7 +60,7 @@ size_t tm_ucs2_str_lookup_16to8 (const uint8_t* buf, size_t len, size_t ucs2_ind
 
 
 // convert offset in UTF-8/CESU-8 string to UCS-2 index [converts lengths, really]
-size_t tm_ucs2_str_lookup_8to16 (const uint8_t* buf, size_t len)
+size_t tm_str_lookup_LuaToJs (const uint8_t* buf, size_t len)
 {
   size_t ucs2_position = 0;
 	while (len) {

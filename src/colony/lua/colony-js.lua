@@ -121,7 +121,7 @@ end
 -- string prototype
 
 str_proto.charCodeAt = function (this, i)
-  return tm.ucs2_str_codeat(this, i)
+  return tm.str_codeat(this, i)
 end
 
 str_proto.charAt = function (str, i)
@@ -135,15 +135,15 @@ str_proto.substr = function (str, beg, len)
   else
     len = math.max(0, tonumber(len))
   end
-  function adjTo8(idx, adj)      -- n.b. different than others!
+  function adjToLua(idx, adj)      -- n.b. different than others!
     idx = tonumber(idx)
     if idx < 0 then
       idx = math.max(0, str.length + idx)
     end
-    return tm.ucs2_str_lookup_16to8(str, idx+adj)
+    return tm.str_lookup_JsToLua(str, idx+adj)
   end
-  local begOffset = adjTo8(beg, 0)
-  local finOffset = adjTo8(beg, len)
+  local begOffset = adjToLua(beg, 0)
+  local finOffset = adjToLua(beg, len)
   return string.sub(str, begOffset, finOffset-1)
 end
 
@@ -151,15 +151,15 @@ str_proto.substring = function (str, beg, fin)
   if fin == nil then
     fin = str.length
   end
-  function adjTo8(idx)      -- n.b. different than others!
+  function adjToLua(idx)      -- n.b. different than others!
     idx = tonumber(idx)
     if idx == nil or idx < 0 then
       idx = 0
     end
-    return tm.ucs2_str_lookup_16to8(str, idx)
+    return tm.str_lookup_JsToLua(str, idx)
   end
-  local begOffset = adjTo8(beg)
-  local finOffset = adjTo8(fin)
+  local begOffset = adjToLua(beg)
+  local finOffset = adjToLua(fin)
   if begOffset > finOffset then
     begOffset, finOffset = finOffset, begOffset
   end
@@ -170,30 +170,30 @@ str_proto.slice = function (str, beg, fin)
   if fin == nil then
     fin = str.length
   end
-  function adjTo8(idx)      -- n.b. different than others!
+  function adjToLua(idx)      -- n.b. different than others!
     idx = tonumber(idx)
     if idx < 0 then
       idx = math.max(0, str.length + idx)
     end
-    return tm.ucs2_str_lookup_16to8(str, idx)
+    return tm.str_lookup_JsToLua(str, idx)
   end
-  local begOffset = adjTo8(beg)
-  local finOffset = adjTo8(fin)
+  local begOffset = adjToLua(beg)
+  local finOffset = adjToLua(fin)
   return string.sub(str, begOffset, finOffset-1)
 end
 
 str_proto.toLowerCase = function (this)
-  return tm.utf8_str_tolower(this)
+  return tm.str_tolower(this)
 end
 
 str_proto.toUpperCase = function (this)
-  return tm.utf8_str_toupper(this)
+  return tm.str_toupper(this)
 end
 
 str_proto.indexOf = function (str, needle, fromIndex)
-  local start = tm.ucs2_str_lookup_16to8(str, math.max(0, tonumber(fromIndex) or 0))
+  local start = tm.str_lookup_JsToLua(str, math.max(0, tonumber(fromIndex) or 0))
   local loc = string.find(str, tostring(needle), start, true)
-  if loc == nil then return -1; else return tm.ucs2_str_lookup_8to16(str, loc); end
+  if loc == nil then return -1; else return tm.str_lookup_LuaToJs(str, loc); end
 end
 
 str_proto.lastIndexOf = function (str, needle, fromIndex)
@@ -203,9 +203,9 @@ str_proto.lastIndexOf = function (str, needle, fromIndex)
   elseif fromIndex < 0 then
     fromIndex = 0
   end
-  local start = tm.ucs2_str_lookup_16to8(str, fromIndex)
+  local start = tm.str_lookup_JsToLua(str, fromIndex)
   local locBeg, locEnd = string.find(string.reverse(str), string.reverse(tostring(needle)), #str+1-start, true)
-  if locEnd == nil then return -1; else return tm.ucs2_str_lookup_8to16(str, #str+1-locEnd); end
+  if locEnd == nil then return -1; else return tm.str_lookup_LuaToJs(str, #str+1-locEnd); end
 end
 
 str_proto.toString = function (this)
@@ -1074,7 +1074,7 @@ global.String.fromCharCode = function (this, ...)
   local str = ''
   for i=1,args.n do
     local uint16 = math.floor(math.abs(tonumbervalue(args[i]))) % (2^16)
-    str = str .. tm.ucs2_char_encode(uint16)    -- even without tm.str_from_utf8 this will work
+    str = str .. tm.str_fromcode(uint16)
   end
   return str
 end
@@ -1879,7 +1879,7 @@ end
 function unescape(this, str)
   function getstr(c)
     -- correctly CESU-8, since c is either 8- or 16-bit only
-    return tm.ucs2_char_encode(tonumber(c, 16))
+    return tm.str_fromcode(tonumber(c, 16))
   end
   return string.gsub(string.gsub(tostring(str), "%%(%x%x)", getstr), "%%u(%x%x%x%x)", getstr)
 end
