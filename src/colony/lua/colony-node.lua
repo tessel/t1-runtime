@@ -301,15 +301,24 @@ local buffer_proto = js_obj({
     end
     encoding = string.lower(encoding);
     
-    local str = tm.buffer_tostring(getmetatable(this).buffer, offset, endOffset);
+    local buf = tm.buffer_tobytestring(getmetatable(this).buffer, offset, endOffset);
 
-    if encoding == 'utf8' or encoding == 'utf-8' 
-      or encoding == 'binary' or encoding == 'ascii' then
-      return str;
+    if encoding == 'binary' then
+      return string.gsub(buf, '[\128-\255]', function (c)
+        -- original value must be converted to internal encoding
+        return global.String.fromCharCode(nil, string.byte(c))
+      end)
+    elseif encoding == 'ascii' then
+      -- simply strips high bit from original value
+      return string.gsub(buf, '[\128-\255]', function (c)
+        return string.char(string.byte(c) - 128)
+      end)
+    elseif encoding == 'utf8' or encoding == 'utf-8' then
+      return tm.str_from_utf8(buf);
     elseif encoding == 'base64' then
-      return to_base64(str);
+      return to_base64(buf);
     elseif encoding == 'hex' then
-      str = string.gsub(str, '(.)', function (c)
+      local str = string.gsub(buf, '(.)', function (c)
         return string.format('%02x', string.byte(c));
       end)
       return str;
@@ -489,6 +498,9 @@ local function Buffer (this, arg, encoding)
   local str, length = '', 0
   if type(arg) == 'number' then
     length = tonumber(arg)
+  elseif type(arg) == 'string' then
+    str = arg
+    length = #arg
   else
     str = arg or ''
     length = arg and arg.length or 0
@@ -516,12 +528,12 @@ local function Buffer (this, arg, encoding)
 
   if type(str) == 'string' and encoding == 'hex' then
     -- "hex" string
-    for i = 1, str.length, 2 do
+    for i = 1, #str, 2 do
       this[(i - 1)/2] = tonumber(string.sub(str, i, i+1), 16)
     end
   elseif type(str) == 'string' then
     -- "binary" string
-    for i = 1, str.length do
+    for i = 1, #str do
       this[i - 1] = string.byte(str, i)
     end
   else

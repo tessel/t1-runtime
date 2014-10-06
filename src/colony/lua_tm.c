@@ -52,6 +52,41 @@ inline static void stackDump (lua_State *L)
   printf("\n");  /* end the listing */
 }
 
+// converts-in-place a value (typically an internal colony string) to external UTF-8 byte array
+const char* colony_tolutf8 (lua_State* L, int index, size_t* res_len)
+{
+  size_t str_len;
+  const uint8_t* str = (const uint8_t*) lua_tolstring(L, index, &str_len);
+  
+  const uint8_t* utf8;
+  size_t utf8_len = tm_str_to_utf8(str, str_len + 1, &utf8) - 1;    // compensate for NUL byte at end
+  lua_pushlstring(L, (const char*) utf8, utf8_len);
+  if (utf8 != str) free((uint8_t*) utf8);
+  lua_replace(L, index);
+  return lua_tolstring(L, index, res_len);
+}
+
+inline const char* colony_toutf8 (lua_State* L, int index)
+{
+  return colony_tolutf8(L, index, NULL);
+}
+
+// pushes an external UTF-8 byte array onto stack as internal colony string
+void colony_pushlutf8 (lua_State* L, const char* utf8, size_t utf8_len)
+{
+  const char* str;
+  size_t str_len = tm_str_from_utf8((const uint8_t*) utf8, utf8_len, (const uint8_t**) &str);
+  lua_pushlstring(L, str, str_len);
+  if (str != utf8) free((char*) str);
+}
+
+inline void colony_pushutf8 (lua_State* L, const char* utf8)
+{
+  colony_pushlutf8(L, utf8, strlen(utf8));
+}
+
+
+
 #ifndef CONFIG_PLATFORM_EMBED
 #include <unistd.h>
 #endif
@@ -59,10 +94,10 @@ inline static void stackDump (lua_State *L)
 static int l_tm_cwd(lua_State* L)
 {
   #ifdef CONFIG_PLATFORM_EMBED
-  lua_pushstring(L, "/app");
+  colony_pushutf8(L, "/app");
   #else
   char *cwd = getcwd(NULL, 0);
-  lua_pushstring(L, cwd);
+  colony_pushutf8(L, cwd);
   free(cwd);
   #endif
   return 1;
@@ -80,7 +115,7 @@ static int l_tm_log(lua_State* L)
 {
   const char level = lua_tonumber(L, 1);
   size_t buf_len = 0;
-  const char* buf = (const char*) colony_toconstdata(L, 2, &buf_len);
+  const char* buf = (const char*) colony_tolutf8(L, 2, &buf_len);
   tm_log(level, buf, buf_len);
   return 0;
 }
@@ -93,7 +128,7 @@ static int l_tm_log(lua_State* L)
 
 static int l_tm_hostname_lookup (lua_State* L)
 {
-  const uint8_t *lookup = (const uint8_t *) lua_tostring(L, 1);
+  const uint8_t *lookup = (const uint8_t *) colony_toutf8(L, 1);
 
   uint32_t ip = tm_hostname_lookup(lookup);
   lua_pushnumber(L, ip);
@@ -292,7 +327,7 @@ static int l_tm_ssl_session_create (lua_State* L)
   tm_socket_t sock = (tm_socket_t) lua_tonumber(L, 2);
   const char* host_name = NULL;
   if (!lua_isnil(L, 3)) {
-    host_name = lua_tostring(L, 3);
+    host_name = colony_toutf8(L, 3);
   }
 
   int res = tm_ssl_session_create(&session, ctx, sock, host_name);
@@ -313,7 +348,7 @@ static int l_tm_ssl_session_altname (lua_State* L)
   if (altname == NULL) {
     lua_pushnil(L);
   } else {
-    lua_pushstring(L, altname);
+    colony_pushutf8(L, altname);
   }
   lua_pushnumber(L, res);
   return 2;
@@ -329,7 +364,7 @@ static int l_tm_ssl_session_cn (lua_State* L)
   if (cn == NULL) {
     lua_pushnil(L);
   } else {
-    lua_pushstring(L, cn);
+    colony_pushutf8(L, cn);
   }
   lua_pushnumber(L, res);
   return 2;
@@ -624,13 +659,13 @@ static int l_tm_buffer_copy (lua_State *L)
   return 0;
 }
 
-static int l_tm_buffer_tostring (lua_State *L)
+static int l_tm_buffer_tobytestring (lua_State *L)
 {
-  uint8_t *source = (uint8_t *) lua_touserdata(L, 1);
+  const char *source = lua_touserdata(L, 1);
   size_t offset = (int) lua_tonumber(L, 2);
   size_t endOffset = (int) lua_tonumber(L, 3);
   source += offset;
-  lua_pushlstring(L, (char *) source, endOffset-offset);
+  lua_pushlstring(L, source, endOffset-offset);
   return 1;
 }
 
@@ -642,7 +677,7 @@ static int l_tm_buffer_tostring (lua_State *L)
 
 static int l_tm_fs_type (lua_State* L)
 {
-  const char *pathname = (const char *) lua_tostring(L, 1);
+  const char *pathname = (const char *) colony_toutf8(L, 1);
 
   #ifdef TM_FS_vfs
   int ret = tm_fs_type(tm_fs_root, pathname);
@@ -656,7 +691,7 @@ static int l_tm_fs_type (lua_State* L)
 
 static int l_tm_fs_open (lua_State* L)
 {
-  const char *pathname = (const char *) lua_tostring(L, 1);
+  const char *pathname = (const char *) colony_toutf8(L, 1);
   uint32_t flags = (uint32_t) lua_tonumber(L, 2);
   uint32_t mode = (uint32_t) lua_tonumber(L, 3);
 
@@ -740,7 +775,7 @@ static int l_tm_fs_write (lua_State* L)
 
 static int l_tm_fs_destroy (lua_State* L)
 {
-  const char *pathname = (const char *) lua_tostring(L, 1);
+  const char *pathname = (const char *) colony_toutf8(L, 1);
 
   #ifdef TM_FS_vfs
   tm_fs_ent* ent = NULL;
@@ -762,8 +797,8 @@ static int l_tm_fs_destroy (lua_State* L)
 
 static int l_tm_fs_rename (lua_State* L)
 {
-  const char *oldname = (const char *) lua_tostring(L, 1);
-  const char *newname = (const char *) lua_tostring(L, 2);
+  const char *oldname = (const char *) colony_toutf8(L, 1);
+  const char *newname = (const char *) colony_toutf8(L, 2);
 
   #ifdef TM_FS_vfs
   int ret = tm_fs_rename(tm_fs_root, oldname, newname);
@@ -809,7 +844,7 @@ static int l_tm_fs_length (lua_State* L)
 
 static int l_tm_fs_dir_create (lua_State* L)
 {
-  const char *pathname = (const char *) lua_tostring(L, 1);
+  const char *pathname = (const char *) colony_toutf8(L, 1);
 
   #ifdef TM_FS_vfs
   int ret = tm_fs_dir_create(tm_fs_root, pathname);
@@ -824,7 +859,7 @@ static int l_tm_fs_dir_create (lua_State* L)
 
 static int l_tm_fs_dir_open (lua_State* L)
 {
-  const char *pathname = (const char *) lua_tostring(L, 1);
+  const char *pathname = (const char *) colony_toutf8(L, 1);
 
   tm_fs_dir_t* dir = (tm_fs_dir_t*) lua_newuserdata(L, sizeof(tm_fs_dir_t));
 
@@ -852,7 +887,7 @@ static int l_tm_fs_dir_read (lua_State* L)
   if (pathname == NULL) {
     lua_pushnil(L);
   } else {
-    lua_pushstring(L, pathname == NULL ? "" : pathname);
+    colony_pushutf8(L, pathname == NULL ? "" : pathname);
   }
   lua_pushnumber(L, ret);
   return 2;
@@ -868,13 +903,112 @@ static int l_tm_fs_dir_close (lua_State* L)
 }
 
 
+static int l_tm_utf8_tolower (lua_State* L)
+{
+  size_t buf_len = 0;
+  const uint8_t* buf = (const uint8_t*) colony_tolutf8(L, 1, &buf_len);
+
+  uint8_t* str_case = NULL;
+  ssize_t len = tm_utf8_tolower(buf, buf_len, &str_case);
+  if (len < 0) {
+    lua_pushnil(L);
+  } else {
+    colony_pushlutf8(L, (const char*) str_case, buf_len);
+    free(str_case);
+  }
+  return 1;
+}
+
+static int l_tm_utf8_toupper (lua_State* L)
+{
+  size_t buf_len = 0;
+  const uint8_t* buf = (const uint8_t*) colony_tolutf8(L, 1, &buf_len);
+
+
+  uint8_t* str_case = NULL;
+  ssize_t len = tm_utf8_toupper(buf, buf_len, &str_case);
+  if (len < 0) {
+    lua_pushnil(L);
+  } else {
+    colony_pushlutf8(L, (const char*) str_case, buf_len);
+    free(str_case);
+  }
+  return 1;
+}
+
+
+static int l_tm_str_to_utf8 (lua_State* L)
+{
+  size_t utf8_len;
+  const char* utf8 = colony_tolutf8(L, 1, &utf8_len);
+  lua_pushlstring(L, utf8, utf8_len);
+  return 1;
+}
+
+static int l_tm_str_from_utf8 (lua_State* L)
+{
+  size_t utf8_len;
+  const char* utf8 = lua_tolstring(L, 1, &utf8_len);
+  colony_pushlutf8(L, utf8, utf8_len);
+  return 1;
+}
+
+
+static int l_tm_str_codeat (lua_State* L)
+{
+  size_t buf_len = 0;
+  const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
+  uint32_t idx = (uint32_t) lua_tonumber(L, 2);
+
+  lua_pushnumber(L, tm_str_codeat(buf, buf_len, idx));
+  return 1;
+}
+
+static int l_tm_str_fromcode (lua_State* L)
+{
+  uint32_t c = (uint32_t) lua_tonumber(L, 1);
+  // TODO: assert c < 0x10000 and optimize below!
+
+  uint8_t buf[4] = { 0 };
+  size_t len = tm_str_fromcode(c, (uint8_t*) &buf);
+  colony_pushlutf8(L, (const char*) buf, len);
+  return 1;
+}
+
+
+static int l_tm_str_lookup_JsToLua (lua_State* L)
+{
+  size_t buf_len = 0;
+  const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
+  lua_Number rawIdx = lua_tonumber(L, 2);
+  size_t idx = (rawIdx < SIZE_MAX) ? (size_t)rawIdx : SIZE_MAX;
+  size_t seq_len;
+  lua_pushnumber(L, tm_str_lookup_JsToLua(buf, buf_len, idx, &seq_len) + 1);
+  lua_pushnumber(L, seq_len);
+  return 2;
+}
+
+static int l_tm_str_lookup_LuaToJs (lua_State* L)
+{
+  size_t buf_len = 0;
+  const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
+  lua_Number idx = lua_tonumber(L, 2) - 1;
+  if (idx < 0 || idx > buf_len) {
+    // str methods are expected to pre-sanitize. make issue obvious if not!
+    return luaL_error(L, "assertion failure: invalid string lookup value");
+  }
+  lua_pushnumber(L, tm_str_lookup_LuaToJs(buf, idx));
+  return 1;
+}
+
+
 #ifdef ENABLE_NET
 
 uint32_t tm__sync_gethostbyname (const char *domain);
 
 static int l_tm__sync_gethostbyname (lua_State* L)
 {
-  const char *host = lua_tostring(L, 1);
+  const char *host = colony_toutf8(L, 1);
 
   lua_pushnumber(L, tm__sync_gethostbyname(host));
   return 1;
@@ -1031,7 +1165,7 @@ static int l_tm_inflate_end (lua_State *L)
 
 static int l_tm_approxidate_milli (lua_State *L) 
 {
-  char* date_string = (char*)lua_tostring(L, 1);
+  char* date_string = (char*)colony_toutf8(L, 1);
 
   struct timeval tv;
   approxidate(date_string, &tv);
@@ -1199,7 +1333,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "buffer_get", l_tm_buffer_get },
     { "buffer_fill", l_tm_buffer_fill },
     { "buffer_copy", l_tm_buffer_copy },
-    { "buffer_tostring", l_tm_buffer_tostring },
+    { "buffer_tobytestring", l_tm_buffer_tobytestring },
     { "buffer_read_uint8", l_tm_buffer_read_uint8 },
     { "buffer_read_uint16le", l_tm_buffer_read_uint16le },
     { "buffer_read_uint16be", l_tm_buffer_read_uint16be },
@@ -1243,6 +1377,18 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "fs_dir_read", l_tm_fs_dir_read },
     { "fs_dir_close", l_tm_fs_dir_close },
 
+    // unicode
+    { "str_tolower", l_tm_utf8_tolower },
+    { "str_toupper", l_tm_utf8_toupper },
+    { "str_to_utf8", l_tm_str_to_utf8 },
+    { "str_from_utf8", l_tm_str_from_utf8 },
+    
+    // internal string manipulation
+    { "str_codeat", l_tm_str_codeat },
+    { "str_fromcode", l_tm_str_fromcode },
+    { "str_lookup_JsToLua", l_tm_str_lookup_JsToLua },
+    { "str_lookup_LuaToJs", l_tm_str_lookup_LuaToJs },
+    
     // deflate
     { "deflate_start", l_tm_deflate_start },
     { "deflate_write", l_tm_deflate_write },

@@ -183,6 +183,58 @@ SUITE(tm)
 
 
 /**
+ * strings
+ */
+
+const uint8_t* pileofpoo = (uint8_t*) "Iñtërnâtiônàlizætiøn☃💩";
+const uint8_t* pileofuppercasepoo = (uint8_t*) "IÑTËRNÂTIÔNÀLIZÆTIØN☃💩";
+const uint8_t* moreutf = (uint8_t*) "lets 𝌆 test!";
+
+TEST unicode_ucs2 ()
+{
+	ASSERT_EQm("ucs2 length", tm_ucs2_str_length(pileofpoo, -1), 23);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(pileofpoo, -1, 0), 'I');
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(pileofpoo, -1, 21), 0xd83d);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(pileofpoo, -1, 22), 0xdca9);
+
+	ASSERT_EQm("ucs2 length", tm_ucs2_str_length(moreutf, -1), 13);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(moreutf, -1, 12), '!');
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(moreutf, -1, 5), 0xD834);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(moreutf, -1, 6), 0xDF06);
+
+	PASS();
+}
+
+TEST unicode_case ()
+{	
+	uint8_t utf8char[4] = {0};
+	ssize_t utf8char_len = tm_utf8_char_encode(0x1F4A9, (uint8_t*) &utf8char);
+	ASSERT_EQm("utf8 encode", utf8char[0], 0xf0);
+	ASSERT_EQm("utf8 encode", utf8char[1], 0x9f);
+	ASSERT_EQm("utf8 encode", utf8char[2], 0x92);
+	ASSERT_EQm("utf8 encode", utf8char[3], 0xa9);
+
+	uint8_t* pileofuppercasepoo_cmp = NULL;
+	tm_utf8_str_toupper(pileofpoo, -1, &pileofuppercasepoo_cmp);
+	ASSERT_EQm("ucs2 length", tm_ucs2_str_length(pileofuppercasepoo_cmp, -1), 23);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(pileofuppercasepoo_cmp, -1, 2), 'T');
+	for (int i = 0; i < strlen((char*) pileofuppercasepoo); i++) {
+		ASSERT_EQm("ucs2 equal", pileofuppercasepoo[i], pileofuppercasepoo_cmp[i]);
+	}
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(pileofuppercasepoo_cmp, -1, 21), 0xd83d);
+	ASSERT_EQm("ucs2 charat", tm_ucs2_str_charat(pileofuppercasepoo_cmp, -1, 22), 0xdca9);
+
+	PASS();
+}
+
+
+SUITE(unicode)
+{
+	RUN_TEST(unicode_ucs2);
+	RUN_TEST(unicode_case);
+}
+
+/**
  * entry
  */
 
@@ -193,5 +245,6 @@ int main(int argc, char **argv)
 	GREATEST_MAIN_BEGIN();      /* command-line arguments, initialization. */
 	RUN_SUITE(tm);
 	// RUN_SUITE(runtime);
+	RUN_SUITE(unicode);
 	GREATEST_MAIN_END();        /* display results */
 }

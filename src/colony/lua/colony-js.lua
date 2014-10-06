@@ -120,86 +120,92 @@ end
 
 -- string prototype
 
-str_proto.charCodeAt = function (str, i, a)
-  return string.byte(str, i+1)
+str_proto.charCodeAt = function (this, i)
+  return tm.str_codeat(this, i)
 end
 
 str_proto.charAt = function (str, i)
-  return string.sub(str, i+1, i+1)
+  -- BUG: `str.charAt('foo')` should not alias `str.foo` but let's pretend we can just…
+  return str[i] or '';
 end
 
-str_proto.substr = function (str, i, len)
-  if i < 0 then
-    i = i - 1
-  end
-  if len ~= nil then
-    return string.sub(str, i+1, i + len)
+str_proto.substr = function (str, beg, len)
+  if len == nil then
+    len = math.huge
   else
-    return string.sub(str, i+1)
+    len = math.max(0, tonumber(len))
   end
+  function adjToLua(idx, adj)      -- n.b. different than others!
+    idx = tonumber(idx)
+    if idx < 0 then
+      idx = math.max(0, str.length + idx)
+    end
+    return tm.str_lookup_JsToLua(str, idx+adj)
+  end
+  local begOffset = adjToLua(beg, 0)
+  local finOffset = adjToLua(beg, len)
+  return string.sub(str, begOffset, finOffset-1)
 end
 
-str_proto.substring = function (str, i, j)
-  if i < 0 then
-    i = i - 1
+str_proto.substring = function (str, beg, fin)
+  if fin == nil then
+    fin = str.length
   end
-  if j < 0 then
-    j = j - 1
+  function adjToLua(idx)      -- n.b. different than others!
+    idx = tonumber(idx)
+    if idx == nil or idx < 0 then
+      idx = 0
+    end
+    return tm.str_lookup_JsToLua(str, idx)
   end
-  if j ~= nil then
-    return string.sub(str, i+1, j)
-  else
-    return string.sub(str, i+1)
+  local begOffset = adjToLua(beg)
+  local finOffset = adjToLua(fin)
+  if begOffset > finOffset then
+    begOffset, finOffset = finOffset, begOffset
   end
+  return string.sub(str, begOffset, finOffset-1)
 end
 
-str_proto.slice = function (str, i, len)
-  len = tonumber(len)
-  if len < 0 then
-    len = str.length + len
+str_proto.slice = function (str, beg, fin)
+  if fin == nil then
+    fin = str.length
   end
-  if len < 0 then
-    len = 0
+  function adjToLua(idx)      -- n.b. different than others!
+    idx = tonumber(idx)
+    if idx < 0 then
+      idx = math.max(0, str.length + idx)
+    end
+    return tm.str_lookup_JsToLua(str, idx)
   end
-  return string.sub(str, i+1, len)
+  local begOffset = adjToLua(beg)
+  local finOffset = adjToLua(fin)
+  return string.sub(str, begOffset, finOffset-1)
 end
 
-str_proto.toLowerCase = function (str)
-  return string.lower(str)
+str_proto.toLowerCase = function (this)
+  return tm.str_tolower(this)
 end
 
-str_proto.toUpperCase = function (str)
-  return string.upper(str)
+str_proto.toUpperCase = function (this)
+  return tm.str_toupper(this)
 end
 
 str_proto.indexOf = function (str, needle, fromIndex)
-
-  if needle == '' then
-    if fromIndex < str.length then return fromIndex; else return str.length; end
-  end
-
-  if fromIndex == nil or fromIndex < 0 then
-    fromIndex = 1
-  elseif fromIndex > str.length then return -1;
-  end
-
-  local ret = string.find(str, tostring(needle), fromIndex, true)
-  if ret == null then return -1; else return ret - 1; end
+  local start = tm.str_lookup_JsToLua(str, math.max(0, tonumber(fromIndex) or 0))
+  local loc = string.find(str, tostring(needle), start, true)
+  if loc == nil then return -1; else return tm.str_lookup_LuaToJs(str, loc); end
 end
 
 str_proto.lastIndexOf = function (str, needle, fromIndex)
-  local len = string.len(str)
-
-  if fromIndex ~= nil then
-    if fromIndex < 0 or fromIndex >= len then return -1; end
-    fromIndex = -fromIndex - 1
-  else
-    fromIndex = 1
+  fromIndex = tonumber(fromIndex)
+  if fromIndex == nil then
+    fromIndex = math.huge
+  elseif fromIndex < 0 then
+    fromIndex = 0
   end
-
-  local ret = string.find(string.reverse(str), tostring(needle), fromIndex, true)
-
-  if ret == null then return -1; else return len - ret; end
+  local start = tm.str_lookup_JsToLua(str, fromIndex)
+  local locBeg, locEnd = string.find(string.reverse(str), string.reverse(tostring(needle)), #str+1-start, true)
+  if locEnd == nil then return -1; else return tm.str_lookup_LuaToJs(str, #str+1-locEnd); end
 end
 
 str_proto.toString = function (this)
@@ -1036,14 +1042,20 @@ global.String = function (ths, str)
     -- save the primitive
     getmetatable(ths).__primitive = str;
 
-    -- set the length getter for the boxed value
+    -- setup the length property for the boxed value
+    js_define_setter(ths, 'length', function() end)
     js_define_getter(ths, 'length', function()
       return str.length
     end)
 
     -- set the boxed object properties
-    for i = 0, #str-1 do
-      ths[i] = str.charAt(str, i);
+    for i = 0, str.length-1 do
+      -- TODO: this would make properly read-only, but breaks a test relying on Object.keys…
+      --js_define_setter(ths, i, function() end)
+      --js_define_getter(ths, i, function()
+      --  return str[i]
+      --end)
+      ths[i] = str[i]
     end
 
     -- return the object
@@ -1062,11 +1074,7 @@ global.String.fromCharCode = function (this, ...)
   local str = ''
   for i=1,args.n do
     local uint16 = math.floor(math.abs(tonumbervalue(args[i]))) % (2^16)
-    -- TODO not this
-    if uint16 > 255 then
-      uint16 = 255
-    end
-    str = str .. string.char(uint16)
+    str = str .. tm.str_fromcode(uint16)
   end
   return str
 end
@@ -1822,7 +1830,7 @@ end
 
 function encodeURIComponent (this, str)
   str = tostring(str)
-  str = string.gsub (str, "([^%w%-%_%.%~%*%(%)'])", function (c)
+  str = string.gsub (tm.str_to_utf8(str), "([^%w%-%_%.%~%*%(%)'])", function (c)
     return string.format ("%%%02X", string.byte(c))
   end)
   return str
@@ -1831,30 +1839,49 @@ end
 function decodeURIComponent (this, str)
   str = tostring(str)
   str = string.gsub (str, "+", " ")
-  return string.gsub (str, "%%(%x%x)", function(h)
+  utf8 = string.gsub (str, "%%(%x%x)", function(h)
     return string.char(tonumber(h,16))
   end)
+  return tm.str_from_utf8(utf8) 
 end
 
 
 function encodeURI(this, str)
-  -- TODO: Check for high/low surrogate pairs
-  return string.gsub (tostring(str), "([^%w,;/:@&='_~#%+%$!%.%?%%-%*%(%)])",
+  str = tostring(str)
+  return string.gsub (tm.str_to_utf8(str), "([^%w,;/:@&='_~#%+%$!%.%?%%-%*%(%)])",
     function (c) return string.format ("%%%02X", string.byte(c)) end)
 end
 
 function decodeURI(this, str)
-  return string.gsub(tostring(str), "%%(%x%x)", 
+  utf8 = string.gsub(tostring(str), "%%(%x%x)",
      function(c) return string.char(tonumber(c, 16)) end)
+  return tm.str_from_utf8(utf8)
 end
 
 function escape(this, str)
-  return string.gsub(tostring(str), "([^%w@%*_%+%-%./])",
-    function(c) 
-      return string.format ("%%%02X", string.byte(c)) 
-    end);
-end 
+  local res = {}
+  for i = 0, str.length-1 do
+    local c = str:charCodeAt(i)
+    local s
+    if c < 256 then
+      s = string.char(c)
+      if string.find(s, '[A-Za-z0-9@*_+-./]') == nil then
+        s = string.format("%%%02X", c)
+      end
+    else
+      s = string.format ("%%u%04X", c)
+    end
+    res[i+1] = s
+  end
+  return table.concat(res)
+end
 
+function unescape(this, str)
+  function getstr(c)
+    return tm.str_fromcode(tonumber(c, 16))
+  end
+  return string.gsub(string.gsub(tostring(str), "%%(%x%x)", getstr), "%%u(%x%x%x%x)", getstr)
+end
 
 
 global.encodeURIComponent = encodeURIComponent
@@ -1862,6 +1889,7 @@ global.decodeURIComponent = decodeURIComponent
 global.encodeURI = encodeURI;
 global.decodeURI = decodeURI;
 global.escape = escape;
+global.unescape = unescape;
 
 
 --[[
