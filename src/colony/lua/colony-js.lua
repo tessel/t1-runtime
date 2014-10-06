@@ -1074,7 +1074,7 @@ global.String.fromCharCode = function (this, ...)
   local str = ''
   for i=1,args.n do
     local uint16 = math.floor(math.abs(tonumbervalue(args[i]))) % (2^16)
-    str = str .. tm.utf8_char_encode(uint16)    -- even without tm.str_from_utf8 this will work
+    str = str .. tm.ucs2_char_encode(uint16)    -- even without tm.str_from_utf8 this will work
   end
   return str
 end
@@ -1879,7 +1879,7 @@ end
 function unescape(this, str)
   function getstr(c)
     -- correctly CESU-8, since c is either 8- or 16-bit only
-    return tm.utf8_char_encode(tonumber(c, 16))
+    return tm.ucs2_char_encode(tonumber(c, 16))
   end
   return string.gsub(string.gsub(tostring(str), "%%(%x%x)", getstr), "%%u(%x%x%x%x)", getstr)
 end

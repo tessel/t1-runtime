@@ -3,10 +3,6 @@
 
 #include "tm.h"
 
-ssize_t tm_utf8_char_encode (const uint32_t c, uint8_t* buf)
-{
-	return utf8proc_encode_char(c, buf);
-}
 
 inline int32_t tm_utf8_char_toupper (const uint32_t c)
 {
