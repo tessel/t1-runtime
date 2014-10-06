@@ -903,28 +903,13 @@ static int l_tm_fs_dir_close (lua_State* L)
 }
 
 
-static int l_tm_ucs2_char_encode (lua_State* L)
-{
-  uint32_t c = (uint32_t) lua_tonumber(L, 1);
-
-  uint8_t buf[4] = { 0 };
-  ssize_t len = tm_ucs2_char_encode(c, (uint8_t*) &buf);
-  if (len < 0) {
-    lua_pushnil(L);
-  } else {
-    colony_pushlutf8(L, (const char*) buf, len);
-  };
-  return 1;
-}
-
-
-static int l_tm_utf8_str_tolower (lua_State* L)
+static int l_tm_utf8_tolower (lua_State* L)
 {
   size_t buf_len = 0;
   const uint8_t* buf = (const uint8_t*) colony_tolutf8(L, 1, &buf_len);
 
   uint8_t* str_case = NULL;
-  ssize_t len = tm_utf8_str_tolower(buf, buf_len, &str_case);
+  ssize_t len = tm_utf8_tolower(buf, buf_len, &str_case);
   if (len < 0) {
     lua_pushnil(L);
   } else {
@@ -934,15 +919,14 @@ static int l_tm_utf8_str_tolower (lua_State* L)
   return 1;
 }
 
-
-static int l_tm_utf8_str_toupper (lua_State* L)
+static int l_tm_utf8_toupper (lua_State* L)
 {
   size_t buf_len = 0;
   const uint8_t* buf = (const uint8_t*) colony_tolutf8(L, 1, &buf_len);
 
 
   uint8_t* str_case = NULL;
-  ssize_t len = tm_utf8_str_toupper(buf, buf_len, &str_case);
+  ssize_t len = tm_utf8_toupper(buf, buf_len, &str_case);
   if (len < 0) {
     lua_pushnil(L);
   } else {
@@ -952,41 +936,6 @@ static int l_tm_utf8_str_toupper (lua_State* L)
   return 1;
 }
 
-
-static int l_tm_ucs2_str_codeat (lua_State* L)
-{
-  size_t buf_len = 0;
-  const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
-  uint32_t idx = (uint32_t) lua_tonumber(L, 2);
-
-  lua_pushnumber(L, tm_ucs2_str_codeat(buf, buf_len, idx));
-  return 1;
-}
-
-static int l_tm_ucs2_str_lookup_16to8 (lua_State* L)
-{
-  size_t buf_len = 0;
-  const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
-  lua_Number rawIdx = lua_tonumber(L, 2);
-  size_t idx = (rawIdx < SIZE_MAX) ? (size_t)rawIdx : SIZE_MAX;
-  size_t seq_len;
-  lua_pushnumber(L, tm_ucs2_str_lookup_16to8(buf, buf_len, idx, &seq_len) + 1);
-  lua_pushnumber(L, seq_len);
-  return 2;
-}
-
-static int l_tm_ucs2_str_lookup_8to16 (lua_State* L)
-{
-  size_t buf_len = 0;
-  const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
-  lua_Number idx = lua_tonumber(L, 2) - 1;
-  if (idx < 0 || idx > buf_len) {
-    // str methods are expected to pre-sanitize. make issue obvious if not!
-    return luaL_error(L, "assertion failure: invalid string lookup value");
-  }
-  lua_pushnumber(L, tm_ucs2_str_lookup_8to16(buf, idx));
-  return 1;
-}
 
 static int l_tm_str_to_utf8 (lua_State* L)
 {
@@ -1004,6 +953,53 @@ static int l_tm_str_from_utf8 (lua_State* L)
   return 1;
 }
 
+
+static int l_tm_str_codeat (lua_State* L)
+{
+  size_t buf_len = 0;
+  const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
+  uint32_t idx = (uint32_t) lua_tonumber(L, 2);
+
+  lua_pushnumber(L, tm_str_codeat(buf, buf_len, idx));
+  return 1;
+}
+
+static int l_tm_str_fromcode (lua_State* L)
+{
+  uint32_t c = (uint32_t) lua_tonumber(L, 1);
+  // TODO: assert c < 0x10000 and optimize below!
+
+  uint8_t buf[4] = { 0 };
+  size_t len = tm_str_fromcode(c, (uint8_t*) &buf);
+  colony_pushlutf8(L, (const char*) buf, len);
+  return 1;
+}
+
+
+static int l_tm_str_lookup_JsToLua (lua_State* L)
+{
+  size_t buf_len = 0;
+  const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
+  lua_Number rawIdx = lua_tonumber(L, 2);
+  size_t idx = (rawIdx < SIZE_MAX) ? (size_t)rawIdx : SIZE_MAX;
+  size_t seq_len;
+  lua_pushnumber(L, tm_str_lookup_JsToLua(buf, buf_len, idx, &seq_len) + 1);
+  lua_pushnumber(L, seq_len);
+  return 2;
+}
+
+static int l_tm_str_lookup_LuaToJs (lua_State* L)
+{
+  size_t buf_len = 0;
+  const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
+  lua_Number idx = lua_tonumber(L, 2) - 1;
+  if (idx < 0 || idx > buf_len) {
+    // str methods are expected to pre-sanitize. make issue obvious if not!
+    return luaL_error(L, "assertion failure: invalid string lookup value");
+  }
+  lua_pushnumber(L, tm_str_lookup_LuaToJs(buf, idx));
+  return 1;
+}
 
 
 #ifdef ENABLE_NET
@@ -1382,15 +1378,16 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "fs_dir_close", l_tm_fs_dir_close },
 
     // unicode
-    { "utf8_str_tolower", l_tm_utf8_str_tolower },
-    { "utf8_str_toupper", l_tm_utf8_str_toupper },
-    { "ucs2_str_codeat", l_tm_ucs2_str_codeat },
-    { "ucs2_char_encode", l_tm_ucs2_char_encode },
-    { "ucs2_str_lookup_16to8", l_tm_ucs2_str_lookup_16to8 },
-    { "ucs2_str_lookup_8to16", l_tm_ucs2_str_lookup_8to16 },
+    { "str_tolower", l_tm_utf8_tolower },
+    { "str_toupper", l_tm_utf8_toupper },
     { "str_to_utf8", l_tm_str_to_utf8 },
     { "str_from_utf8", l_tm_str_from_utf8 },
     
+    // internal string manipulation
+    { "str_codeat", l_tm_str_codeat },
+    { "str_fromcode", l_tm_str_fromcode },
+    { "str_lookup_JsToLua", l_tm_str_lookup_JsToLua },
+    { "str_lookup_LuaToJs", l_tm_str_lookup_LuaToJs },
     
     // deflate
     { "deflate_start", l_tm_deflate_start },
