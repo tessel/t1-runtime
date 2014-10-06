@@ -953,13 +953,13 @@ static int l_tm_utf8_str_toupper (lua_State* L)
 }
 
 
-static int l_tm_ucs2_str_charat (lua_State* L)
+static int l_tm_ucs2_str_codeat (lua_State* L)
 {
   size_t buf_len = 0;
   const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
   uint32_t idx = (uint32_t) lua_tonumber(L, 2);
 
-  lua_pushnumber(L, tm_ucs2_str_charat(buf, buf_len, idx));
+  lua_pushnumber(L, tm_ucs2_str_codeat(buf, buf_len, idx));
   return 1;
 }
 
@@ -1385,7 +1385,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "utf8_char_encode", l_tm_utf8_char_encode },
     { "utf8_str_tolower", l_tm_utf8_str_tolower },
     { "utf8_str_toupper", l_tm_utf8_str_toupper },
-    { "ucs2_str_charat", l_tm_ucs2_str_charat },
+    { "ucs2_str_codeat", l_tm_ucs2_str_codeat },
     { "ucs2_str_lookup_16to8", l_tm_ucs2_str_lookup_16to8 },
     { "ucs2_str_lookup_8to16", l_tm_ucs2_str_lookup_8to16 },
     { "str_to_utf8", l_tm_str_to_utf8 },
