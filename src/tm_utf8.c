@@ -75,7 +75,18 @@ ssize_t tm_utf8_tolower (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr)
 #define IS_LEAD(uchar) (uchar > 0xD800 && uchar < 0xDC00)
 #define IS_TRAIL(uchar) (uchar > 0xDC00 && uchar <= 0xDFFF)
 
+inline bool tm_buf_is7bitsafe(const uint8_t* buf, size_t buf_len) {
+  while (buf_len --> 0) {
+    if (buf[buf_len] & 0x80) return false;
+  }
+  return true;
+}
+
 size_t tm_str_to_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t ** const dstptr) {
+  if (tm_buf_is7bitsafe(buf, buf_len)) {
+    *dstptr = buf;
+    return buf_len;
+  }
   uint8_t* utf8 = malloc(buf_len);    // NOTE: we know utf8 always same or shorter
   size_t utf8_len = 0;
   
@@ -109,6 +120,10 @@ size_t tm_str_to_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t ** cons
 }
 
 size_t tm_str_from_utf8 (const uint8_t* utf8, size_t utf8_len, const uint8_t ** const dstptr) {
+  if (tm_buf_is7bitsafe(utf8, utf8_len)) {
+    *dstptr = utf8;
+    return utf8_len;
+  }
   size_t buf_len = utf8_len;
   // TODO: increase buf_len to fit actual split pairs (4 bytes become 6) and replaced non-characters (3 bytes per byte in bad sequence)
   buf_len += utf8_len / 2 + 6;    // HACK: this is just a glorified/dynamic fudge factor
