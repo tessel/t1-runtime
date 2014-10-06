@@ -231,7 +231,7 @@ str_proto.split = function (str, sep, max)
   local i = 0
   if str_regex_split and js_instanceof(sep, global.RegExp) then
     return str_regex_split(str, sep, max)
-  elseif type(sep) == 'string' and string.len(str) > 0 then
+  elseif type(sep) == 'string' then
     max = max or -1
 
     local start=1
