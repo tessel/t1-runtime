@@ -337,7 +337,7 @@ static int l_regex_split (lua_State *L)
   lua_createtable(L, 0, 0);
 
   int idx = 0;
-  while (w_input_len > 0) {
+  while (w_input_len > 0 || idx == 0) {
     int rc = re_exec(cre, w_input, w_input_len, NULL, pmatch_len, pmatch, 0);
     if (rc != 0) {
       lua_pushlstring(L, input, input_len);
