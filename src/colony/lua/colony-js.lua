@@ -1878,7 +1878,6 @@ end
 
 function unescape(this, str)
   function getstr(c)
-    -- correctly CESU-8, since c is either 8- or 16-bit only
     return tm.str_fromcode(tonumber(c, 16))
   end
   return string.gsub(string.gsub(tostring(str), "%%(%x%x)", getstr), "%%u(%x%x%x%x)", getstr)
