@@ -118,6 +118,15 @@ do
   global.process.cwd = function ()
     return tm.cwd()
   end
+  global.process.hrtime = function (this, prev)
+    -- This number exceeds the 53-bit limit on integer representation, but with
+    -- microsecond resolution, there are only ~50 bits of actual data
+    local nanos = tm.timestamp() * 1e3;
+    if prev ~= nil then
+      nanos = nanos - prev[0]*1e9 + prev[1]
+    end
+    return js_arr({[0]=math.floor(nanos / 1e9), nanos % 1e9}, 2)
+  end
   global.process.nextTick = global.setImmediate
   global.process.version = global.process.versions.node
 
