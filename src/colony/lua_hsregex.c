@@ -200,9 +200,8 @@ static int l_regex_replace (lua_State *L)
   int repeat_flag = lua_toboolean(L, -1);
 
   // matches
-  int pmatch_len = 100;
-  lua_getglobal(L, "_HSMATCH");
-  regmatch_t* pmatch = (regmatch_t*) lua_touserdata(L, -1);
+  size_t pmatch_len = cre->re_nsub + 1;
+  regmatch_t* pmatch = (regmatch_t*) calloc(1, sizeof(regmatch_t) * (pmatch_len));
 
   size_t w_input_len = 0;
   chr* orig_w_input = toregexstr(input, input_len, &w_input_len);
@@ -312,8 +311,8 @@ static int l_regex_replace (lua_State *L)
   stringbuilder_append(&b, input, input_len);
   lua_pushlstring(L, (const char*) b.string, b.len);
   free(b.string);
-
   free(orig_w_input);
+  free(pmatch);
 
   return 1;
 }
@@ -328,9 +327,8 @@ static int l_regex_split (lua_State *L)
   regex_t* cre = (regex_t*) lua_touserdata(L, -1);
 
   // matches
-  int pmatch_len = 100;
-  lua_getglobal(L, "_HSMATCH");
-  regmatch_t* pmatch = (regmatch_t*) lua_touserdata(L, -1);
+  size_t pmatch_len = cre->re_nsub + 1;
+  regmatch_t* pmatch = (regmatch_t*) calloc(1, sizeof(regmatch_t) * (pmatch_len));
 
   size_t w_input_len = 0;
   chr* orig_w_input = toregexstr(input, input_len, &w_input_len);
@@ -339,7 +337,7 @@ static int l_regex_split (lua_State *L)
   lua_createtable(L, 0, 0);
 
   int idx = 0;
-  while (w_input_len > 0) {
+  while (w_input_len > 0 || idx == 0) {
     int rc = re_exec(cre, w_input, w_input_len, NULL, pmatch_len, pmatch, 0);
     if (rc != 0) {
       lua_pushlstring(L, input, input_len);
@@ -359,6 +357,7 @@ static int l_regex_split (lua_State *L)
   }
 
   free(orig_w_input);
+  free(pmatch);
   lua_pushnumber(L, idx);
 
   return 2;

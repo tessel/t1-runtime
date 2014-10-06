@@ -237,7 +237,7 @@ str_proto.split = function (str, sep, max)
   local i = 0
   if str_regex_split and js_instanceof(sep, global.RegExp) then
     return str_regex_split(str, sep, max)
-  elseif type(sep) == 'string' and string.len(str) > 0 then
+  elseif type(sep) == 'string' then
     max = max or -1
 
     local start=1
@@ -1580,11 +1580,6 @@ end
 -- regexp library
 
 if type(hs) == 'table' then
-  local hsmatchc = 100
-  local hsmatch = hs.regmatch_create(hsmatchc)
-
-  _G._HSMATCH = hsmatch
-
   global.RegExp = function (this, source, flags)
     -- hsregex requires special flags handling
     local patt = source
@@ -1597,9 +1592,7 @@ if type(hs) == 'table' then
     if rc ~= 0 then
       error(js_new(global.SyntaxError, 'Invalid regex "' .. patt .. '" (error ' + tostring(rc or 0) + ')'))
     end
-    if hs.regex_nsub(cre) > hsmatchc then
-      error(js_new(global.Error, 'Too many capturing subgroups (max ' .. hsmatchc .. ', compiled ' .. hs.regex_nsub(cre) .. ')'))
-    end
+    local regex_nsub = hs.regex_nsub(cre) + 1
 
     local o = {}
     o.source = source
@@ -1628,6 +1621,7 @@ if type(hs) == 'table' then
       __tostring=js_tostring,
       cre=cre,
       crestr=crestr,
+      regex_nsub=regex_nsub,
       proto=global.RegExp.prototype
     })
     return o
@@ -1661,12 +1655,14 @@ if type(hs) == 'table' then
     -- Match using hsregex
     local cre = getmetatable(regex).cre
     local crestr = getmetatable(regex).crestr
+    local regex_nsub = getmetatable(regex).regex_nsub
+    local hsmatch = hs.regmatch_create(regex_nsub)
 
     if rawget(regex, 'global') then
       local data = tostring(this)
       local ret, count, idx = {}, 0, 1
       while true do
-        local rc = hs.re_exec(cre, string.sub(data, idx), nil, hsmatchc, hsmatch, 0)
+        local rc = hs.re_exec(cre, string.sub(data, idx), nil, regex_nsub, hsmatch, 0)
         if rc ~= 0 then
           break
         end
@@ -1693,17 +1689,19 @@ if type(hs) == 'table' then
     if type(cre) ~= 'userdata' then
       error(js_new(global.TypeError, 'Cannot call RegExp.prototype.exec on non-regex'))
     end
+    local regex_nsub = getmetatable(this).regex_nsub
+    local hsmatch = hs.regmatch_create(regex_nsub)
 
     local input = tostring(subj)
     local data = string.sub(input, this.lastIndex + 1)
-    local rc = hs.re_exec(cre, data, nil, hsmatchc, hsmatch, 0)
+    local rc = hs.re_exec(cre, data, nil, regex_nsub, hsmatch, 0)
     if rc ~= 0 then
       -- Reset .lastIndex when no match found
       this.lastIndex = 0
       return nil
     end
     local ret, len = {}, 0
-    for i=0, hs.regex_nsub(cre) do
+    for i=0,regex_nsub-1 do
       local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
       if so == -1 or eo == -1 then
         table.insert(ret, len, nil)
@@ -1728,9 +1726,11 @@ if type(hs) == 'table' then
     if type(cre) ~= 'userdata' then
       error(js_new(global.TypeError, 'Cannot call RegExp.prototype.match on non-regex'))
     end
+    local regex_nsub = getmetatable(this).regex_nsub
+    local hsmatch = hs.regmatch_create(regex_nsub)
 
     -- TODO optimize by capturing no subgroups?
-    local rc = hs.re_exec(cre, tostring(subj), nil, hsmatchc, hsmatch, 0)
+    local rc = hs.re_exec(cre, tostring(subj), nil, regex_nsub, hsmatch, 0)
     return rc == 0
   end
 
@@ -1812,7 +1812,7 @@ global.JSON.stringify = function (this, value, replacer, spacer)
 
   -- Call writer.
   local wh = rapidjson.create_writer(spacer)
-  local status, err = pcall(rapidjson.write_value, wh, value, replacer)
+  local status, err = pcall(rapidjson.write_value, wh, value, replacer, nil, {[""] = value})
   if not status then
     rapidjson.destroy(wh)
     error(err)

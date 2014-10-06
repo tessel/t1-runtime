@@ -270,7 +270,7 @@ function OutgoingMessage () {
     if (self._socket == null 
       || (self._socket && self._socket._destroy !== true)) {
       if (!self.headersSent) {
-        self._chunked = false;
+        if (self instanceof ClientRequest) self._chunked = false;
         self.flush();
       }
       if (self._chunked) {
