@@ -121,7 +121,7 @@ end
 -- string prototype
 
 str_proto.charCodeAt = function (this, i)
-  return tm.ucs2_str_charat(this, i)
+  return tm.ucs2_str_codeat(this, i)
 end
 
 str_proto.charAt = function (str, i)

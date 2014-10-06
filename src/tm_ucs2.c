@@ -2,16 +2,12 @@
 
 #include "tm.h"
 
-int32_t tm_ucs2_str_charat (const uint8_t* buf, ssize_t buf_len, ssize_t index)
+uint32_t tm_ucs2_str_codeat (const uint8_t* buf, size_t buf_len, size_t index)
 {
-	// This is silly, don't do this.
-	if (buf_len < 0) {
-		buf_len = strlen((char*) buf);
-	}
-
 	const uint8_t* ptr = buf;
 	int32_t dst = 0;
-	while (index >= 0) {
+  index += 2;
+	while (index >= 2) {
 		ssize_t bytes_read = utf8proc_iterate(ptr, buf_len, &dst);
 		if (dst == -1) {
 			return dst;
@@ -21,7 +17,7 @@ int32_t tm_ucs2_str_charat (const uint8_t* buf, ssize_t buf_len, ssize_t index)
 		index -= dst & 0x10000 ? 2 : 1;
 	}
 
-	return index == -2
+	return index == 0
 		? (dst - 0x10000) / 0x400 + 0xD800
 		: dst > 0xFFFF
 			? (dst - 0x10000) % 0x400 + 0xDC00
