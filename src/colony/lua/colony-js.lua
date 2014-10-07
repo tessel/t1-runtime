@@ -149,7 +149,7 @@ end
 
 str_proto.substring = function (str, beg, fin)
   if fin == nil then
-    fin = str.length
+    fin = math.huge
   end
   function adjToLua(idx)      -- n.b. different than others!
     idx = tonumber(idx)
@@ -168,7 +168,7 @@ end
 
 str_proto.slice = function (str, beg, fin)
   if fin == nil then
-    fin = str.length
+    fin = math.huge
   end
   function adjToLua(idx)      -- n.b. different than others!
     idx = tonumber(idx)
