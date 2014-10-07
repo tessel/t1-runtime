@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(58);
+tap.count(59);
 
 tap.ok("1234567890".substring(3, 6) == "456", 'substring 1')
 tap.ok("abc".substring(0, 0) == "", 'substring 2')
@@ -14,6 +14,7 @@ tap.ok("abc"[0] == "a", 'index 1')
 tap.ok("abc"['1'] == "b", 'index 2')
 
 var s = "abc👀a✇def";
+tap.eq(s.length, 10);
 tap.eq(s.indexOf('d'), 7);
 tap.eq(s.indexOf('def'), 7);
 tap.eq(s.indexOf('defg'), -1);
