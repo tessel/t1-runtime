@@ -14,6 +14,8 @@
 -- local bit = require('bit32')
 local tm = require('tm')
 
+tm.log(11, 'OKAY6')
+
 -- locals
 
 local js_arr = colony.js_arr
@@ -493,6 +495,8 @@ function _of_buffer (this, buf, length)
   return this
 end
 
+tm.log(11, 'OKAY7')
+
 local function Buffer (this, arg, encoding)
   -- args
   local str, length = '', 0
@@ -594,11 +598,10 @@ end
 
 global.Buffer = Buffer
 
-
 --[[
 --|| global variables
 --]]
-
+tm.log(11, 'OKAY-!-10')
 function abssource (ret)
   if string.sub(ret, 1, 1) == '.' then
     ret = os.getenv('PWD') + string.sub(ret, 2)
@@ -606,6 +609,7 @@ function abssource (ret)
   return ret
 end
 
+<<<<<<< HEAD
 function script_dirname (idx)
   return abssource(string.gsub(string.sub(debug.getinfo(idx + 1).source, 2), "/?[^/]+$", ""))
 end
@@ -621,7 +625,17 @@ end)
 global:__defineGetter__('____filename', function (this)
   return script_filename(3)
 end)
+=======
+-- global:__defineGetter__('____dirname', function (this)
+--   return abssource(string.gsub(string.sub(debug.getinfo(3).source, 2), "/?[^/]+$", ""))
+-- end)
 
+-- global:__defineGetter__('____filename', function (this)
+--   return abssource(string.sub(debug.getinfo(3).source, 2))
+-- end)
+>>>>>>> PANIC LOGS
+
+tm.log(11, 'OKAY-2')
 
 --[[
 --|| bindings
@@ -742,6 +756,8 @@ end
 -- lookup and execution
 
 colony.cache = {}
+
+tm.log(11, 'OKAY-3')
 
 local function require_resolve (origname, root)
   root = root or './'
@@ -908,6 +924,8 @@ colony.run = function (name, root, parent)
   return colony.cache[p].exports
 end
 
+tm.log(11, 'OKAY-4')
+
 package.preload.http_parser = function ()
   local http_parser = require('http_parser_lua')
 
@@ -955,3 +973,5 @@ package.preload.http_parser = function ()
   })
   return mod
 end
+
+tm.log(11, 'OKAY8')

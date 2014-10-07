@@ -25,6 +25,8 @@ if not table.pack then
   end
 end
 
+tm.log(11, 'OKAY-!-!-1')
+
 if not setfenv then -- Lua 5.2
   -- based on http://lua-users.org/lists/lua-l/2010-06/msg00314.html
   -- this assumes f is a function
@@ -43,10 +45,13 @@ if not setfenv then -- Lua 5.2
     return f end
 end
 
+tm.log(11, 'OKAY-!-!-2')
+
 -- "Precache" builtin library code as functions.
 -- This gets moved into colony.cache when run, as do all modules.
 colony.precache = {}
 for k, v in pairs(_builtin) do
+  tm.log(11, k);
   (function (k, v)
     colony.precache[k] = function ()
       ret = _builtin_load(k, v)()
@@ -60,13 +65,15 @@ for k, v in pairs(_builtin) do
     end
   end)(k, v)
 end
-if _colony_preload_on_init then
-  for k, v in pairs(_builtin) do
-    -- preload all the things
-    colony.run(k)
-  end
-end
-collectgarbage()
+-- if _colony_preload_on_init then
+--   for k, v in pairs(_builtin) do
+--     -- preload all the things
+--     colony.run(k)
+--   end
+-- end
+tm.log(11, 'OKAY-!-!-3')
+-- collectgarbage()
+tm.log(11, 'OKAY-!-!-4')
 
 if _G.COLONY_EMBED then
   -- This is temporary until we have tm_pwd() working
@@ -78,6 +85,7 @@ if _G.COLONY_EMBED then
   end
 end
 
+tm.log(11, 'OKAY-!-!-5')
 if not _G.COLONY_EMBED then
   -- This is temporary until we have proper compilation in C.
   colony._load = function (file)
@@ -166,12 +174,14 @@ do
     return js_wrap_module(require(key))
   end
 
-
+tm.log(11, 'OKAY-!-!-6')
   local Readable = colony.run('stream').Readable
   local Writable = colony.run('stream').Writable
 
+tm.log(11, 'OKAY-!-!-7')
   colony.global.console = colony.run('console')
 
+tm.log(11, 'OKAY-!-!-8')
   colony.global.process.stdout = colony.js_new(Writable)
   colony.global.process.stdout._write = function (this, chunk, encoding, callback)
     tm.log(10, chunk)
@@ -182,6 +192,8 @@ do
     tm.log(13, chunk)
     callback()
   end
+
+  tm.log(11, 'OKAY-!-!-9')
 
   -- setup stdin
   colony.global.process.stdin = colony.js_new(Readable)
@@ -199,8 +211,12 @@ do
       colony.global:clearInterval(stdinkeepalive)
     end
   end)
+
+  tm.log(11, 'OKAY-!-!-10')
   -- hook into builtin ipc command
   colony.global.process:on('stdin', function (this, buf)
     colony.global.process.stdin:push(buf)
   end)
 end
+
+tm.log(11, 'OKAY-!-!-11')
