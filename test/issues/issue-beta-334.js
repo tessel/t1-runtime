@@ -40,9 +40,5 @@ buf[2] = 0xFF;
 buf[3] = 0xFF;
 var value = buf.readUInt32LE(0, true);
 tap.ok(value == 4294901760, 'in bounds write succeeds')
-try {
-	var value = buf.readUInt32LE(2, true);
-	tap.ok(value == 65535, 'out of bounds write succeeds')
-} catch (e) {
-	tap.ok(false);
-}
+var value = buf.readUInt32LE(2, true);
+tap.ok(isNaN(value), 'out of bounds write fails with NaN')
