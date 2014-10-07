@@ -32,6 +32,8 @@ test:
 	@./tools/colony-compiler-correct.sh # check that the path lookup is correct
 	@./node_modules/.bin/tap -e './tools/tap-colony.sh' test/suite/*.js test/issues/*.js test/net/*.js
 
+test-node:
+	@./node_modules/.bin/tap -e node test/suite/*.js test/issues/*.js test/net/*.js
 
 # Targets
 
