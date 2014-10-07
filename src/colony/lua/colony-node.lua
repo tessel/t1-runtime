@@ -368,7 +368,7 @@ function read_buf (this, pos, no_assert, size, fn, le)
       if size == 1 then
         return nil
       else
-        return 0
+        return 0/0
       end
     end
     local tmp = tm.buffer_create(4)
