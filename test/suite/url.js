@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(14);
+tap.count(13);
 
 var expected = { protocol: 'ws:',
 		 slashes: true,
@@ -14,8 +14,6 @@ var expected = { protocol: 'ws:',
 		 pathname: '/events',
 		 path: '/events?q=123',
 		 href: 'ws://user:pass@somedomain.com:1234/events?q=123#hash1' };
-
-tap.ok(process.versions.colony, 'running in colony')
 
 var url = require('url');
 tap.ok(url.parse('http://tools.ietf.org/html/draft-ietf-6man-text-addr-representation-04#section-6'), 'url parses');
