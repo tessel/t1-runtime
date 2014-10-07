@@ -13,7 +13,7 @@ else
 		ninja -C out/$(CONFIG)
 endif
 
-.PHONY: all test
+.PHONY: all test test-colony test-node
 
 all: colony
 
@@ -28,7 +28,9 @@ update:
 	git submodule update --init --recursive
 	npm install
 
-test:
+test: test-node test-colony
+
+test-colony:
 	@./node_modules/.bin/tap -e './tools/tap-colony.sh' test/suite/*.js test/colony/*.js  test/issues/*.js test/net/*.js
 
 test-node:
