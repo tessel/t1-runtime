@@ -66,5 +66,5 @@ tap.eq(s[4], '\udc40');
 tap.eq(s[5], 'a');
 tap.eq(s[6], '✇');
 tap.eq(s.charAt(6), '✇');
-tap.eq(s[s.length], null);
+tap.eq(s[s.length], undefined);
 tap.eq(s.charAt(s.length), '');
