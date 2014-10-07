@@ -16,7 +16,7 @@ tap.ok(Math.SQRT1_2 == 0.7071067811865476, 'Math.SQRT1_2')
 tap.ok(Math.SQRT2 == 1.4142135623730951, 'Math.SQRT2')
 
 // clz32
-tap.ok(Math.clz32(nil) == 32, 'Math.clz32(nil)')
+tap.ok(Math.clz32(null) == 32, 'Math.clz32(null)')
 tap.ok(Math.clz32(1) == 31, 'Math.clz32(1)')
 tap.ok(Math.clz32(1000) == 22, 'Math.clz32(22)')
 tap.ok(Math.clz32(true) == 31, 'Math.clz32(true)')
