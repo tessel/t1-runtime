@@ -1839,7 +1839,7 @@ end
 function decodeURIComponent (this, str)
   str = tostring(str)
   str = string.gsub (str, "+", " ")
-  utf8 = string.gsub (str, "%%(%x%x)", function(h)
+  local utf8 = string.gsub (str, "%%(%x%x)", function(h)
     return string.char(tonumber(h,16))
   end)
   return tm.str_from_utf8(utf8) 
@@ -1853,7 +1853,7 @@ function encodeURI(this, str)
 end
 
 function decodeURI(this, str)
-  utf8 = string.gsub(tostring(str), "%%(%x%x)",
+  local utf8 = string.gsub(tostring(str), "%%(%x%x)",
      function(c) return string.char(tonumber(c, 16)) end)
   return tm.str_from_utf8(utf8)
 end
