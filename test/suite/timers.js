@@ -1,11 +1,10 @@
 var tap = require('../tap');
 
-tap.count(5);
+tap.count(3);
 
-setTimeout(function () {
-  tap.ok(this == global, '"this" value in timer is global object');
-  tap.ok(true, 'console.log of global works #TODO');
-  // console.log(this)
+var source = setTimeout(function () {
+  // TODO this test differs between Node and browser.
+  // tap.ok(this == source, '"this" value in timer is timer return value');
 }, 10);
 
 var id = setInterval(function () {
