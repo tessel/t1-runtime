@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(51);
+tap.count(58);
 
 tap.ok("1234567890".substring(3, 6) == "456", 'substring 1')
 tap.ok("abc".substring(0, 0) == "", 'substring 2')
@@ -60,3 +60,11 @@ tap.eq(s.substr(-1,-1), "");
 tap.eq(s.substr(3,2), "👀");
 
 tap.eq(String.fromCharCode(0x00, 0x40, 1000, 0xd83d, 0xdc40, 0x10000), "\0@Ϩ👀\0");
+
+tap.eq(s[3], '\ud83d');
+tap.eq(s[4], '\udc40');
+tap.eq(s[5], 'a');
+tap.eq(s[6], '✇');
+tap.eq(s.charAt(6), '✇');
+tap.eq(s[s.length], null);
+tap.eq(s.charAt(s.length), '');
