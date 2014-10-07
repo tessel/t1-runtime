@@ -31,9 +31,11 @@ update:
 test: test-node test-colony
 
 test-colony:
+	@echo "colony testbench:"
 	@./node_modules/.bin/tap -e './tools/tap-colony.sh' test/suite/*.js test/colony/*.js  test/issues/*.js test/net/*.js
 
 test-node:
+	@echo "node testbench:"
 	@./node_modules/.bin/tap -e node test/suite/*.js test/issues/*.js test/net/*.js
 
 # Targets
