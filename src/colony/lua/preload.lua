@@ -95,6 +95,78 @@ end
 
 -- Set up builtin dependencies
 do
+  local EventEmitter = colony.run('events').EventEmitter
+
+  global.process = js_new(EventEmitter)
+  global.process.memoryUsage = function (ths)
+    return js_obj({
+      heapUsed=collectgarbage('count')*1024
+    });
+  end
+  global.process.platform = "tessel"
+  global.process.arch = "armv7-m"
+  global.process.versions = js_obj({
+    node = "0.10.0",
+    colony = "0.10.0"
+  })
+  global.process.EventEmitter = EventEmitter
+  global.process.argv = js_arr({}, 0)
+  global.process.env = js_obj({})
+  global.process.exit = function (this, code)
+    tm.exit(code)
+  end
+  global.process.cwd = function ()
+    return tm.cwd()
+  end
+  global.process.hrtime = function (this, prev)
+    -- This number exceeds the 53-bit limit on integer representation, but with
+    -- microsecond resolution, there are only ~50 bits of actual data
+    local nanos = tm.timestamp() * 1e3;
+    if prev ~= nil then
+      nanos = nanos - prev[0]*1e9 + prev[1]
+    end
+    return js_arr({[0]=math.floor(nanos / 1e9), nanos % 1e9}, 2)
+  end
+  global.process.nextTick = global.setImmediate
+  global.process.version = global.process.versions.node
+
+  -- DEPLOY_TIME workaround for setting environmental time
+
+  global.Object:defineProperty(global.process.env, 'DEPLOY_TIMESTAMP', {
+    set = function (this, value)
+      tm.timestamp_update((tonumber(value or 0) or 0)*1e3)
+      rawset(this, 'DEPLOY_TIMESTAMP', value)
+    end
+  });
+
+  -- simple process.ref() and process.unref() options
+
+  global.process.ref = function ()
+    if global.process.refid == nil then
+      global.process.refid = global:setInterval(function () end, 1e8)
+    end
+  end
+
+  global.process.unref = function ()
+    if global.process.refid ~= nil then
+      global:clearInterval(global.process.refid)
+      global.process.refid = nil
+    end
+  end
+
+  global.process.umask = function(ths, value)
+    -- Return standard octal 0022
+    return 18;
+  end
+
+  global.process.binding = function (self, key)
+    if key == 'lua' then
+      return js_wrap_module(_G)
+    end
+    return js_wrap_module(require(key))
+  end
+
+
   local Readable = colony.run('stream').Readable
   local Writable = colony.run('stream').Writable
 
