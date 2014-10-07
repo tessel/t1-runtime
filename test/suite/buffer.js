@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(65);
+tap.count(67);
 
 function arreq (a, b) {
 	if (a.length != b.length) {
@@ -142,7 +142,10 @@ var b = new Buffer('deadbeefcafebabe', 'hex');
 tap.ok(b.readUInt32BE(0) == 0xdeadbeef, 'hex encoding');
 tap.ok(b.readUInt32BE(4) == 0xcafebabe, 'hex encoding');
 console.log('#', '0x' + b.readUInt32BE(0).toString(16), '0x' + b.readUInt32BE(4).toString(16))
-try { new Buffer('gggg', 'hex'); tap.ok(false); } catch (e) { tap.ok(true, 'invalid hex digits'); }
+
+var b = new Buffer('AA__55', 'hex');
+tap.eq(b.length, 1, 'invalid hex digits truncated');
+tap.eq(b[0], 0xAA, 'invalid hex digits truncate but return a value');
 try { new Buffer('0', 'hex'); tap.ok(false); } catch (e) { tap.ok(true, 'invalid hex length'); }
 
 console.log('\n# base64')
@@ -169,5 +172,3 @@ tap.ok(buf.slice(4, 4 + 12).toString() == '\u00bd + \u00bc = \u00be', 'result wa
 
 // inspecting
 tap.ok(require('buffer').INSPECT_MAX_BYTES === 50, 'default INSPECT_MAX_BYTES is 50')
-require('buffer').INSPECT_MAX_BYTES = 2;
-tap.ok(Buffer([1,2,3]).inspect() === '<Buffer 01 02 ...>', 'inspect follows custom limit')

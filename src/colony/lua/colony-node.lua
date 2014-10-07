@@ -500,10 +500,11 @@ local function Buffer (this, arg, encoding)
     str = from_base64(str)
     length = string.len(str)
   elseif type(str) == 'string' and encoding == 'hex' then
-    if string.len(str) % 2 ~= 0 or string.gsub(str, '[a-fA-F0-9]', '') ~= '' then
+    if string.len(str) % 2 ~= 0 then
       error(js_new(global.TypeError, 'Invalid hex string.'))
     end
-    str = string.lower(str)
+    -- Remove first occurrance of invalid char until end of string
+    str = string.lower(string.gsub(str, '[^a-fA-F0-9].*', ''))
     length = string.len(str) / 2
   end
 
