@@ -101,8 +101,14 @@ if not _G.COLONY_EMBED then
   end
 end
 
+colony.global.console = {
+  log = function (this, val)
+    tm.log(11, tostring(val))
+  end
+}
+
 -- Set up builtin dependencies
-do
+if 0 then
   local EventEmitter = colony.run('events').EventEmitter
 
   global.process = js_new(EventEmitter)

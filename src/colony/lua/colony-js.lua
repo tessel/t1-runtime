@@ -1626,6 +1626,10 @@ end
 
 -- regexp library
 
+global._regexp = function ()
+  return {}
+end
+
 
 --[[
 --|| json library
