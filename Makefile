@@ -29,6 +29,7 @@ update:
 	npm install
 
 test:
+	@./tools/colony-compiler-correct.sh # check that the path lookup is correct
 	@./node_modules/.bin/tap -e './out/Release/colony' test/suite/*.js test/issues/*.js test/net/*.js
 
 
