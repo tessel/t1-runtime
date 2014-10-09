@@ -801,7 +801,7 @@ end
 --]]
 
 function abssource (ret)
-  if string.sub(ret, 1, 2) == './' then
+  if string.sub(ret, 1, 1) == '.' then
     ret = os.getenv('PWD') + string.sub(ret, 2)
   end
   return ret
@@ -946,6 +946,10 @@ colony.cache = {}
 
 local function require_resolve (origname, root)
   root = root or './'
+  if string.sub(origname, 1, 1) == '/' then
+    root = ''
+  end
+
   local name = origname
   if string.sub(name, 1, 1) == '.' then
     if string.sub(name, -3) == '.js' then
@@ -956,7 +960,7 @@ local function require_resolve (origname, root)
   end
 
   -- module
-  if string.sub(name, 1, 1) ~= '.' then
+  if string.sub(name, 1, 1) ~= '.' and string.sub(name, 1, 1) ~= '/' then
     if colony.precache[name] or colony.cache[name] then
       root = ''
     else
@@ -1007,7 +1011,7 @@ local function require_resolve (origname, root)
       name = name .. '/index'
     end
   end
-  if root ~= '' and string.sub(name, -3) ~= '.js' then
+  if (root ~= '' or string.sub(name, 1, 1) == '/') and string.sub(name, -3) ~= '.js' then
     local p = path_normalize(root .. name)
     if string.sub(origname, -5) == '.json' or fs_exists(p .. '.json') then
       name = name .. '.json'
