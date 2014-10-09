@@ -9,7 +9,7 @@ ifeq ($(ARM),1)
 		ninja -C out/$(CONFIG)
 else
     compile = \
-        gyp $(1) --depth=. -f ninja -D enable_ssl=$(ENABLE_TLS) -D enable_net=$(ENABLE_NET) &&\
+        gyp $(1) --depth=. -f ninja -D enable_ssl=$(ENABLE_TLS) -D enable_net=$(ENABLE_NET) -D compiler_path="$(shell pwd)/node_modules/colony-compiler/bin/colony-compiler.js" &&\
 		ninja -C out/$(CONFIG)
 endif
 
@@ -29,6 +29,7 @@ update:
 	npm install
 
 test:
+	@./tools/colony-compiler-correct.sh # check that the path lookup is correct
 	@./node_modules/.bin/tap -e './out/Release/colony' test/suite/*.js test/issues/*.js test/net/*.js
 
 

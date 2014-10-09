@@ -165,6 +165,9 @@ static int builtin_loader (lua_State* L)
   return 1;
 }
 
+#define colony_runtime_xstr(s) colony_runtime_str(s)
+#define colony_runtime_str(s) #s
+
 int colony_runtime_open ()
 {
   lua_State* L = tm_lua_state = luaL_newstate ();
@@ -183,6 +186,13 @@ int colony_runtime_open ()
   lua_pushboolean(L, 0);
 #endif
   lua_setglobal(L, "COLONY_EMBED");
+
+#ifndef COLONY_EMBED
+#ifdef COLONY_COMPILER_PATH
+  lua_pushliteral(L, colony_runtime_xstr(COLONY_COMPILER_PATH));
+  lua_setglobal(L, "COLONY_COMPILER_PATH");
+#endif
+#endif
 
   // Preload Lua modules.
   lua_getglobal(L, "package");

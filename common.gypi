@@ -16,6 +16,7 @@
     "miniz_inc_path": "./deps/miniz-inc",
     "approxidate_path": "./deps/approxidate",
     'enable_ssl%': 0,
+    "compiler_path%": "",
   },
 
   'target_defaults': {
