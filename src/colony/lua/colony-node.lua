@@ -801,18 +801,26 @@ end
 --]]
 
 function abssource (ret)
-  if string.sub(ret, 1, 2) == './' then
+  if string.sub(ret, 1, 1) == '.' then
     ret = os.getenv('PWD') + string.sub(ret, 2)
   end
   return ret
 end
 
+function script_dirname (idx)
+  return abssource(string.gsub(string.sub(debug.getinfo(idx + 1).source, 2), "/?[^/]+$", ""))
+end
+
+function script_filename (idx)
+  return abssource(string.sub(debug.getinfo(idx + 1).source, 2))
+end
+
 global:__defineGetter__('____dirname', function (this)
-  return abssource(string.gsub(string.sub(debug.getinfo(3).source, 2), "/?[^/]+$", ""))
+  return script_dirname(3)
 end)
 
 global:__defineGetter__('____filename', function (this)
-  return abssource(string.sub(debug.getinfo(3).source, 2))
+  return script_filename(3)
 end)
 
 
@@ -938,6 +946,10 @@ colony.cache = {}
 
 local function require_resolve (origname, root)
   root = root or './'
+  if string.sub(origname, 1, 1) == '/' then
+    root = ''
+  end
+
   local name = origname
   if string.sub(name, 1, 1) == '.' then
     if string.sub(name, -3) == '.js' then
@@ -948,7 +960,7 @@ local function require_resolve (origname, root)
   end
 
   -- module
-  if string.sub(name, 1, 1) ~= '.' then
+  if string.sub(name, 1, 1) ~= '.' and string.sub(name, 1, 1) ~= '/' then
     if colony.precache[name] or colony.cache[name] then
       root = ''
     else
@@ -999,7 +1011,7 @@ local function require_resolve (origname, root)
       name = name .. '/index'
     end
   end
-  if root ~= '' and string.sub(name, -3) ~= '.js' then
+  if (root ~= '' or string.sub(name, 1, 1) == '/') and string.sub(name, -3) ~= '.js' then
     local p = path_normalize(root .. name)
     if string.sub(origname, -5) == '.json' or fs_exists(p .. '.json') then
       name = name .. '.json'
@@ -1077,6 +1089,20 @@ colony.run = function (name, root, parent)
     return colony.run(value, path_dirname(scriptpath) .. '/', colony.cache[scriptpath])
   end
   colony.global.require.cache = colony.cache
+
+  colony.global.require.resolve = function(ths, str)
+    local path, found = require_resolve(str)
+    if found then
+      if string.sub(path, 1, 1) == '.' then
+        path = path_normalize(script_dirname(2) .. '/' .. path)
+      end
+      if fs_exists(path) then
+        return path
+      end
+    end
+
+    error(js_new(global.Error('Cannot find module \'' .. str .. '\'')))
+  end
 
   colony.cache[p] = js_obj({exports=js_obj({}),parent=parent}) --dummy
   res(colony.global, colony.cache[p])
