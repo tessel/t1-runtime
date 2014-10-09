@@ -903,40 +903,6 @@ static int l_tm_fs_dir_close (lua_State* L)
 }
 
 
-static int l_tm_utf8_tolower (lua_State* L)
-{
-  size_t buf_len = 0;
-  const uint8_t* buf = (const uint8_t*) colony_tolutf8(L, 1, &buf_len);
-
-  uint8_t* str_case = NULL;
-  ssize_t len = tm_utf8_tolower(buf, buf_len, &str_case);
-  if (len < 0) {
-    lua_pushnil(L);
-  } else {
-    colony_pushlutf8(L, (const char*) str_case, buf_len);
-    free(str_case);
-  }
-  return 1;
-}
-
-static int l_tm_utf8_toupper (lua_State* L)
-{
-  size_t buf_len = 0;
-  const uint8_t* buf = (const uint8_t*) colony_tolutf8(L, 1, &buf_len);
-
-
-  uint8_t* str_case = NULL;
-  ssize_t len = tm_utf8_toupper(buf, buf_len, &str_case);
-  if (len < 0) {
-    lua_pushnil(L);
-  } else {
-    colony_pushlutf8(L, (const char*) str_case, buf_len);
-    free(str_case);
-  }
-  return 1;
-}
-
-
 static int l_tm_str_to_utf8 (lua_State* L)
 {
   size_t utf8_len;
@@ -1378,8 +1344,6 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "fs_dir_close", l_tm_fs_dir_close },
 
     // unicode
-    { "str_tolower", l_tm_utf8_tolower },
-    { "str_toupper", l_tm_utf8_toupper },
     { "str_to_utf8", l_tm_str_to_utf8 },
     { "str_from_utf8", l_tm_str_from_utf8 },
     

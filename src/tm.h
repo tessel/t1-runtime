@@ -205,10 +205,10 @@ void tm_buffer_double_write (uint8_t* buf, size_t index, double value, tm_endian
 
 // UNICODE
 
-ssize_t tm_utf8_tolower (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr);
-ssize_t tm_utf8_toupper (const uint8_t *buf, ssize_t buf_len, uint8_t **dstptr);
 size_t tm_str_to_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t **dstptr);
 size_t tm_str_from_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t **dstptr);
+
+// INTERNAL STRING MANIPULATION
 
 uint32_t tm_str_codeat (const uint8_t* buf, size_t buf_len, size_t index);
 size_t tm_str_fromcode (uint32_t c, uint8_t* buf);
