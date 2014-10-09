@@ -41,4 +41,4 @@ console.log('# toISOString', d0.toISOString());
 tap.eq(d0.toJSON(), '1970-01-01T00:00:00.000Z');
 console.log('# toJSON', d0.toJSON());
 
-tap.eq(new Date("10/Mar/2012:05:00:07 +0000").valueOf(), 1331355607000);
+tap.eq(new Date("10/Mar/2012 05:00:07 +0000").valueOf(), 1331355607000);

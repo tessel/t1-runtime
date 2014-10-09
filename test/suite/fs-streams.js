@@ -15,7 +15,7 @@ function inputTest (next) {
   }
 
   ins.pipe(fs.createWriteStream(output))
-    .on('end', function () {
+    .on('finish', function () {
       var txt = fs.readFileSync(output, 'utf-8');
       console.log('# writestream', txt);
       console.log(txt == 'HELLOWORLD' ? 'ok' : 'not ok');

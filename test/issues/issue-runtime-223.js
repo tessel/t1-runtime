@@ -8,9 +8,7 @@ util.inherits(Test, events.EventEmitter);
 
 var i = new Test();
 
-tap.count(3);
-
-tap.ok(process.versions.colony, 'running in colony');
+tap.count(2);
 
 try {
    i.once('event', undefined);

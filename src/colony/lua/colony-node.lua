@@ -364,11 +364,11 @@ function read_buf (this, pos, no_assert, size, fn, le)
       error(js_new(global.RangeError, 'Trying to access beyond buffer length'))
     end
 
-    if pos >= sourceBufferLength then
+    if pos >= sourceBufferLength or (le and pos + size >= sourceBufferLength) then
       if size == 1 then
         return nil
       else
-        return 0
+        return 0/0
       end
     end
     local tmp = tm.buffer_create(4)
@@ -380,16 +380,16 @@ function read_buf (this, pos, no_assert, size, fn, le)
   return fn(sourceBuffer, pos, le)
 end
 
-buffer_proto.readUInt8 = function (this, pos, opts) return read_buf(this, pos, opts, 1, tm.buffer_read_uint8); end
-buffer_proto.readUInt16LE = function (this, pos, opts) return read_buf(this, pos, opts, 2, tm.buffer_read_uint16le); end
-buffer_proto.readUInt16BE = function (this, pos, opts) return read_buf(this, pos, opts, 2, tm.buffer_read_uint16be); end
-buffer_proto.readUInt32LE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_uint32le); end
-buffer_proto.readUInt32BE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_uint32be); end
-buffer_proto.readInt8 = function (this, pos, opts) return read_buf(this, pos, opts, 1, tm.buffer_read_int8); end
-buffer_proto.readInt16LE = function (this, pos, opts) return read_buf(this, pos, opts, 2, tm.buffer_read_int16le); end
-buffer_proto.readInt16BE = function (this, pos, opts) return read_buf(this, pos, opts, 2, tm.buffer_read_int16be); end
-buffer_proto.readInt32LE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_int32le); end
-buffer_proto.readInt32BE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_int32be); end
+buffer_proto.readUInt8 = function (this, pos, opts) return read_buf(this, pos, opts, 1, tm.buffer_read_uint8, 0); end
+buffer_proto.readUInt16LE = function (this, pos, opts) return read_buf(this, pos, opts, 2, tm.buffer_read_uint16le, 1); end
+buffer_proto.readUInt16BE = function (this, pos, opts) return read_buf(this, pos, opts, 2, tm.buffer_read_uint16be, 0); end
+buffer_proto.readUInt32LE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_uint32le, 1); end
+buffer_proto.readUInt32BE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_uint32be, 0); end
+buffer_proto.readInt8 = function (this, pos, opts) return read_buf(this, pos, opts, 1, tm.buffer_read_int8, 0); end
+buffer_proto.readInt16LE = function (this, pos, opts) return read_buf(this, pos, opts, 2, tm.buffer_read_int16le, 1); end
+buffer_proto.readInt16BE = function (this, pos, opts) return read_buf(this, pos, opts, 2, tm.buffer_read_int16be, 0); end
+buffer_proto.readInt32LE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_int32le, 1); end
+buffer_proto.readInt32BE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_int32be, 0); end
 
 buffer_proto.readFloatLE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_float, 1); end
 buffer_proto.readFloatBE = function (this, pos, opts) return read_buf(this, pos, opts, 4, tm.buffer_read_float, 0); end
@@ -500,10 +500,11 @@ local function Buffer (this, arg, encoding)
     str = from_base64(str)
     length = string.len(str)
   elseif type(str) == 'string' and encoding == 'hex' then
-    if string.len(str) % 2 ~= 0 or string.gsub(str, '[a-fA-F0-9]', '') ~= '' then
+    if string.len(str) % 2 ~= 0 then
       error(js_new(global.TypeError, 'Invalid hex string.'))
     end
-    str = string.lower(str)
+    -- Remove first occurrance of invalid char until end of string
+    str = string.lower(string.gsub(str, '[^a-fA-F0-9].*', ''))
     length = string.len(str) / 2
   end
 

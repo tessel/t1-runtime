@@ -175,31 +175,47 @@ end
 str_proto.indexOf = function (str, needle, fromIndex)
 
   if needle == '' then
-    if fromIndex < str.length then return fromIndex; else return str.length; end
+    if fromIndex < str.length then
+      return fromIndex
+    else
+      return str.length
+    end
   end
 
   if fromIndex == nil or fromIndex < 0 then
-    fromIndex = 1
-  elseif fromIndex > str.length then return -1;
+    fromIndex = 0
+  elseif fromIndex > str.length then
+    return -1
   end
 
-  local ret = string.find(str, tostring(needle), fromIndex, true)
-  if ret == null then return -1; else return ret - 1; end
+  local ret = string.find(str, tostring(needle), fromIndex + 1, true)
+  if ret == nil then
+    return -1
+  else
+    return ret - 1
+  end
 end
 
 str_proto.lastIndexOf = function (str, needle, fromIndex)
   local len = string.len(str)
 
-  if fromIndex ~= nil then
-    if fromIndex < 0 or fromIndex >= len then return -1; end
-    fromIndex = -fromIndex - 1
-  else
-    fromIndex = 1
+  if fromIndex == nil or fromIndex >= len then
+    fromIndex = len
+  end
+  if fromIndex < 0 then
+    fromIndex = 0
   end
 
-  local ret = string.find(string.reverse(str), tostring(needle), fromIndex, true)
+  if fromIndex >= len then
+    fromIndex = len - 1
+  end
+  local ret = string.find(string.reverse(string.sub(str, 1, fromIndex + 1)), tostring(needle), 1, true)
 
-  if ret == null then return -1; else return len - ret; end
+  if ret == nil then
+    return -1
+  else
+    return fromIndex - (ret - 1)
+  end
 end
 
 str_proto.toString = function (this)
