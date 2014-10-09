@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(59);
+tap.count(61);
 
 tap.ok("1234567890".substring(3, 6) == "456", 'substring 1')
 tap.ok("abc".substring(0, 0) == "", 'substring 2')
@@ -69,3 +69,11 @@ tap.eq(s[6], '✇');
 tap.eq(s.charAt(6), '✇');
 tap.eq(s[s.length], undefined);
 tap.eq(s.charAt(s.length), '');
+
+tap.eq("aBc\0123".toUpperCase(), 'ABC\0123');
+tap.eq("aBc\0123".toLowerCase(), 'abc\0123');
+
+//var lower = "iñtërnâtiônàlizætiøn☃💩";
+//var upper = "IÑTËRNÂTIÔNÀLIZÆTIØN☃💩";
+//tap.eq(lower.toUpperCase(), upper, 'toUpperCase works: ' + lower.toUpperCase());
+//tap.eq(upper.toLowerCase(), lower, 'toLowerCase works: ' + upper.toLowerCase());

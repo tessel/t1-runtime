@@ -183,11 +183,13 @@ str_proto.slice = function (str, beg, fin)
 end
 
 str_proto.toLowerCase = function (this)
-  return tm.str_tolower(this)
+  -- TODO: unicode mappings!
+  return string.lower(this)
 end
 
 str_proto.toUpperCase = function (this)
-  return tm.str_toupper(this)
+  -- TODO: unicode mappings!
+  return string.upper(this)
 end
 
 str_proto.indexOf = function (str, needle, fromIndex)

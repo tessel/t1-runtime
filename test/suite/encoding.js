@@ -3,7 +3,7 @@ function ok (a, d) { console.log(a ? 'ok ' + (t++) + ' -' : 'not ok ' + (t++) + 
 console.log(t + '..' + tmax);
 ok(process.versions.colony, 'running in colony')
 
-tap.count(37);
+tap.count(35);
 
 tap.eq(String.fromCharCode(0x1A), '\u001A');
 tap.eq(String.fromCharCode(0x1A), '\x1A');
@@ -65,10 +65,5 @@ tap.eq(0xdca9, poo.charCodeAt(1), poo.charCodeAt(1));
 tap.eq(poo, '\ud83d\udca9');
 tap.ok(poo != '\xd8\x3d\xdc\xa9');
 
-ok(String.fromCharCode(0x2603) == String.fromCharCode(0x12603), 'fromCharCode truncates UCS-2 values');
-ok(poo.length == 2, 'length is reported as ucs-2, 2 == ' + poo.length);
-
-var lower = "iñtërnâtiônàlizætiøn☃💩";
-var upper = "IÑTËRNÂTIÔNÀLIZÆTIØN☃💩";
-ok(lower.toUpperCase() == upper, 'toUpperCase works: ' + lower.toUpperCase())
-ok(upper.toLowerCase() == lower, 'toLowerCase works: ' + upper.toLowerCase())
+tap.eq(String.fromCharCode(0x2603), String.fromCharCode(0x12603), 'fromCharCode truncates UCS-2 values');
+tap.eq(poo.length, 2, 'length is reported as ucs-2, 2 == ' + poo.length);
