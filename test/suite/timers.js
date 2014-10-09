@@ -1,10 +1,11 @@
 var tap = require('../tap');
 
-tap.count(3);
+tap.count(4);
 
 var source = setTimeout(function () {
   // TODO this test differs between Node and browser.
   // tap.ok(this == source, '"this" value in timer is timer return value');
+  tap.ok(true, 'setTimeout is called');
 }, 10);
 
 var id = setInterval(function () {
