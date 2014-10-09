@@ -41,4 +41,4 @@ buf[3] = 0xFF;
 var value = buf.readUInt32LE(0, true);
 tap.ok(value == 4294901760, 'in bounds write succeeds')
 var value = buf.readUInt32LE(2, true);
-tap.ok(isNaN(value), 'out of bounds write fails with NaN')
+tap.ok(isNaN(value) || (value == 65535), 'out of bounds write returns 65535 (older) or NaN (newer) depending on Node version')
