@@ -163,6 +163,9 @@
       "product_name": "libcolony",
       "type": "static_library",
       'cflags': [ '-Wall', '-Wextra', '-Werror' ],
+      'defines': [
+        'COLONY_COMPILER_PATH=<(compiler_path)'
+      ],
       "sources": [
         'src/tm_event.c',
         'src/tm_timer.c',
