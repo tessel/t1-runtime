@@ -807,12 +807,20 @@ function abssource (ret)
   return ret
 end
 
+function script_dirname (idx)
+  return abssource(string.gsub(string.sub(debug.getinfo(idx + 1).source, 2), "/?[^/]+$", ""))
+end
+
+function script_filename (idx)
+  return abssource(string.sub(debug.getinfo(idx + 1).source, 2))
+end
+
 global:__defineGetter__('____dirname', function (this)
-  return abssource(string.gsub(string.sub(debug.getinfo(3).source, 2), "/?[^/]+$", ""))
+  return script_dirname(3)
 end)
 
 global:__defineGetter__('____filename', function (this)
-  return abssource(string.sub(debug.getinfo(3).source, 2))
+  return script_filename(3)
 end)
 
 
@@ -1077,6 +1085,20 @@ colony.run = function (name, root, parent)
     return colony.run(value, path_dirname(scriptpath) .. '/', colony.cache[scriptpath])
   end
   colony.global.require.cache = colony.cache
+
+  colony.global.require.resolve = function(ths, str)
+    local path, found = require_resolve(str)
+    if found then
+      if string.sub(path, 1, 1) == '.' then
+        path = path_normalize(script_dirname(2) .. '/' .. path)
+      end
+      if fs_exists(path) then
+        return path
+      end
+    end
+
+    error(js_new(global.Error('Cannot find module \'' .. str .. '\'')))
+  end
 
   colony.cache[p] = js_obj({exports=js_obj({}),parent=parent}) --dummy
   res(colony.global, colony.cache[p])
