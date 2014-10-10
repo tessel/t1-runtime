@@ -68,7 +68,7 @@ size_t tm_str_to_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t ** cons
   size_t utf8_len = 0;
   
   int32_t hchar = 0;    // stores half of surrogate pair
-  ssize_t buf_pos = 0;
+  size_t buf_pos = 0;
   while (buf_pos < buf_len) {
     uint32_t uchar;
 		buf_pos += tm_utf8_decode(buf + buf_pos, buf_len - buf_pos, &uchar);
@@ -105,7 +105,7 @@ size_t tm_str_from_utf8 (const uint8_t* utf8, size_t utf8_len, const uint8_t ** 
   uint8_t* buf = malloc(buf_len);
   
   size_t buf_pos = 0;
-  ssize_t utf8_pos = 0;
+  size_t utf8_pos = 0;
   while (utf8_pos < utf8_len) {
     assert(buf_pos + 6 < buf_len);        // bail if fudge factor was insufficiently generous
     uint32_t uchar;
