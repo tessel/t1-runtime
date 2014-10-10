@@ -2,7 +2,7 @@ ENABLE_TLS ?= 1
 ENABLE_NET ?= 1
 
 # Update when targeting new Node build.
-NODE_VERSION ?= v0.10.32
+NODE_VERSION ?= 0.10.32
 
 CONFIG ?= Release
 
@@ -45,20 +45,9 @@ test-node:
 	@./node_modules/.bin/tap -e node test/suite/*.js test/issues/*.js test/net/*.js
 
 update-node-libs:
-	$(eval ORIG_BRANCH := $(shell git rev-parse --abbrev-ref HEAD))
-	git remote rm node || true
-	git branch -D node_master || true
-	git branch -D node_lib || true
-	git remote add -t master node https://github.com/joyent/node.git
-	git fetch node --tags
-	git checkout $(NODE_VERSION)
-	git subtree split --rejoin --prefix=lib -b node_lib
-	git checkout -f $(ORIG_BRANCH)
-	if [ -a deps/node-libs ]; then \
-		git subtree merge --squash --prefix=deps/node-libs node_lib; \
-	else \
-		git subtree add --squash --prefix=deps/node-libs .git node_lib; \
-	fi
+	rm -rf deps/node-libs || true
+	mkdir -p deps/node-libs
+	cd deps/node-libs; curl -L https://github.com/joyent/node/archive/v$(NODE_VERSION).tar.gz | tar xvf - --strip-components=2 node-$(NODE_VERSION)/lib
 
 # Targets
 
