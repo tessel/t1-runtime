@@ -15,7 +15,7 @@ install:
   - make update
 script:
   - make colony
-  - npm test
+  - make test
 
 git:
   submodules: false
