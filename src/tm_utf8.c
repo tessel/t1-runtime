@@ -27,7 +27,7 @@ size_t tm_utf8_decode(const uint8_t* buf, size_t buf_len, uint32_t* uc) {
           return 2;
         }
       }
-    } else {
+    } else if (buf[0] < 0x80) {
       *uc = buf[0];
       return 1;
     }
@@ -118,7 +118,7 @@ size_t tm_str_from_utf8 (const uint8_t* utf8, size_t utf8_len, const uint8_t ** 
       buf_pos += tm_utf8_encode(buf + buf_pos, 3, uchar);
     } else {
       uchar -= 0x010000;
-      buf_pos += tm_utf8_encode(buf + buf_pos, 6, 0xD800 + (uchar >> 10));
+      buf_pos += tm_utf8_encode(buf + buf_pos, 3, 0xD800 + (uchar >> 10));
       buf_pos += tm_utf8_encode(buf + buf_pos, 3, 0xDC00 + (uchar & 0x03FF));
     }
     utf8_pos += bytes_read;
