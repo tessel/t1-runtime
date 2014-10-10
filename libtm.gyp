@@ -364,25 +364,6 @@
     },
 
     {
-      "target_name": "utf8proc",
-      "product_name": "utf8proc",
-      "type": "static_library",
-      "sources": [
-        "<(utf8proc_path)/utf8proc.c",
-        "<(utf8proc_path)/utf8proc_data.c",
-      ],
-      "include_dirs": [
-        "<(utf8proc_path)/"
-      ],
-
-      "direct_dependent_settings": {
-        "include_dirs": [
-          "<(utf8proc_path)/"
-        ],
-      },
-    },
-
-    {
       "target_name": "miniz",
       "product_name": "miniz",
       "type": "static_library",
@@ -532,7 +513,6 @@
         "c-ares",
         "fortuna",
         "dlmalloc",
-        "utf8proc",
         "miniz",
         "approxidate",
         'libtm-cxx',
