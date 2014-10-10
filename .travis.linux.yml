@@ -19,7 +19,7 @@ before_install:
   - npm config set spin=false
 install:
   - git submodule update --init
-  - npm install
+  - make update
   - sudo apt-get -y install gyp
 script:
   - make colony
