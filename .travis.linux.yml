@@ -23,7 +23,7 @@ install:
   - sudo apt-get -y install gyp
 script:
   - make colony
-  - npm test
+  - make test
 
 git:
   submodules: false
