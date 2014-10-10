@@ -16,7 +16,7 @@ else
 		ninja -C out/$(CONFIG)
 endif
 
-NODE_FILES = deps/node/lib/events.js deps/node/lib/domain.js
+NODE_FILES = deps/node-libs/events.js deps/node-libs/domain.js
 
 .PHONY: all test test-colony test-node
 

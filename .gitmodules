@@ -19,6 +19,3 @@
 [submodule "deps/rapidjson"]
 	path = deps/rapidjson
 	url = https://github.com/miloyip/rapidjson.git
-[submodule "deps/node"]
-	path = deps/node
-	url = https://github.com/joyent/node.git\
