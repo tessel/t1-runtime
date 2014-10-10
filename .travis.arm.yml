@@ -12,7 +12,7 @@ before_install:
   - npm config set spin=false
 install:
   - git submodule update --init
-  - npm install
+  - make update
 script:
   - make libcolony ARM=1
 

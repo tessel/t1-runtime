@@ -1860,16 +1860,16 @@ function encodeURI(this, str)
 end
 
 function decodeURI(this, str)
-  return string.gsub(tostring(str), "%%(%x%x)", 
+  return string.gsub(tostring(str), "%%(%x%x)",
      function(c) return string.char(tonumber(c, 16)) end)
 end
 
 function escape(this, str)
   return string.gsub(tostring(str), "([^%w@%*_%+%-%./])",
-    function(c) 
-      return string.format ("%%%02X", string.byte(c)) 
+    function(c)
+      return string.format ("%%%02X", string.byte(c))
     end);
-end 
+end
 
 
 

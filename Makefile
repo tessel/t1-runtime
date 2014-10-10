@@ -1,6 +1,9 @@
 ENABLE_TLS ?= 1
 ENABLE_NET ?= 1
 
+# Update when targeting new Node build.
+NODE_VERSION ?= 0.10.32
+
 CONFIG ?= Release
 
 ifeq ($(ARM),1)
@@ -12,6 +15,8 @@ else
         gyp $(1) --depth=. -f ninja -D enable_ssl=$(ENABLE_TLS) -D enable_net=$(ENABLE_NET) -D compiler_path="$(shell pwd)/node_modules/colony-compiler/bin/colony-compiler.js" &&\
 		ninja -C out/$(CONFIG)
 endif
+
+NODE_FILES = deps/node-libs/events.js deps/node-libs/domain.js
 
 .PHONY: all test test-colony test-node
 
@@ -26,6 +31,7 @@ nuke:
 
 update:
 	git submodule update --init --recursive
+	cp $(NODE_FILES) src/colony/modules/
 	npm install
 
 test: test-node test-colony
@@ -37,6 +43,11 @@ test-colony:
 test-node:
 	@echo "node testbench:"
 	@./node_modules/.bin/tap -e node test/suite/*.js test/issues/*.js test/net/*.js
+
+update-node-libs:
+	rm -rf deps/node-libs || true
+	mkdir -p deps/node-libs
+	cd deps/node-libs; curl -L https://github.com/joyent/node/archive/v$(NODE_VERSION).tar.gz | tar xvf - --strip-components=2 node-$(NODE_VERSION)/lib
 
 # Targets
 
