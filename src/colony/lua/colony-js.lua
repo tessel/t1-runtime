@@ -1074,7 +1074,7 @@ global.String.fromCharCode = function (this, ...)
   -- http://es5.github.io/x15.5.html#x15.5.3.2
   local args = table.pack(...)
   local str = ''
-  for i=1,args.length do
+  for i=1,args.n do
     local uint16 = math.floor(math.abs(tonumbervalue(args[i]))) % (2^16)
     str = str .. tm.str_fromcode(uint16)
   end
