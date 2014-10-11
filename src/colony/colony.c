@@ -135,3 +135,16 @@ void colony_ipc_emit (lua_State* L, char *type, void* data, size_t size)
     tm_checked_call(L, 2);
   }
 }
+
+#include <lobject.h>
+#include <lstate.h>
+
+static uint8_t* colony_string_flags_internal (TString* string)
+{
+  return (uint8_t*) &string->tsv.reserved;
+}
+
+uint8_t* colony_string_flags (lua_State* L, int index)
+{
+  return colony_string_flags_internal(rawtsvalue(L->top - index));
+}
