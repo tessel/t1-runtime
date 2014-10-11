@@ -665,6 +665,13 @@ end
 -- Returns directory name component of path
 -- Copied and adapted from http://dev.alpinelinux.org/alpine/acf/core/acf-core-0.4.20.tar.bz2/acf-core-0.4.20/lib/fs.lua
 
+function colony_buffertorawstr (buf)
+  local sourceBuffer = getmetatable(buf).buffer
+  local sourceBufferLength = getmetatable(buf).bufferlen
+
+  return tm.buffer_tobytestring(sourceBuffer, 0, sourceBufferLength)
+end
+
 function fs_readfile (name)
   local prefix = ''
   fd, err = tm.fs_open(prefix..name, tm.RDWR + tm.OPEN_EXISTING)
@@ -673,7 +680,7 @@ function fs_readfile (name)
   while true do
     local chunk = tm.fs_read(fd, 16*1024)
     if chunk ~= nil then
-      s = s .. tostring(chunk)
+      s = s .. colony_buffertorawstr(chunk)
     end
     if chunk == nil then
       break
