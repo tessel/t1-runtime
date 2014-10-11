@@ -28,28 +28,32 @@
 
 // Lua is using ascii. We are too, until we have real usc2 functions.
 
-static chr* _toregexstr (const char *input, size_t input_len, chr *output, size_t* output_len)
+size_t tm_ucs2_from_utf8 (const uint8_t* utf8, size_t utf8_len, const uint8_t ** const dstptr);
+
+static chr* _toregexstr (const char *input, size_t input_len, size_t* output_len)
 {
   #ifdef REGEX_WCHAR
-    *output_len = mbstowcs(output, input, input_len);
+    uint8_t* output = NULL;
+    *output_len = tm_ucs2_from_utf8((const uint8_t *) input, input_len, (const uint8_t **) &output);
+    *output_len /= 4;
+    return (chr*) output;
   #else
+    uint8_t* output = calloc(1, input_len);
     *output_len = memcpy(output, input, input_len);
+    return output;
   #endif
-  return output;
 }
 
 static chr* toregexstr (const char *input, size_t input_len, size_t* output_len)
 {
-  chr* output = (chr*) calloc(1, input_len * sizeof(chr));
-  return _toregexstr(input, input_len, output, output_len);
+  return _toregexstr(input, input_len, output_len);
 }
 
 static const chr* lua_toregexstr (lua_State* L, int pos, size_t* buflen)
 {
   size_t patt_len = 0;
   const char *patt = lua_tolstring(L, pos, &patt_len);
-  chr *mbpatt = (chr *) lua_newuserdata(L, (patt_len+1) * sizeof(chr));
-  return _toregexstr(patt, patt_len, mbpatt, buflen);
+  return _toregexstr(patt, patt_len, buflen);
 }
 
 

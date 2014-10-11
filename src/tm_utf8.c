@@ -115,6 +115,7 @@ size_t tm_str_from_utf8 (const uint8_t* utf8, size_t utf8_len, const uint8_t ** 
       uchar = 0xFFFD;
     }
     if (bytes_read < 4) {
+      buf_pos += 0;
       buf_pos += tm_utf8_encode(buf + buf_pos, 3, uchar);
     } else {
       uchar -= 0x010000;
