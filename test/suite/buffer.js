@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(67);
+tap.count(70);
 
 function arreq (a, b) {
 	if (a.length != b.length) {
@@ -162,6 +162,12 @@ console.log('#', new Buffer(new Buffer('hello world').toString('base64'), 'base6
 tap.ok(new Buffer(new Buffer('hello world').toString('hex'), 'hex').toString() == 'hello world', 'str -> hex -> str')
 console.log('#', new Buffer('hello world').toString('hex'))
 console.log('#', new Buffer(new Buffer('hello world').toString('hex'), 'hex'))
+
+var b = new Buffer([0, 0x41, 0x82, 0x104]);
+tap.eq(b.toString('binary'), "\u0000\u0041\u0082\u0004");
+tap.eq(b.toString('ascii'), "\u0000\u0041\u0002\u0004");
+tap.eq(b.toString('utf8'), "\u0000\u0041\uFFFD\u0004");
+//tap.eq(b.toString('utf16le'), "\u4100\u0482");
 
 // write
 var buf = new Buffer(256);

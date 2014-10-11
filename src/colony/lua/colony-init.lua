@@ -16,6 +16,7 @@
 -- $ luarocks install bit32
 
 local bit = require('bit32')
+local tm = require('tm')
 
 -- local logger = assert(io.open('colony.log', 'w+'))
 -- debug.sethook(function ()
@@ -321,8 +322,8 @@ func_mt.proto = func_proto
 --]]
 
 str_mt.getters = {
-  length = function (ths)
-    return string.len(ths)
+  length = function (this)
+    return tm.str_lookup_LuaToJs(this, #this+1)
   end
 }
 str_mt.__index = function (self, key)
@@ -334,10 +335,11 @@ str_mt.__index = function (self, key)
     return getter(self, key)
   end
   if (tonumber(key) == key) then
-    if key >= self.length then
-      return null
+    local off, len = tm.str_lookup_JsToLua(self, key)
+    if len > 0 then
+      return string.sub(self, off, off+len-1)
     else
-      return string.sub(self, key+1, key+1)
+      return null
     end
   end
   return js_proto_get(self, str_proto, key)
