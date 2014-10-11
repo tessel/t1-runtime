@@ -42,6 +42,8 @@ test-colony:
 
 test-node:
 	@echo "node testbench:"
+	@node -p '"(testing against node " + process.versions.node + ")"'
+	@node -e "process.exit(process.versions.node.match(/^0\.10\.[3]/)?0:1)" || (echo "please test with node >=0.10.30" && exit 1)
 	@./node_modules/.bin/tap -e node test/suite/*.js test/issues/*.js test/net/*.js
 
 update-node-libs:
