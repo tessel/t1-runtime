@@ -17,9 +17,8 @@
 #include "regalone.h"
 #include "regex.h"
 
-
 #ifdef REGEX_WCHAR
-# define chr  wchar_t
+# define chr  REGEX_WCHAR
 # define re_comp  re_wcomp
 # define re_exec  re_wexec
 #else
@@ -35,7 +34,7 @@ static chr* _toregexstr (const char *input, size_t input_len, size_t* output_len
   #ifdef REGEX_WCHAR
     uint8_t* output = NULL;
     *output_len = tm_ucs2_from_utf8((const uint8_t *) input, input_len, (const uint8_t **) &output);
-    *output_len /= 4;
+    *output_len /= 2;
     return (chr*) output;
   #else
     uint8_t* output = calloc(1, input_len);
@@ -109,7 +108,7 @@ static int l_re_comp (lua_State* L)
   regex_t* cre = (regex_t*) lua_touserdata(L, 1);
   int flags = (int) lua_tonumber(L, 3);
 
-  const wchar_t* patt = lua_toregexstr(L, 2, &pattlen);
+  const chr* patt = lua_toregexstr(L, 2, &pattlen);
   int rc = re_comp(cre, patt, pattlen, flags);
 
   lua_pushnumber(L, rc);
