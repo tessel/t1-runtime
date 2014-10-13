@@ -118,6 +118,10 @@ do
   global.process.cwd = function ()
     return tm.cwd()
   end
+  global.process._usingDomains = function ()
+    -- process._usingDomains called by domain.js in Node
+    -- here it's a no-op
+  end
   global.process.hrtime = function (this, prev)
     -- This number exceeds the 53-bit limit on integer representation, but with
     -- microsecond resolution, there are only ~50 bits of actual data

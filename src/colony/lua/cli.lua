@@ -16,14 +16,14 @@ local colony = require('colony')
 
 -- This is temporary until we can add files to builtin array easily.
 if _tessel_lib then
-	colony.precache['tessel'] = _tessel_lib
-	colony.run('tessel')
+  colony.precache['tessel'] = _tessel_lib
+  colony.run('tessel')
 end
 
 -- also temporary.
 if _wifi_cc3000_lib then
-	colony.precache['wifi-cc3000'] = _wifi_cc3000_lib
-	colony.run('wifi-cc3000')
+  colony.precache['wifi-cc3000'] = _wifi_cc3000_lib
+  colony.run('wifi-cc3000')
 end
 
 -- Command line invocation
@@ -37,5 +37,17 @@ if string.sub(p, 1, 1) ~= '.' then
 end
 
 colony.global:setImmediate(function ()
-	colony.run(p)
+  -- TODO move uncaughtException handling to an appropriate file
+  local status, err = pcall(function ()
+    colony.run(p)
+  end)
+  if not status then
+    if colony.global.process.domain then
+      colony.global.process.domain:emit('error', err)
+    elseif colony.global.process:listeners('uncaughtException').length then
+      colony.global.process:emit('uncaughtException', err)
+    else
+      error(err)
+    end
+  end
 end)
