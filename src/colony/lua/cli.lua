@@ -37,5 +37,15 @@ if string.sub(p, 1, 1) ~= '.' then
 end
 
 colony.global:setImmediate(function ()
-	colony.run(p)
+
+	local status, err = pcall(function ()
+		colony.run(p)
+	end)
+	if not status then
+		if colony.global.process:listeners('uncaughtException').length then
+			colony.global.process:emit('uncaughtException', err)
+		else
+			error(err)
+		end
+	end
 end)

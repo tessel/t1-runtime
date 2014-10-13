@@ -118,6 +118,14 @@ do
   global.process.cwd = function ()
     return tm.cwd()
   end
+  global.process._usingDomains = function ()
+    -- internal _usingDomains from Node
+    global.process:on('uncaughtException', function (this, err)
+      if global.process.domain then
+        global.process.domain:emit('error', err)
+      end
+    end)
+  end
   global.process.hrtime = function (this, prev)
     -- This number exceeds the 53-bit limit on integer representation, but with
     -- microsecond resolution, there are only ~50 bits of actual data
