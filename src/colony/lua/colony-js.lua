@@ -605,6 +605,43 @@ arr_proto.indexOf = function (this, searchElement, fromIndex)
   return -1
 end
 
+arr_proto.lastIndexOf = function (this, searchElement, fromIndex)
+  local len = this.length
+  local start
+
+  if len == 0 then
+    return -1
+  end
+
+  if fromIndex ~= nil then
+    fromIndex = tonumber(fromIndex)
+  else
+    fromIndex = len
+  end
+
+  if fromIndex >= 0 then
+    start = fromIndex
+  else
+    start = len + fromIndex
+
+    if start < 0 then
+      start = 0
+    end
+  end
+
+  if start >= len then
+    start = len - 1
+  end
+
+  for i=start,0,-1 do
+    if this[i] == searchElement then
+      return i
+    end
+  end
+
+  return -1
+end
+
 arr_proto.map = function (this, fn, ...)
   local a = js_arr({}, 0)
   local args = table.pack(...)
