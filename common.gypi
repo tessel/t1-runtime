@@ -58,6 +58,7 @@
         'defines': [
           'COLONY_PC',
           '_GNU_SOURCE',
+          'LUA_USE_POSIX',
         ],
         'cflags': [
           '-std=c99',
