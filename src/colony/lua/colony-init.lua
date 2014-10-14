@@ -204,7 +204,8 @@ nil_mt.__pow = function (op1, op2)
 end
 
 nil_mt.__lt = function (op1, op2)
-  return type(op2) == 'table' or op2 > 0
+  if type(op2) == 'table' then return false end
+  return op2 > 0
 end
 
 nil_mt.__le = function (op1, op2)
