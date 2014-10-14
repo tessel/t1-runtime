@@ -181,8 +181,8 @@ int colony_runtime_open ()
     printf("Error creating Lua state.\n");
   }
   lua_atpanic(L, &runtime_panic);
-  lua_gc(L, LUA_GCSETPAUSE, 1600);
-  lua_gc(L, LUA_GCSETSTEPMUL, 1);
+  // lua_gc(L, LUA_GCSETPAUSE, 1600);
+  // lua_gc(L, LUA_GCSETSTEPMUL, 1);
 
   // Open libraries.
   luaL_openlibs(L);
