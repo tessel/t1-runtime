@@ -13,6 +13,7 @@
 
 #include <ctype.h>
 
+#include "tm.h"
 #include "colony.h"
 #include "regalone.h"
 #include "regex.h"
@@ -27,13 +28,11 @@
 
 // Lua is using ascii. We are too, until we have real usc2 functions.
 
-size_t tm_ucs2_from_utf8 (const uint8_t* utf8, size_t utf8_len, const uint8_t ** const dstptr);
-
 static chr* _toregexstr (const char *input, size_t input_len, size_t* output_len)
 {
   #ifdef REGEX_WCHAR
     uint8_t* output = NULL;
-    *output_len = tm_ucs2_from_utf8((const uint8_t *) input, input_len, (const uint8_t **) &output);
+    *output_len = tm_str_to_utf16((const uint8_t *) input, input_len, (const uint8_t **) &output);
     *output_len /= 2;
     return (chr*) output;
   #else
