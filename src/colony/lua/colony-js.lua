@@ -128,7 +128,7 @@ str_proto.charCodeAt = function (this, i)
 end
 
 str_proto.charAt = function (str, i)
-  -- BUG: `str.charAt('foo')` should not alias `str.foo` but let's pretend we can just…
+  -- BUG: `str.charAt('foo')` should not alias `str.foo` but let's pretend we can just...
   return str[i] or '';
 end
 
@@ -1094,7 +1094,7 @@ global.String = function (ths, str)
 
     -- set the boxed object properties
     for i = 0, str.length-1 do
-      -- TODO: this would make properly read-only, but breaks a test relying on Object.keys…
+      -- TODO: this would make properly read-only, but breaks a test relying on Object.keys...
       --js_define_setter(ths, i, function() end)
       --js_define_getter(ths, i, function()
       --  return str[i]

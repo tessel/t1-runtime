@@ -28,10 +28,6 @@ clean-luajit:
 	cd deps/colony-luajit; make clean
 	rm out/Release/obj/colony-lua.gen/libluajit.o || true
 
-clean-luajit:
-	cd deps/colony-luajit; make clean
-	rm out/Release/obj/colony-lua.gen/libluajit.o || true
-
 nuke:
 	rm -rf out build
 

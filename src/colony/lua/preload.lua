@@ -13,6 +13,7 @@
 --
 
 local tm = require('tm')
+tm.log(11, 'START')
 local colony = require('colony')
 -- This is temporary until we can do global._arr in C extension methods
 _G._colony = colony
@@ -108,10 +109,11 @@ colony.global.console = {
 }
 
 -- Set up builtin dependencies
-if 0 then
-  local EventEmitter = colony.run('events').EventEmitter
-
-  global.process = js_new(EventEmitter)
+do
+  -- local EventEmitter = colony.run('events').EventEmitter
+tm.log(11, 'OKAY-!-!-!-1')
+  global.process = js_obj({})
+tm.log(11, 'OKAY-!-!-!-2')
   global.process.memoryUsage = function (ths)
     return js_obj({
       heapUsed=collectgarbage('count')*1024
@@ -123,7 +125,8 @@ if 0 then
     node = "0.10.0",
     colony = "0.10.0"
   })
-  global.process.EventEmitter = EventEmitter
+tm.log(11, 'OKAY-!-!-!-3')
+  global.process.EventEmitter = nil
   global.process.argv = js_arr({}, 0)
   global.process.env = js_obj({})
   global.process.exit = function (this, code)
@@ -145,13 +148,13 @@ if 0 then
   global.process.version = global.process.versions.node
 
   -- DEPLOY_TIME workaround for setting environmental time
-
-  global.Object:defineProperty(global.process.env, 'DEPLOY_TIMESTAMP', {
-    set = function (this, value)
-      tm.timestamp_update((tonumber(value or 0) or 0)*1e3)
-      rawset(this, 'DEPLOY_TIMESTAMP', value)
-    end
-  });
+tm.log(11, 'OKAY-!-!-!-4')
+  -- global.Object:defineProperty(global.process.env, 'DEPLOY_TIMESTAMP', {
+  --   set = function (this, value)
+  --     tm.timestamp_update((tonumber(value or 0) or 0)*1e3)
+  --     rawset(this, 'DEPLOY_TIMESTAMP', value)
+  --   end
+  -- });
 
   -- simple process.ref() and process.unref() options
 
@@ -167,7 +170,7 @@ if 0 then
       global.process.refid = nil
     end
   end
-
+tm.log(11, 'OKAY-!-!-!-5')
   global.process.umask = function(ths, value)
     -- Return standard octal 0022
     return 18;
@@ -179,7 +182,10 @@ if 0 then
     end
     return js_wrap_module(require(key))
   end
+tm.log(11, 'OKAY-!-!-!-6')
+end
 
+if 0 then
 tm.log(11, 'OKAY-!-!-6')
   local Readable = colony.run('stream').Readable
   local Writable = colony.run('stream').Writable
