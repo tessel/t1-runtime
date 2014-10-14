@@ -119,7 +119,7 @@
             'deps/node-libs/querystring.js',
             'src/colony/modules/repl.js',
             'deps/node-libs/stream.js',
-            'src/colony/modules/string_decoder.js',
+            'deps/node-libs/string_decoder.js',
             'src/colony/modules/tls.js',
             'src/colony/modules/tty.js',
             'src/colony/modules/url.js',
