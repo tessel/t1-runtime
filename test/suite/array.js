@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(50);
+tap.count(56);
 
 function arreq (a, b) {
 	if (a.length != b.length) {
@@ -178,3 +178,12 @@ arr.sort(function (a, b) {
 });
 
 tap.eq(arr.join(','), '-11,-6,2,10');
+
+// lastIndexOf
+var array = [2, 5, 9, 2];
+tap.eq(array.lastIndexOf(2), 3, 'lastIndexOf')
+tap.eq(array.lastIndexOf(7), -1, 'lastIndexOf')
+tap.eq(array.lastIndexOf(2, 3), 3, 'lastIndexOf')
+tap.eq(array.lastIndexOf(2, 2), 0, 'lastIndexOf')
+tap.eq(array.lastIndexOf(2, -2), 0, 'lastIndexOf')
+tap.eq(array.lastIndexOf(2, -1), 3, 'lastIndexOf')

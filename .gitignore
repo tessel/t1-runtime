@@ -9,9 +9,6 @@ node_modules
 build/*
 npm-debug.log
 
-src/colony/modules/events.js
-src/colony/modules/domain.js
-
 out
 gyp
 
