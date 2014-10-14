@@ -100,7 +100,7 @@
             'src/colony/modules/_stream_transform.js',
             'src/colony/modules/_stream_writable.js',
             'src/colony/modules/_structured_clone.js',
-            'src/colony/modules/assert.js',
+            'deps/node-libs/assert.js',
             'src/colony/modules/buffer.js',
             'src/colony/modules/child_process.js',
             'src/colony/modules/console.js',
