@@ -114,7 +114,7 @@
             'src/colony/modules/https.js',
             'src/colony/modules/net.js',
             'src/colony/modules/os.js',
-            'src/colony/modules/path.js',
+            'deps/node-libs/path.js',
             'src/colony/modules/punycode.js',
             'src/colony/modules/querystring.js',
             'src/colony/modules/repl.js',
