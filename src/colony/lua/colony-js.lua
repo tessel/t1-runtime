@@ -1636,11 +1636,11 @@ if type(hs) == 'table' then
     local o = {}
     o.source = source
     o.lastIndex = 0
-    o.global = (flags and string.find(flags, "g") and true)
-    o.ignoreCase = (flags and string.find(flags, "i") and true)
-    o.multiline = (flags and string.find(flags, "m") and true)
-    o.unicode = (flags and string.find(flags, "u") and true)
-    o.sticky = (flags and string.find(flags, "y") and true)
+    o.global = (flags and string.find(flags, "g") and true) or false
+    o.ignoreCase = (flags and string.find(flags, "i") and true) or false
+    o.multiline = (flags and string.find(flags, "m") and true) or false
+    o.unicode = (flags and string.find(flags, "u") and true) or false
+    o.sticky = (flags and string.find(flags, "y") and true) or false
 
     -- Set a metatable on the created regex.
     -- This way we can add a handler when the regex obj gets GC'ed
