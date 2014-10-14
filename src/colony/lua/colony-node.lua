@@ -14,8 +14,6 @@
 -- local bit = require('bit32')
 local tm = require('tm')
 
-tm.log(11, 'OKAY6')
-
 -- locals
 
 local js_arr = colony.js_arr
@@ -495,8 +493,6 @@ function _of_buffer (this, buf, length)
   return this
 end
 
-tm.log(11, 'OKAY7')
-
 local function Buffer (this, arg, encoding)
   -- args
   local str, length = '', 0
@@ -598,10 +594,11 @@ end
 
 global.Buffer = Buffer
 
+
 --[[
 --|| global variables
 --]]
-tm.log(11, 'OKAY-!-10')
+
 function abssource (ret)
   if string.sub(ret, 1, 1) == '.' then
     ret = os.getenv('PWD') + string.sub(ret, 2)
@@ -617,15 +614,14 @@ function script_filename (idx)
   return abssource(string.sub(debug.getinfo(idx + 1).source, 2))
 end
 
--- global:__defineGetter__('____dirname', function (this)
---   return script_dirname(3)
--- end)
+global:__defineGetter__('____dirname', function (this)
+  return script_dirname(3)
+end)
 
--- global:__defineGetter__('____filename', function (this)
---   return script_filename(3)
--- end)
+global:__defineGetter__('____filename', function (this)
+  return script_filename(3)
+end)
 
-tm.log(11, 'OKAY-2')
 
 --[[
 --|| bindings
@@ -747,8 +743,6 @@ end
 
 colony.cache = {}
 
-tm.log(11, 'OKAY-3')
-
 local function require_resolve (origname, root)
   root = root or './'
   if string.sub(origname, 1, 1) == '/' then
@@ -832,7 +826,6 @@ end
 local function require_load (p)
   -- Load the script.
   local res = nil
-  tm.log(11, '-!~~~~er');
   if colony.precache[p] then
     res = colony.precache[p]()
   end
@@ -844,11 +837,8 @@ local function require_load (p)
           module.exports = parsed
         end
       else
-        tm.log(11, '-!~~~~' + p);
         local s = colony._load(p)
-        tm.log(11, '-!~~~~wow');
         res = assert(loadstring(s, "@"..p))()
-        tm.log(11, '-!~~~~b');
       end
     end
   end
@@ -860,22 +850,18 @@ colony._normalize = function (p, path_normalize)
 end
 
 colony._load = function (p)
-return '\n\nreturn function (_ENV, _module)\nlocal exports, module = _module.exports, _module;\n\n\nlocal hw, i = hw, i;\n--[[232]] hw = process:binding(("hw"));\n--[[264]] i = (0);\n--[[275]] setInterval(_global, (function (this)\n--[[303]] console:log(((((("Blinked "))+((function () local _r = i; i = _r + 1; return _r; end)())))+((" times"))));\n--[[347]] if ((i)%((2))) then\n--[[363]] (function () local _b = hw; local _f = _b["digital_write"]; return _f(_b, hw["PIN_LED1"], hw.HIGH); end)();\n--[[405]] (function () local _b = hw; local _f = _b["digital_write"]; return _f(_b, hw["PIN_LED2"], hw.LOW); end)();\nelse\n--[[457]] (function () local _b = hw; local _f = _b["digital_write"]; return _f(_b, hw["PIN_LED2"], hw.HIGH); end)();\n--[[499]] (function () local _b = hw; local _f = _b["digital_write"]; return _f(_b, hw["PIN_LED1"], hw.LOW); end)();\nend;\nend), (100));\n\nreturn _module.exports;\nend'
+  return '\n\nreturn function (_ENV, _module)\nlocal exports, module = _module.exports, _module;\n\n\nlocal hw, i = hw, i;\n--[[232]] hw = process:binding(("hw"));\n--[[264]] i = (0);\n--[[275]] setInterval(_global, (function (this)\n--[[303]] console:log(((((("Blinked "))+((function () local _r = i; i = _r + 1; return _r; end)())))+((" times"))));\n--[[347]] if ((i)%((2))) then\n--[[363]] (function () local _b = hw; local _f = _b["digital_write"]; return _f(_b, hw["PIN_LED1"], hw.HIGH); end)();\n--[[405]] (function () local _b = hw; local _f = _b["digital_write"]; return _f(_b, hw["PIN_LED2"], hw.LOW); end)();\nelse\n--[[457]] (function () local _b = hw; local _f = _b["digital_write"]; return _f(_b, hw["PIN_LED2"], hw.HIGH); end)();\n--[[499]] (function () local _b = hw; local _f = _b["digital_write"]; return _f(_b, hw["PIN_LED1"], hw.LOW); end)();\nend;\nend), (100));\n\nreturn _module.exports;\nend'
   -- return fs_readfile(p)
 end
 
 colony.run = function (name, root, parent)
   local p, pfound = require_resolve(name, root)
 
-  tm.log(11, '-!-1');
-
   -- Load the script.
   if colony.cache[p] then
     return colony.cache[p].exports
   end
   local res = pfound and require_load(p)
-
-  tm.log(11, '-!-2');
 
   -- If we can't find the file, they may have passed in a folder
   -- eg. lib may need to resolve to lib/index.js, not lib.js
@@ -887,8 +873,6 @@ colony.run = function (name, root, parent)
   if not pfound or not res then
     error(js_new(global.Error, 'Could not find module "' .. p .. '"'))
   end
-
-  tm.log(11, '-!-3');
 
   -- Run the script and return its value.
   setfenv(res, colony.global)
@@ -903,33 +887,28 @@ colony.run = function (name, root, parent)
     local scriptpath = string.sub(debug.getinfo(n).source, 2)
 
     -- Return the new script.
-    tm.log(11, '-!-4');
     return colony.run(value, path_dirname(scriptpath) .. '/', colony.cache[scriptpath])
   end
   colony.global.require.cache = colony.cache
 
-  -- colony.global.require.resolve = function(ths, str)
-  --   local path, found = require_resolve(str)
-  --   if found then
-  --     if string.sub(path, 1, 1) == '.' then
-  --       path = path_normalize(script_dirname(2) .. '/' .. path)
-  --     end
-  --     if fs_exists(path) then
-  --       return path
-  --     end
-  --   end
+  colony.global.require.resolve = function(ths, str)
+    local path, found = require_resolve(str)
+    if found then
+      if string.sub(path, 1, 1) == '.' then
+        path = path_normalize(script_dirname(2) .. '/' .. path)
+      end
+      if fs_exists(path) then
+        return path
+      end
+    end
 
-  --   error(js_new(global.Error('Cannot find module \'' .. str .. '\'')))
-  -- end
+    error(js_new(global.Error('Cannot find module \'' .. str .. '\'')))
+  end
 
-  tm.log(11, '-!-5');
   colony.cache[p] = js_obj({exports=js_obj({}),parent=parent}) --dummy
   res(colony.global, colony.cache[p])
-  tm.log(11, '-!-6');
   return colony.cache[p].exports
 end
-
-tm.log(11, 'OKAY-4')
 
 package.preload.http_parser = function ()
   local http_parser = require('http_parser_lua')
@@ -978,5 +957,3 @@ package.preload.http_parser = function ()
   })
   return mod
 end
-
-tm.log(11, 'OKAY8')

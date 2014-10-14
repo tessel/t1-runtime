@@ -17,9 +17,6 @@ local _, hs = pcall(require, 'hsregex')
 local tm = require('tm')
 local rapidjson = require('rapidjson')
 
-
-tm.log(11, 'OKAY')
-
 -- locals
 
 local js_arr = colony.js_arr
@@ -350,9 +347,9 @@ obj_proto.__defineSetter__ = js_define_setter
 
 -- function prototype
 
--- js_define_getter(func_proto, 'length', function (this)
---   return debug.getinfo(this, 'u').nparams - 1
--- end)
+js_define_getter(func_proto, 'length', function (this)
+  return debug.getinfo(this, 'u').nparams - 1
+end)
 
 func_proto.call = function (func, ths, ...)
   return func(ths, ...)
@@ -1018,8 +1015,6 @@ global.Object.getOwnPropertyNames = function (this, obj)
   return a
 end
 
-tm.log(11, 'OKAY2')
-
 global.Object.getOwnPropertyDescriptor = function (this, obj, key)
   local mt = getmetatable(obj)
   if mt then
@@ -1493,9 +1488,6 @@ global.parseInt = function (ths, str, radix)
   end
 end
 
-
-tm.log(11, 'OKAY3')
-
 -- Date
 
 global.Date = function (this, time)
@@ -1626,8 +1618,176 @@ end
 
 -- regexp library
 
-global._regexp = function ()
-  return {}
+if type(hs) == 'table' then
+  global.RegExp = function (this, source, flags)
+    -- hsregex requires special flags handling
+    local patt = source
+    if flags and string.find(flags, "i") then
+      patt = '(?i)' .. patt
+    end
+
+    local cre = hs.regex_create()
+    local crestr, rc = hs.re_comp(cre, patt, hs.ADVANCED)
+    if rc ~= 0 then
+      error(js_new(global.SyntaxError, 'Invalid regex "' .. patt .. '" (error ' + tostring(rc or 0) + ')'))
+    end
+    local regex_nsub = hs.regex_nsub(cre) + 1
+
+    local o = {}
+    o.source = source
+    o.lastIndex = 0
+    o.global = (flags and string.find(flags, "g") and true) or false
+    o.ignoreCase = (flags and string.find(flags, "i") and true) or false
+    o.multiline = (flags and string.find(flags, "m") and true) or false
+    o.unicode = (flags and string.find(flags, "u") and true) or false
+    o.sticky = (flags and string.find(flags, "y") and true) or false
+
+    -- Set a metatable on the created regex.
+    -- This way we can add a handler when the regex obj gets GC'ed
+    -- and then in turn force hsregex to free the created regex.
+    -- If we free this before hand, we're not guaranteed that the
+    -- regex won't get used later.
+    -- Had to add a `debug` here in order to set the metatable on userdata.
+    debug.setmetatable(cre, {
+      __gc = function(self)
+        -- force regex to free after it goes out of context
+        hs.regfree(self)
+      end
+    })
+
+    setmetatable(o, {
+      __index=global.RegExp.prototype,
+      __tostring=js_tostring,
+      cre=cre,
+      crestr=crestr,
+      regex_nsub=regex_nsub,
+      proto=global.RegExp.prototype
+    })
+    return o
+  end
+
+  global._regexp = function (pat, flags)
+    return js_new(global.RegExp, pat, flags)
+  end
+
+  str_regex_split = function (this, input)
+    if not js_instanceof(input, global.RegExp) then
+      error(js_new(global.Error, 'Cannot call String.prototype.split on non-regex'))
+    end
+    local arr, len = hs.regex_split(this, input)
+    return js_arr(arr, len)
+  end
+
+  str_regex_replace = function (this, regex, out)
+    if not js_instanceof(regex, global.RegExp) then
+      error(js_new(global.Error, 'Cannot call String.prototype.replace on non-regex'))
+    end
+    return hs.regex_replace(this, regex, out)
+  end
+
+  global.String.prototype.match = function (this, regex)
+
+    if not js_instanceof(regex, global.RegExp) then
+      regex = js_new(global.RegExp, regex)
+    end
+
+    -- Match using hsregex
+    local cre = getmetatable(regex).cre
+    local crestr = getmetatable(regex).crestr
+    local regex_nsub = getmetatable(regex).regex_nsub
+    local hsmatch = hs.regmatch_create(regex_nsub)
+
+    if rawget(regex, 'global') then
+      local data = tostring(this)
+      local ret, count, idx = {}, 0, 1
+      while true do
+        local rc = hs.re_exec(cre, string.sub(data, idx), nil, regex_nsub, hsmatch, 0)
+        if rc ~= 0 then
+          break
+        end
+
+        local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
+        if so == -1 or eo == -1 then
+          break
+        end
+
+        rawset(ret, count, string.sub(data, idx + so, idx + eo - 1))
+        count = count + 1
+        idx = idx + eo
+      end
+      return js_arr(ret, count)
+    else
+      -- Call regex.exec(str) if the global flag is not true
+      return global.RegExp.prototype.exec(regex, this)
+    end
+  end
+
+  global.RegExp.prototype.exec = function (this, subj)
+    local cre = getmetatable(this).cre
+    local crestr = getmetatable(this).crestr
+    if type(cre) ~= 'userdata' then
+      error(js_new(global.TypeError, 'Cannot call RegExp.prototype.exec on non-regex'))
+    end
+    local regex_nsub = getmetatable(this).regex_nsub
+    local hsmatch = hs.regmatch_create(regex_nsub)
+
+    local input = tostring(subj)
+    local data = string.sub(input, this.lastIndex + 1)
+    local rc = hs.re_exec(cre, data, nil, regex_nsub, hsmatch, 0)
+    if rc ~= 0 then
+      -- Reset .lastIndex when no match found
+      this.lastIndex = 0
+      return nil
+    end
+    local ret, len = {}, 0
+    for i=0,regex_nsub-1 do
+      local so, eo = hs.regmatch_so(hsmatch, i), hs.regmatch_eo(hsmatch, i)
+      if so == -1 or eo == -1 then
+        table.insert(ret, len, nil)
+      else
+        table.insert(ret, len, string.sub(data, so + 1, eo))
+      end
+      len = len + 1
+    end
+
+    ret.index = this.lastIndex + hs.regmatch_so(hsmatch, 0)
+    ret.input = input
+
+    if this.global then
+      this.lastIndex = this.lastIndex + hs.regmatch_eo(hsmatch, 0)
+    end
+
+    return js_arr(ret, len)
+  end
+
+  global.RegExp.prototype.test = function (this, subj)
+    local cre = getmetatable(this).cre
+    if type(cre) ~= 'userdata' then
+      error(js_new(global.TypeError, 'Cannot call RegExp.prototype.match on non-regex'))
+    end
+    local regex_nsub = getmetatable(this).regex_nsub
+    local hsmatch = hs.regmatch_create(regex_nsub)
+
+    -- TODO optimize by capturing no subgroups?
+    local rc = hs.re_exec(cre, tostring(subj), nil, regex_nsub, hsmatch, 0)
+    return rc == 0
+  end
+
+  -- https://people.mozilla.org/~jorendorff/es6-draft.html#sec-regexp.prototype.tostring
+  global.RegExp.prototype.toString = function (this)
+    if type(this) ~= 'table' or not getmetatable(this).cre then
+      error(js_new(global.TypeError, 'Cannot call Regex.prototype.toString on non-regex'))
+    end
+
+    local flags = ''
+    if rawget(this, 'global') then flags = flags .. 'g' end
+    if rawget(this, 'ignoreCase') then flags = flags .. 'i' end
+    if rawget(this, 'multiline') then flags = flags .. 'm' end
+    if rawget(this, 'unicode') then flags = flags .. 'u' end
+    if rawget(this, 'sticky') then flags = flags .. 'y' end
+
+    return '/' .. tostring(this.source) .. '/' .. flags
+  end
 end
 
 
@@ -1702,9 +1862,6 @@ global.JSON.stringify = function (this, value, replacer, spacer)
   -- Return code.
   return tostring(str)
 end
-
-
-tm.log(11, 'OKAY4')
 
 --[[
 --|| encode
@@ -1785,5 +1942,3 @@ global.eval = function () end
 -- colony API
 
 colony.global = global
-
-tm.log(11, 'OKAY5')

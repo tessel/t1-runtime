@@ -13,7 +13,6 @@
 --
 
 local tm = require('tm')
-tm.log(11, 'START')
 local colony = require('colony')
 -- This is temporary until we can do global._arr in C extension methods
 _G._colony = colony
@@ -25,8 +24,6 @@ if not table.pack then
     return { n = select("#", ...), ... }
   end
 end
-
-tm.log(11, 'OKAY-!-!-1')
 
 if not setfenv then -- Lua 5.2
   -- based on http://lua-users.org/lists/lua-l/2010-06/msg00314.html
@@ -46,13 +43,10 @@ if not setfenv then -- Lua 5.2
     return f end
 end
 
-tm.log(11, 'OKAY-!-!-2')
-
 -- "Precache" builtin library code as functions.
 -- This gets moved into colony.cache when run, as do all modules.
 colony.precache = {}
 for k, v in pairs(_builtin) do
-  tm.log(11, k);
   (function (k, v)
     colony.precache[k] = function ()
       ret = _builtin_load(k, v)()
@@ -66,15 +60,13 @@ for k, v in pairs(_builtin) do
     end
   end)(k, v)
 end
--- if _colony_preload_on_init then
---   for k, v in pairs(_builtin) do
---     -- preload all the things
---     colony.run(k)
---   end
--- end
-tm.log(11, 'OKAY-!-!-3')
--- collectgarbage()
-tm.log(11, 'OKAY-!-!-4')
+if _colony_preload_on_init then
+  for k, v in pairs(_builtin) do
+    -- preload all the things
+    colony.run(k)
+  end
+end
+collectgarbage()
 
 if _G.COLONY_EMBED then
   -- This is temporary until we have tm_pwd() working
@@ -86,7 +78,6 @@ if _G.COLONY_EMBED then
   end
 end
 
-tm.log(11, 'OKAY-!-!-5')
 if not _G.COLONY_EMBED then
   -- This is temporary until we have proper compilation in C.
   colony._load = function (file)
@@ -102,18 +93,11 @@ if not _G.COLONY_EMBED then
   end
 end
 
-colony.global.console = {
-  log = function (this, val)
-    tm.log(11, tostring(val))
-  end
-}
-
 -- Set up builtin dependencies
 do
-  -- local EventEmitter = colony.run('events').EventEmitter
-tm.log(11, 'OKAY-!-!-!-1')
-  global.process = js_obj({})
-tm.log(11, 'OKAY-!-!-!-2')
+  local EventEmitter = colony.run('events').EventEmitter
+
+  global.process = js_new(EventEmitter)
   global.process.memoryUsage = function (ths)
     return js_obj({
       heapUsed=collectgarbage('count')*1024
@@ -125,8 +109,7 @@ tm.log(11, 'OKAY-!-!-!-2')
     node = "0.10.0",
     colony = "0.10.0"
   })
-tm.log(11, 'OKAY-!-!-!-3')
-  global.process.EventEmitter = nil
+  global.process.EventEmitter = EventEmitter
   global.process.argv = js_arr({}, 0)
   global.process.env = js_obj({})
   global.process.exit = function (this, code)
@@ -148,13 +131,13 @@ tm.log(11, 'OKAY-!-!-!-3')
   global.process.version = global.process.versions.node
 
   -- DEPLOY_TIME workaround for setting environmental time
-tm.log(11, 'OKAY-!-!-!-4')
-  -- global.Object:defineProperty(global.process.env, 'DEPLOY_TIMESTAMP', {
-  --   set = function (this, value)
-  --     tm.timestamp_update((tonumber(value or 0) or 0)*1e3)
-  --     rawset(this, 'DEPLOY_TIMESTAMP', value)
-  --   end
-  -- });
+
+  global.Object:defineProperty(global.process.env, 'DEPLOY_TIMESTAMP', {
+    set = function (this, value)
+      tm.timestamp_update((tonumber(value or 0) or 0)*1e3)
+      rawset(this, 'DEPLOY_TIMESTAMP', value)
+    end
+  });
 
   -- simple process.ref() and process.unref() options
 
@@ -170,7 +153,7 @@ tm.log(11, 'OKAY-!-!-!-4')
       global.process.refid = nil
     end
   end
-tm.log(11, 'OKAY-!-!-!-5')
+
   global.process.umask = function(ths, value)
     -- Return standard octal 0022
     return 18;
@@ -182,18 +165,13 @@ tm.log(11, 'OKAY-!-!-!-5')
     end
     return js_wrap_module(require(key))
   end
-tm.log(11, 'OKAY-!-!-!-6')
-end
 
-if 0 then
-tm.log(11, 'OKAY-!-!-6')
+
   local Readable = colony.run('stream').Readable
   local Writable = colony.run('stream').Writable
 
-tm.log(11, 'OKAY-!-!-7')
   colony.global.console = colony.run('console')
 
-tm.log(11, 'OKAY-!-!-8')
   colony.global.process.stdout = colony.js_new(Writable)
   colony.global.process.stdout._write = function (this, chunk, encoding, callback)
     tm.log(10, chunk)
@@ -204,8 +182,6 @@ tm.log(11, 'OKAY-!-!-8')
     tm.log(13, chunk)
     callback()
   end
-
-  tm.log(11, 'OKAY-!-!-9')
 
   -- setup stdin
   colony.global.process.stdin = colony.js_new(Readable)
@@ -223,12 +199,8 @@ tm.log(11, 'OKAY-!-!-8')
       colony.global:clearInterval(stdinkeepalive)
     end
   end)
-
-  tm.log(11, 'OKAY-!-!-10')
   -- hook into builtin ipc command
   colony.global.process:on('stdin', function (this, buf)
     colony.global.process.stdin:push(buf)
   end)
 end
-
-tm.log(11, 'OKAY-!-!-11')
