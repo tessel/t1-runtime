@@ -116,7 +116,7 @@
             'src/colony/modules/os.js',
             'deps/node-libs/path.js',
             'src/colony/modules/punycode.js',
-            'src/colony/modules/querystring.js',
+            'deps/node-libs/querystring.js',
             'src/colony/modules/repl.js',
             'src/colony/modules/stream.js',
             'src/colony/modules/string_decoder.js',
