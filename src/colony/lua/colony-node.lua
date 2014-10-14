@@ -837,7 +837,8 @@ local function require_load (p)
           module.exports = parsed
         end
       else
-        res = assert(loadstring(colony._load(p), "@"..p))()
+        local s = colony._load(p)
+        res = assert(loadstring(s, "@"..p))()
       end
     end
   end
@@ -849,6 +850,7 @@ colony._normalize = function (p, path_normalize)
 end
 
 colony._load = function (p)
+  -- return '\n\nreturn function (_ENV, _module)\nlocal exports, module = _module.exports, _module;\n\n\nlocal hw, i = hw, i;\n--[[232]] hw = process:binding(("hw"));\n--[[264]] i = (0);\n--[[275]] setInterval(_global, (function (this)\n--[[303]] console:log(((((("Blinked "))+((function () local _r = i; i = _r + 1; return _r; end)())))+((" times"))));\n--[[347]] if ((i)%((2))) then\n--[[363]] (function () local _b = hw; local _f = _b["digital_write"]; return _f(_b, hw["PIN_LED1"], hw.HIGH); end)();\n--[[405]] (function () local _b = hw; local _f = _b["digital_write"]; return _f(_b, hw["PIN_LED2"], hw.LOW); end)();\nelse\n--[[457]] (function () local _b = hw; local _f = _b["digital_write"]; return _f(_b, hw["PIN_LED2"], hw.HIGH); end)();\n--[[499]] (function () local _b = hw; local _f = _b["digital_write"]; return _f(_b, hw["PIN_LED1"], hw.LOW); end)();\nend;\nend), (100));\n\nreturn _module.exports;\nend'
   return fs_readfile(p)
 end
 

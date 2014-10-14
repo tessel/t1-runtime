@@ -60,12 +60,12 @@ for k, v in pairs(_builtin) do
     end
   end)(k, v)
 end
-if _colony_preload_on_init then
-  for k, v in pairs(_builtin) do
-    -- preload all the things
-    colony.run(k)
-  end
-end
+-- if _colony_preload_on_init then
+--   for k, v in pairs(_builtin) do
+--     -- preload all the things
+--     colony.run(k)
+--   end
+-- end
 collectgarbage()
 
 if _G.COLONY_EMBED then
