@@ -53,7 +53,7 @@ static int report(lua_State *L, int status)
 {
   if (status != 0) {
     size_t len = 0;
-    const char *msg = lua_tolstring(L, -1, &len);
+    const char *msg = colony_tolstring(L, -1, &len);
     if (msg != NULL) {
       tm_log(SYS_ERR, msg, len);
     } else {
@@ -171,6 +171,10 @@ static int builtin_loader (lua_State* L)
 int colony_runtime_open ()
 {
   lua_State* L = tm_lua_state = luaL_newstate ();
+  if (L == NULL) {
+    tm_logf(SYS_ERR, "Error creating Lua state.\n");
+    return 255;
+  }
   lua_atpanic(L, &runtime_panic);
   // luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
   // lua_gc(L, LUA_GCSETPAUSE, 90);

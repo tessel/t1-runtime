@@ -53,7 +53,7 @@ int colony_isarray (lua_State* L, int index)
   }
   lua_pushvalue(L, index);
   lua_call(L, 2, 1);
-  int ret = lua_tonumber(L, -1);
+  int ret = lua_toboolean(L, -1);
   lua_pop(L, 1);
   return ret;
 }
@@ -134,4 +134,27 @@ void colony_ipc_emit (lua_State* L, char *type, void* data, size_t size)
     memcpy(buf, data, size);
     tm_checked_call(L, 2);
   }
+}
+
+// Backported from Lua 5.1
+LUALIB_API const char *colony_tolstring (lua_State *L, int idx, size_t *len) {
+  if (!luaL_callmeta(L, idx, "__tostring")) {  /* no metafield? */
+    switch (lua_type(L, idx)) {
+      case LUA_TNUMBER:
+      case LUA_TSTRING:
+        lua_pushvalue(L, idx);
+        break;
+      case LUA_TBOOLEAN:
+        lua_pushstring(L, (lua_toboolean(L, idx) ? "true" : "false"));
+        break;
+      case LUA_TNIL:
+        lua_pushliteral(L, "nil");
+        break;
+      default:
+        lua_pushfstring(L, "%s: %p", luaL_typename(L, idx),
+                                            lua_topointer(L, idx));
+        break;
+    }
+  }
+  return lua_tolstring(L, -1, len);
 }
