@@ -249,15 +249,6 @@ int colony_runtime_open ()
   // Initialize runtime semantics.
   colony_init(L);
 
-  // Load all builtin libraries immediately on init.
-  // This can trade loss of sped for later access.
-#ifdef COLONY_PRELOAD
-  lua_pushnumber(L, 1);
-#else
-  lua_pushnumber(L, 0);
-#endif
-  lua_setglobal(L, "_colony_preload_on_init");
-
   return tm_eval_lua(L, "require('preload');");
 }
 
