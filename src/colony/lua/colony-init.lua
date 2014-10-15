@@ -53,6 +53,10 @@ end
 
 local obj_proto, func_proto, bool_proto, num_proto, str_proto, arr_proto, regex_proto, date_proto = {}, {}, {}, {}, {}, {}, {}, {}
 
+local function is_builtin_proto (proto)
+  return proto == obj_proto or proto == func_proto or proto == bool_proto or proto == num_proto or proto == str_proto or proto == arr_proto or proto == regex_proto or proto == date_proto
+end
+
 -- NOTE: js_proto_get defined in colony_init.c
 -- NOTE: js_getter_index defined in colony_init.c
 
@@ -402,8 +406,9 @@ local function js_void () end
 
 -- a = object, b = last value
 local function js_next (a, b, c)
-  local len = rawget(a, 'length')
-  local mt = getmetatable(a)
+  local arg = a.arg
+  local len = rawget(arg, 'length')
+  local mt = getmetatable(arg)
 
   -- first value in arrays should be 0
   if b == nil and type(len) == 'number' and len > 0 then
@@ -419,8 +424,14 @@ local function js_next (a, b, c)
   end
   local k = b
   repeat
-    k = next(a, k)
-  until (len == nil or type(k) ~= 'number') and not (k == 'length' and mt.proto == arr_proto) and not (type(a) == 'function' and k == '__mt')
+    k = next(arg, k)
+  until (len == nil or type(k) ~= 'number') and not (k == 'length' and mt.proto == arr_proto) and not (type(arg) == 'function' and k == '__mt') and (k ~= 'constructor')
+  if k == nil then
+    if mt and mt.proto and not is_builtin_proto(mt.proto) then
+      a.arg = mt.proto
+      return next(mt.proto, k)
+    end
+  end
   return k
 end
 
@@ -429,9 +440,9 @@ end
 function js_pairs (arg)
   if type(arg) == 'string' then
     -- todo what
-    return js_next, {}
+    return js_next, {arg = {}}
   else
-    return js_next, (arg or {})
+    return js_next, {arg = (arg or {})}
   end
 end
 
