@@ -127,29 +127,26 @@ size_t tm_str_from_utf8 (const uint8_t* utf8, size_t utf8_len, const uint8_t ** 
   return buf_pos;
 }
 
-size_t tm_str_to_utf16 (const uint8_t* utf8, size_t utf8_len, const uint8_t ** const dstptr) {
+size_t tm_str_to_utf16 (const uint8_t* utf8, size_t utf8_len, const uint8_t ** const dstptr, tm_endian_t endian) {
   // ut16 length will always be <= 2 * utf8_len
-  size_t buf_len = utf8_len * 2;
-  uint8_t* buf = calloc(1, buf_len);
+  size_t buf_len = utf8_len;
+  uint8_t* buf = calloc(1, buf_len * sizeof(uint16_t));
   
   size_t buf_pos = 0;
   size_t utf8_pos = 0;
   while (utf8_pos < utf8_len) {
-    assert(buf_pos + 2 <= buf_len); // enforce buffer length
+    assert(buf_pos <= buf_len); // enforce buffer length
 
-    uint32_t uchar;
+    uint32_t uchar = 0;
     size_t bytes_read = tm_utf8_decode(utf8 + utf8_pos, utf8_len - utf8_pos, &uchar);
     
-    if (uchar == TM_UTF8_DECODE_ERROR) {
-      bytes_read = 1;
-      uchar = 0xFFFD;
-    }
-    assert(bytes_read < 4); // enforce UCS-2 source string
+    // enforce UCS-2 source string with no errors
+    assert(uchar <= 0xFFFF);
 
-    *((uint16_t *) (buf + buf_pos)) = uchar;
-    buf_pos += 2;
+    ((uint16_t *) buf)[buf_pos] = (endian == TM_ENDIAN_HOST ? uchar : TM_ENDIAN_SWAP16(uchar));
+    buf_pos += 1;
     utf8_pos += bytes_read;
   }
   *dstptr = buf;
-  return buf_pos;
+  return buf_pos * sizeof(uint16_t);
 }

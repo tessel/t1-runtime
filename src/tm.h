@@ -193,12 +193,20 @@ uint32_t tm_uptime_micro ();
 double tm_timestamp ();
 int tm_timestamp_update (double millis);
 
-// BUFFER
+// ENDIANNESS
+
+#include "order32.h"
 
 typedef enum {
   BE = 0,
-  LE
+  LE,
 } tm_endian_t;
+
+#define TM_ENDIAN_HOST (O32_HOST_ORDER == O32_BIG_ENDIAN ? BE : LE)
+#define TM_ENDIAN_SWAP32(x)      __builtin_bswap32(x)
+#define TM_ENDIAN_SWAP16(x)      __builtin_bswap16(x)
+
+// BUFFER
 
 void tm_buffer_float_write (uint8_t* buf, size_t index, float value, tm_endian_t endianness);
 void tm_buffer_double_write (uint8_t* buf, size_t index, double value, tm_endian_t endianness);
@@ -210,7 +218,7 @@ size_t tm_utf8_decode(const uint8_t* buf, size_t buf_len, uint32_t* uc);
 size_t tm_utf8_encode(uint8_t* buf, size_t buf_len, uint32_t uc);
 size_t tm_str_to_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t **dstptr);
 size_t tm_str_from_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t **dstptr);
-size_t tm_str_to_utf16 (const uint8_t* utf8, size_t utf8_len, const uint8_t ** const dstptr);
+size_t tm_str_to_utf16 (const uint8_t* utf8, size_t utf8_len, const uint8_t ** const dstptr, tm_endian_t endian);
 
 // INTERNAL STRING MANIPULATION
 

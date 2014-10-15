@@ -32,7 +32,7 @@ static chr* _toregexstr (const char *input, size_t input_len, size_t* output_len
 {
   #ifdef REGEX_WCHAR
     uint8_t* output = NULL;
-    *output_len = tm_str_to_utf16((const uint8_t *) input, input_len, (const uint8_t **) &output);
+    *output_len = tm_str_to_utf16((const uint8_t *) input, input_len, (const uint8_t **) &output, TM_ENDIAN_HOST);
     *output_len /= 2;
     return (chr*) output;
   #else
