@@ -4,14 +4,13 @@ badge_token: QsFQ9CsYegvj7x78qiit
 language: objective-c
 before_install:
   - brew update
-  - brew tap tcr/tcr
-  - brew install python gyp ninja gcc-arm
-  - brew install node || true
+  - mkdir -p ~/Library/Python/2.7/lib/python/site-packages
+  - echo '/usr/local/lib/python2.7/site-packages' > ~/Library/Python/2.7/lib/python/site-packages/homebrew.pth
+  - brew tap tessel/tools
+  - brew install gyp ninja gcc-arm node luajit
   - git config credential.helper store
-  - git clone https://github.com/tessel/colony-lua.git deps/colony-lua
   - npm config set spin=false
 install:
-  - git submodule update --init
   - make update
 script:
   - make colony
