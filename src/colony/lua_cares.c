@@ -105,8 +105,12 @@ uint32_t tm__sync_gethostbyname (const char *domain)
 
     // get the dns server
     uint32_t ip_dns = tm_net_dnsserver();
-    char str_dns[16] = {0};
-    sprintf(str_dns, "%d.%d.%d.%d", (int)GET_BYTE(ip_dns, 3), (int)GET_BYTE(ip_dns, 2), (int)GET_BYTE(ip_dns, 1), (int)GET_BYTE(ip_dns, 0));
+    if (ip_dns == 0) {
+        // error not connected
+        return 1;
+    }
+    char str_dns[16] = {0}; // length of 255.255.255.255 + 1
+    sprintf(str_dns, "%d.%d.%d.%d", (uint8_t)TM_BYTE(ip_dns, 3), (uint8_t)TM_BYTE(ip_dns, 2), (uint8_t)TM_BYTE(ip_dns, 1), (uint8_t)TM_BYTE(ip_dns, 0));
     
     inet_aton(str_dns, &ns1);
  

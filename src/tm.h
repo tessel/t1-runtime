@@ -23,7 +23,7 @@ extern "C" {
 #include <time.h>
 #include <stdbool.h>
 
-#define GET_BYTE(A, B) ((A >> (B*8)) & 0xFF)
+#define TM_BYTE(A, B) ((A >> (B*8)) & 0xFF)
 
 // logging
 void tm_log(char level, const char* string, unsigned length);

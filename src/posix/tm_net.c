@@ -137,7 +137,7 @@ int tm_tcp_connect (tm_socket_t sock, uint32_t addr, uint16_t port)
 
 uint32_t tm_net_dnsserver () {
   // for now just do 8.8.8.8 on the PC
-  return 134744072;
+  return 0x08080808;
 }
 
 // http://publib.boulder.ibm.com/infocenter/iseries/v5r3/index.jsp?topic=%2Frzab6%2Frzab6xnonblock.htm
