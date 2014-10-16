@@ -15,6 +15,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <ares.h>
+#include <tm.h>
 #ifndef COLONY_EMBED
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -89,7 +90,7 @@ wait_ares(ares_channel channel)
         ares_process(channel, &read_fds, &write_fds);
     }
 }
- 
+
 // Bad synchronous gethostbyname demo
 uint32_t tm__sync_gethostbyname (const char *domain)
 {
@@ -102,7 +103,12 @@ uint32_t tm__sync_gethostbyname (const char *domain)
 
     struct in_addr ns1;
 
-    inet_aton("8.8.8.8",&ns1);
+    // get the dns server
+    uint32_t ip_dns = tm_net_dnsserver();
+    char str_dns[16] = {0};
+    sprintf(str_dns, "%d.%d.%d.%d", (int)GET_BYTE(ip_dns, 3), (int)GET_BYTE(ip_dns, 2), (int)GET_BYTE(ip_dns, 1), (int)GET_BYTE(ip_dns, 0));
+    
+    inet_aton(str_dns, &ns1);
  
     status = ares_library_init(ARES_LIB_INIT_ALL);
     if (status != ARES_SUCCESS){

@@ -23,6 +23,8 @@ extern "C" {
 #include <time.h>
 #include <stdbool.h>
 
+#define GET_BYTE(A, B) ((A >> (B*8)) & 0xFF)
+
 // logging
 void tm_log(char level, const char* string, unsigned length);
 void tm_logf(char level, const char* format, ...);
@@ -136,6 +138,7 @@ tm_socket_t tm_tcp_accept (tm_socket_t sock, uint32_t *addr, uint16_t *port);
 // DNS
 
 uint32_t tm_hostname_lookup (const uint8_t *hostname);
+uint32_t tm_net_dnsserver();
 
 // Random
 
