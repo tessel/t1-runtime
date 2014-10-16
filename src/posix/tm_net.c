@@ -135,6 +135,11 @@ int tm_tcp_connect (tm_socket_t sock, uint32_t addr, uint16_t port)
     return connect(sock, (struct sockaddr *) &server, sizeof(server));
 }
 
+uint32_t tm_net_dnsserver () {
+  // for now just do 8.8.8.8 on the PC
+  return 0x08080808;
+}
+
 // http://publib.boulder.ibm.com/infocenter/iseries/v5r3/index.jsp?topic=%2Frzab6%2Frzab6xnonblock.htm
 
 int tm_tcp_write (tm_socket_t sock, const uint8_t *buf, size_t buflen)
