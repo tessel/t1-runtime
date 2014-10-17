@@ -26,6 +26,12 @@ if _wifi_cc3000_lib then
 	colony.run('wifi-cc3000')
 end
 
+-- also also temporary.
+if _neopixels_lib then
+	colony.precache['neopixels'] = _neopixels_lib
+	colony.run('neopixels')
+end
+
 -- Command line invocation
 if #arg < 2 then
   print('Usage: colony script.js')
