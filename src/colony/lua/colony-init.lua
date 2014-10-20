@@ -498,7 +498,7 @@ end
 
 -- arguments objects
 
-function js_arguments (...)
+function js_arguments (callee, ...)
   local a, len = {}, select('#', ...)
   for i=1,len do
     local val, _ = select(i, ...)
@@ -507,6 +507,7 @@ function js_arguments (...)
 
   local obj = global._obj(a);
   obj.length = len
+  obj.callee = callee
   get_unique_metatable(obj).arguments = true
   return obj
 end
