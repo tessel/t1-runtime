@@ -21,7 +21,11 @@ function UDP (opts) {
 util.inherits(UDP, EventEmitter);
 
 
-UDP.prototype.bind = function (port, cb) {
+UDP.prototype.bind = function (port, addr, cb) {
+  if (typeof addr === 'function') {
+    cb = addr;
+    addr = null;
+  }
   var self = this;
   var ret = tm.udp_listen(this._fd, port || 0);
   if (ret < 0) {
