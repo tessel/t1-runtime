@@ -119,6 +119,8 @@ UDP.prototype.close = function () {
   }
 }
 
+exports.Socket = UDP;
+
 exports.createSocket = function (opts, cb) {
   if (typeof opts === 'string') {
     opts = {type:opts};
