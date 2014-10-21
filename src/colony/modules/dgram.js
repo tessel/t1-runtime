@@ -8,56 +8,74 @@
 // except according to those terms.
 
 var dns = require('dns');
+var isIP = require('net').isIP;
 var tm = process.binding('tm');
 
+var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 
-function UDP (socket) {
-  this.socket = socket;
+function UDP (opts) {
+  this._fd = opts._fd;
 }
 
-UDP.prototype = new EventEmitter();
+util.inherits(UDP, EventEmitter);
+
 
 UDP.prototype.bind = function (port, cb) {
   var self = this;
-
-  this._bound = true;
-  var ret = tm.udp_listen(this.socket, port || 0);
+  var ret = tm.udp_listen(this._fd, port || 0);
   if (ret < 0) {
     var err = "ENOENT: Cannot listen to socket.";
     if (ret == -tm.ENETUNREACH) {
       err = "ENETUNREACH: Wifi is not connected.";
     }
-    self.emit('error', new Error(err));
+    setImmediate(function () {
+      self.emit('error', new Error(err));
+    });
     return;
   }
-
+  
+  this._boundPort = port;
   this._listenid = setTimeout(function poll () {
     self._listenid = null;
-    if (self.socket == null) {
+    if (self._fd == null) {
       return;
     }
 
     var r;
-    while ((r = tm.udp_readable(self.socket))) {
-      var buf = tm.udp_receive(self.socket);
-      self.emit('message', buf[0].slice(0, buf[1]));
+    while ((r = tm.udp_readable(self._fd))) {
+      var ret = tm.udp_receive(self._fd),
+          msg = ret[0].slice(0, ret[1]),
+          addr = ret[3];
+      self.emit('message', msg, {
+        address:[addr >>> 24, (addr >>> 16) & 0xFF, (addr >>> 8) & 0xFF, addr & 0xFF].join('.'),
+        family:'IPv4',
+        port:-1
+      });
     }
-
     self._listenid = setTimeout(poll);
   }, 100);
-
-  cb && cb();
+  
+  setImmediate(function () {
+    cb && cb();
+    self.emit('listening');
+  });
 }
 
-function isIP (host) {
-  return host.match(/^[0-9.]+$/);
+UDP.prototype.address = function () {
+  if ('_boundPort' in this) return {
+    address: "0.0.0.0",
+    family: 'IPv4',
+    port: this._boundPort
+  }
+  else throw Error("EINVAL: socket not bound");
 }
+
 
 UDP.prototype.send = function (text, offset, len, port, host, cb) {
   var self = this;
 
-  if (!this._bound) {
+  if (!this._boundPort) {
     // TODO 0 on PC build
     this.bind(7000);
   }
@@ -68,25 +86,27 @@ UDP.prototype.send = function (text, offset, len, port, host, cb) {
     } else {
       dns.resolve(host, function onResolve(err, ips) {
         if (err) {
+          cb && cb(err);
           return self.emit('error', err);
         }
         doConnect(ips[0]);
-      })
+      });
     }
 
     function doConnect(ip) {
       var ips = ip.split('.');
       var buf = Buffer.isBuffer(text) ? text : new Buffer(text);
       buf = buf.slice(offset, len);
-      var ret = tm.udp_send(self.socket, ips[0], ips[1], ips[2], ips[3], port, buf);
-      cb && cb(ret);
+      var err = tm.udp_send(self._fd, ips[0], ips[1], ips[2], ips[3], port, buf);
+      if (err) err = new Error("Send error: "+err);
+      cb && cb(err);
     }
   });
 }
 
 UDP.prototype.close = function () {
-  tm.udp_close(this.socket);
-  this.socket = null;
+  tm.udp_close(this._fd);
+  this._fd = null;
   this._closed = true;
   if (this._listenid) {
     clearTimeout(this._listenid);
@@ -94,6 +114,18 @@ UDP.prototype.close = function () {
   }
 }
 
-exports.createSocket = function () {
-  return new UDP(tm.udp_open());
+exports.createSocket = function (opts, cb) {
+  if (typeof opts === 'string') {
+    opts = {type:opts};
+  } else if (typeof opts === 'undefined') {
+    throw Error("You must provide a type string or options dictionary.");
+  }
+  if (opts.type !== 'udp4') {
+    throw Error("ENOSYS: 'udp4' is the only supported type.");
+  }
+  
+  opts._fd = tm.udp_open();
+  var socket = new UDP(opts);
+  if (cb) socket.on('message', cb);
+  return socket;
 };
