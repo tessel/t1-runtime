@@ -22,6 +22,7 @@ util.inherits(UDP, EventEmitter);
 
 
 UDP.prototype.bind = function (port, addr, cb) {
+  if (this._closed) throw Error("EINVAL: socket closed");
   if (typeof addr === 'function') {
     cb = addr;
     addr = null;
