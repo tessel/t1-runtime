@@ -217,6 +217,6 @@ tm_socket_t tm_tcp_accept (tm_socket_t sock, uint32_t *addr, uint16_t *port)
   socklen_t addrlen = sizeof(addrClient);
   int res = accept(sock, (struct sockaddr *) &addrClient, &addrlen);
   *addr = ntohl(addrClient.sin_addr.s_addr);
-  *port = ntohs(addrClient.sin_addr.s_addr);
+  *port = ntohs(addrClient.sin_port);
   return res;
 }
