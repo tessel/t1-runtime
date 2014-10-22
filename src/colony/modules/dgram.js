@@ -17,7 +17,7 @@ var EventEmitter = require('events').EventEmitter;
 function UDP (opts, cb) {
   if (typeof opts === 'string') {
     opts = {type:opts};
-  } else if (typeof opts === 'undefined') {
+  } else if (opts == null) {
     throw Error("You must provide a type string or options dictionary.");
   }
   if (opts.type !== 'udp4') {
@@ -78,7 +78,7 @@ UDP.prototype.bind = function (port, addr, cb) {
 }
 
 UDP.prototype.address = function () {
-  if ('_boundPort' in this) return {
+  if (this._boundPort != null) return {
     address: "0.0.0.0",
     family: 'IPv4',
     port: this._boundPort
@@ -90,7 +90,7 @@ UDP.prototype.address = function () {
 UDP.prototype.send = function (text, offset, len, port, host, cb) {
   var self = this;
 
-  if (!this._boundPort) {
+  if (this._boundPort == null) {
     // TODO 0 on PC build
     this.bind(7000);
   }
