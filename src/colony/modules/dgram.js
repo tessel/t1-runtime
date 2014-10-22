@@ -14,8 +14,18 @@ var tm = process.binding('tm');
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 
-function UDP (opts) {
-  this._fd = opts._fd;
+function UDP (opts, cb) {
+  if (typeof opts === 'string') {
+    opts = {type:opts};
+  } else if (typeof opts === 'undefined') {
+    throw Error("You must provide a type string or options dictionary.");
+  }
+  if (opts.type !== 'udp4') {
+    throw Error("ENOSYS: 'udp4' is the only supported type.");
+  }
+  
+  this._fd = tm.udp_open();
+  if (cb) this.on('message', cb);
 }
 
 util.inherits(UDP, EventEmitter);
@@ -122,17 +132,5 @@ UDP.prototype.close = function () {
 exports.Socket = UDP;
 
 exports.createSocket = function (opts, cb) {
-  if (typeof opts === 'string') {
-    opts = {type:opts};
-  } else if (typeof opts === 'undefined') {
-    throw Error("You must provide a type string or options dictionary.");
-  }
-  if (opts.type !== 'udp4') {
-    throw Error("ENOSYS: 'udp4' is the only supported type.");
-  }
-  
-  opts._fd = tm.udp_open();
-  var socket = new UDP(opts);
-  if (cb) socket.on('message', cb);
-  return socket;
+  return new UDP(opts, cb);
 };
