@@ -60,12 +60,13 @@ UDP.prototype.bind = function (port, addr, cb) {
     var r;
     while ((r = tm.udp_readable(self._fd))) {
       var ret = tm.udp_receive(self._fd),
-          msg = ret[0].slice(0, ret[1]),
-          addr = ret[3];
+          msg = ret[0],
+          addr = ret[1],
+          port = ret[2];
       self.emit('message', msg, {
-        address:[addr >>> 24, (addr >>> 16) & 0xFF, (addr >>> 8) & 0xFF, addr & 0xFF].join('.'),
-        family:'IPv4',
-        port:-1
+        address: [addr >>> 24, (addr >>> 16) & 0xFF, (addr >>> 8) & 0xFF, addr & 0xFF].join('.'),
+        family: 'IPv4',
+        port: port
       });
     }
     self._listenid = setTimeout(poll);
@@ -109,10 +110,12 @@ UDP.prototype.send = function (text, offset, len, port, host, cb) {
     }
 
     function doConnect(ip) {
-      var ips = ip.split('.');
+      var addr = ip.split('.').map(Number);
+      addr = (addr[0] << 24) + (addr[1] << 16) + (addr[2] << 8) + addr[3];
+      
       var buf = Buffer.isBuffer(text) ? text : new Buffer(text);
       buf = buf.slice(offset, len);
-      var err = tm.udp_send(self._fd, ips[0], ips[1], ips[2], ips[3], port, buf);
+      var err = tm.udp_send(self._fd, addr, port, buf);
       if (err) err = new Error("Send error: "+err);
       cb && cb(err);
     }
