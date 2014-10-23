@@ -86,6 +86,14 @@ inline void colony_pushutf8 (lua_State* L, const char* utf8)
 }
 
 
+// you probably mean this instead of lua_pushlstring
+void colony_pushbuffer (lua_State* L, const uint8_t* buf, size_t buf_len)
+{
+    uint8_t* tgt = colony_createbuffer(L, buf_len);
+    memcpy(tgt, buf, buf_len);
+}
+
+
 
 #ifndef CONFIG_PLATFORM_EMBED
 #include <unistd.h>
@@ -147,7 +155,7 @@ static int l_tm_udp_open (lua_State* L)
 
 static int l_tm_udp_close (lua_State* L)
 {
-  int socket = (int) lua_tonumber(L, 1);
+  tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
   int res = tm_udp_close(socket);
 
   lua_pushnumber(L, res);
@@ -156,23 +164,20 @@ static int l_tm_udp_close (lua_State* L)
 
 static int l_tm_udp_send (lua_State* L)
 {
-  int socket = (int) lua_tonumber(L, 1);
-  int ip0 = (int) lua_tonumber(L, 2);
-  int ip1 = (int) lua_tonumber(L, 3);
-  int ip2 = (int) lua_tonumber(L, 4);
-  int ip3 = (int) lua_tonumber(L, 5);
-  int port = (int) lua_tonumber(L, 6);
+  tm_socket_t socket = (int) lua_tonumber(L, 1);
+  uint32_t addr = (int) lua_tonumber(L, 2);
+  uint16_t port = (uint16_t) lua_tonumber(L, 3);
   size_t len;
-  const uint8_t* buf = colony_toconstdata(L, 7, &len);
-
-  tm_udp_send(socket, ip0, ip1, ip2, ip3, port, buf, len);
+  const uint8_t* buf = colony_toconstdata(L, 4, &len);
+  
+  tm_udp_send(socket, addr, port, buf, len);
   return 0;
 }
 
 static int l_tm_udp_listen (lua_State *L)
 {
-  int socket = (int) lua_tonumber(L, 1);
-  int port = (int) lua_tonumber(L, 2);
+  tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
+  uint16_t port = (uint16_t) lua_tonumber(L, 2);
 
   lua_pushnumber(L, tm_udp_listen(socket, port));
 
@@ -181,16 +186,16 @@ static int l_tm_udp_listen (lua_State *L)
 
 static int l_tm_udp_receive (lua_State *L)
 {
-  int socket = (int) lua_tonumber(L, 1);
+  tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
 
-  // TODO is max buf size 256?
-  uint8_t* buf = colony_createbuffer(L, 256);
-  uint32_t from;
-  size_t buf_len = tm_udp_receive(socket, buf, 256, &from);
+  uint8_t buf[512];
+  uint32_t addr;
+  uint16_t port;
+  size_t buf_len = tm_udp_receive(socket, buf, sizeof(buf), &addr, &port);
 
-  lua_pushnumber(L, buf_len);
-  lua_pushnumber(L, from);
-
+  colony_pushbuffer(L, buf, buf_len);
+  lua_pushnumber(L, addr);
+  lua_pushnumber(L, port);
   return 3;
 }
 
