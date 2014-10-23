@@ -118,11 +118,11 @@ typedef int tm_socket_t;
 // UDP
 
 tm_socket_t tm_udp_open ();
-int tm_udp_close (int sock);
-int tm_udp_listen (int ulSocket, int port);
-int tm_udp_receive (int ulSocket, uint8_t *buf, unsigned long buf_len, uint32_t *ip);
+int tm_udp_close (tm_socket_t sock);
+int tm_udp_listen (tm_socket_t sock, int port);
+ssize_t tm_udp_receive (tm_socket_t sock, uint8_t *buf, size_t buf_len, uint32_t *addr, uint16_t *port);
 int tm_udp_readable (tm_socket_t sock);
-int tm_udp_send (int ulSocket, uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3, int port, const uint8_t *buf, unsigned long buf_len);
+int tm_udp_send (tm_socket_t sock, uint32_t addr, uint16_t port, const uint8_t *buf, size_t buf_len);
 
 // TCP
 
