@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/time.h>
+#include <assert.h>
 
 /**
  * Net
@@ -42,12 +43,12 @@ tm_socket_t tm_udp_open ()
     return socket(AF_INET, SOCK_DGRAM, 0);
 }
 
-int tm_udp_close (int sock)
+int tm_udp_close (tm_socket_t sock)
 {
   return shutdown(sock, SHUT_WR) == 0 ? 0 : -errno;
 }
 
-int tm_udp_listen (int sock, int port)
+int tm_udp_listen (tm_socket_t sock, int port)
 {
   struct sockaddr_in localSocketAddr;
   localSocketAddr.sin_family = AF_INET;
@@ -71,13 +72,16 @@ int tm_udp_listen (int sock, int port)
   return 0;
 }
 
-int tm_udp_receive (int sock, uint8_t *buf, unsigned long buf_len, uint32_t *ip)
+ssize_t tm_udp_receive (tm_socket_t sock, uint8_t *buf, size_t buf_len, uint32_t *addr, uint16_t *port)
 {
-  struct sockaddr from;
-  socklen_t from_len;
-  signed long ret = recvfrom(sock, buf, buf_len, 0, &from, &from_len);
-  memcpy(ip, &(from.sa_data[2]), sizeof(unsigned));
-  return ret;
+  struct sockaddr_storage remoteAddr;
+  socklen_t remoteLen = sizeof(remoteAddr);
+  ssize_t res = recvfrom(sock, buf, buf_len, 0, (struct sockaddr *) &remoteAddr, &remoteLen);
+  assert(remoteAddr.ss_family == AF_INET);
+  struct sockaddr_in* remoteAddr4 = (void *) &remoteAddr;
+  *addr = ntohl(remoteAddr4->sin_addr.s_addr);
+  *port = ntohs(remoteAddr4->sin_port);
+  return res;
 }
 
 int tm_udp_readable (tm_socket_t sock)
@@ -95,11 +99,11 @@ int tm_udp_readable (tm_socket_t sock)
     return FD_ISSET(sock, &readset);
 }
 
-int tm_udp_send (int sock, uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3, int port, const uint8_t *buf, unsigned long buf_len)
+int tm_udp_send (tm_socket_t sock, uint32_t addr, uint16_t port, const uint8_t *buf, size_t buf_len)
 {
   struct sockaddr_in tSocketAddr;
   tSocketAddr.sin_family = AF_INET;
-  tSocketAddr.sin_addr.s_addr = htonl(ip0 << 24 | ip1 << 16 | ip2 << 8 | ip3);
+  tSocketAddr.sin_addr.s_addr = htonl(addr);
   tSocketAddr.sin_port = htons(port);
 
   // CC3000_START
