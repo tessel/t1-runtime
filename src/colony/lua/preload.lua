@@ -101,8 +101,8 @@ do
   global.process.platform = "tessel"
   global.process.arch = "armv7-m"
   global.process.versions = js_obj({
-    node = "0.10.0",
-    colony = "0.10.0"
+    node = "v0.10.0",
+    colony = "v0.10.0"
   })
   global.process.EventEmitter = EventEmitter
   global.process.argv = js_arr({}, 0)
