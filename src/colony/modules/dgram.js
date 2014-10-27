@@ -18,10 +18,10 @@ function UDP (opts, cb) {
   if (typeof opts === 'string') {
     opts = {type:opts};
   } else if (opts == null) {
-    throw Error("You must provide a type string or options dictionary.");
+    throw new Error("You must provide a type string or options dictionary.");
   }
   if (opts.type !== 'udp4') {
-    throw Error("ENOSYS: 'udp4' is the only supported type.");
+    throw new Error("ENOSYS: 'udp4' is the only supported type.");
   }
   
   this._fd = tm.udp_open();
@@ -32,7 +32,7 @@ util.inherits(UDP, EventEmitter);
 
 
 UDP.prototype.bind = function (port, addr, cb) {
-  if (this._closed) throw Error("EINVAL: socket closed");
+  if (this._closed) throw new Error("EINVAL: socket closed");
   if (typeof addr === 'function') {
     cb = addr;
     addr = null;
@@ -84,7 +84,7 @@ UDP.prototype.address = function () {
     family: 'IPv4',
     port: this._boundPort
   }
-  else throw Error("EINVAL: socket not bound");
+  else throw new Error("EINVAL: socket not bound");
 }
 
 
