@@ -120,17 +120,17 @@ typedef int tm_socket_t;
 tm_socket_t tm_udp_open ();
 int tm_udp_close (tm_socket_t sock);
 int tm_udp_listen (tm_socket_t sock, int port);
-ssize_t tm_udp_receive (tm_socket_t sock, uint8_t *buf, size_t buf_len, uint32_t *addr, uint16_t *port);
+int tm_udp_receive (tm_socket_t sock, uint8_t *buf, size_t *buf_len, uint32_t *addr, uint16_t *port);
 int tm_udp_readable (tm_socket_t sock);
-int tm_udp_send (tm_socket_t sock, uint32_t addr, uint16_t port, const uint8_t *buf, size_t buf_len);
+int tm_udp_send (tm_socket_t sock, uint32_t addr, uint16_t port, const uint8_t *buf, size_t *buf_len);
 
 // TCP
 
 tm_socket_t tm_tcp_open ();
 int tm_tcp_close ();
 int tm_tcp_connect (tm_socket_t sock, uint32_t addr, uint16_t port);
-int tm_tcp_write (tm_socket_t sock, const uint8_t *buf, size_t buflen);
-int tm_tcp_read (tm_socket_t sock, uint8_t *buf, size_t buflen);
+int tm_tcp_write (tm_socket_t sock, const uint8_t *buf, size_t *buf_len);
+int tm_tcp_read (tm_socket_t sock, uint8_t *buf, size_t *buf_len);
 int tm_tcp_readable (tm_socket_t sock);
 int tm_tcp_listen (tm_socket_t sock, uint16_t port);
 tm_socket_t tm_tcp_accept (tm_socket_t sock, uint32_t *addr, uint16_t *port);
