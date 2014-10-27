@@ -403,7 +403,8 @@ TCPSocket.prototype.__send = function (cb) {
     if (self._ssl) {
       ret = tm.ssl_write(self._ssl, buf, buf.length);
     } else {
-      ret = tm.tcp_write(self.socket, buf, buf.length);
+      // HACK/TODO: invert return value to match logic below (but AFAICT it used to always get -1 from this TCP path anyway??!)
+      ret = -tm.tcp_write(self.socket, buf, buf.length);
     }
 
     if (ret == null) {
