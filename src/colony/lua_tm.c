@@ -161,8 +161,8 @@ static int l_tm_udp_close (lua_State* L)
 
 static int l_tm_udp_send (lua_State* L)
 {
-  tm_socket_t socket = (int) lua_tonumber(L, 1);
-  uint32_t addr = (int) lua_tonumber(L, 2);
+  tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
+  uint32_t addr = (uint32_t) lua_tonumber(L, 2);
   uint16_t port = (uint16_t) lua_tonumber(L, 3);
   size_t len;
   const uint8_t* buf = colony_toconstdata(L, 4, &len);
