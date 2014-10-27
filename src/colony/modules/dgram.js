@@ -111,7 +111,7 @@ UDP.prototype.send = function (text, offset, len, port, host, cb) {
 
     function doConnect(ip) {
       var addr = ip.split('.').map(Number);
-      addr = (addr[0] << 24) + (addr[1] << 16) + (addr[2] << 8) + addr[3];
+      addr = (addr[0] << 24) | (addr[1] << 16) | (addr[2] << 8) | addr[3];
       
       var buf = Buffer.isBuffer(text) ? text : new Buffer(text);
       buf = buf.slice(offset, len);
