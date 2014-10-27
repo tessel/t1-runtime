@@ -91,14 +91,6 @@ inline void colony_pushutf8 (lua_State* L, const char* utf8)
 }
 
 
-// you probably mean this instead of lua_pushlstring
-void colony_pushbuffer (lua_State* L, const uint8_t* buf, size_t buf_len)
-{
-    uint8_t* tgt = colony_createbuffer(L, buf_len);
-    memcpy(tgt, buf, buf_len);
-}
-
-
 
 #ifndef CONFIG_PLATFORM_EMBED
 #include <unistd.h>
