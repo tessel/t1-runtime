@@ -186,7 +186,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
     var retries = 0;
     setImmediate(function doConnect() {
       var addr = ip.split('.').map(Number);
-      addr = (addr[0] << 24) + (addr[1] << 16) + (addr[2] << 8) + addr[3];
+      addr = (addr[0] << 24) | (addr[1] << 16) | (addr[2] << 8) | addr[3];
 
       var ret = tm.tcp_connect(self.socket, addr, port);
       if (ret == -tm.ENETUNREACH) {
