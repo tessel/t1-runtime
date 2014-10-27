@@ -202,9 +202,6 @@ int colony_runtime_open ()
   lua_getglobal(L, "package");
   lua_getfield(L, -1, "preload");
   lua_remove(L, -2);
-  // bit32
-  lua_pushcfunction(L, luaopen_bit);
-  lua_setfield(L, -2, "bit32");
   // tm
   lua_pushcfunction(L, luaopen_tm);
   lua_setfield(L, -2, "tm");
@@ -245,6 +242,11 @@ int colony_runtime_open ()
     lua_settable(L, -3);
   }
   lua_setglobal(L, "_builtin");
+
+  // Load bit module on Lua VM.
+  lua_pushcfunction(L, luaopen_bit);
+  lua_call(L, 0, 1);
+  lua_setglobal(L, "bit");
 
   // Initialize runtime semantics.
   colony_init(L);

@@ -12,7 +12,6 @@
 -- Initializes JavaScript's globals and API for built-in types.
 --
 
-local bit = require('bit32')
 local _, hs = pcall(require, 'hsregex')
 local tm = require('tm')
 local rapidjson = require('rapidjson')
