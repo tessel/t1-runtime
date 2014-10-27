@@ -161,7 +161,7 @@ static int l_tm_udp_send (lua_State* L)
   uint16_t port = (uint16_t) lua_tonumber(L, 3);
   size_t len;
   const uint8_t* buf = colony_toconstdata(L, 4, &len);
-  
+
   tm_udp_send(socket, addr, port, buf, len);
   return 0;
 }
