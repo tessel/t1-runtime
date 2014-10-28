@@ -7,6 +7,7 @@
     "axtls_inc_path": "./deps/axtls-inc",
     "c_ares_path": "./deps/c-ares",
     "colony_lua_path": "./deps/colony-lua",
+    "colony_luajit_path": "./deps/colony-luajit",
     "lua_bitop_path": "./deps/luabitop-1.0",
     "fortuna_path": "./deps/fortuna",
     "fortuna_inc_path": "./deps/fortuna-inc",
@@ -16,6 +17,7 @@
     "miniz_inc_path": "./deps/miniz-inc",
     "approxidate_path": "./deps/approxidate",
     'enable_ssl%': 0,
+    'enable_luajit%': 0,
     "compiler_path%": "",
   },
 
@@ -78,6 +80,11 @@
       ['enable_net==1', {
         'defines': [
           "ENABLE_NET",
+        ],
+      }],
+      ['enable_luajit==1', {
+        'defines': [
+          "COLONY_JIT",
         ],
       }],
     ],
