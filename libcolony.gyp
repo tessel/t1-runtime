@@ -42,7 +42,6 @@
         '<(colony_lua_path)/src/lvm.c',
         '<(colony_lua_path)/src/lzio.c',
         '<(colony_lua_path)/src/print.c',
-        '<(lua_bitop_path)/bit.c'
       ],
 
       # Lua uses tmpname and has empty bodies and doesn't use some vars
@@ -66,7 +65,6 @@
 
       "include_dirs": [
         "<(colony_lua_path)/src",
-        "<(lua_bitop_path)/",
       ],
       'direct_dependent_settings': {
         'defines': [
