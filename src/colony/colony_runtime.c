@@ -10,7 +10,10 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-// #include <luajit.h>
+
+#if COLONY_JIT
+#include <luajit.h>
+#endif
 
 #include <stdlib.h>
 #include <string.h>
@@ -33,6 +36,11 @@ lua_State* tm_lua_state = NULL;
  * Runtime.
  */
 
+int lj_err_unwind_arm(int state, void *ucb, void *ctx)
+{
+  (void) state; (void) ucb; (void) ctx;
+  return -1;
+}
 
 static int getargs(lua_State *L, const char **argv, int argc)
 {
@@ -176,12 +184,17 @@ int colony_runtime_open ()
     return 255;
   }
   lua_atpanic(L, &runtime_panic);
-  // luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
+
   // lua_gc(L, LUA_GCSETPAUSE, 90);
   // lua_gc(L, LUA_GCSETSTEPMUL, 200);
 
   // Open libraries.
   luaL_openlibs(L);
+
+#if COLONY_JIT
+  // Enable JIT.
+  luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE|LUAJIT_MODE_ON);
+#endif
 
   // Type of build.
 #ifdef COLONY_EMBED
@@ -202,9 +215,6 @@ int colony_runtime_open ()
   lua_getglobal(L, "package");
   lua_getfield(L, -1, "preload");
   lua_remove(L, -2);
-  // bit32
-  lua_pushcfunction(L, luaopen_bit);
-  lua_setfield(L, -2, "bit32");
   // tm
   lua_pushcfunction(L, luaopen_tm);
   lua_setfield(L, -2, "tm");
@@ -245,6 +255,13 @@ int colony_runtime_open ()
     lua_settable(L, -3);
   }
   lua_setglobal(L, "_builtin");
+
+#if !COLONY_JIT
+  // Load bit module on Lua VM.
+  lua_pushcfunction(L, luaopen_bit);
+  lua_call(L, 0, 1);
+  lua_setglobal(L, "bit");
+#endif
 
   // Initialize runtime semantics.
   colony_init(L);

@@ -11,7 +11,6 @@
 -- Initializes Node-specific global APIs, and the event loop.
 --
 
-local bit = require('bit32')
 local tm = require('tm')
 
 -- locals

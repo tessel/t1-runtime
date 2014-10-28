@@ -9,14 +9,15 @@ var packageFolder = require('./package-folder');
 // console.log(process.argv);
 
 if (process.argv.length < 4) {
-  console.error('Usage: ./compile_folder.sh outfile token_name [files ... ]') 
+  console.error('Usage: ./compile_folder.sh outfile token_name no_compile [files ... ]') 
   console.error('Compiles code into built-in binary.')
   process.exit(1);
 }
 
 var outfile = process.argv[2];
 var varname = process.argv[3];
-var infiles = process.argv.slice(4);
+var docompile = !parseInt(process.argv[4]);
+var infiles = process.argv.slice(5);
 
 
 var colonyCompiler = require('colony-compiler');
@@ -27,13 +28,21 @@ packageFolder(infiles, varname, function (file, buf, next) {
   buf = buf.toString('utf-8');
   if (file.match(/\.js$/)) {
     try {
-      colonyCompiler.toBytecode(colonyCompiler.colonize(String(buf)), '[T]:' + file, next);
+      if (docompile) {
+        colonyCompiler.toBytecode(colonyCompiler.colonize(String(buf)), '[T]:' + file, next);
+      } else {
+        next(null, colonyCompiler.colonize(String(buf)).source);
+      }
     } catch (e) {
       throw new Error('Bytecode compilation of ' + file + ' failed.');
     }
   } else if (file.match(/\.lua$/)) {
     try {
-      colonyCompiler.toBytecode({ source: String(buf) }, '[T]: ' + file, next);
+      if (docompile) {
+        colonyCompiler.toBytecode({ source: String(buf) }, '[T]: ' + file, next);
+      } else {
+        next(null, buf);
+      }
     } catch (e) {
       throw new Error('Bytecode compilation of ' + file + ' failed.');
     }
