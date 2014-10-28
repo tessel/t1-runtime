@@ -1,5 +1,6 @@
 ENABLE_TLS ?= 1
 ENABLE_NET ?= 1
+ENABLE_LUAJIT ?= 1
 
 # Update when targeting new Node build.
 NODE_VERSION ?= 0.10.32
@@ -12,7 +13,7 @@ ifeq ($(ARM),1)
 		ninja -C out/$(CONFIG)
 else
     compile = \
-        gyp $(1) --depth=. -f ninja -D enable_ssl=$(ENABLE_TLS) -D enable_net=$(ENABLE_NET) -D compiler_path="$(shell pwd)/node_modules/colony-compiler/bin/colony-compiler.js" &&\
+        gyp $(1) --depth=. -f ninja -D enable_ssl=$(ENABLE_TLS) -D enable_net=$(ENABLE_NET) -D enable_luajit=$(ENABLE_LUAJIT) -D compiler_path="$(shell pwd)/node_modules/colony-compiler/bin/colony-compiler.js" &&\
 		ninja -C out/$(CONFIG)
 endif
 
@@ -20,9 +21,14 @@ endif
 
 all: colony
 
-clean:
+clean: clean-luajit
 	ninja -v -C out/Debug -t clean
 	ninja -v -C out/Release -t clean
+
+clean-luajit:
+	make -C deps/colony-luajit clean || true
+	rm out/Release/obj/colony-lua.gen/libluajit.o || true
+	touch deps/colony-luajit/src/Makefile || true
 
 nuke:
 	rm -rf out build

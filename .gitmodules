@@ -19,3 +19,6 @@
 [submodule "deps/rapidjson"]
 	path = deps/rapidjson
 	url = https://github.com/miloyip/rapidjson.git
+[submodule "deps/colony-luajit"]
+	path = deps/colony-luajit
+	url = https://github.com/tcr/luajit.git
