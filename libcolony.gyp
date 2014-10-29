@@ -244,11 +244,16 @@
             'colony-luajit',
           ]
         }],
+        ['OS=="linux"', {
+          "link_settings": {
+            "libraries": [ "-ldl" ],
+          },
+        }],
         ['OS!="arm"', {
           "sources": [
             'src/posix/tm_uptime.c',
             'src/posix/tm_timestamp.c',
-          ]
+          ],
         }],
         ['enable_ssl==1', {
           'dependencies': [
