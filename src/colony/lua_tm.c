@@ -529,7 +529,10 @@ static int l_tm_buffer_get (lua_State *L)
 { \
   uint8_t *ud = (uint8_t *) lua_touserdata(L, 1); \
   size_t index = (size_t) lua_tonumber(L, 2); \
-  uint32_t value = (uint32_t) lua_tonumber(L, 3); \
+  uint32_t value = lua_type(L, 3) == LUA_TNUMBER \
+    ? (uint32_t) lua_tonumber(L, 3) \
+    : lua_type(L, 3) == LUA_TBOOLEAN ? (uint32_t) lua_toboolean(L, 3) \
+    : lua_type(L, 3) == LUA_TNIL ? 0 : 1; \
   uint8_t *a = &ud[index]; \
   T; \
   return 0; \
