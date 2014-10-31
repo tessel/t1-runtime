@@ -58,6 +58,7 @@ libcolony:
 	$(call compile, libcolony.gyp)
 
 colony:
+	touch deps/colony-luajit/Makefile || true
 	$(call compile, colony.gyp)
 
 libtm-test:
