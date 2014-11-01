@@ -378,8 +378,9 @@ function Agent (opts) {
   this.freeSockets = {};
   this.requests = {};
   this._pools = {};
-  
 }
+
+util.inherits(Agent, EventEmitter);
 
 Agent.prototype.destroy = function () {
   Object.keys(this._pools).forEach(function (k) {
