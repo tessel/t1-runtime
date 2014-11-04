@@ -525,16 +525,16 @@ static int l_tm_buffer_get (lua_State *L)
 #define TO_16(a, b) ((a << 8) | b)
 #define TO_32(a, b, c, d) ((a << 24) | (b << 16) | (c << 8) | d)
 
-#define WRITE_BUFFER(N, T) static int N (lua_State *L) \
+#define WRITE_BUFFER(N, T, C) static int N (lua_State *L) \
 { \
   uint8_t *ud = (uint8_t *) lua_touserdata(L, 1); \
   size_t index = (size_t) lua_tonumber(L, 2); \
-  int32_t value = lua_type(L, 3) == LUA_TNUMBER \
-    ? (int32_t) lua_tonumber(L, 3) \
-    : lua_type(L, 3) == LUA_TBOOLEAN ? (int32_t) lua_toboolean(L, 3) \
+  T value = lua_type(L, 3) == LUA_TNUMBER \
+    ? (T) lua_tonumber(L, 3) \
+    : lua_type(L, 3) == LUA_TBOOLEAN ? (T) lua_toboolean(L, 3) \
     : lua_type(L, 3) == LUA_TNIL ? 0 : 1; \
   uint8_t *a = &ud[index]; \
-  T; \
+  C; \
   return 0; \
 }
 
@@ -553,16 +553,16 @@ READ_BUFFER(l_tm_buffer_read_int16be, (int16_t) TO_16(a[0], a[1]));
 READ_BUFFER(l_tm_buffer_read_int32le, (int32_t) TO_32(a[3], a[2], a[1], a[0]));
 READ_BUFFER(l_tm_buffer_read_int32be, (int32_t) TO_32(a[0], a[1], a[2], a[3]));
 
-WRITE_BUFFER(l_tm_buffer_write_uint8, WRITE_8((uint8_t) value, a[0]));
-WRITE_BUFFER(l_tm_buffer_write_uint16le, WRITE_16((uint16_t) value, a[1], a[0]));
-WRITE_BUFFER(l_tm_buffer_write_uint16be, WRITE_16((uint16_t) value, a[0], a[1]));
-WRITE_BUFFER(l_tm_buffer_write_uint32le, WRITE_32((uint32_t) value, a[3], a[2], a[1], a[0]));
-WRITE_BUFFER(l_tm_buffer_write_uint32be, WRITE_32((uint32_t) value, a[0], a[1], a[2], a[3]));
-WRITE_BUFFER(l_tm_buffer_write_int8, WRITE_8((int8_t) value, a[0]));
-WRITE_BUFFER(l_tm_buffer_write_int16le, WRITE_16((int16_t) value, a[1], a[0]));
-WRITE_BUFFER(l_tm_buffer_write_int16be, WRITE_16((int16_t) value, a[0], a[1]));
-WRITE_BUFFER(l_tm_buffer_write_int32le, WRITE_32((int32_t) value, a[3], a[2], a[1], a[0]));
-WRITE_BUFFER(l_tm_buffer_write_int32be, WRITE_32((int32_t) value, a[0], a[1], a[2], a[3]));
+WRITE_BUFFER(l_tm_buffer_write_uint8, uint8_t, WRITE_8(value, a[0]));
+WRITE_BUFFER(l_tm_buffer_write_uint16le, uint16_t, WRITE_16(value, a[1], a[0]));
+WRITE_BUFFER(l_tm_buffer_write_uint16be, uint16_t, WRITE_16(value, a[0], a[1]));
+WRITE_BUFFER(l_tm_buffer_write_uint32le, uint32_t, WRITE_32(value, a[3], a[2], a[1], a[0]));
+WRITE_BUFFER(l_tm_buffer_write_uint32be, uint32_t, WRITE_32(value, a[0], a[1], a[2], a[3]));
+WRITE_BUFFER(l_tm_buffer_write_int8, int8_t, WRITE_8(value, a[0]));
+WRITE_BUFFER(l_tm_buffer_write_int16le, int16_t, WRITE_16(value, a[1], a[0]));
+WRITE_BUFFER(l_tm_buffer_write_int16be, int16_t, WRITE_16(value, a[0], a[1]));
+WRITE_BUFFER(l_tm_buffer_write_int32le, int32_t, WRITE_32(value, a[3], a[2], a[1], a[0]));
+WRITE_BUFFER(l_tm_buffer_write_int32be, int32_t, WRITE_32(value, a[0], a[1], a[2], a[3]));
 
 static int l_tm_buffer_read_float (lua_State *L)
 {
