@@ -1,4 +1,4 @@
-# tessel runtime
+# Tessel runtime
 
 This is the runtime and JavaScript engine that runs on Tessel, built on Lua's VM. It can be run independently on PC or embedded.
 
