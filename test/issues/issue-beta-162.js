@@ -1,3 +1,7 @@
+var tap = require('../tap');
+
+tap.count(1);
+
 var loopNum = 0;
 
 console.log('Starting outer loop.');
@@ -16,4 +20,5 @@ var outerLoop = setInterval(function(){
 setTimeout(function(){
     console.log('Stopping outer loop after 1000ms (' + (1000/60 - 1).toFixed(0) + ' iterations)');
     clearInterval(outerLoop);
+    tap.ok(true);
 }, 1000);

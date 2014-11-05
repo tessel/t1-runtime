@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(13);
+tap.count(14);
 
 var expected = { protocol: 'ws:',
 		 slashes: true,

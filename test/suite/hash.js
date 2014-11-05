@@ -1,3 +1,7 @@
+var tap = require('../tap')
+
+tap.count(1)
+
 var a = { hi: "hi", heya: "there", hellos: "amigos", hitheres: "goodbye" }
 
 console.log('... nullifying values')
@@ -27,3 +31,5 @@ b[2] = null
 console.log(b.length, '==5');
 b[20] = 5
 console.log(b.length, '==21');
+
+tap.ok(true, 'hash test passed without error');

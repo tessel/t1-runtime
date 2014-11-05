@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(2);
+tap.count(4);
 
 console.log('#', 0 && true)
 tap.ok(!(0 && true), '0 should short-circuit truthiness');
