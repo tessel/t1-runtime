@@ -1,3 +1,7 @@
+var tap = require('../tap');
+
+tap.count(1);
+
 (function () {
   var Peripheral = require('./lib/peripheral');
   var Descriptor = require('./lib/descriptor');
@@ -1986,3 +1990,5 @@
   module.exports.use = use;
   module.exports.BluetoothController = BluetoothController;
 });
+
+tap.ok(true, 'module code loaded');

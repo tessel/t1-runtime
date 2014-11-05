@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(3)
+tap.count(6)
 
 var a = [1,2,3];
 

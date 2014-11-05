@@ -328,6 +328,22 @@ test('agent', function (t) {
   }
 });
 
+test('runtime issue #492', function (t) {
+  http.createServer(function (req, res) {
+    res.end();
+    this.close();   // in lieu of unref
+  }).listen(0, function () {
+    http.get({port:this.address().port}, function (res) {
+      res.on('end', function () {
+        t.ok('good')
+        t.end();
+        // WORKAROUND: https://github.com/tessel/runtime/issues/336 perhaps? not relevant to this issue.
+        // process.exit();
+      }).resume();
+    });
+  })//.unref();
+})
+
 test('keepalive', function (t) {
   var server = http.createServer(function (req, res) {
     res.end('okay');
@@ -361,4 +377,3 @@ test('keepalive', function (t) {
     });
   }
 });
-

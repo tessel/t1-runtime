@@ -434,8 +434,8 @@ arr_proto.unshift = function (this, elem)
 end
 
 arr_proto.splice = function (this, i, del, ...)
-  local del_len = (tonumber(del) or 0)
   local original_len = tonumber(rawget(this, 'length'))
+  local del_len = math.min(original_len - i, tonumber(del) or 0)
   local ret = {}
   for j=1,del_len do
     ret[j-1] = rawget(this, i)

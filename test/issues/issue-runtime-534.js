@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(2);
+tap.count(4);
 
 var split1 = ''.split('.');
 tap.eq(typeof split1[0], 'string', 'split empty string (with string) returns [""]');
