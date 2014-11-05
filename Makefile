@@ -17,7 +17,7 @@ else
 		ninja -C out/$(CONFIG)
 endif
 
-.PHONY: all test test-colony test-node
+.PHONY: all test test-colony test-node luajit-check
 
 all: colony
 
@@ -52,13 +52,16 @@ update-node-libs:
 	mkdir -p deps/node-libs
 	cd deps/node-libs; curl -L https://github.com/joyent/node/archive/v$(NODE_VERSION).tar.gz | tar xvf - --strip-components=2 node-$(NODE_VERSION)/lib
 
+luajit-check:
+	objdump -G deps/colony-luajit/src/libluajit.a > /dev/null || make -C deps/colony-luajit clean || true
+	touch deps/colony-luajit/Makefile
+
 # Targets
 
 libcolony:
 	$(call compile, libcolony.gyp)
 
-colony:
-	touch deps/colony-luajit/Makefile || true
+colony: luajit-check
 	$(call compile, colony.gyp)
 
 libtm-test:
