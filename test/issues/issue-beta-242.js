@@ -1,5 +1,10 @@
 var tap = require('../tap');
 
+// This is a regression test for a colony-compiler bug fixed by
+// https://github.com/tessel/colony-compiler/commit/28e16de34310594025dbc7dfa6453c4454c62a1f
+// This just checks that the code compiles. The function below isn't meant to execute, and
+// wouldn't run without the other BLE source files it depends on.
+
 tap.count(1);
 
 (function () {
