@@ -1,4 +1,6 @@
 // Tests float v int implementation details of Lua engine.
+// Compares 32-bit ints with floats when treated silently
+// by underlying engine (as LuaJIT with DUAL_NUM does)
 
 var tap = require('../tap');
 
@@ -7,11 +9,17 @@ tap.count(10);
 var tm = process.binding('tm');
 
 function float_0() {
-	return tm.RAW;
+	// Signed-fill right shift generates float
+	// (as it preserves negative numbers)
+	var v = 0;
+	return v >> 0;
 };
 
 function float_1() {
-	return tm.ZLIB;
+	// Signed-fill right shift generates float
+	// (as it preserves negative numbers)
+	var v = 1;
+	return v >> 0;
 };
 
 function int_0(){
