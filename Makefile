@@ -1,6 +1,6 @@
 ENABLE_TLS ?= 1
 ENABLE_NET ?= 1
-ENABLE_LUAJIT ?= 0
+ENABLE_LUAJIT ?= 1
 
 # Update when targeting new Node build.
 NODE_VERSION ?= 0.10.32
