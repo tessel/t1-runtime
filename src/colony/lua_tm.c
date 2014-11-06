@@ -147,7 +147,7 @@ static int l_tm_udp_open (lua_State* L)
 
 static int l_tm_udp_close (lua_State* L)
 {
-  int socket = (int) lua_tonumber(L, 1);
+  tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
   int res = tm_udp_close(socket);
 
   lua_pushnumber(L, res);
@@ -156,23 +156,22 @@ static int l_tm_udp_close (lua_State* L)
 
 static int l_tm_udp_send (lua_State* L)
 {
-  int socket = (int) lua_tonumber(L, 1);
-  int ip0 = (int) lua_tonumber(L, 2);
-  int ip1 = (int) lua_tonumber(L, 3);
-  int ip2 = (int) lua_tonumber(L, 4);
-  int ip3 = (int) lua_tonumber(L, 5);
-  int port = (int) lua_tonumber(L, 6);
+  tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
+  uint32_t addr = (uint32_t) lua_tonumber(L, 2);
+  uint16_t port = (uint16_t) lua_tonumber(L, 3);
   size_t len;
-  const uint8_t* buf = colony_toconstdata(L, 7, &len);
+  const uint8_t* buf = colony_toconstdata(L, 4, &len);
 
-  tm_udp_send(socket, ip0, ip1, ip2, ip3, port, buf, len);
-  return 0;
+  int err = tm_udp_send(socket, addr, port, buf, &len);
+  
+  lua_pushnumber(L, err);
+  return 1;
 }
 
 static int l_tm_udp_listen (lua_State *L)
 {
-  int socket = (int) lua_tonumber(L, 1);
-  int port = (int) lua_tonumber(L, 2);
+  tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
+  uint16_t port = (uint16_t) lua_tonumber(L, 2);
 
   lua_pushnumber(L, tm_udp_listen(socket, port));
 
@@ -181,16 +180,18 @@ static int l_tm_udp_listen (lua_State *L)
 
 static int l_tm_udp_receive (lua_State *L)
 {
-  int socket = (int) lua_tonumber(L, 1);
+  tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
 
-  // TODO is max buf size 256?
-  uint8_t* buf = colony_createbuffer(L, 256);
-  uint32_t from;
-  size_t buf_len = tm_udp_receive(socket, buf, 256, &from);
+  uint8_t buf[512];
+  size_t buf_len = sizeof(buf);
+  uint32_t addr;
+  uint16_t port;
+  int err = tm_udp_receive(socket, buf, &buf_len, &addr, &port);
+  (void) err;
 
-  lua_pushnumber(L, buf_len);
-  lua_pushnumber(L, from);
-
+  colony_pushbuffer(L, buf, buf_len);
+  lua_pushnumber(L, addr);
+  lua_pushnumber(L, port);
   return 3;
 }
 
@@ -238,11 +239,11 @@ static int l_tm_tcp_write (lua_State* L)
   tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
   size_t len;
   const uint8_t* buf = colony_toconstdata(L, 2, &len);
-  
   if (buf == NULL) return -1;
-
-  lua_pushnumber(L, tm_tcp_write(socket, buf, len));
   
+  int err = tm_tcp_write(socket, buf, &len);
+
+  lua_pushnumber(L, err);
   return 1;
 }
 
@@ -252,8 +253,11 @@ static int l_tm_tcp_read (lua_State* L)
   tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
 
   uint8_t buf[512];
-  size_t buf_len = tm_tcp_read(socket, buf, sizeof(buf));
-
+  size_t buf_len = sizeof(buf);
+  int err = tm_tcp_read(socket, buf, &buf_len);
+  (void) err;
+  
+  // TODO: use colony_pushbuffer (once HTTP fixed if necessary?)
   lua_pushlstring(L, (char *) buf, buf_len);
   return 1;
 }

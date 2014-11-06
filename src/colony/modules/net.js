@@ -186,7 +186,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
     var retries = 0;
     setImmediate(function doConnect() {
       var addr = ip.split('.').map(Number);
-      addr = (addr[0] << 24) + (addr[1] << 16) + (addr[2] << 8) + addr[3];
+      addr = (addr[0] << 24) | (addr[1] << 16) | (addr[2] << 8) | addr[3];
 
       var ret = tm.tcp_connect(self.socket, addr, port);
       if (ret == -tm.ENETUNREACH) {
@@ -403,7 +403,8 @@ TCPSocket.prototype.__send = function (cb) {
     if (self._ssl) {
       ret = tm.ssl_write(self._ssl, buf, buf.length);
     } else {
-      ret = tm.tcp_write(self.socket, buf, buf.length);
+      // HACK/TODO: invert return value to match logic below (but AFAICT it used to always get -1 from this TCP path anyway??!)
+      ret = -tm.tcp_write(self.socket, buf, buf.length);
     }
 
     if (ret == null) {
