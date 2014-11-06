@@ -11,6 +11,7 @@
 
 #include <os_port.h>
 #include <ssl.h>
+#include <assert.h>
 
 #ifdef TLS_VERBOSE
 #define TLS_DEBUG(...) printf(__VA_ARGS__)
@@ -21,25 +22,32 @@
 static void display_cipher(tm_ssl_session_t ssl);
 static void display_session_id(tm_ssl_session_t ssl);
 
-ssize_t tm_ssl_write (tm_ssl_session_t ssl, uint8_t *buf, size_t buf_len)
+int tm_ssl_write (tm_ssl_session_t ssl, const uint8_t *buf, size_t *buf_len)
 {
-    int ret = ssl_write(ssl, buf, buf_len);
-    return ret;
+    int res = ssl_write(ssl, buf, *buf_len);
+    if (res < 0) {
+        *buf_len = 0;
+        return res;
+    } else {
+        *buf_len = res;
+        return 0;
+    }
 }
 
 // TODO less than 1024
-ssize_t tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t buf_len)
+int tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t *buf_len)
 {
-    (void) buf_len;
-	uint8_t *read_buf;
-    ssize_t ret = ssl_read(ssl, &read_buf);
-    if (ret >= 0) {
-    	memcpy(buf, read_buf, ret);
-    	buf_len = ret; 
+    uint8_t *read_buf;
+    int res = ssl_read(ssl, &read_buf);
+    if (res < 0) {
+        *buf_len = 0;
+        return res;
     } else {
-    	buf_len = 0;
+        assert(res <= *buf_len);
+        memcpy(buf, read_buf, res);
+        *buf_len = res;
+        return 0;
     }
-    return ret;
 }
 
 typedef struct dir_reg { const char *path; const unsigned char *src; unsigned int len; } dir_reg_t;

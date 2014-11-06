@@ -262,8 +262,7 @@ static int l_tm_tcp_read (lua_State* L)
   int err = tm_tcp_read(socket, buf, &buf_len);
   (void) err;
   
-  // TODO: use colony_pushbuffer (once HTTP fixed if necessary?)
-  lua_pushlstring(L, (char *) buf, buf_len);
+  colony_pushbuffer(L, buf, buf_len);
   return 1;
 }
 
@@ -394,11 +393,12 @@ static int l_tm_ssl_write (lua_State* L)
 {
   tm_ssl_session_t session = (tm_ssl_session_t) lua_touserdata(L, 1);
   size_t len;
-  const uint8_t *text = colony_toconstdata(L, 2, &len);
+  const uint8_t* buf = colony_toconstdata(L, 2, &len);
+  if (buf == NULL) return -1;
 
-  int ret = tm_ssl_write(session, (uint8_t*) text, len);
+  int err = tm_ssl_write(session, buf, &len);
 
-  lua_pushnumber(L, ret);
+  lua_pushnumber(L, err);
   return 1;
 }
 
@@ -408,13 +408,11 @@ static int l_tm_ssl_read (lua_State* L)
   tm_ssl_session_t session = (tm_ssl_session_t) lua_touserdata(L, 1);
 
   uint8_t buf[20000];
-  ssize_t buf_len = tm_ssl_read(session, buf, sizeof(buf));
-
-  if (buf_len <= 0) {
-    lua_pushstring(L, "");
-  } else {
-    lua_pushlstring(L, (char *) buf, buf_len);
-  }
+  size_t buf_len = sizeof(buf);
+  int err = tm_ssl_read(session, buf, &buf_len);
+  (void) err;
+  
+  colony_pushbuffer(L, buf, buf_len);
   return 1;
 }
 

@@ -432,7 +432,7 @@ TCPSocket.prototype.__send = function (cb) {
 
 TCPSocket.prototype.__readSocket = function(restartTimeout) {
   var self = this;
-  var buf = '', flag = 0;
+  var arr = [], flag = 0;
   while (self.socket != null && (flag = tm.tcp_readable(self.socket)) > 0) {
     if (self._ssl) {
       var data = tm.ssl_read(self._ssl);
@@ -442,16 +442,17 @@ TCPSocket.prototype.__readSocket = function(restartTimeout) {
     if (!data || data.length == 0) {
       break;
     }
-    buf += data;
+    arr.push(data);
   }
 
 
-  if (buf.length) {
+  if (arr.length) {
 
     if (restartTimeout) {
       self._restartTimeout();
     }
 
+    var buf = Buffer.concat(arr);
     // TODO: stop polling if this returns false
     self.push(buf);
   }

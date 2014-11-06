@@ -183,8 +183,8 @@ int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ctx, tm_socke
 int tm_ssl_session_altname (tm_ssl_session_t* session, size_t index, const char** altname);
 int tm_ssl_session_cn (tm_ssl_session_t* session, const char** cn);
 int tm_ssl_session_free (tm_ssl_session_t *session);
-ssize_t tm_ssl_write (tm_ssl_session_t ssl, uint8_t *buf, size_t buf_len);
-ssize_t tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t buf_len);
+int tm_ssl_write (tm_ssl_session_t ssl, const uint8_t *buf, size_t *buf_len);
+int tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t *buf_len);
 
 // UPTIME
 
