@@ -123,6 +123,7 @@ UDP.prototype.send = function (text, offset, len, port, host, cb) {
 }
 
 UDP.prototype.close = function () {
+  if (this._closed) return;
   tm.udp_close(this._fd);
   this._fd = null;
   this._closed = true;
