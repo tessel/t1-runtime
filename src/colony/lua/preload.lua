@@ -81,7 +81,7 @@ if not _G.COLONY_EMBED then
     if jit == nil then
       status = os.execute(_G.COLONY_COMPILER_PATH .. ' -m ' .. file .. ' > /tmp/colonyunique')
     else
-      status = os.execute(_G.COLONY_COMPILER_PATH .. ' ' .. file .. ' > /tmp/colonyunique')
+      status = os.execute(_G.COLONY_COMPILER_PATH .. ' -l ' .. file .. ' > /tmp/colonyunique')
     end
     if status ~= 0 then
       os.exit(status)

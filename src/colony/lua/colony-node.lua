@@ -836,7 +836,17 @@ local function require_load (p)
           module.exports = parsed
         end
       else
-        res = assert(loadstring(colony._load(p), "@"..p))()
+        local fn, err, c = loadstring(colony._load(p), "@"..p)
+        if err and string.find(tostring(err), 'incompatible bytecode') then
+          res = function ()
+            console:error('! Error: Outdated CLI')
+            console:error('! Please update your Tessel CLI using npm to run code on this board.')
+            console:error('! Run "npm install -g tessel" or see http://start.tessel.io/')
+            process:exit(127)
+          end
+        else
+          res = assert(fn, err)()
+        end
       end
     end
   end

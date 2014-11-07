@@ -1,6 +1,6 @@
 {
   "name": "runtime",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "private": true,
   "bin": {
     "colony": "./out/Release/colony",
@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "async": "~0.2.9",
-    "colony-compiler": "~0.6.22",
+    "colony-compiler": "~0.6.23",
     "mkdirp": "~0.3.5",
     "bindings": "~1.2.0"
   },

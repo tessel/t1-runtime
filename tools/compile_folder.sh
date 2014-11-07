@@ -31,7 +31,9 @@ packageFolder(infiles, varname, function (file, buf, next) {
       if (docompile) {
         colonyCompiler.toBytecode(colonyCompiler.colonize(String(buf)), '[T]:' + file, next);
       } else {
-        next(null, colonyCompiler.colonize(String(buf)).source);
+        next(null, colonyCompiler.colonize(String(buf), {
+          embedLineNumbers: true
+        }).source);
       }
     } catch (e) {
       throw new Error('Bytecode compilation of ' + file + ' failed.');

@@ -218,11 +218,9 @@ int colony_runtime_open ()
   // tm
   lua_pushcfunction(L, luaopen_tm);
   lua_setfield(L, -2, "tm");
-#ifdef ENABLE_NET
   // http_parser
   lua_pushcfunction(L, luaopen_http_parser);
   lua_setfield(L, -2, "http_parser_lua");
-#endif
   // hsregex
   lua_pushcfunction(L, luaopen_hsregex);
   lua_setfield(L, -2, "hsregex");

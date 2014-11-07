@@ -1,6 +1,6 @@
 ENABLE_TLS ?= 1
 ENABLE_NET ?= 1
-ENABLE_LUAJIT ?= 0
+ENABLE_LUAJIT ?= 1
 
 # Update when targeting new Node build.
 NODE_VERSION ?= 0.10.32
@@ -17,7 +17,7 @@ else
 		ninja -C out/$(CONFIG)
 endif
 
-.PHONY: all test test-colony test-node
+.PHONY: all test test-colony test-node prepare-pc prepare-arm
 
 all: colony
 
@@ -52,13 +52,20 @@ update-node-libs:
 	mkdir -p deps/node-libs
 	cd deps/node-libs; curl -L https://github.com/joyent/node/archive/v$(NODE_VERSION).tar.gz | tar xvf - --strip-components=2 node-$(NODE_VERSION)/lib
 
+prepare-pc:
+	@objdump -G deps/colony-luajit/src/libluajit.a >/dev/null 2>&1 || make -C deps/colony-luajit clean || true
+	@touch deps/colony-luajit/Makefile
+
+prepare-arm:
+	@arm-none-eabi-objdump -G deps/colony-luajit/src/libluajit.a >/dev/null 2>&1 || make -C deps/colony-luajit clean || true
+	@touch deps/colony-luajit/Makefile
+
 # Targets
 
 libcolony:
 	$(call compile, libcolony.gyp)
 
-colony:
-	touch deps/colony-luajit/Makefile || true
+colony: prepare-pc
 	$(call compile, colony.gyp)
 
 libtm-test:

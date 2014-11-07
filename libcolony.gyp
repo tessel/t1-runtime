@@ -211,6 +211,7 @@
         'src/colony/colony.c',
         'src/colony/colony_init.c',
         'src/colony/colony_runtime.c',
+        'src/colony/lua_http_parser.c',
         '<(SHARED_INTERMEDIATE_DIR)/dir_builtin.c',
         '<(SHARED_INTERMEDIATE_DIR)/dir_runtime_lib.c',
       ],
@@ -226,7 +227,8 @@
         'libtm.gyp:fortuna',
         'libtm.gyp:dlmalloc',
         'libtm.gyp:libtm',
-        'libtm.gyp:approxidate'
+        'libtm.gyp:approxidate',
+        'libtm.gyp:http_parser',
       ],
       "direct_dependent_settings": {
         "include_dirs": [
@@ -264,11 +266,9 @@
         ['enable_net==1', {
           'sources': [
             'src/colony/lua_cares.c',
-            'src/colony/lua_http_parser.c',
           ],
           'dependencies': [
             'libtm.gyp:c-ares',
-            'libtm.gyp:http_parser',
           ],
         }],
       ],
