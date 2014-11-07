@@ -123,7 +123,7 @@ do
     -- microsecond resolution, there are only ~50 bits of actual data
     local nanos = tm.timestamp() * 1e3;
     if prev ~= nil then
-      nanos = nanos - prev[0]*1e9 + prev[1]
+      nanos = nanos - (prev[0]*1e9 + prev[1])
     end
     return js_arr({[0]=math.floor(nanos / 1e9), nanos % 1e9}, 2)
   end
