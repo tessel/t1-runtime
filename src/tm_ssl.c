@@ -43,7 +43,7 @@ int tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t *buf_len)
         *buf_len = 0;
         return res;
     } else {
-        assert(res <= *buf_len);
+        assert((unsigned int)res <= *buf_len);
         memcpy(buf, read_buf, res);
         *buf_len = res;
         return 0;
