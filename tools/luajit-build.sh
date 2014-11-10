@@ -1,10 +1,7 @@
 #!/bin/bash
 
-if [ "$(uname)" == "Darwin" ]; then
-	LJ_CC=gcc-4.9
-else
-	LJ_CC=gcc
-fi
+# gcc on Linux, clang on OS X, doesn't matter
+LJ_CC=gcc
 
 set -e
 cd deps/colony-luajit
