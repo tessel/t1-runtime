@@ -4,8 +4,9 @@ var test = require('tinytap'),
 test('https', function (t) {
  var https = require('https')
  console.log('imported');
- https.get("https://google.com", function (res) {
-   t.equal(res.headers.location, "https://www.google.com/");
+ https.get("https://tessel-httpbin.herokuapp.com/", function (res) {
+   t.equal(res.statusCode, 200, 'https status code is 200')
+   t.equal(res.connection.remotePort, 443, 'remote port is 443 for https')
    res.resume();
    t.end();
  });
