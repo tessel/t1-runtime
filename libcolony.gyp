@@ -200,7 +200,9 @@
       "type": "static_library",
       'cflags': [ '-Wall', '-Wextra', '-Werror' ],
       'defines': [
-        'COLONY_COMPILER_PATH=<(compiler_path)'
+        'COLONY_COMPILER_PATH=<(compiler_path)',
+        'COLONY_NODE_VERSION=<(node_version)',
+        '__TESSEL_RUNTIME_SEMVER__=<!(node -p \"require(\\\"./package.json\\\").version")',
       ],
       "sources": [
         'src/tm_event.c',
