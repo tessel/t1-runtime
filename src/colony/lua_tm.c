@@ -16,6 +16,11 @@
 #include "colony.h"
 #include "order32.h"
 
+#if COLONY_JIT
+#include <lj_obj.h>
+#include <lj_debug.h>
+#endif
+
 #ifdef ENABLE_TLS
 #include <sha2.h>
 #include <crypto.h>
@@ -1128,6 +1133,32 @@ static int l_tm_inflate_end (lua_State *L)
  return 3;
 }
 
+/* params */
+
+static int l_tm_paramname (lua_State *L)
+{
+#if !COLONY_JIT
+  lua_pushnil(L);
+  return 1;
+#else
+  luaL_argcheck(L, lua_gettop(L) == 2, 2, "expecting two arguments");
+  luaL_checktype(L, 1, LUA_TFUNCTION);
+  size_t param = lua_tonumber(L, 2) + 1;
+  
+  GCfunc *fn = funcV(L->top-2);
+  const char *name = NULL;
+  BCIns *ip = proto_bc(funcproto(fn));
+  lj_debug_slotname(funcproto(fn), ip, param, &name);
+
+  if (name) {
+    lua_pushstring(L, name);
+  } else {
+    lua_pushnil(L);
+  }
+  return 1;
+#endif
+}
+
 /*Approxidate*/
 
 #include <approxidate.h>
@@ -1389,6 +1420,9 @@ LUALIB_API int luaopen_tm (lua_State *L)
 
     // itoa
     { "itoa", l_tm_itoa },
+
+    // params
+    { "paramname", l_tm_paramname },
 
 #ifdef ENABLE_NET
     { "_sync_gethostbyname", l_tm__sync_gethostbyname },
