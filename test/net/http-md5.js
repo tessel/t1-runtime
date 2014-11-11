@@ -13,8 +13,8 @@ tap.count(2);
 var http = require('http');
 var crypto = require('crypto');
 
-http.get("http://httpstat.us/200", function (res) {
-  tap.eq(typeof res.statusCode, 'number');
+http.get("http://tessel-httpbin.herokuapp.com/status/418", function (res) {
+  tap.eq(typeof res.statusCode, 'number', 'statuscode is a number');
   console.log('# statusCode', res.statusCode)
 
   var hash = crypto.createHash('md5');
@@ -23,7 +23,7 @@ http.get("http://httpstat.us/200", function (res) {
   hash.on('readable', function () {
   	var md5 = hash.read().toString('hex');
   	console.log('#', md5);
-  	tap.eq(md5, '3c3f2943d4337318cf737f45d5b564cd');
+  	tap.eq(md5, 'a039239a1eae504e41cb810c98419b99', 'teapot md5 works');
   })
 }).on('error', function (e) {
   tap.ok(false, String(e));
