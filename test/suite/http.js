@@ -5,7 +5,7 @@ var test = require('tinytap'),
 test('client-basic', function (t) {
   // test based loosely on http://nodejs.org/api/http.html#http_http_request_options_callback
   var req = http.request({
-    hostname: 'httpbin.org',
+    hostname: 'tessel-httpbin.herokuapp.com',
     path: '/post',
     method: 'POST'
   }, function(res) {
@@ -125,7 +125,7 @@ test('server-limit', function (t) {
 
 test('client-auth', function (t) {
   var req = http.get({
-      host: "httpbin.org",
+      host: "tessel-httpbin.herokuapp.com",
       path: "/basic-auth/user/passwd",      // will 401 if not matched
       auth: "user:passwd"
     }, function (res) {
