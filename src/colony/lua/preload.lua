@@ -106,9 +106,10 @@ do
   global.process.platform = "tessel"
   global.process.arch = "armv7-m"
   global.process.versions = js_obj({
-    node = "v0.10.0",
-    colony = "v0.10.0"
+    node = 'v' .. COLONY_NODE_VERSION,
+    colony = 'v' .. __TESSEL_RUNTIME_SEMVER__
   })
+  global.process.version = global.process.versions.node
   global.process.EventEmitter = EventEmitter
   global.process.argv = js_arr({}, 0)
   global.process.env = js_obj({})
@@ -128,7 +129,6 @@ do
     return js_arr({[0]=math.floor(nanos / 1e9), nanos % 1e9}, 2)
   end
   global.process.nextTick = global.setImmediate
-  global.process.version = global.process.versions.node
 
   -- DEPLOY_TIME workaround for setting environmental time
 

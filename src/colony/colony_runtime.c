@@ -203,6 +203,10 @@ int colony_runtime_open ()
   lua_pushboolean(L, 0);
 #endif
   lua_setglobal(L, "COLONY_EMBED");
+  lua_pushstring(L, colony_runtime_xstr(COLONY_NODE_VERSION));
+  lua_setglobal(L, "COLONY_NODE_VERSION");
+  lua_pushstring(L, colony_runtime_xstr(__TESSEL_RUNTIME_SEMVER__));
+  lua_setglobal(L, "__TESSEL_RUNTIME_SEMVER__");
 
 #ifndef COLONY_EMBED
 #ifdef COLONY_COMPILER_PATH

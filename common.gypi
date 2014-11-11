@@ -18,6 +18,7 @@
     "approxidate_path": "./deps/approxidate",
     'enable_ssl%': 0,
     'enable_luajit%': 0,
+    'node_version%': "0.10.0",
     "compiler_path%": "",
   },
 
