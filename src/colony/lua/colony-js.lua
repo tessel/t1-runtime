@@ -381,7 +381,12 @@ func_proto.apply = function (func, this, args)
 end
 
 func_proto.toString = function (this)
-  return 'function ' .. (this.name or '') .. '() { }'
+  local params = {}
+  local len = debug.getinfo(this, 'u').nparams - 1
+  for i=0,len-1 do
+    table.insert(params, tm.paramname(this, i))
+  end
+  return 'function ' .. (this.name or '') .. '(' .. table.concat(params, ', ') .. ') { [compiled code] }'
 end
 
 -- array prototype
