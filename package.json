@@ -12,12 +12,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "./node_modules/.bin/tap -e './out/Release/colony' test/suite/*.js test/issues/*.js test/net/*.js",
-    "test-offline": "./node_modules/.bin/tap -e './out/Release/colony' test/suite/*.js test/issues/*.js",
-    "test-net": "./node_modules/.bin/tap -e './out/Release/colony' test/net/*.js",
-    "test-suite": "./node_modules/.bin/tap -e './out/Release/colony' test/suite/*.js",
-    "test-issues": "./node_modules/.bin/tap -e './out/Release/colony' test/issues/*.js",
-    "tessel-test": "./node_modules/.bin/tap -e 'tessel-node -qs' test/suite/*.js",
+    "test": "echo 'ERROR: Please use `make test` now.' && echo '' && exit 1",
     "install": "true"
   },
   "dependencies": {
