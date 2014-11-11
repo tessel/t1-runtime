@@ -118,19 +118,19 @@ typedef int tm_socket_t;
 // UDP
 
 tm_socket_t tm_udp_open ();
-int tm_udp_close (int sock);
-int tm_udp_listen (int ulSocket, int port);
-int tm_udp_receive (int ulSocket, uint8_t *buf, unsigned long buf_len, uint32_t *ip);
+int tm_udp_close (tm_socket_t sock);
+int tm_udp_listen (tm_socket_t sock, int port);
+int tm_udp_receive (tm_socket_t sock, uint8_t *buf, size_t *buf_len, uint32_t *addr, uint16_t *port);
 int tm_udp_readable (tm_socket_t sock);
-int tm_udp_send (int ulSocket, uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3, int port, const uint8_t *buf, unsigned long buf_len);
+int tm_udp_send (tm_socket_t sock, uint32_t addr, uint16_t port, const uint8_t *buf, size_t *buf_len);
 
 // TCP
 
 tm_socket_t tm_tcp_open ();
 int tm_tcp_close ();
 int tm_tcp_connect (tm_socket_t sock, uint32_t addr, uint16_t port);
-int tm_tcp_write (tm_socket_t sock, const uint8_t *buf, size_t buflen);
-int tm_tcp_read (tm_socket_t sock, uint8_t *buf, size_t buflen);
+int tm_tcp_write (tm_socket_t sock, const uint8_t *buf, size_t *buf_len);
+int tm_tcp_read (tm_socket_t sock, uint8_t *buf, size_t *buf_len);
 int tm_tcp_readable (tm_socket_t sock);
 int tm_tcp_listen (tm_socket_t sock, uint16_t port);
 tm_socket_t tm_tcp_accept (tm_socket_t sock, uint32_t *addr, uint16_t *port);
@@ -183,8 +183,8 @@ int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ctx, tm_socke
 int tm_ssl_session_altname (tm_ssl_session_t* session, size_t index, const char** altname);
 int tm_ssl_session_cn (tm_ssl_session_t* session, const char** cn);
 int tm_ssl_session_free (tm_ssl_session_t *session);
-ssize_t tm_ssl_write (tm_ssl_session_t ssl, uint8_t *buf, size_t buf_len);
-ssize_t tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t buf_len);
+int tm_ssl_write (tm_ssl_session_t ssl, const uint8_t *buf, size_t *buf_len);
+int tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t *buf_len);
 
 // UPTIME
 

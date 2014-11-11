@@ -186,7 +186,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
     var retries = 0;
     setImmediate(function doConnect() {
       var addr = ip.split('.').map(Number);
-      addr = (addr[0] << 24) + (addr[1] << 16) + (addr[2] << 8) + addr[3];
+      addr = (addr[0] << 24) | (addr[1] << 16) | (addr[2] << 8) | addr[3];
 
       var ret = tm.tcp_connect(self.socket, addr, port);
       if (ret == -tm.ENETUNREACH) {
@@ -403,7 +403,8 @@ TCPSocket.prototype.__send = function (cb) {
     if (self._ssl) {
       ret = tm.ssl_write(self._ssl, buf, buf.length);
     } else {
-      ret = tm.tcp_write(self.socket, buf, buf.length);
+      // HACK/TODO: invert return value to match logic below (but AFAICT it used to always get -1 from this TCP path anyway??!)
+      ret = -tm.tcp_write(self.socket, buf, buf.length);
     }
 
     if (ret == null) {
@@ -431,7 +432,7 @@ TCPSocket.prototype.__send = function (cb) {
 
 TCPSocket.prototype.__readSocket = function(restartTimeout) {
   var self = this;
-  var buf = '', flag = 0;
+  var arr = [], flag = 0;
   while (self.socket != null && (flag = tm.tcp_readable(self.socket)) > 0) {
     if (self._ssl) {
       var data = tm.ssl_read(self._ssl);
@@ -441,16 +442,17 @@ TCPSocket.prototype.__readSocket = function(restartTimeout) {
     if (!data || data.length == 0) {
       break;
     }
-    buf += data;
+    arr.push(data);
   }
 
 
-  if (buf.length) {
+  if (arr.length) {
 
     if (restartTimeout) {
       self._restartTimeout();
     }
 
+    var buf = Buffer.concat(arr);
     // TODO: stop polling if this returns false
     self.push(buf);
   }

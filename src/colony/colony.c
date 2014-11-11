@@ -103,6 +103,13 @@ uint8_t* colony_createbuffer (lua_State* L, int size)
   return colony_getbufferptr(L, -1, NULL);
 }
 
+// you probably mean this instead of lua_pushlstring
+void colony_pushbuffer (lua_State* L, const uint8_t* buf, size_t buf_len)
+{
+    uint8_t* tgt = colony_createbuffer(L, buf_len);
+    memcpy(tgt, buf, buf_len);
+}
+
 const uint8_t* colony_toconstdata (lua_State* L, int index, size_t* buf_len)
 {
   const uint8_t* buf = NULL;
