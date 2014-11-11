@@ -2,6 +2,8 @@
 var test = require('tinytap'),
     net = require('net');
 
+test.count(74);
+
 test('addresses', function (t) {
   // API checks
   t.ok(net.isIP);
@@ -69,13 +71,13 @@ test('client-basic', function (t) {
   // see http://nodejs.org/api/net.html#net_net_connect_options_connectionlistener
   
   // connects
-  var client = net.connect(80, "ipcalf.com", function () {
+  var client = net.connect(80, "tessel-httpbin.herokuapp.com", function () {
     t.pass("callback called");
   });
   t.ok(client instanceof net.Socket, "returned socket");
   client.on('connect', function () {
     t.pass("socket connected");
-    client.write("GET / HTTP/1.1\nHost: ipcalf.com\nAccept: text/plain\n\n");
+    client.write("GET / HTTP/1.1\nHost: tessel-httpbin.herokuapp.com\nAccept: text/plain\n\n");
   });
   client.on('error', function () {
     t.fail("socket error");
@@ -155,7 +157,7 @@ test('client-errors', function (t) {
 });
 
 test('client-timeout', function (t) {
-  var client = net.connect(80, "ipcalf.com", function () {
+  var client = net.connect(80, "tessel-httpbin.herokuapp.com", function () {
     client.setTimeout(100, function () {
       t.pass("timeout callback called");
     });
@@ -168,7 +170,7 @@ test('client-timeout', function (t) {
 });
 
 test('client-connect-args', function (t) {
-  var client = net.connect({port:80, host:"ipcalf.com"}, function () {
+  var client = net.connect({port:80, host:"tessel-httpbin.herokuapp.com"}, function () {
     t.pass("callback called");
     t.end();
   });
