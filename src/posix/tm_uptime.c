@@ -48,8 +48,20 @@ static void wait_alarm (int dummy)
 void hw_wait_for_event()
 {
 	if (tm_lua_state == NULL) return;
-	
-	unsigned ms = tm_timer_head_time() / 1000;
+
+	unsigned ms = 10000;
+	if (tm_timer_waiting()) {
+		unsigned base = tm_timer_base_time();
+		unsigned step = tm_timer_head_time();
+
+		unsigned elapsed = tm_uptime_micro() - base;
+
+		if (elapsed < step) {
+			ms = (step - elapsed) / 1000;
+		} else {
+			ms = 0;
+		}
+	}
 
 	struct pollfd fd;
 	fd.fd = STDIN_FILENO;
