@@ -161,7 +161,7 @@ static int l_tm_udp_close (lua_State* L)
 static int l_tm_udp_send (lua_State* L)
 {
   tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
-  uint32_t addr = DOUBLE_TO_UINT32(lua_tointeger(L, 2));
+  uint32_t addr = TM_TO_UINT32(lua_tointeger(L, 2));
   uint16_t port = (uint16_t) lua_tonumber(L, 3);
   size_t len;
   const uint8_t* buf = colony_toconstdata(L, 4, &len);
@@ -230,7 +230,7 @@ static int l_tm_tcp_close (lua_State* L)
 static int l_tm_tcp_connect (lua_State* L)
 {
   tm_socket_t socket = (tm_socket_t) lua_tonumber(L, 1);
-  uint32_t addr = DOUBLE_TO_UINT32(lua_tointeger(L, 2));
+  uint32_t addr = TM_TO_UINT32(lua_tointeger(L, 2));
   uint16_t port = (uint16_t) lua_tonumber(L, 3);
 
   lua_pushnumber(L, tm_tcp_connect(socket, addr, port));
@@ -701,8 +701,8 @@ static int l_tm_fs_type (lua_State* L)
 static int l_tm_fs_open (lua_State* L)
 {
   const char *pathname = (const char *) colony_toutf8(L, 1);
-  uint32_t flags = DOUBLE_TO_UINT32(lua_tointeger(L, 2));
-  uint32_t mode = DOUBLE_TO_UINT32(lua_tointeger(L, 3));
+  uint32_t flags = TM_TO_UINT32(lua_tointeger(L, 2));
+  uint32_t mode = TM_TO_UINT32(lua_tointeger(L, 3));
 
   tm_fs_t* fd = (tm_fs_t*) lua_newuserdata(L, sizeof(tm_fs_t));
 
@@ -933,7 +933,7 @@ static int l_tm_str_codeat (lua_State* L)
 {
   size_t buf_len = 0;
   const uint8_t* buf = (const uint8_t*) lua_tolstring(L, 1, &buf_len);
-  uint32_t idx = DOUBLE_TO_UINT32(lua_tointeger(L, 2));
+  uint32_t idx = TM_TO_UINT32(lua_tointeger(L, 2));
 
   lua_pushnumber(L, tm_str_codeat(buf, buf_len, idx));
   return 1;
@@ -941,7 +941,7 @@ static int l_tm_str_codeat (lua_State* L)
 
 static int l_tm_str_fromcode (lua_State* L)
 {
-  uint32_t c = DOUBLE_TO_UINT32(lua_tointeger(L, 1));
+  uint32_t c = TM_TO_UINT32(lua_tointeger(L, 1));
   // TODO: assert c < 0x10000 and optimize below!
 
   uint8_t buf[4] = { 0 };
