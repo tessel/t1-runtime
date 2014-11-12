@@ -23,6 +23,7 @@ extern "C" {
 #include <time.h>
 #include <stdbool.h>
 
+#define DOUBLE_TO_UINT32(n) ((uint32_t) (n))
 #define TM_BYTE(A, B) ((A >> (B*8)) & 0xFF)
 
 // logging
