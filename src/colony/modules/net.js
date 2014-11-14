@@ -470,7 +470,7 @@ TCPSocket.prototype.__close = function (tryToClose) {
   process.removeListener('tcp-close', this._closehandler);
 
   var retries = 0;
-  function closeSocket(){
+  function closeSocket(cb){
     if (self.socket === null) return;
     var ret = tm.tcp_close(self.socket);
     if (ret < 0 && ret != -tm.ENOTCONN) { // -57 is inactive, socket has already been closed
@@ -478,21 +478,30 @@ TCPSocket.prototype.__close = function (tryToClose) {
         // tried 3 times and couldn't close, error out
         self.emit('close');
         self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+ret));
+        cb && cb();
       } else {
         retries++;
         // try again
-        setTimeout(closeSocket, 100);
+        setTimeout(function(){
+          closeSocket(cb);
+        }, 100);
       }
      
     } else {
       self.socket = null;
       self.emit('close');
+      cb && cb();
     }
   }
 
   if (tryToClose !== false) {
-    closeSocket();
+    closeSocket(function(){
+      self.removeAllListeners();
+    });
+  } else {
+    self.removeAllListeners();
   }
+  
 }
 
 TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
@@ -513,7 +522,6 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
         self.__close();
       } 
     }
-    self.removeAllListeners();
   });
 };
 
