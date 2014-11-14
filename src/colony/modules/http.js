@@ -191,17 +191,10 @@ function IncomingMessage (type, socket) {
   };
   this._unplug = function () {
     self.socket = self.connection = null;
+    socket.removeListener('error', _emitError);
+    socket.removeListener('close', _emitClose);
     socket.removeListener('data', _handleData);
     socket.removeListener('end', _handleEnd);
-
-    socket.on('close', function(){
-      // remove all listeners after socket has closed
-      // don't remove the 'error' listener before 'close' emits
-      // because socket could throw an error on the cc3k trying
-      // to close
-      socket.removeAllListeners();
-    });
-
   };
   this._socket = socket;
 }
@@ -453,8 +446,8 @@ function _getPool(agent, opts) {
       var nextReq = requests.shift();   // FIFO
       nextReq._assignSocket(socket);
     } else {
+      socket.on('error', handleIdleError); // Hack, sometimes the TCP socket emits errors on close, after `end` event
       if (agent._keepAlive && freeSockets.length < agent.maxFreeSockets) {
-        socket.on('error', handleIdleError);
         freeSockets.push(socket);
       } else {
         socket.end();

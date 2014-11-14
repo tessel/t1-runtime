@@ -493,6 +493,8 @@ TCPSocket.prototype.__close = function (tryToClose) {
 }
 
 TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
+  if (this._destroy) return;
+
   this._destroy = true;
   
   var self = this;
