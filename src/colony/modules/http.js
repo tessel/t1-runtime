@@ -191,10 +191,17 @@ function IncomingMessage (type, socket) {
   };
   this._unplug = function () {
     self.socket = self.connection = null;
-    socket.removeListener('error', _emitError);
-    socket.removeListener('close', _emitClose);
     socket.removeListener('data', _handleData);
     socket.removeListener('end', _handleEnd);
+
+    socket.on('close', function(){
+      // remove all listeners after socket has closed
+      // don't remove the 'error' listener before 'close' emits
+      // because socket could throw an error on the cc3k trying
+      // to close
+      socket.removeAllListeners();
+    });
+
   };
   this._socket = socket;
 }
