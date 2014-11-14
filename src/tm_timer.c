@@ -17,10 +17,6 @@ void timer_cb(tm_event* event);
 /// The event triggered by the timer callback
 tm_event tm_timer_event = TM_EVENT_INIT(timer_cb);
 
-/// The timer count at which the timer callback last ran.
-/// It should be safe if this wraps at UINT_MAX as long as all delays are shorter than a timer period.
-unsigned last_time = 0;
-
 // Timer ID
 unsigned timer_id = 0;
 
@@ -40,6 +36,11 @@ typedef struct tm_timer {
 /// expires soonest. This linked list structure is managed only by the
 /// callbacks, and is not touched in the ISR.
 tm_timer* timers_head = 0;
+
+/// The timer count through which we've processed.
+/// It should be safe if this wraps at UINT_MAX as long as all delays are shorter than a timer period.
+/// `last_time + timers_head->time` is the absolute timestamp of the next timeout.
+unsigned last_time = 0;
 
 // Example: The following calls are made in one instant:
 // 	setTimeout(1010, a)
@@ -88,19 +89,15 @@ static bool enqueue_timer(unsigned time, tm_timer* t) {
 }
 
 /// Create a timer and enqueue it
-unsigned tm_settimeout(unsigned time, bool repeat, int lua_cb) {
+unsigned tm_settimeout(unsigned delay, bool repeat, int lua_cb) {
 	tm_timer* t = calloc(sizeof(tm_timer), 1);
-	t->repeat = repeat ? time : 0;
+	t->repeat = repeat ? delay : 0;
 	t->lua_cb = lua_cb;
 	t->next = 0;
 	t->id = ++timer_id;
 
-	if (!timers_head) {
-		last_time = tm_uptime_micro();
-	} else {
-		// Adjust because the times on the queue are relative to last_time
-		time += (tm_uptime_micro() - last_time);
-	}
+	// Adjust because the times on the queue are relative to last_time
+	unsigned time = delay + (tm_uptime_micro() - last_time);
 
 	if (enqueue_timer(time, t)) {
 		configure_timer_interrupt();
@@ -150,20 +147,21 @@ unsigned tm_timer_base_time() {
 /// often than necessary
 void timer_cb(tm_event* event) {
 	(void) event;
-	
-	unsigned prev_time = last_time;
-	last_time = tm_uptime_micro();
-	unsigned elapsed = last_time - prev_time;
+
+	unsigned next_time = tm_uptime_micro();
 
 	while (timers_head) {
 		tm_timer* t = timers_head;
 
-		if (t->time > elapsed) {
-			t->time -= elapsed;
+		unsigned remaining = next_time - last_time;
+
+		if (t->time > remaining) {
+			t->time -= remaining;
+			last_time = next_time;
 			break;
 		}
 
-		elapsed -= t->time;
+		last_time += t->time;
 		timers_head = t->next;
 
 		lua_rawgeti(tm_lua_state, LUA_REGISTRYINDEX, t->lua_cb);
