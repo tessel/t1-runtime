@@ -446,8 +446,8 @@ function _getPool(agent, opts) {
       var nextReq = requests.shift();   // FIFO
       nextReq._assignSocket(socket);
     } else {
+      socket.on('error', handleIdleError); // Hack, sometimes the TCP socket emits errors on close, after `end` event
       if (agent._keepAlive && freeSockets.length < agent.maxFreeSockets) {
-        socket.on('error', handleIdleError);
         freeSockets.push(socket);
       } else {
         socket.end();

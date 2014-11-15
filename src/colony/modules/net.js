@@ -239,11 +239,6 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
       if (!self._secure) {
         connectionStable();
       } else {
-        // do a select call to try to free some cc3k buffers
-        
-        tm.tcp_readable(self.socket);
-        tm.tcp_readable(self.socket);
-        tm.tcp_readable(self.socket);
 
         setTimeout(function() {
           createSession(); 
@@ -261,17 +256,18 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
             } else if (ret == -516) {
               return self.emit('error', new Error('CERT_NOT_YET_VALID'));
             } else if (ret == -2) {
+              self.emit('error', new Error('Socket out of mem'));
+
               tm.tcp_readable(self.socket);
               self.destroy();
               self.__close();
-              return self.emit('error', new Error('Socket out of mem'));
-
               return;
             } else {
               // close socket
+              self.emit('error', new Error('Could not validate SSL request (error ' + ret + ')'));
               self.destroy();
               self.__close();
-              return self.emit('error', new Error('Could not validate SSL request (error ' + ret + ')'));
+              return;
             }
           }
 
@@ -473,11 +469,12 @@ TCPSocket.prototype.__close = function (tryToClose) {
   function closeSocket(){
     if (self.socket === null) return;
     var ret = tm.tcp_close(self.socket);
+
     if (ret < 0 && ret != -tm.ENOTCONN) { // -57 is inactive, socket has already been closed
       if (retries > 3) {
         // tried 3 times and couldn't close, error out
-        self.emit('close');
         self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+ret));
+        self.emit('close');
       } else {
         retries++;
         // try again
@@ -496,6 +493,8 @@ TCPSocket.prototype.__close = function (tryToClose) {
 }
 
 TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
+  if (this._destroy) return;
+
   this._destroy = true;
   
   var self = this;
