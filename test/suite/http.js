@@ -377,3 +377,49 @@ test('keepalive', function (t) {
     });
   }
 });
+
+var zlib = require('zlib');
+var hostname = 'tessel-httpbin.herokuapp.com';
+
+test('gunzip', function(t){
+  var req = http.request({
+    hostname: hostname,
+    path: '/gzip',
+    method: 'GET'
+  }, function(res) {  
+    res.on('data', function (chunk) {   
+      zlib.gunzip(chunk, function(err, data){
+        t.ok(err == null, "sucessfully gunzipped");
+        
+        data = JSON.parse(data.toString());
+        t.equal(data.headers.Host, hostname);
+        t.end();
+      })
+    });
+
+  });
+
+  req.end();
+});
+
+test('inflate', function(t){
+  var http = require('http');
+  var hostname = 'tessel-httpbin.herokuapp.com';
+  var req = http.request({
+    hostname: hostname,
+    path: '/deflate',
+    method: 'GET'
+  }, function(res) {  
+    res.on('data', function (chunk) {   
+      zlib.inflate(chunk, function(err, data){
+        t.ok(err == null, "sucessfully deflated");
+        data = JSON.parse(data.toString());
+        t.equal(data.headers.Host, hostname);
+        t.end();
+      })
+    });
+
+  });
+
+  req.end();
+});

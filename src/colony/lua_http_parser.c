@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include "lua_http_parser.h"
 #include "http_parser.h"
+#include "colony.h"
 
 static const char* method_to_str(unsigned short m) {
   switch (m) {
@@ -277,8 +278,7 @@ static int lhttp_parser_execute (lua_State *L) {
   size_t length;
   size_t nparsed;
 
-  luaL_checktype(L, 2, LUA_TSTRING);
-  chunk = lua_tolstring(L, 2, &chunk_len);
+  chunk = colony_toconstdata(L, 2, &chunk_len);
 
   offset = luaL_checkint(L, 3);
   length = luaL_checkint(L, 4);
