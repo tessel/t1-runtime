@@ -502,7 +502,9 @@
         '<(runtime_path)/tm_random.c',
         '<(runtime_path)/tm_deflate.c',
         '<(runtime_path)/tm_str.c',
-        '<(runtime_path)/tm_utf8.c'
+        '<(runtime_path)/tm_utf7.c',
+        '<(runtime_path)/tm_utf8.c',
+        '<(runtime_path)/tm_utf16.c',
       ],
       "include_dirs": [
         '<(runtime_path)/',

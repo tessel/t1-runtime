@@ -211,6 +211,17 @@ size_t tm_utf8_encode(uint8_t* buf, size_t buf_len, uint32_t uc);
 size_t tm_str_to_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t **dstptr);
 size_t tm_str_from_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t **dstptr);
 
+size_t tm_str_to_utf16le (const uint8_t* buf, size_t buf_len, const uint8_t **dstptr);
+size_t tm_str_from_utf16le (const uint8_t* buf, size_t buf_len, const uint8_t **dstptr);
+
+size_t _tm_str_to_8bit (const uint8_t* buf, size_t buf_len, const uint8_t **dstptr, uint8_t mask);
+size_t _tm_str_from_8bit (const uint8_t* buf, size_t buf_len, const uint8_t **dstptr, uint8_t mask);
+#define tm_str_to_ascii(a,b,c) _tm_str_to_8bit(a,b,c, 0xFF)  // yes 0xFF, despite node.js doc insinuation!
+#define tm_str_from_ascii(a,b,c) _tm_str_from_8bit(a,b,c, 0x7F)
+#define tm_str_to_binary(a,b,c) _tm_str_to_8bit(a,b,c, 0xFF)
+#define tm_str_from_binary(a,b,c) _tm_str_from_8bit(a,b,c, 0xFF)
+
+
 // INTERNAL STRING MANIPULATION
 
 uint32_t tm_str_codeat (const uint8_t* buf, size_t buf_len, size_t index);

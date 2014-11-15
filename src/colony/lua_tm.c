@@ -922,20 +922,85 @@ static int l_tm_fs_dir_close (lua_State* L)
   return 1;
 }
 
+static int l_tm_str_to_ascii (lua_State* L)
+{
+  const uint8_t* raw;
+  size_t str_len;
+  const char* str = lua_tolstring(L, 1, &str_len);
+  size_t raw_len = tm_str_to_ascii((const uint8_t*) str, str_len + 1, &raw) - 1;    // compensate for NUL byte at end
+  lua_pushlstring(L, (const char*) raw, raw_len);
+  if ((void*) raw != (void*) str) free((uint8_t*) raw);
+  return 1;
+}
+
+static int l_tm_str_from_ascii (lua_State* L)
+{
+  const char* str;
+  size_t raw_len;
+  const char* raw = lua_tolstring(L, 1, &raw_len);
+  size_t str_len = tm_str_from_ascii((const uint8_t*) raw, raw_len, (const uint8_t**) &str);
+  lua_pushlstring(L, str, str_len);
+  if ((void*) str != (void*) raw) free((char*) str);
+  return 1;
+}
+
+static int l_tm_str_to_binary (lua_State* L)
+{
+  const uint8_t* raw;
+  size_t str_len;
+  const char* str = lua_tolstring(L, 1, &str_len);
+  size_t raw_len = tm_str_to_binary((const uint8_t*) str, str_len + 1, &raw) - 1;    // compensate for NUL byte at end
+  lua_pushlstring(L, (const char*) raw, raw_len);
+  if ((void*) raw != (void*) str) free((uint8_t*) raw);
+  return 1;
+}
+
+static int l_tm_str_from_binary (lua_State* L)
+{
+  const char* str;
+  size_t raw_len;
+  const char* raw = lua_tolstring(L, 1, &raw_len);
+  size_t str_len = tm_str_from_binary((const uint8_t*) raw, raw_len, (const uint8_t**) &str);
+  lua_pushlstring(L, str, str_len);
+  if ((void*) str != (void*) raw) free((char*) str);
+  return 1;
+}
+
+static int l_tm_str_to_utf16le (lua_State* L)
+{
+  const uint8_t* raw;
+  size_t str_len;
+  const char* str = lua_tolstring(L, 1, &str_len);
+  size_t raw_len = tm_str_to_utf16le((const uint8_t*) str, str_len + 1, &raw) - 1;    // compensate for NUL byte at end
+  lua_pushlstring(L, (const char*) raw, raw_len);
+  if ((void*) raw != (void*) str) free((uint8_t*) raw);
+  return 1;
+}
+
+static int l_tm_str_from_utf16le (lua_State* L)
+{
+  const char* str;
+  size_t raw_len;
+  const char* raw = lua_tolstring(L, 1, &raw_len);
+  size_t str_len = tm_str_from_utf16le((const uint8_t*) raw, raw_len, (const uint8_t**) &str);
+  lua_pushlstring(L, str, str_len);
+  if ((void*) str != (void*) raw) free((char*) str);
+  return 1;
+}
 
 static int l_tm_str_to_utf8 (lua_State* L)
 {
-  size_t utf8_len;
-  const char* utf8 = colony_tolutf8(L, 1, &utf8_len);
-  lua_pushlstring(L, utf8, utf8_len);
+  size_t raw_len;
+  const char* raw = colony_tolutf8(L, 1, &raw_len);
+  lua_pushlstring(L, raw, raw_len);
   return 1;
 }
 
 static int l_tm_str_from_utf8 (lua_State* L)
 {
-  size_t utf8_len;
-  const char* utf8 = lua_tolstring(L, 1, &utf8_len);
-  colony_pushlutf8(L, utf8, utf8_len);
+  size_t raw_len;
+  const char* raw = lua_tolstring(L, 1, &raw_len);
+  colony_pushlutf8(L, raw, raw_len);
   return 1;
 }
 
@@ -1389,10 +1454,16 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "fs_dir_read", l_tm_fs_dir_read },
     { "fs_dir_close", l_tm_fs_dir_close },
 
-    // unicode
+    // encodings
     { "str_to_utf8", l_tm_str_to_utf8 },
     { "str_from_utf8", l_tm_str_from_utf8 },
-    
+    { "str_to_utf16le", l_tm_str_to_utf16le },
+    { "str_from_utf16le", l_tm_str_from_utf16le },
+    { "str_to_binary", l_tm_str_to_binary },
+    { "str_from_binary", l_tm_str_from_binary },
+    { "str_to_ascii", l_tm_str_to_ascii },
+    { "str_from_ascii", l_tm_str_from_ascii },
+
     // internal string manipulation
     { "str_codeat", l_tm_str_codeat },
     { "str_fromcode", l_tm_str_fromcode },

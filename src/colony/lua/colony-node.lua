@@ -298,22 +298,17 @@ local buffer_proto = js_obj({
     if encoding == nil then
       encoding = 'utf8'
     end
-    encoding = string.lower(encoding);
+    encoding = string.lower(encoding)
     
-    local buf = tm.buffer_tobytestring(getmetatable(this).buffer, offset, endOffset);
-
+    local buf = tm.buffer_tobytestring(getmetatable(this).buffer, offset, endOffset)
     if encoding == 'binary' then
-      return string.gsub(buf, '[\128-\255]', function (c)
-        -- original value must be converted to internal encoding
-        return global.String.fromCharCode(nil, string.byte(c))
-      end)
+      return tm.str_from_binary(buf);
     elseif encoding == 'ascii' then
-      -- simply strips high bit from original value
-      return string.gsub(buf, '[\128-\255]', function (c)
-        return string.char(string.byte(c) - 128)
-      end)
+      return tm.str_from_ascii(buf);
     elseif encoding == 'utf8' or encoding == 'utf-8' then
       return tm.str_from_utf8(buf);
+    elseif encoding == 'ucs2' or encoding == 'ucs-2' or encoding == 'utf16le' or encoding == 'utf-16le' then
+      return tm.str_from_utf16le(buf)
     elseif encoding == 'base64' then
       return to_base64(buf);
     elseif encoding == 'hex' then
@@ -321,9 +316,6 @@ local buffer_proto = js_obj({
         return string.format('%02x', string.byte(c));
       end)
       return str;
-    elseif  encoding == 'ucs2' or encoding == 'ucs-2' 
-      or encoding == 'utf16le' or encoding == 'utf-16le' then
-      return error(js_new(global.NotImplementedError, 'Encoding not implemented yet: ' + encoding));
     else
       error(js_new(global.TypeError, 'Unknown encoding: ' + encoding));
     end
@@ -493,56 +485,62 @@ function _of_buffer (this, buf, length)
 end
 
 local function Buffer (this, arg, encoding)
-  -- args
-  local str, length = '', 0
-  if type(arg) == 'number' then
-    length = tonumber(arg)
-  elseif type(arg) == 'string' then
-    str = arg
-    length = #arg
-  else
-    str = arg or ''
-    length = arg and arg.length or 0
+  if encoding == nil then
+    encoding = 'utf8'
   end
-
-  -- encoding first check
-  if type(str) == 'string' and encoding == 'base64' then
-    -- "base64" string
-    str = from_base64(str)
-    length = string.len(str)
-  elseif type(str) == 'string' and encoding == 'hex' then
-    if string.len(str) % 2 ~= 0 then
+  encoding = string.lower(encoding)
+  
+  local raw, arr, hex, size
+  if type(arg) == 'number' then
+    size = arg
+  elseif type(arg) ~= 'string' then
+    -- assume an array
+    arr = arg
+  elseif encoding == 'binary' then
+    raw = tm.str_to_binary(arg)
+  elseif encoding == 'ascii' then
+    raw = tm.str_to_ascii(arg)
+  elseif encoding == 'utf8' or encoding == 'utf-8' then
+    raw = tm.str_to_utf8(arg)
+  elseif encoding == 'ucs2' or encoding == 'ucs-2' or encoding == 'utf16le' or encoding == 'utf-16le' then
+    raw = tm.str_to_utf16le(arg)
+  elseif encoding == 'base64' then
+    raw = from_base64(arg)
+  elseif encoding == 'hex' then
+    if string.len(arg) % 2 ~= 0 then
       error(js_new(global.TypeError, 'Invalid hex string.'))
     end
-    -- Remove first occurrance of invalid char until end of string
-    str = string.lower(string.gsub(str, '[^a-fA-F0-9].*', ''))
-    length = string.len(str) / 2
-  end
-
-  this = {}
-  local buf = tm.buffer_create(length)
-  _of_buffer(this, buf, length)
-
-  -- Lua internally uses a "binary" encoding, that is,
-  -- operates on (1-indexable) 8-bit values.
-
-  if type(str) == 'string' and encoding == 'hex' then
-    -- "hex" string
-    for i = 1, #str, 2 do
-      this[(i - 1)/2] = tonumber(string.sub(str, i, i+1), 16)
-    end
-  elseif type(str) == 'string' then
-    -- "binary" string
-    for i = 1, #str do
-      this[i - 1] = string.byte(str, i)
-    end
+    hex = string.lower(string.gsub(arg, '[^a-fA-F0-9].*', ''))
   else
-    -- array
-    for i = 1, str.length do
-      this[i - 1] = str[i - 1]
+    error(js_new(global.TypeError, 'Unknown encoding: ' + encoding));
+  end
+  
+  if type(size) == 'number' then
+    -- all set
+  elseif arr then
+    size = arr.length
+  elseif hex then
+    size = #hex / 2
+  else
+    size = #raw
+  end
+  
+  this = {}
+  local buf = tm.buffer_create(size)
+  _of_buffer(this, buf, size)
+  if arr then
+    for i = 1, size do
+      this[i - 1] = arr[i - 1]
+    end
+  elseif hex then
+    for i = 1, #hex, 2 do
+      this[(i - 1)/2] = tonumber(string.sub(hex, i, i+1), 16)
+    end
+  elseif raw then
+    for i = 1, size do
+      this[i - 1] = string.byte(raw, i)
     end
   end
-
   return this
 end
 
