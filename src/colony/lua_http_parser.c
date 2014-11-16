@@ -278,7 +278,7 @@ static int lhttp_parser_execute (lua_State *L) {
   size_t length;
   size_t nparsed;
 
-  chunk = colony_toconstdata(L, 2, &chunk_len);
+  chunk = (const char*) colony_toconstdata(L, 2, &chunk_len);
 
   offset = luaL_checkint(L, 3);
   length = luaL_checkint(L, 4);
