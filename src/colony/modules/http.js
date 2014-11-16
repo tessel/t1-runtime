@@ -170,7 +170,7 @@ function IncomingMessage (type, socket) {
   }
   function _handleData(d) {
     if (self.socket) {
-       var nparsed = parser.execute(d.toString('binary'), 0, d.length);
+      var nparsed = parser.execute(d, 0, d.length);
       if (self._upgrade) self.emit('_upgrade', d.slice(nparsed));
       else if (nparsed !== d.length) _emitError();
     }
