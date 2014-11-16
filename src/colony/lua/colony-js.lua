@@ -1606,7 +1606,10 @@ date_proto.toLocaleDateString = function () return ''; end
 date_proto.toLocaleString = function () return ''; end
 date_proto.toLocaleTimeString = function () return ''; end
 date_proto.toTimeString = function () return ''; end
-date_proto.toUTCString = function () return ''; end
+
+date_proto.toUTCString = function ()
+  return os.date('!%a, %d %h %Y %H:%M:%S GMT', getmetatable(this).date/1e6)
+end
 
 global.Date.now = function ()
   return math.floor(tonumber(tm.timestamp()/1e3)) or 0
