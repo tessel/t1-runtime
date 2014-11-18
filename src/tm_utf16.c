@@ -41,7 +41,6 @@ size_t tm_str_from_utf16le (const uint8_t* _utf16, size_t _utf16_len, const uint
     buf_pos += tm_utf8_encode(buf + buf_pos, 3, uchar);
     utf16_pos += 1;
   }
-  buf[buf_pos++] = '\0';      // manually add null byte (just for consistency with other encodings)
   *dstptr = buf;
   return buf_pos;
 }
