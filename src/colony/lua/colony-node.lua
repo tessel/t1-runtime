@@ -186,7 +186,7 @@ function from_base64(to_decode)
     local char = string.sub(to_decode, i, i)
     local offset, _ = string.find(index_table, char)
     if offset == nil then
-      error(js_new(global.Error, "Invalid character '" .. char .. "' found."))
+      error(js_new(global.Error, "Invalid character '" .. tm.str_from_binary(char) .. "' found."))
     end
 
     bit_pattern = bit_pattern .. string.sub(to_binary(offset-1), 3)
