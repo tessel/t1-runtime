@@ -71,7 +71,7 @@ size_t tm_str_to_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t ** cons
   size_t buf_pos = 0;
   while (buf_pos < buf_len) {
     uint32_t uchar;
-		buf_pos += tm_utf8_decode(buf + buf_pos, buf_len - buf_pos, &uchar);
+    buf_pos += tm_utf8_decode(buf + buf_pos, buf_len - buf_pos, &uchar);
     assert(uchar != TM_UTF8_DECODE_ERROR);     // internal strings should never be malformed, 0xFFFD replacement increases length
     // NOTE: this follows new behavior http://blog.nodejs.org/2014/06/16/openssl-and-breaking-utf-8-change/
     if (hchar) {
