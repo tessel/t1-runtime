@@ -13,13 +13,13 @@
 
 #include <ctype.h>
 
+#include "tm.h"
 #include "colony.h"
 #include "regalone.h"
 #include "regex.h"
 
-
 #ifdef REGEX_WCHAR
-# define chr  wchar_t
+# define chr  REGEX_WCHAR
 # define re_comp  re_wcomp
 # define re_exec  re_wexec
 #else
@@ -28,28 +28,30 @@
 
 // Lua is using ascii. We are too, until we have real usc2 functions.
 
-static chr* _toregexstr (const char *input, size_t input_len, chr *output, size_t* output_len)
+static chr* _toregexstr (const char *input, size_t input_len, size_t* output_len)
 {
   #ifdef REGEX_WCHAR
-    *output_len = mbstowcs(output, input, input_len);
+    uint8_t* output = NULL;
+    *output_len = tm_str_to_utf16((const uint8_t *) input, input_len, (const uint8_t **) &output, TM_ENDIAN_HOST);
+    *output_len /= 2;
+    return (chr*) output;
   #else
+    uint8_t* output = calloc(1, input_len);
     *output_len = memcpy(output, input, input_len);
+    return output;
   #endif
-  return output;
 }
 
 static chr* toregexstr (const char *input, size_t input_len, size_t* output_len)
 {
-  chr* output = (chr*) calloc(1, input_len * sizeof(chr));
-  return _toregexstr(input, input_len, output, output_len);
+  return _toregexstr(input, input_len, output_len);
 }
 
 static const chr* lua_toregexstr (lua_State* L, int pos, size_t* buflen)
 {
   size_t patt_len = 0;
   const char *patt = lua_tolstring(L, pos, &patt_len);
-  chr *mbpatt = (chr *) lua_newuserdata(L, (patt_len+1) * sizeof(chr));
-  return _toregexstr(patt, patt_len, mbpatt, buflen);
+  return _toregexstr(patt, patt_len, buflen);
 }
 
 
@@ -105,7 +107,7 @@ static int l_re_comp (lua_State* L)
   regex_t* cre = (regex_t*) lua_touserdata(L, 1);
   int flags = (int) lua_tonumber(L, 3);
 
-  const wchar_t* patt = lua_toregexstr(L, 2, &pattlen);
+  const chr* patt = lua_toregexstr(L, 2, &pattlen);
   int rc = re_comp(cre, patt, pattlen, flags);
 
   lua_pushnumber(L, rc);

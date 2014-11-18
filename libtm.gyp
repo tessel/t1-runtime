@@ -26,7 +26,7 @@
       "product_name": "hsregex",
       "type": "static_library",
       "defines": [
-        'REGEX_WCHAR',
+        'REGEX_WCHAR=uint16_t',
         'REGEX_STANDALONE',
         '_NDEBUG'
       ],
@@ -56,7 +56,7 @@
           '<(hsregex_path)/src'
         ],
         'defines': [
-          'REGEX_WCHAR'
+          'REGEX_WCHAR=uint16_t'
         ]
       }
     },
