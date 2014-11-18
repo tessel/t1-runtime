@@ -25,23 +25,23 @@ size_t tm_str_to_utf16le (const uint8_t* buf, size_t buf_len, const uint8_t ** c
     utf16_len += 1;
   }
   *dstptr = (uint8_t*) utf16;
-  return utf16_len;
+  return (utf16_len << 1) - 1;        // include only single null *byte* (for consistency with others)
 }
 
-size_t tm_str_from_utf16le (const uint8_t* utf16, size_t utf16_len, const uint8_t ** const dstptr) {
-  size_t buf_len = utf16_len;
-  // TODO: figure out actual length needed? (typically a right-size copy is made into Lua anyway though…)
-  buf_len *= 3;     // HACK: each incoming codepoint could require up to 3 bytes to represent
-  uint8_t* buf = malloc(buf_len);
+size_t tm_str_from_utf16le (const uint8_t* _utf16, size_t _utf16_len, const uint8_t ** const dstptr) {
+  const uint16_t* utf16 = (const uint16_t*) _utf16;
+  size_t utf16_len = _utf16_len >> 1;
+  
+  uint8_t* buf = calloc(utf16_len, 3);      // each incoming codepoint could require up to 3 bytes to represent
   
   size_t buf_pos = 0;
   size_t utf16_pos = 0;
   while (utf16_pos < utf16_len) {
-    assert(buf_pos < buf_len);
     uint16_t uchar = utf16[utf16_pos];
     buf_pos += tm_utf8_encode(buf + buf_pos, 3, uchar);
     utf16_pos += 1;
   }
+  buf[buf_pos++] = '\0';      // manually add null byte (just for consistency with other encodings)
   *dstptr = buf;
   return buf_pos;
 }
