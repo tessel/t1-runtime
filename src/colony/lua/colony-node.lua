@@ -308,9 +308,9 @@ local buffer_proto = js_obj({
     elseif encoding == 'utf8' or encoding == 'utf-8' then
       return tm.str_from_utf8(buf);
     elseif encoding == 'ucs2' or encoding == 'ucs-2' or encoding == 'utf16le' or encoding == 'utf-16le' then
-      return tm.str_from_utf16le(buf)
+      return tm.str_from_utf16le(buf);
     elseif encoding == 'base64' then
-      return to_base64(buf);
+      return tm.str_from_binary(to_base64(buf));
     elseif encoding == 'hex' then
       local str = string.gsub(buf, '(.)', function (c)
         return string.format('%02x', string.byte(c));
@@ -505,7 +505,7 @@ local function Buffer (this, arg, encoding)
   elseif encoding == 'ucs2' or encoding == 'ucs-2' or encoding == 'utf16le' or encoding == 'utf-16le' then
     raw = tm.str_to_utf16le(arg)
   elseif encoding == 'base64' then
-    raw = from_base64(arg)
+    raw = from_base64(tm.str_to_binary(arg))
   elseif encoding == 'hex' then
     if string.len(arg) % 2 ~= 0 then
       error(js_new(global.TypeError, 'Invalid hex string.'))
