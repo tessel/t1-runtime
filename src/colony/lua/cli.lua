@@ -44,4 +44,5 @@ end
 
 colony.global:setImmediate(function ()
 	colony.run(p)
+	colony.global.process:emit('_script_running');
 end)
