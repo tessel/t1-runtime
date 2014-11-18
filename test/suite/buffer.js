@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(70);
+tap.count(96);
 
 function arreq (a, b) {
 	if (a.length != b.length) {
@@ -164,19 +164,43 @@ console.log('#', new Buffer('hello world').toString('hex'))
 console.log('#', new Buffer(new Buffer('hello world').toString('hex'), 'hex'))
 
 var b = new Buffer([0, 0x41, 0x82, 0x104]);
-tap.eq(b.toString('binary'), "\u0000\u0041\u0082\u0004");
-tap.eq(b.toString('ascii'), "\u0000\u0041\u0002\u0004");
-tap.eq(b.toString('utf8'), "\u0000\u0041\uFFFD\u0004");
-tap.eq(b.toString('utf16le'), "\u4100\u0482");
+tap.eq(b.length, 4, "array ingested");
+tap.eq(b[0], 0x00);
+tap.eq(b[1], 0x41);
+tap.eq(b[2], 0x82);
+tap.eq(b[3], 0x04);
+tap.eq(b.toString('binary'), "\u0000\u0041\u0082\u0004", "binary toString");
+tap.eq(b.toString('binary').length, 4);
+tap.eq(b.toString('ascii'), "\u0000\u0041\u0002\u0004", "ascii toString");
+tap.eq(b.toString('ascii').length, 4);
+tap.eq(b.toString('utf8'), "\u0000\u0041\uFFFD\u0004", "utf8 toString");
+tap.eq(b.toString('utf8').length, 4);
+tap.eq(b.toString('utf16le'), "\u4100\u0482", "utf16le toString");
+tap.eq(b.toString('utf16le').length, 2);
+tap.eq(b.toString('ucs2').length, 2);
+tap.eq(b.toString('base64'), "AEGCBA==", "base64 toString");
+tap.eq(b.toString('base64').length, 8);
+tap.eq(b.toString('hex'), "00418204", "hex toString");
+tap.eq(b.toString('base64').length, 8);
 
-tap.eq(Buffer("\u8182", 'utf8')[3], 0x82);
+tap.eq(Buffer("\u8182", 'utf8')[2], 0x82, "buffer from utf8");
 tap.eq(Buffer("\u8182", 'utf8').length, 3);
-tap.eq(Buffer("\u8182", 'ascii')[0], 0x82);
+tap.eq(Buffer("\u8182", 'ascii')[0], 0x82, "buffer from ascii");
 tap.eq(Buffer("\u8182", 'ascii').length, 1);
-tap.eq(Buffer("\u8182", 'binary')[0], 0x82);
+tap.eq(Buffer("\u8182", 'binary')[0], 0x82, "buffer from binary");
 tap.eq(Buffer("\u8182", 'binary').length, 1);
-tap.eq(Buffer("\u8182", 'utf16le')[1], 0x81);
+tap.eq(Buffer("\u8182", 'utf16le')[1], 0x81, "buffer from utf16le");
 tap.eq(Buffer("\u8182", 'utf16le').length, 2);
+tap.eq(Buffer("\u8182", 'ucs2')[1], 0x81);
+tap.eq(Buffer("\u8182", 'base64').length, 0, "buffer from [bad] base64");
+var threw;
+try {
+  Buffer("\u8182", 'hex');
+} catch (e) {
+  threw = e;
+}
+tap.ok(threw, "buffer from [bad] hex");
+
 
 // write
 var buf = new Buffer(256);
