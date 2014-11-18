@@ -2,10 +2,6 @@
 
 This is the runtime and JavaScript engine that runs on Tessel, built on Lua's VM. It can be run independently on PC or embedded.
 
-```
-git clone --recursive https://github.com/tessel/runtime.git
-```
-
 Building the firmware requires [gyp](https://code.google.com/p/gyp/), and [ninja](http://martine.github.io/ninja/), and [gcc-arm-embedded](https://launchpad.net/gcc-arm-embedded) when building for embedded.
 
 #### OS X
@@ -27,17 +23,19 @@ sudo apt-get install git nodejs npm nodejs-legacy gyp ninja-build
 sudo apt-get install gcc-arm-none-eabi # to build for embedded
 ```
 
-## Building
+## Building (PC or Embedded)
 
 ```
-npm install
-npm install -g colony-compiler
+git clone https://github.com/tessel/runtime.git
+cd runtime
+make update
 make colony
-npm link --local
 make test
 ```
 
-You can now run code on your PC using `colony` from your command line (e.g. `colony hello-world.js`). For building firmware, please see the [firmware building instructions](https://github.com/tessel/firmware).
+To link globally, run `npm link --local`. You can now run code on your PC using `colony` from your command line (e.g. `colony hello-world.js`). For building firmware, please see the [firmware building instructions](https://github.com/tessel/firmware).
+
+**Troubleshooting:** If you're updating and have the error `fatal: destination path 'deps/colony-luajit' already exists and is not an empty directory.`, run `rm -rf deps/colony-luajit && make update`.
 
 ## Documentation for C
 
