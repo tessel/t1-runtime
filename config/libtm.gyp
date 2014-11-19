@@ -184,12 +184,12 @@
         {
           'action_name': '<(_target_name)_compile',
           'inputs': [
-            'deps/cacert/certdata.new'
+            '../deps/cacert/certdata.new'
           ],
           'outputs': [
             '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c',
           ],
-          'action': [ 'tools/compile_certs.js', '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c', '<(_target_name)', '<@(_inputs)' ],
+          'action': [ '<(tools_path)/compile_certs.js', '<(SHARED_INTERMEDIATE_DIR)/<(_target_name).c', '<(_target_name)', '<@(_inputs)' ],
         },
       ]
     },
@@ -427,11 +427,11 @@
       'cflags': [ '-Wall', '-Wextra', '-Werror' ],
       "sources": [
         "<(axtls_inc_path)/crypto_misc.c",
-        'src/tm_ssl.c',
+        '<(runtime_path)/tm_ssl.c',
         '<(SHARED_INTERMEDIATE_DIR)/cacert_bundle.c',
       ],
       "include_dirs": [
-        'src/',
+        '<(runtime_path)/',
       ],
       "dependencies": [
         "axtls",
@@ -456,11 +456,11 @@
         '-std=c99',
       ],
       'sources': [
-        'src/std.cpp',
-        'src/tm_json.cpp',
+        '<(runtime_path)/std.cpp',
+        '<(runtime_path)/tm_json.cpp',
       ],
       "include_dirs": [
-        'src/',
+        '<(runtime_path)/',
       ],
       'dependencies': [
         "rapidjson",
@@ -479,14 +479,14 @@
         ['OS=="arm"', {
           "sources": [
             '<(c_ares_path)/inet_addr.c',
-            'src/vfs/vfs.c',
-            'src/vfs/vfs_tar.c',
+            '<(runtime_path)/vfs/vfs.c',
+            '<(runtime_path)/vfs/vfs_tar.c',
           ],
         }],
         ['OS!="arm"', {
           "sources": [
-            'src/posix/tm_net.c',
-            'src/posix/tm_fs.c',
+            '<(runtime_path)/posix/tm_net.c',
+            '<(runtime_path)/posix/tm_fs.c',
           ]
         }],
         ['enable_ssl==1', {
@@ -496,17 +496,17 @@
         }],
       ],
       'sources': [
-        'src/dlmallocfork.c',
-        'src/tm_buffer.c',
-        'src/tm_itoa.c',
-        'src/tm_log.c',
-        'src/tm_random.c',
-        'src/tm_deflate.c',
-        'src/tm_str.c',
-        'src/tm_utf8.c'
+        '<(runtime_path)/dlmallocfork.c',
+        '<(runtime_path)/tm_buffer.c',
+        '<(runtime_path)/tm_itoa.c',
+        '<(runtime_path)/tm_log.c',
+        '<(runtime_path)/tm_random.c',
+        '<(runtime_path)/tm_deflate.c',
+        '<(runtime_path)/tm_str.c',
+        '<(runtime_path)/tm_utf8.c'
       ],
       "include_dirs": [
-        'src/',
+        '<(runtime_path)/',
       ],
       'dependencies': [
         "http_parser",
@@ -521,7 +521,7 @@
       ],
       'direct_dependent_settings': {
         'include_dirs': [
-          'src/',
+          '<(runtime_path)/',
         ]
       }
     },

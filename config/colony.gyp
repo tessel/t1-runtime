@@ -10,7 +10,7 @@
       "type": "executable",
       'cflags': [ '-Wall', '-Wextra', '-Werror' ],
       "sources": [
-        'src/colony/cli.c',
+        '<(runtime_path)/colony/cli.c',
       ],
       'xcode_settings': {
         'OTHER_LDFLAGS': [
@@ -18,8 +18,8 @@
         ],
       },
       "include_dirs": [
-        'src/',
-        'src/colony/',
+        '<(runtime_path)/',
+        '<(runtime_path)/colony/',
         "<(colony_lua_path)/src",
       ],
       "dependencies": [

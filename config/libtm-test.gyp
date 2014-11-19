@@ -9,10 +9,10 @@
       "product_name": "libtm-test",
       "type": "executable",
       "sources": [
-        'test/tm/test.c'
+        '../test/tm/test.c'
       ],
       "include_dirs": [
-        'src/',
+        '<(runtime_path)/src',
       ],
       "dependencies": [
         "libtm.gyp:libtm",
