@@ -1462,7 +1462,7 @@ global.isFinite = function(this, arg)
 end
 
 global.isNaN = function (this, arg)
-  return arg ~= arg -- nan != nan
+  return tonumbervalue(arg) ~= tonumbervalue(arg) -- nan != nan
 end
 
 global.parseFloat = function (ths, str)
