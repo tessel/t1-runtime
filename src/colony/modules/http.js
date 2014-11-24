@@ -424,10 +424,7 @@ function _getPool(agent, opts) {
   function addSocket() {
     var socket = agent._createConnection(opts);
 
-    socket.on('close', function(){
-      handleDead();
-      socket.destroy();
-    });
+    socket.on('close', handleDead);
     socket.on('_free', handleFree);
     socket.once('agentRemove', function () {
       socket.removeListener('close', handleDead);
@@ -435,7 +432,10 @@ function _getPool(agent, opts) {
       removeSocket(socket);
     });
     
-    function handleDead() { removeSocket(socket); }
+    function handleDead() { 
+      removeSocket(socket);
+      socket.destroy(); 
+    }
     function handleFree() { updateSocket(socket); }
     
     return socket;
