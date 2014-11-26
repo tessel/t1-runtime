@@ -62,7 +62,7 @@ const char* colony_tolutf8 (lua_State* L, int index, size_t* res_len)
 {
   size_t str_len;
   const uint8_t* str = (const uint8_t*) lua_tolstring(L, index, &str_len);
-  
+
   const uint8_t* utf8;
   size_t utf8_len = tm_str_to_utf8(str, str_len + 1, &utf8) - 1;    // compensate for NUL byte at end
   lua_pushlstring(L, (const char*) utf8, utf8_len);
@@ -168,7 +168,7 @@ static int l_tm_udp_send (lua_State* L)
   const uint8_t* buf = colony_toconstdata(L, 4, &len);
 
   int err = tm_udp_send(socket, addr, port, buf, &len);
-  
+
   lua_pushnumber(L, err);
   return 1;
 }
@@ -245,7 +245,7 @@ static int l_tm_tcp_write (lua_State* L)
   size_t len;
   const uint8_t* buf = colony_toconstdata(L, 2, &len);
   if (buf == NULL) return -1;
-  
+
   int err = tm_tcp_write(socket, buf, &len);
 
   lua_pushnumber(L, err);
@@ -261,7 +261,7 @@ static int l_tm_tcp_read (lua_State* L)
   size_t buf_len = sizeof(buf);
   int err = tm_tcp_read(socket, buf, &buf_len);
   (void) err;
-  
+
   colony_pushbuffer(L, buf, buf_len);
   return 1;
 }
@@ -411,7 +411,7 @@ static int l_tm_ssl_read (lua_State* L)
   size_t buf_len = sizeof(buf);
   int err = tm_ssl_read(session, buf, &buf_len);
   (void) err;
-  
+
   colony_pushbuffer(L, buf, buf_len);
   return 1;
 }
@@ -502,7 +502,7 @@ static int l_tm_buffer_set (lua_State *L)
   uint8_t *ud = (uint8_t *) lua_touserdata(L, 1);
   size_t index = (size_t) lua_tonumber(L, 2);
   double newvalue = (double) lua_tonumber(L, 3);
-  
+
   if (newvalue < 0) {
     ud[index] = 0x100 - (((uint32_t) -newvalue) % 0x100);
   } else {
@@ -645,13 +645,33 @@ static int l_tm_buffer_write_double (lua_State *L)
 static int l_tm_buffer_fill (lua_State *L)
 {
   uint8_t *a = (uint8_t *) lua_touserdata(L, 1);
-  uint8_t value = (uint8_t) lua_tonumber(L, 2);
   int start = (int) lua_tonumber(L, 3);
   int end = (int) lua_tonumber(L, 4);
 
-  for (int i = start; i < end; i++) {
-    a[i] = value;
+  if (lua_isnumber(L, 2)) {
+    uint8_t value = (uint8_t) lua_tonumber(L, 2);
+    memset(a + start, value, end - start);
+    return 0;
   }
+
+  int len = (int) lua_objlen(L, 2);
+
+  if (len == 0) {
+    memset(a + start, 0, end - start);
+    return 0;
+  }
+
+  const char *source = lua_tostring(L, 2);
+
+  while (start < end - len) {
+    memcpy(a + start, source, len);
+    start += len;
+  }
+
+  if (start < end) {
+    memcpy(a + start, source, end - start);
+  }
+
   return 0;
 }
 
@@ -1146,7 +1166,7 @@ static int l_tm_paramname (lua_State *L)
   luaL_argcheck(L, lua_gettop(L) == 2, 2, "expecting two arguments");
   luaL_checktype(L, 1, LUA_TFUNCTION);
   size_t param = lua_tonumber(L, 2) + 1;
-  
+
   GCfunc *fn = funcV(L->top-2);
   const char *name = NULL;
   BCIns *ip = proto_bc(funcproto(fn));
@@ -1165,7 +1185,7 @@ static int l_tm_paramname (lua_State *L)
 
 #include <approxidate.h>
 
-static int l_tm_approxidate_milli (lua_State *L) 
+static int l_tm_approxidate_milli (lua_State *L)
 {
   char* date_string = (char*)colony_toutf8(L, 1);
 
@@ -1382,13 +1402,13 @@ LUALIB_API int luaopen_tm (lua_State *L)
     // unicode
     { "str_to_utf8", l_tm_str_to_utf8 },
     { "str_from_utf8", l_tm_str_from_utf8 },
-    
+
     // internal string manipulation
     { "str_codeat", l_tm_str_codeat },
     { "str_fromcode", l_tm_str_fromcode },
     { "str_lookup_JsToLua", l_tm_str_lookup_JsToLua },
     { "str_lookup_LuaToJs", l_tm_str_lookup_LuaToJs },
-    
+
     // deflate
     { "deflate_start", l_tm_deflate_start },
     { "deflate_write", l_tm_deflate_write },
