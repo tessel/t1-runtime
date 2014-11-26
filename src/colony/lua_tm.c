@@ -971,7 +971,7 @@ static int l_tm_str_to_utf16le (lua_State* L)
   const uint8_t* raw;
   size_t str_len;
   const char* str = lua_tolstring(L, 1, &str_len);
-  size_t raw_len = tm_str_to_utf16le((const uint8_t*) str, str_len + 1, &raw) - 1;    // compensate for NUL byte at end
+  size_t raw_len = tm_str_to_utf16((const uint8_t*) str, str_len + 1, &raw, LE) - 1;    // compensate for NUL byte at end
   lua_pushlstring(L, (const char*) raw, raw_len);
   if ((void*) raw != (void*) str) free((uint8_t*) raw);
   return 1;
@@ -982,7 +982,7 @@ static int l_tm_str_from_utf16le (lua_State* L)
   const char* str;
   size_t raw_len;
   const char* raw = lua_tolstring(L, 1, &raw_len);
-  size_t str_len = tm_str_from_utf16le((const uint8_t*) raw, raw_len, (const uint8_t**) &str);
+  size_t str_len = tm_str_from_utf16((const uint8_t*) raw, raw_len, (const uint8_t**) &str, LE);
   lua_pushlstring(L, str, str_len);
   if ((void*) str != (void*) raw) free((char*) str);
   return 1;
