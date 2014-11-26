@@ -17,6 +17,8 @@ endif
 compile = \
 	$(CCENV) gyp $(join config/, $(1)) --depth=. -f $(GYPTARGET) \
 		-D builtin_section=.rodata -D node_version=$(NODE_VERSION) \
+		-D compiler_path="$(shell pwd)/node_modules/colony-compiler/bin/colony-compiler.js" \
+		-D enable_luajit=$(ENABLE_LUAJIT) \
 		-D enable_ssl=$(ENABLE_TLS) -D enable_net=$(ENABLE_NET) &&\
 	ninja -C out/$(CONFIG)
 
