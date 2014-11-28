@@ -216,7 +216,7 @@ local buffer_proto = js_obj({
     if (not endoffset and endoffset ~= 0) or endoffset > sourceBufferLength then
       endoffset = sourceBufferLength
     end
-    tm.buffer_fill(sourceBuffer, tonumber(value), offset, endoffset)
+    tm.buffer_fill(sourceBuffer, value, offset, endoffset)
   end,
   slice = function (this, sourceStart, len)
     sourceStart = tonumber(sourceStart or 0) or 0
@@ -299,7 +299,7 @@ local buffer_proto = js_obj({
       encoding = 'utf8'
     end
     encoding = string.lower(encoding);
-    
+
     local buf = tm.buffer_tobytestring(getmetatable(this).buffer, offset, endOffset);
 
     if encoding == 'binary' then
@@ -321,7 +321,7 @@ local buffer_proto = js_obj({
         return string.format('%02x', string.byte(c));
       end)
       return str;
-    elseif  encoding == 'ucs2' or encoding == 'ucs-2' 
+    elseif  encoding == 'ucs2' or encoding == 'ucs-2'
       or encoding == 'utf16le' or encoding == 'utf-16le' then
       return error(js_new(global.NotImplementedError, 'Encoding not implemented yet: ' + encoding));
     else
