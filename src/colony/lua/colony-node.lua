@@ -216,7 +216,7 @@ local buffer_proto = js_obj({
     if (not endoffset and endoffset ~= 0) or endoffset > sourceBufferLength then
       endoffset = sourceBufferLength
     end
-    tm.buffer_fill(sourceBuffer, tonumber(value), offset, endoffset)
+    tm.buffer_fill(sourceBuffer, value, offset, endoffset)
   end,
   slice = function (this, sourceStart, len)
     sourceStart = tonumber(sourceStart or 0) or 0
