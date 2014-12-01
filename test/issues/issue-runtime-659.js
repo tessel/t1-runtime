@@ -10,15 +10,15 @@ tap.eq('aaaa', b.toString(), 'buffer contains "aaaa"');
 
 b = new Buffer(4);
 b.fill('ab');
-tap.eq('aaaa', b.toString(), 'buffer contains "aaaa"');
+tap.eq('abab', b.toString(), 'buffer contains "abab"');
 
 b = new Buffer(4);
 b.fill('abc');
-tap.eq('aaaa', b.toString(), 'buffer contains "aaaa"');
+tap.eq('abca', b.toString(), 'buffer contains "abca"');
 
 b = new Buffer(10);
 b.fill('abc');
-tap.eq('aaaaaaaaaa', b.toString(), 'buffer contains "aaaaaaaaaa"');
+tap.eq('abcabcabca', b.toString(), 'buffer contains "abcabcabca"');
 
 b = new Buffer([0x10, 0x20, 0x30, 0x40]);
 b.fill('');

@@ -672,24 +672,32 @@ static int l_tm_buffer_write_double (lua_State *L)
 static int l_tm_buffer_fill (lua_State *L)
 {
   uint8_t *a = (uint8_t *) lua_touserdata(L, 1);
-  int start = (int) lua_tonumber(L, 3);
+  int pos = (int) lua_tonumber(L, 3);
   int end = (int) lua_tonumber(L, 4);
 
   if (lua_isnumber(L, 2)) {
     uint8_t value = (uint8_t) lua_tonumber(L, 2);
-    memset(a + start, value, end - start);
+    memset(a + pos, value, end - pos);
     return 0;
   }
 
   int len = (int) lua_objlen(L, 2);
 
   if (len == 0) {
-    memset(a + start, 0, end - start);
+    memset(a + pos, 0, end - pos);
     return 0;
   }
 
   const char *source = lua_tostring(L, 2);
-  memset(a + start, source[0], end - start);
+
+  while (pos < end - len) {
+    memcpy(a + pos, source, len);
+    pos += len;
+  }
+
+  if (pos < end) {
+    memcpy(a + pos, source, end - pos);
+  }
 
   return 0;
 }
