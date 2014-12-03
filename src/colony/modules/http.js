@@ -276,6 +276,7 @@ function OutgoingMessage () {
       if (self._chunked) {
         self._outbox.write('0\r\n'+self._trailer+'\r\n');
       }
+      self._outbox.end();
     }
   });
 }
@@ -288,7 +289,11 @@ OutgoingMessage.prototype._assignSocket = function (socket) {
   //       ClientRequest re-emits a public event asyncronously.
   this.emit('_socket-SYNC', socket);
   this._socket = socket;
-  this._outbox.pipe(socket);
+  var self = this;
+  self._outbox.pipe(socket, {end:false});
+  self._outbox.on('end', function () {
+      self._outbox.unpipe(socket);
+  });
   // TODO: setTimeout/setNoDelay/setSocketKeepAlive
 };
 
@@ -451,9 +456,9 @@ function _getPool(agent, opts) {
         freeSockets.push(socket);
       } else {
         socket.end();
+        socket.destroy();     // TODO: why is this even necessary??!
       }
       removeSocket(socket);
-      socket.destroy();
     }
   }
   
