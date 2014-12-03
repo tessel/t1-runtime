@@ -288,7 +288,7 @@ OutgoingMessage.prototype._assignSocket = function (socket) {
   //       ClientRequest re-emits a public event asyncronously.
   this.emit('_socket-SYNC', socket);
   this._socket = socket;
-  this._outbox.pipe(socket);
+  this._outbox.pipe(socket, {end:false});
   // TODO: setTimeout/setNoDelay/setSocketKeepAlive
 };
 
