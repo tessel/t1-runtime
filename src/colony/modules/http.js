@@ -451,9 +451,9 @@ function _getPool(agent, opts) {
         freeSockets.push(socket);
       } else {
         socket.end();
+        socket.destroy();     // TODO: why is this even necessary??!
       }
       removeSocket(socket);
-      socket.destroy();
     }
   }
   
