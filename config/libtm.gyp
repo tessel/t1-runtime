@@ -497,7 +497,6 @@
       ],
       'sources': [
         '<(runtime_path)/dlmallocfork.c',
-        '<(runtime_path)/tm_buffer.c',
         '<(runtime_path)/tm_itoa.c',
         '<(runtime_path)/tm_log.c',
         '<(runtime_path)/tm_random.c',
