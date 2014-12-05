@@ -472,8 +472,7 @@ TCPSocket.prototype.__close = function (tryToClose) {
 
     if (ret < 0 && ret != -tm.ENOTCONN) { // -57 is inactive, socket has already been closed
       if (retries > 3) {
-        // tried 3 times and couldn't close, error out
-        self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+ret));
+        // tried 3 times and couldn't close
         self.emit('close');
       } else {
         retries++;
