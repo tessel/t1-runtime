@@ -372,7 +372,7 @@ function Agent (opts) {
   opts = util._extend({
     keepAlive: false,
     keepAliveMsecs: 1000,
-    maxSockets: Infinity,
+    maxSockets: 1,
     maxFreeSockets: 1   // NOTE: node has `256`
   }, opts);
   
