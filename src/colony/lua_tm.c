@@ -120,7 +120,7 @@ static int l_tm_log(lua_State* L)
 {
   const char level = lua_tonumber(L, 1);
   size_t buf_len = 0;
-  const char* buf = (const char*) colony_tolutf8(L, 2, &buf_len);
+  const char* buf = (const char*) colony_toconstdata(L, 2, &buf_len);
   tm_log(level, buf, buf_len);
   return 0;
 }
