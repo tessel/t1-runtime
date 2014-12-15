@@ -110,7 +110,7 @@ static int lhttp_parser_on_url(http_parser *p, const char *at, size_t length) {
     return 0;
   };
   /* Push the string argument */
-  lua_pushlstring(L, at, length);
+  colony_pushbuffer(L, (const uint8_t*) at, length);
 
   lua_call(L, 1, 1);
 
@@ -132,7 +132,7 @@ static int lhttp_parser_on_header_field(http_parser *p, const char *at, size_t l
     return 0;
   };
   /* Push the string argument */
-  lua_pushlstring(L, at, length);
+  colony_pushbuffer(L, (const uint8_t*) at, length);
 
   lua_call(L, 1, 1);
 
@@ -154,7 +154,7 @@ static int lhttp_parser_on_header_value(http_parser *p, const char *at, size_t l
     return 0;
   };
   /* Push the string argument */
-  lua_pushlstring(L, at, length);
+  colony_pushbuffer(L, (const uint8_t*) at, length);
 
   lua_call(L, 1, 1);
 
@@ -176,7 +176,7 @@ static int lhttp_parser_on_body(http_parser *p, const char *at, size_t length) {
     return 0;
   };
   /* Push the string argument */
-  lua_pushlstring(L, at, length);
+  colony_pushbuffer(L, (const uint8_t*) at, length);
 
   lua_call(L, 1, 1);
 
