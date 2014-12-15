@@ -127,11 +127,13 @@ function IncomingMessage (type, socket) {
       self.url = url;
     }),
     onHeaderField: parserCallback(function (field) {
+      field = field.toString();
       var arr = (self._headersComplete) ? self.rawTrailers : self.rawHeaders;
       if (arr.length + 1 > self._maxRawHeaders) return;
       arr.push(field);
     }),
     onHeaderValue: parserCallback(function (value) {
+      value = value.toString();
       var arr = (self._headersComplete) ? self.rawTrailers : self.rawHeaders,
         key = arr[arr.length - 1].toLowerCase();
       if (arr.length + 1 > self._maxRawHeaders) return;

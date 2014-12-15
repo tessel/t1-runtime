@@ -71,7 +71,7 @@ const char* colony_tolutf8 (lua_State* L, int index, size_t* res_len)
   return lua_tolstring(L, index, res_len);
 }
 
-inline const char* colony_toutf8 (lua_State* L, int index)
+const char* colony_toutf8 (lua_State* L, int index)
 {
   return colony_tolutf8(L, index, NULL);
 }
@@ -85,7 +85,7 @@ void colony_pushlutf8 (lua_State* L, const char* utf8, size_t utf8_len)
   if (str != utf8) free((char*) str);
 }
 
-inline void colony_pushutf8 (lua_State* L, const char* utf8)
+void colony_pushutf8 (lua_State* L, const char* utf8)
 {
   colony_pushlutf8(L, utf8, strlen(utf8));
 }
