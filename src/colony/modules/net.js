@@ -14,7 +14,7 @@ var tm = process.binding('tm');
 
 var util = require('util');
 var dns = require('dns');
-var Stream = require('stream');
+var stream = require('stream');
 var tls = require('tls');
 
 /**
@@ -40,8 +40,10 @@ function toNumber(x) { return (x = Number(x)) >= 0 ? x : false; }
  * TCPSocket
  */
 
+// TODO: this will need to inherit from Socket too
+
 function TCPSocket (socket, _secure) {
-  Stream.Duplex.call(this);
+  stream.Duplex.call(this);
   
   if (typeof socket === 'object') {
     this.socket = socket.fd;
@@ -74,7 +76,7 @@ function TCPSocket (socket, _secure) {
   process.on('tcp-close', this._closehandler)
 }
 
-util.inherits(TCPSocket, Stream.Duplex);
+util.inherits(TCPSocket, stream.Duplex);
 
 TCPSocket._portsUsed = Object.create(null);
 
