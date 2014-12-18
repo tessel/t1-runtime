@@ -6,20 +6,8 @@ var util = require('util'),
     connect = require('net').connect;
 
 /**
- * Socket
+ * Temporary tunnel globals
  */
-
-function Socket(opts) {
-  stream.Duplex.call(this, opts);
-}
-util.inherits(Socket, stream.Duplex);
-
-
-
-/**
- * ProxiedSocket
- */
- 
  
 function createTunnel(tokenServer, proxyServer, cb) {
   var streamplex = require('streamplex');
@@ -57,16 +45,48 @@ createTunnel({port:5006}, {port:5005}, function (e, _tunnel) {
     emitter.emit('ready');
 });
 
+
+/**
+ * Socket
+ */
+
+function Socket(opts) {
+  stream.Duplex.call(this, opts);
+}
+util.inherits(Socket, stream.Duplex);
+
+
+/**
+ * ProxiedSocket
+ */
+
+function ProxiedSocketConstructor() {
+    return tunnel.createStream();
+}
+
+
 function ProxiedSocket(opts) {
-  return tunnel.createStream();
+    Socket.call(this);
 }
 util.inherits(ProxiedSocket, Socket);
 
-module.exports = emitter;
+ProxiedSocket.prototype.connect = function (port, host, cb) {
+    if (typeof host === 'function') {
+        cb = host;
+        host = null;      // 'localhost' not useful here…
+    }
+    // NOTE: avoid sending garbage, but proxy must still guard itself properly!
+    if (typeof host !== 'string') throw Error("Host string must be provided");
+    if (typeof port !== 'number') throw Error("Port number must be provided");
+    this.remoteEmit('_pls_connect', port, host);
+    if (cb) this.on('connect', cb);
+};
 
-exports.createConnection = function (opts, cb) {
-  var socket = new ProxiedSocket();
-  if (cb) socket.on('connect', cb);
+
+exports = module.exports = emitter;
+
+exports.createConnection = function (port, host, cb) {
+  var socket = new ProxiedSocketConstructor();
   ProxiedSocket.prototype.connect.apply(socket, arguments);
   return socket;
 };
