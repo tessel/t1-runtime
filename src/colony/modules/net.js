@@ -16,7 +16,7 @@ var util = require('util');
 var dns = require('dns');
 var stream = require('stream');
 var tls = require('tls');
-var net_proxied = require('net_proxied');
+//var net_proxied = require('net_proxied');
 
 
 /**
@@ -42,42 +42,66 @@ function toNumber(x) { return (x = Number(x)) >= 0 ? x : false; }
  * Socket
  */
 
-function Socket(socket, _secure) {
-  // NOTE: this implements a "class cluster" pattern
-  //       Do *not* call this from subclasses! use `Socket._Constructor` instead
+function Socket(opts) {
+  //if (!(this instanceof Socket)) return new Socket(opts);
+  if (!(this instanceof TCPSocket)) return new TCPSocket(opts);
+  switch (typeof opts) {
+    case 'number':
+      opts = { fd: opts }; // Legacy interface.
+      break;
+    case 'undefined':
+      opts = {};
+      break;
+  }
+  stream.Duplex.call(this, opts);
   
-  if (net_proxied.tunnel) return net_proxied.tunnel.createStream();     // TODO: need on-demand (async!) tunnel, *and* per-target routing…
-  else return new TCPSocket(socket, _secure);
+  this._opts = opts;
+  this._secure  = opts._secure;
+  // TODO: finish core setup
 }
-Socket._Constructor = function () {     // actual 
-    stream.Duplex.call(this);
-};
 util.inherits(Socket, stream.Duplex);
 
+Socket.prototype._read = function () {};
+Socket.prototype._write = function (buf, enc, cb) {
+  throw Error("NOT READY!");
+  // NOTE: under node v0.12 we could simply call `this.cork()` in constructor and leave this unimplemented
+  // holds the chunk (without calling cb) until we know what type of socket we are (post-connect)
+  this._pending = {buf:buf, enc:enc, cb:cb};
+};
 
+Socket.prototype.connect = function (opts, cb) {
+  if (typeof opts !== 'object') {
+    var args = normalizeConnectArgs(arguments, this._secure);
+    return Socket.prototype.connect.apply(this, args);
+  }
+  
+  if (cb && this._secure) this.once('secureConnect', cb);
+  else if (cb) this.once('connect', cb);
+  
+  // TODO: convert to necessary subclass *HERE* based on configuration
+  // TODO: handle _pending stuff (or subclass responsibility?)
+  
+  this._connect(+opts.port, opts.host || "127.0.0.1", cb);
+  return this;
+};
+
+// TODO: what other "abstract" methods do we need?
 
 
 /**
  * TCPSocket
  */
 
-// TODO: this will need to inherit from Socket too
-
-function TCPSocket (socket, _secure) {
-  Socket._Constructor.call(this);
+function TCPSocket (opts) {
+  if (!(this instanceof TCPSocket)) return new TCPSocket(opts);
+  Socket.call(this, opts);
   
-  if (typeof socket === 'object') {
-    this.socket = socket.fd;
-    // TODO: respect readable/writable flags
-    if (socket.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
-  } 
-
-  this._secure = _secure;
   this._outgoing = [];
   this._sending = false;
   this._queueEnd = false;
-  this.socket = (socket === undefined) ? null : socket;
-
+  // TODO: this.socket should be this._socket — it is not public!
+  this.socket = (this._opts.fd === undefined) ? null : this._opts.fd;
+  
   var self = this;
 
   self.on('finish', function () {
@@ -111,52 +135,14 @@ TCPSocket._requestPort = function (port) {
   return port;
 };
 
-function normalizeConnectArgs(args) {
-  var options = {};
-
-  if (util.isObject(args[0])) {
-    // connect(options, [cb])
-    options = args[0];
-  } else if (isPipeName(args[0])) {
-    // connect(path, [cb]);
-    options.path = args[0];
-  } else {
-    // connect(port, [host], [cb])
-    options.port = args[0];
-    if (util.isString(args[1])) {
-      options.host = args[1];
-    }
-  }
-
-  var cb = args[args.length - 1];
-  return util.isFunction(cb) ? [options, cb] : [options];
-}
-
-TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
+TCPSocket.prototype._connect = function (port, host) {
   var self = this;
-
-  var args = normalizeConnectArgs(arguments);
-  var opts = args[0];
-  if (opts.allowHalfOpen) console.warn("Ignoring allowHalfOpen option.");
-  var port = +opts.port;
-  var host = opts.host || "127.0.0.1";
-  var cb = args[1];
   self.remotePort = port;
   self.remoteAddress = host;
   // TODO: proper value for these?
   self.localPort = 0;
   self.localAddress = "0.0.0.0";
-
-  if (cb) {
-    if (self._secure) {
-      self.once('secureConnect', cb);
-    }
-    else {
-      self.once('connect', cb);
-    }
-    
-  }
-
+  
   if (isIP(host)) {
     setUpConnection(host);
   } else {
@@ -555,19 +541,49 @@ TCPSocket.prototype.setNoDelay = function (val) {
   if (val) console.warn("Ignoring call to setNoDelay. TCP_NODELAY socket option not supported.");
 };
 
-function connect (port, host, callback) {
-  var client = new TCPSocket(null);
-  TCPSocket.prototype.connect.apply(client, arguments);
-  return client;
+
+function normalizeConnectArgs(args, _secure) {
+  var options = {};
+
+  if (util.isObject(args[0])) {
+    // connect(options, [cb])
+    options = args[0];
+  } else if (isPipeName(args[0])) {
+    // connect(path, [cb]);
+    options.path = args[0];
+  } else {
+    // connect(port, [host], [cb])
+    options.port = args[0];
+    if (util.isString(args[1])) {
+      options.host = args[1];
+    }
+  }
+  
+  if (_secure) {
+    var listArgs = args;
+    if (util.isObject(listArgs[1])) {
+      options = util._extend(options, listArgs[1]);
+    } else if (util.isObject(listArgs[2])) {
+      options = util._extend(options, listArgs[2]);
+    }
+  }
+  
+  var cb = args[args.length - 1];
+  return util.isFunction(cb) ? [options, cb] : [options];
+}
+
+function connect () {
+  var args = normalizeConnectArgs(arguments);
+  var s = new Socket(args[0]);
+  return Socket.prototype.connect.apply(s, args);
 };
 
-// HACK: this is a quick solution to the regressions introduced by 5fb859605b183b70b246328bff24f4e4f8b50dab
-//       a more complete solution is implemented in a different PR: c015017492980271fa583fce57d798de26a12dab
-function _secureConnect (options, callback) {
-  var client = new TCPSocket(null, true);
-  TCPSocket.prototype.connect.apply(client, arguments);
-  return client;
-};
+function secureConnect () {
+  var args = normalizeConnectArgs(arguments, true);
+  args[0]._secure = true;
+  var s = new Socket(args[0]);
+  return Socket.prototype.connect.apply(s, args);
+}
 
 
 /**
@@ -626,7 +642,7 @@ TCPServer.prototype.listen = function (port, host, backlog, cb) {
       , port = _[2];
 
     if (client >= 0) {
-      var clientsocket = new TCPSocket(client);
+      var clientsocket = new TCPSocket({fd:client});
       clientsocket.connected = true;
       clientsocket.localAddress = self.localAddress;    // TODO: https://forums.tessel.io/t/get-ip-address-of-tessel-in-code/203
       clientsocket.localPort = self.localPort;
@@ -678,8 +694,7 @@ function createServer (opts, onsocket) {
 exports.isIP = isIP;
 exports.isIPv4 = isIPv4;
 exports.connect = exports.createConnection = connect;
-exports._secureConnect = _secureConnect;
+exports._secureConnect = secureConnect;     // TLS module uses this
 exports.createServer = createServer;
 exports.Socket = Socket;
 exports.Server = TCPServer;
-exports._normalizeConnectArgs = normalizeConnectArgs;
