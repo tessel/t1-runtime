@@ -16,6 +16,8 @@ var util = require('util');
 var dns = require('dns');
 var stream = require('stream');
 var tls = require('tls');
+var net_proxied = require('net_proxied');
+
 
 /**
  * ip/helpers
@@ -37,13 +39,32 @@ function isPipeName(s) {
 function toNumber(x) { return (x = Number(x)) >= 0 ? x : false; }
 
 /**
+ * Socket
+ */
+
+function Socket(socket, _secure) {
+  // NOTE: this implements a "class cluster" pattern
+  //       Do *not* call this from subclasses! use `Socket._Constructor` instead
+  
+  if (net_proxied.tunnel) return net_proxied.tunnel.createStream();     // TODO: need on-demand (async!) tunnel, *and* per-target routing…
+  else return new TCPSocket(socket, _secure);
+}
+Socket._Constructor = function () {     // actual 
+    stream.Duplex.call(this);
+};
+util.inherits(Socket, stream.Duplex);
+
+
+
+
+/**
  * TCPSocket
  */
 
 // TODO: this will need to inherit from Socket too
 
 function TCPSocket (socket, _secure) {
-  stream.Duplex.call(this);
+  Socket._Constructor.call(this);
   
   if (typeof socket === 'object') {
     this.socket = socket.fd;
@@ -76,7 +97,7 @@ function TCPSocket (socket, _secure) {
   process.on('tcp-close', this._closehandler)
 }
 
-util.inherits(TCPSocket, stream.Duplex);
+util.inherits(TCPSocket, Socket);
 
 TCPSocket._portsUsed = Object.create(null);
 
@@ -659,6 +680,6 @@ exports.isIPv4 = isIPv4;
 exports.connect = exports.createConnection = connect;
 exports._secureConnect = _secureConnect;
 exports.createServer = createServer;
-exports.Socket = TCPSocket;
+exports.Socket = Socket;
 exports.Server = TCPServer;
 exports._normalizeConnectArgs = normalizeConnectArgs;

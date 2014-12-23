@@ -3,7 +3,7 @@
 var util = require('util'),
     stream = require('stream'),
     events = require('events'),
-    connect = require('net').connect;
+    net = require('net');
 
 /**
  * Temporary tunnel globals
@@ -46,14 +46,6 @@ createTunnel({port:5006}, {port:5005}, function (e, _tunnel) {
 });
 
 
-/**
- * Socket
- */
-
-function Socket(opts) {
-  stream.Duplex.call(this, opts);
-}
-util.inherits(Socket, stream.Duplex);
 
 
 /**
@@ -63,7 +55,6 @@ util.inherits(Socket, stream.Duplex);
 function ProxiedSocketConstructor() {
     return tunnel.createStream();
 }
-
 
 function ProxiedSocket(opts) {
     Socket.call(this);

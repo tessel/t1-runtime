@@ -148,6 +148,7 @@
             '<(runtime_path)/colony/modules/http.js',
             '<(runtime_path)/colony/modules/https.js',
             '<(runtime_path)/colony/modules/net.js',
+            '<(runtime_path)/colony/modules/net_proxied.js',
             '<(runtime_path)/colony/modules/os.js',
             '<(node_libs_path)/path.js',
             '<(node_libs_path)/punycode.js',
