@@ -3,7 +3,12 @@
 var util = require('util'),
     stream = require('stream'),
     events = require('events'),
-    net = require('net');
+//    net = require('net');
+    net = require("./net.js");
+
+
+var PROXY_TOKEN = "DEV-CRED",
+    PROXY_LOCAL = "10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 169.254.0.0/16";
 
 /**
  * Temporary tunnel globals
@@ -14,7 +19,7 @@ function createTunnel(tokenServer, proxyServer, cb) {
   
   var tokenSocket = connect(tokenServer, function () {
       var token = [];
-      tokenSocket.write("DEV-CRED");
+      tokenSocket.write(PROXY_TOKEN);
       tokenSocket.on('data', function (chunk) {
           token.push(chunk);
       });
@@ -37,16 +42,19 @@ function createTunnel(tokenServer, proxyServer, cb) {
   });
 }
 
-var tunnel,
-    emitter = new events.EventEmitter();
-createTunnel({port:5006}, {port:5005}, function (e, _tunnel) {
-    if (e) return console.error(e);
-    tunnel = _tunnel;
-    emitter.emit('ready');
-});
+//var tunnel,
+//    emitter = new events.EventEmitter();
+//createTunnel({port:5006}, {port:5005}, function (e, _tunnel) {
+//    if (e) return console.error(e);
+//    tunnel = _tunnel;
+//    emitter.emit('ready');
+//});
 
 
-
+function protoForConnection(host, port, cb) {   // CAUTION: this may callback syncronously!
+console.log("HOST??", host)
+    cb(null, net._CC3KSocket.prototype);
+}
 
 /**
  * ProxiedSocket
@@ -59,7 +67,7 @@ function ProxiedSocketConstructor() {
 function ProxiedSocket(opts) {
     Socket.call(this);
 }
-util.inherits(ProxiedSocket, Socket);
+util.inherits(ProxiedSocket, net.Socket);
 
 ProxiedSocket.prototype.connect = function (port, host, cb) {
     if (typeof host === 'function') {
@@ -74,10 +82,4 @@ ProxiedSocket.prototype.connect = function (port, host, cb) {
 };
 
 
-exports = module.exports = emitter;
-
-exports.createConnection = function (port, host, cb) {
-  var socket = new ProxiedSocketConstructor();
-  ProxiedSocket.prototype.connect.apply(socket, arguments);
-  return socket;
-};
+exports._protoForConnection = protoForConnection;

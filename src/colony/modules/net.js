@@ -16,8 +16,6 @@ var util = require('util');
 var dns = require('dns');
 var stream = require('stream');
 var tls = require('tls');
-//var net_proxied = require('net_proxied');
-
 
 /**
  * ip/helpers
@@ -69,6 +67,9 @@ Socket.prototype._write = function (buf, enc, cb) {
 };
 
 Socket.prototype.connect = function (opts, cb) {
+  // NOTE: imported here to avoid circular dependency
+  var net_proxied = require("./net_proxied.js");
+  
   if (typeof opts !== 'object') {
     var args = normalizeConnectArgs(arguments, this._secure);
     return Socket.prototype.connect.apply(this, args);
@@ -77,15 +78,16 @@ Socket.prototype.connect = function (opts, cb) {
   if (cb && this._secure) this.once('secureConnect', cb);
   else if (cb) this.once('connect', cb);
   
-  // HACK: convert to necessary subclass here, now that we know necessary type
-  if (1) {
-    this.__proto__ = TCPSocket.prototype;
-    this._setup(this._opts);   // pass original (constructor) opts
-  }
+  var self = this,
+      port = +opts.port,
+      host = opts.host || "127.0.0.1";
+  net_proxied._protoForConnection(host, port, function (e, proto) {
+      self.__proto__ = proto;   // HACK: convert to "concrete" subclass here, now that we know necessary type
+      self._setup(self._opts);  // pass original (constructor) opts
+      // TODO: handle _pending stuff (or subclass responsibility?)
+      self._connect(port, host, cb);
+  });
   
-  // TODO: handle _pending stuff (or subclass responsibility?)
-  
-  this._connect(+opts.port, opts.host || "127.0.0.1", cb);
   return this;
 };
 
@@ -707,3 +709,4 @@ exports._secureConnect = secureConnect;     // TLS module uses this
 exports.createServer = createServer;
 exports.Socket = Socket;
 exports.Server = TCPServer;
+exports._CC3KSocket = TCPSocket;        // net-proxied module uses this
