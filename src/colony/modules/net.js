@@ -30,6 +30,13 @@ function isIP (host) {
   else return 0;
 }
 
+function ipStrToInt(ip) {
+  var addr = ip.split('.').map(Number);
+  addr = ((addr[0] << 24) | (addr[1] << 16) | (addr[2] << 8) | addr[3]) >>> 0;
+  return addr;
+}
+
+
 function isPipeName(s) {
   return util.isString(s) && toNumber(s) === false;
 }
@@ -81,7 +88,9 @@ Socket.prototype.connect = function (opts, cb) {
   var self = this,
       port = +opts.port,
       host = opts.host || "127.0.0.1";
-  net_proxied._protoForConnection(host, port, function (e, proto) {
+  net_proxied._protoForConnection(host, port, this._opts, function (e, proto) {
+      if (e) return self.emit('error', e);
+console.log("HERE?", host, port);
       self.__proto__ = proto;   // HACK: convert to "concrete" subclass here, now that we know necessary type
       self._setup(self._opts);  // pass original (constructor) opts
       // TODO: handle _pending stuff (or subclass responsibility?)
@@ -101,7 +110,7 @@ Socket.prototype.connect = function (opts, cb) {
 function TCPSocket (opts) {
   if (!(this instanceof TCPSocket)) return new TCPSocket(opts);
   Socket.call(this, opts);
-  this._setup(opts);
+  this._setup(this._opts);
 }
 util.inherits(TCPSocket, Socket);
 
@@ -199,10 +208,8 @@ TCPSocket.prototype._connect = function (port, host) {
 
     var retries = 0;
     setImmediate(function doConnect() {
-      var addr = ip.split('.').map(Number);
-      addr = ((addr[0] << 24) | (addr[1] << 16) | (addr[2] << 8) | addr[3]) >>> 0;
-
-      var ret = tm.tcp_connect(self.socket, addr, port);
+      var addr = ipStrToInt(ip),
+          ret = tm.tcp_connect(self.socket, addr, port);
       if (ret == -tm.ENETUNREACH) {
         // we're not connected to the internet
         self.emit('error', new Error("ENETUNREACH: Wifi is not connected"));
@@ -704,6 +711,7 @@ function createServer (opts, onsocket) {
 
 exports.isIP = isIP;
 exports.isIPv4 = isIPv4;
+exports._ipStrToInt = ipStrToInt;
 exports.connect = exports.createConnection = connect;
 exports._secureConnect = secureConnect;     // TLS module uses this
 exports.createServer = createServer;
