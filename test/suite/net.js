@@ -1,6 +1,7 @@
 // NOTE: see https://github.com/tcr/tinytap/issues/4 — not all tests get applied?!
 var test = require('tinytap'),
-    net = require('net');
+    //net = require('net');
+    net = require("../../src/colony/modules/net.js");
 
 test.count(74);
 
