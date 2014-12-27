@@ -90,7 +90,6 @@ Socket.prototype.connect = function (opts, cb) {
       host = opts.host || "127.0.0.1";
   net_proxied._protoForConnection(host, port, this._opts, function (e, proto) {
       if (e) return self.emit('error', e);
-console.log("HERE?", host, port);
       self.__proto__ = proto;   // HACK: convert to "concrete" subclass here, now that we know necessary type
       self._setup(self._opts);  // pass original (constructor) opts
       // TODO: handle _pending stuff (or subclass responsibility?)

@@ -23,14 +23,16 @@ function createTunnel(tokenServer, proxyServer, cb) {
       tokenSocket.write(PROXY_TOKEN);
       tokenSocket.on('data', function (chunk) {
           token.push(chunk);
+          // HACK: workaround missing tcp-close event
+          tokenSocket.close();    
       });
       tokenSocket.on('end', function () {
           token = Buffer.concat(token);
           if (!token.length) return cb(new Error("Credentials rejected (or token server down)."));
           
-          var proxySocket = connect(proxyServer, function () {
+          var proxySocket = net.connect(proxyServer, function () {
               proxySocket.write(token);
-              var tunnel = streamplex(streamplex.B_SIDE, {subclass:ProxiedSocket});
+              var tunnel = streamplex(streamplex.B_SIDE);
               tunnel.pipe(proxySocket).pipe(tunnel);
               cb(null, tunnel);
           });
@@ -54,6 +56,11 @@ tunnelKeeper.getTunnel = function (cb) {    // CAUTION: syncronous callback!
     if (!this._pending) createTunnel({port:5006}, {port:5005}, function (e, tunnel) {
       delete self._pending;
       self._tunnel = tunnel;
+      if (tunnel) {
+        var streamProto = Object.create(ProxiedSocket.prototype);
+        streamProto._tunnel = tunnel;
+        tunnel._streamProto = streamProto;
+      }
       self.emit('tunnel', e, tunnel);
     });
     this._pending = true;
@@ -89,8 +96,7 @@ function protoForConnection(host, port, opts, cb) {   // CAUTION: syncronous cal
   if (local) cb(null, net._CC3KSocket.prototype);
   else tunnelKeeper.getTunnel(function (e, tunnel) {
     if (e) return cb(e);
-    opts.name = (opts._secure) ? 'tls' : 'net';
-    cb(null, tunnel.createStream(opts));
+    cb(null, tunnel._streamProto);
   });
 }
 
@@ -99,16 +105,34 @@ function protoForConnection(host, port, opts, cb) {   // CAUTION: syncronous cal
  */
 
 function ProxiedSocket(opts) {
-  // NOTE: only intended for instantiation via protoForConnection!
-  Socket.call(this, opts);
+  if (!(this instanceof ProxiedSocket)) return new ProxiedSocket(opts);
+  net.Socket.call(this, opts);
+  this._tunnel = this._opts.tunnel;
+  this._setup(this._opts);
 }
 util.inherits(ProxiedSocket, net.Socket);
 
-ProxiedSocket.prototype._setup = function () {};
+ProxiedSocket.prototype._setup = function () {
+  var type = (this._secure) ? 'tls' : 'net';
+  this._transport = this._tunnel.createStream(type);
+  
+  var self = this;
+  // TODO: it'd be great if we is-a substream instead of has-a…
+  this._transport.on('data', function () {
+    var more = self.push(d);
+    if (!more) self._transport.pause();
+  });
+};
+
+ProxiedSocket.prototype._read = function () {
+  this._transport.resume();
+};
+ProxiedSocket.prototype._write = function (buf, enc, cb) {
+  this._transport.write(buf, enc, cb);
+};
 
 ProxiedSocket.prototype._connect = function (port, host) {
-console.log("HERE", port, host);
-  this.remoteEmit('_pls_connect', port, host);
+  this._transport.remoteEmit('_pls_connect', port, host);
 };
 
 exports._protoForConnection = protoForConnection;
