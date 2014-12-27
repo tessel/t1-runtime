@@ -118,10 +118,21 @@ ProxiedSocket.prototype._setup = function () {
   
   var self = this;
   // TODO: it'd be great if we is-a substream instead of has-a…
-  this._transport.on('data', function () {
+  this._transport.on('data', function (d) {
     var more = self.push(d);
     if (!more) self._transport.pause();
   });
+  this._transport.on('end', function () {
+    self.push(null);
+  });
+  
+  function reEmit(evt) {
+    self._transport.on(evt, function test() {
+      var args = Array.prototype.concat.apply([evt], arguments);
+      self.emit.apply(self, args);
+    });
+  }
+  ['connect', 'secureConnect', 'error'].forEach(reEmit);
 };
 
 ProxiedSocket.prototype._read = function () {
