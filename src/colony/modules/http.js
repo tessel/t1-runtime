@@ -124,7 +124,7 @@ function IncomingMessage (type, socket) {
       self.emit('_messageBegin');
     }),
     onUrl: parserCallback(function (url) {
-      self.url = url;
+      self.url = url.toString('utf8');
     }),
     onHeaderField: parserCallback(function (field) {
       field = field.toString();
