@@ -283,7 +283,6 @@ local buffer_proto = js_obj({
     end
     local buf = js_new(global.Buffer, string, encoding)
     if length ~= nil then
-      length = tonumber(length)
       length = math.min(length, this.length - offset)
       if encoding == 'utf16le' then
         -- HACK: partial fix for https://github.com/tessel/runtime/issues/693
