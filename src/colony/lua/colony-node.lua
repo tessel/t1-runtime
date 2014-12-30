@@ -282,9 +282,11 @@ local buffer_proto = js_obj({
       length = nil
     end
     local buf = js_new(global.Buffer, string, encoding)
-    length = tonumber(length) or math.min(this.length, buf.length)
-    buf:copy(this, offset, 0, length)
-    return length
+    if length ~= nil then
+      buf = buf:slice(0, length)
+    end
+    buf:copy(this, offset)
+    return buf.length
   end,
   toString = function (this, encoding, offset, endOffset)
 
