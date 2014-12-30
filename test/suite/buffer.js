@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(120);
+tap.count(119);
 
 function arreq (a, b) {
 	if (a.length != b.length) {
