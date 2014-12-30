@@ -132,7 +132,7 @@ ProxiedSocket.prototype._setup = function () {
       self.emit.apply(self, args);
     });
   }
-  ['connect', 'secureConnect', 'error'].forEach(reEmit);
+  ['connect', 'secureConnect', 'error', 'timeout'].forEach(reEmit);
 };
 
 ProxiedSocket.prototype._read = function () {
@@ -144,6 +144,18 @@ ProxiedSocket.prototype._write = function (buf, enc, cb) {
 
 ProxiedSocket.prototype._connect = function (port, host) {
   this._transport.remoteEmit('_pls_connect', port, host);
+};
+
+ProxiedSocket.prototype.setTimeout = function (msecs, cb) {
+  this._transport.remoteEmit('_pls_timeout', msecs);
+  if (cb) {
+    if (msecs) this.once('timeout', cb);
+    else this.removeListener('timeout', cb);
+  }
+};
+
+ProxiedSocket.prototype.destroy = function () {
+  this._transport.destroy();
 };
 
 exports._protoForConnection = protoForConnection;
