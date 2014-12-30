@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(96);
+tap.count(120);
 
 function arreq (a, b) {
 	if (a.length != b.length) {
@@ -208,6 +208,42 @@ var len = buf.write('\u00bd + \u00bc = \u00be', 4);
 console.log('#', len + " bytes: " + buf.toString('utf8', 4, 4 + len));
 tap.ok(len == 12, 'written length is 12 byes')
 tap.ok(buf.slice(4, 4 + 12).toString() == '\u00bd + \u00bc = \u00be', 'result was written')
+
+len = buf.write("\u8182", 'utf8');
+tap.eq(buf[2], 0x82, "write utf8");
+tap.eq(len, 3);
+len = buf.write("\u8182", 'ascii');
+tap.eq(buf[0], 0x82, "write ascii");
+tap.eq(len, 1);
+len = buf.write("\u8182", 'binary');
+tap.eq(buf[0], 0x82, "write binary");
+tap.eq(len, 1);
+len = buf.write("\u8182", 'utf16le');
+tap.eq(buf[1], 0x81, "write utf16le");
+tap.eq(len, 2);
+len = buf.write("82", 'hex');
+tap.eq(buf[0], 0x82, "write hex");
+tap.eq(len, 1);
+len = buf.write("gg==", 'base64');
+tap.eq(buf[0], 0x82, "write base64");
+tap.eq(len, 1);
+
+buf.fill(0xFF);     // buf.write(string, [offset], [length], [encoding])
+buf.write("BBBB", 'utf16le');
+tap.eq(buf[2], 0x42, "write with encoding");
+tap.eq(buf[7], 0x00);
+buf.write("CCCC", 1, 'utf16le');
+tap.eq(buf[0], 0x42, "write with offset and encoding");
+tap.eq(buf[1], 0x43);
+tap.eq(buf[2], 0x00);
+len = buf.write("DDDD", 2, 3, 'utf16le');
+tap.eq(buf[0], 0x42, "write with offset, length and encoding");
+tap.eq(buf[1], 0x43);
+tap.eq(buf[2], 0x44);
+tap.eq(buf[3], 0x00);
+tap.eq(len, 2, "did not write partial character");
+tap.eq(buf[4], 0x00);
+tap.eq(buf[9], 0xFF, "original fill remains");
 
 // inspecting
 tap.ok(require('buffer').INSPECT_MAX_BYTES === 50, 'default INSPECT_MAX_BYTES is 50')
