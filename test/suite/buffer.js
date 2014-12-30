@@ -246,5 +246,7 @@ tap.eq(len, 2, "did not write partial character");
 tap.eq(buf[4], 0x00);
 tap.eq(buf[9], 0xFF, "original fill remains");
 
+// TODO: more partial character tests, see https://github.com/tessel/runtime/issues/693
+
 // inspecting
 tap.ok(require('buffer').INSPECT_MAX_BYTES === 50, 'default INSPECT_MAX_BYTES is 50')

@@ -283,6 +283,11 @@ local buffer_proto = js_obj({
     end
     local buf = js_new(global.Buffer, string, encoding)
     if length ~= nil then
+      length = tonumber(length)
+      if encoding == 'utf16le' then
+        -- HACK: partial fix for https://github.com/tessel/runtime/issues/693
+        length = length - length % 2
+      end
       buf = buf:slice(0, length)
     end
     buf:copy(this, offset)
