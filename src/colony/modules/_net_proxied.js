@@ -1,10 +1,10 @@
-// NOTE: keeping separate for quicker standalone testing right now
-console.log("PARSING NET PROXIED");
-
 var util = require('util'),
     events = require('events'),
-    net = require('net'),
-    streamplex = require('_streamplex_module');
+    //net = require('net'),
+    //streamplex = require('_streamplex_module');
+    net = require("./net.js"),
+    streamplex = require("./_streamplex_module.js");
+    
 
 var PROXY_TOKEN = "DEV-CRED",
     // see also https://tools.ietf.org/html/rfc5735#section-4
@@ -137,7 +137,6 @@ ProxiedSocket.prototype.setTimeout = function (msecs, cb) {
 };
 
 ProxiedSocket.prototype.destroy = function () {
-console.log("HERE");
   this._transport.destroy();
   this.end();
 };

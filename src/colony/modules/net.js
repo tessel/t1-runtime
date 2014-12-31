@@ -15,7 +15,8 @@ var tm = process.binding('tm');
 var util = require('util');
 var dns = require('dns');
 var stream = require('stream');
-var tls = require('tls');
+//var tls = require('tls');
+var tls = require("./tls.js");
 
 /**
  * ip/helpers
@@ -65,7 +66,7 @@ function Socket(opts) {
 }
 util.inherits(Socket, stream.Duplex);
 
-['_read', '_write', 'close', 'destroy', 'setTimeout', 'setNoDelay'].forEach(function (method) {
+['_read', '_write', 'close', 'zzz-destroy', 'setTimeout', 'setNoDelay'].forEach(function (method) {
   Socket.prototype[method] = function () {
     this._pendingCalls.push({method:method, arguments:arguments});
   };
@@ -82,7 +83,7 @@ Socket.prototype._doPending = function (proto) {
 
 Socket.prototype.connect = function (opts, cb) {
   // NOTE: imported here to avoid circular dependency
-  var net_proxied = require("./net_proxied.js");
+  var net_proxied = require("./_net_proxied.js");
   
   if (typeof opts !== 'object') {
     var args = normalizeConnectArgs(arguments, this._secure);
@@ -598,7 +599,7 @@ function connect () {
   var args = normalizeConnectArgs(arguments);
   var s = new Socket(args[0]);
   return Socket.prototype.connect.apply(s, args);
-};
+}
 
 function secureConnect () {
   var args = normalizeConnectArgs(arguments, true);
