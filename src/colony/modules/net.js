@@ -61,17 +61,24 @@ function Socket(opts) {
   
   this._opts = opts;
   this._secure  = opts._secure;
-  // TODO: finish core setup
+  this._pendingCalls = [];
 }
 util.inherits(Socket, stream.Duplex);
 
-Socket.prototype._read = function () {};
-Socket.prototype._write = function (buf, enc, cb) {
-  throw Error("NOT READY!");
-  // NOTE: under node v0.12 we could simply call `this.cork()` in constructor and leave this unimplemented
-  // holds the chunk (without calling cb) until we know what type of socket we are (post-connect)
-  this._pending = {buf:buf, enc:enc, cb:cb};
+['_read', '_write', 'close', 'destroy', 'setTimeout', 'setNoDelay'].forEach(function (method) {
+  Socket.prototype[method] = function () {
+    this._pendingCalls.push({method:method, arguments:arguments});
+  };
+});
+
+Socket.prototype._doPending = function (proto) {
+  var self = this;
+  this._pendingCalls.forEach(function (call) {
+    proto[call.method].apply(self, call.arguments);
+  });
+  delete this._pendingCalls;
 };
+
 
 Socket.prototype.connect = function (opts, cb) {
   // NOTE: imported here to avoid circular dependency
@@ -92,14 +99,12 @@ Socket.prototype.connect = function (opts, cb) {
       if (e) return self.emit('error', e);
       self.__proto__ = proto;   // HACK: convert to "concrete" subclass here, now that we know necessary type
       self._setup(self._opts);  // pass original (constructor) opts
-      // TODO: handle _pending stuff (or subclass responsibility?)
+      self._doPending(proto);
       self._connect(port, host, cb);
   });
   
   return this;
 };
-
-// TODO: what other "abstract" methods do we need?
 
 
 /**
