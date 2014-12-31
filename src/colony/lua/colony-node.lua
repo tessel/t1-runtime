@@ -273,10 +273,25 @@ local buffer_proto = js_obj({
     tm.buffer_copy(sourceBuffer, targetBuffer, targetStart, sourceStart, sourceEnd)
   end,
   write = function (this, string, offset, length, encoding)
-    local buf = js_new(global.Buffer, string)
-    length = tonumber(length) or math.min(this.length, buf.length)
-    buf:copy(this, offset, 0, length)
-    return length
+    if type(offset) == 'string' then
+      encoding = offset
+      offset = 0
+      length = nil
+    elseif type(length) == 'string' then
+      encoding = length
+      length = nil
+    end
+    local buf = js_new(global.Buffer, string, encoding)
+    if length ~= nil then
+      length = math.min(length, this.length - offset)
+      if encoding == 'utf16le' then
+        -- HACK: partial fix for https://github.com/tessel/runtime/issues/693
+        length = length - length % 2
+      end
+      buf = buf:slice(0, length)
+    end
+    buf:copy(this, offset)
+    return buf.length
   end,
   toString = function (this, encoding, offset, endOffset)
 
