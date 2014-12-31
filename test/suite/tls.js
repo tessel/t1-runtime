@@ -1,4 +1,5 @@
-var tls = require('tls'),
+var //tls = require('tls'),
+    tls = require("../../src/colony/modules/tls.js"),
     tap = require('../tap');
 
 tap.count(3);
