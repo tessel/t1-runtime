@@ -90,7 +90,7 @@ test('client-basic', function (t) {
     client.end();
   });
   client.on('end', function () {
-    t.ok(true, "socket closed");
+    t.pass("socket closed");
     t.end();
   });
 });
