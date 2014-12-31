@@ -20,6 +20,9 @@ function createTunnel(proxyServer, cb) {
     var proxySocket = this,
         tunnel = streamplex(streamplex.B_SIDE);
     tunnel.pipe(proxySocket).pipe(tunnel);
+    tunnel.once('inactive', function () {
+      proxySocket.destroy();
+    });
     tunnel.sendMessage({token:PROXY_TOKEN});
     tunnel.once('message', function (d) {
       proxySocket.removeListener('error', cb);
@@ -37,16 +40,19 @@ tunnelKeeper.getTunnel = function (cb) {    // CAUTION: syncronous callback!
     var self = this;
     if (!this._pending) createTunnel({port:5005}, function (e, tunnel) {
       delete self._pending;
+      if (e) return self.emit('tunnel', e);
+      
       self._tunnel = tunnel;
-      if (tunnel) {
-        var streamProto = Object.create(ProxiedSocket.prototype);
-        streamProto._tunnel = tunnel;
-        tunnel._streamProto = streamProto;
-      }
-      self.emit('tunnel', e, tunnel);
+      tunnel.once('inactive', function () {
+        self._tunnel = null;
+      });
+      var streamProto = Object.create(ProxiedSocket.prototype);
+      streamProto._tunnel = tunnel;
+      tunnel._streamProto = streamProto;
+      self.emit('tunnel', null, tunnel);
     });
     this._pending = true;
-    this.on('tunnel', cb);
+    this.once('tunnel', cb);
 };
 
 var local_matchers = PROXY_LOCAL.split(' ').map(function (str) {

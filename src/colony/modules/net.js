@@ -66,7 +66,7 @@ function Socket(opts) {
 }
 util.inherits(Socket, stream.Duplex);
 
-['_read', '_write', 'close', 'zzz-destroy', 'setTimeout', 'setNoDelay'].forEach(function (method) {
+['_read', '_write', 'close', 'destroy', 'setTimeout', 'setNoDelay'].forEach(function (method) {
   Socket.prototype[method] = function () {
     this._pendingCalls.push({method:method, arguments:arguments});
   };
