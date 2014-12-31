@@ -78,7 +78,7 @@ test('client-basic', function (t) {
   t.ok(client instanceof net.Socket, "returned socket");
   client.on('connect', function () {
     t.pass("socket connected");
-    client.write("GET / HTTP/1.1\nHost: tessel-httpbin.herokuapp.com\nAccept: text/plain\n\n");
+    client.write("GET /ip HTTP/1.1\nHost: tessel-httpbin.herokuapp.com\nAccept: text/plain\n\n");
   });
   client.on('error', function () {
     t.fail("socket error");
