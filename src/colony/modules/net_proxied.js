@@ -15,34 +15,21 @@ var PROXY_TOKEN = "DEV-CRED",
  * Temporary tunnel globals
  */
  
-function createTunnel(tokenServer, proxyServer, cb) {
+function createTunnel(proxyServer, cb) {
   var streamplex = require('streamplex');
   
-  var tokenSocket = net.connect(tokenServer, function () {
-      var token = [];
-      tokenSocket.write(PROXY_TOKEN);
-      tokenSocket.on('data', function (chunk) {
-          token.push(chunk);
-          // HACK: workaround missing tcp-close event
-          tokenSocket.close();    
-      });
-      tokenSocket.on('end', function () {
-          token = Buffer.concat(token);
-          if (!token.length) return cb(new Error("Credentials rejected (or token server down)."));
-          
-          var proxySocket = net.connect(proxyServer, function () {
-              proxySocket.write(token);
-              var tunnel = streamplex(streamplex.B_SIDE);
-              tunnel.pipe(proxySocket).pipe(tunnel);
-              cb(null, tunnel);
-          });
-          // TODO: more error handling, etc.
-      });
-  });
-  tokenSocket.on('error', function (e) {
-      tokenSocket.destroy();
-      cb(e);
-  });
+  net.connect(proxyServer, function () {
+    // TODO: proxySocket/tunnel error handling
+    var proxySocket = this,
+        tunnel = streamplex(streamplex.B_SIDE);
+    tunnel.pipe(proxySocket).pipe(tunnel);
+    tunnel.sendMessage({token:PROXY_TOKEN});
+    tunnel.once('message', function (d) {
+      proxySocket.removeListener('error', cb);
+      if (!d.authed) cb(new Error("Authorization failed."));
+      else cb(null, tunnel);
+    });
+  }).on('error', cb);
 }
 
 
@@ -53,7 +40,7 @@ tunnelKeeper.getTunnel = function (cb) {    // CAUTION: syncronous callback!
     if (this._tunnel) return cb(null, this._tunnel);
     
     var self = this;
-    if (!this._pending) createTunnel({port:5006}, {port:5005}, function (e, tunnel) {
+    if (!this._pending) createTunnel({port:5005}, function (e, tunnel) {
       delete self._pending;
       self._tunnel = tunnel;
       if (tunnel) {
