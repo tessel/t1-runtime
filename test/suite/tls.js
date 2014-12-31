@@ -22,5 +22,3 @@ socket.once('data', function(data) {
   tap.ok(data.length > 0, 'we got data back from google over a secure TCP socket');
   socket.destroy();
 });
-
-
