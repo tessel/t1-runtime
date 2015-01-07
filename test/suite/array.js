@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(56);
+tap.count(59);
 
 function arreq (a, b) {
 	if (a.length != b.length) {
@@ -58,6 +58,9 @@ tap.ok([0, 0, 0, 0, 0, 0].length == 6);
 tap.ok(arreq([0, 1, 2, 3, 4, 5].slice(0, 5), [0, 1, 2, 3, 4]))
 tap.ok(arreq([0, 0, 0, 0, 0, 0].slice(0, 5), [0, 0, 0, 0, 0]));
 tap.ok(arreq([0, 1, 2, 3, 4, 5].slice(1), [1, 2, 3, 4, 5]), 'slice(1) returns full array')
+tap.ok(arreq([1,2,3].slice(-1), [3]), 'slice -1 returns the last element in an array');
+tap.ok(arreq([1,2,3].slice(-2), [2,3]), 'slice -2 returns the last two elements in an array');
+tap.ok(arreq([1,2,3].slice(0,-1), [1,2]), 'slice 0,-1 returns the everything except the last');
 
 
 var a = new Array(50);

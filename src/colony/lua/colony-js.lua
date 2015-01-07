@@ -482,6 +482,15 @@ arr_proto.slice = function (this, start, len)
   if not this then
     return js_arr(a, 0)
   end
+
+  if start < 0 then
+    start = this.length + start
+  end
+
+  if len < 0 then
+    len = this.length + len
+  end
+
   if len == nil then
     len = this.length or 0
   end
@@ -2044,7 +2053,7 @@ function decodeURIComponent (this, str)
   local utf8 = string.gsub (str, "%%(%x%x)", function(h)
     return string.char(tonumber(h,16))
   end)
-  return tm.str_from_utf8(utf8) 
+  return tm.str_from_utf8(utf8)
 end
 
 
