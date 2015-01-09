@@ -1,10 +1,8 @@
 var util = require('util'),
     events = require('events'),
-    //net = require('net'),
-    //streamplex = require('_streamplex_module');
-    net = require("./net.js"),
-    streamplex = require("./_streamplex_module.js");
-    
+    net = require('net'),
+    streamplex = require('_streamplex');
+
 
 var PROXY_TOKEN = "DEV-CRED",
     // see also https://tools.ietf.org/html/rfc5735#section-4

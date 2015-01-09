@@ -15,8 +15,7 @@ var tm = process.binding('tm');
 var util = require('util');
 var dns = require('dns');
 var stream = require('stream');
-//var tls = require('tls');
-var tls = require("./tls.js");
+var tls = require('tls');
 
 /**
  * ip/helpers
@@ -83,7 +82,7 @@ Socket.prototype._doPending = function (proto) {
 
 Socket.prototype.connect = function (opts, cb) {
   // NOTE: imported here to avoid circular dependency
-  var net_proxied = require("./_net_proxied.js");
+  var net_proxied = require('_net_proxied');
   
   if (typeof opts !== 'object') {
     var args = normalizeConnectArgs(arguments, this._secure);

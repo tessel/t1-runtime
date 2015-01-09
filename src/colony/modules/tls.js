@@ -7,8 +7,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//var net = require('net');
-var net = require("./net.js");
+var net = require('net');
 var util = require('util');
 
 function NotImplementedException () {
