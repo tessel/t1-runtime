@@ -14,6 +14,7 @@ function NotImplementedException () {
 	throw new Error('Not yet implemented.');
 }
 
+if (!net._secureConnect) throw Error("Circular import detected!");
 exports.connect = net._secureConnect;
 
 function checkServerIdentity (host, cert) {

@@ -15,7 +15,6 @@ var tm = process.binding('tm');
 var util = require('util');
 var dns = require('dns');
 var stream = require('stream');
-var tls = require('tls');
 
 /**
  * ip/helpers
@@ -60,7 +59,7 @@ function Socket(opts) {
   stream.Duplex.call(this, opts);
   
   this._opts = opts;
-  this._secure  = opts._secure;
+  this._secure = opts._secure;
   this._pendingCalls = [];
 }
 util.inherits(Socket, stream.Duplex);
@@ -315,6 +314,7 @@ TCPSocket.prototype._connect = function (port, host) {
             }
           };
 
+          var tls = require('tls');     // NOTE: imported here to avoid circular dependency!
           if (self._ssl_checkCerts && !tls.checkServerIdentity(host, self._ssl_cert)) {
             return self.emit('error', new Error('Hostname/IP doesn\'t match certificate\'s altnames'));
           }
