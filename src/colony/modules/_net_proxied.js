@@ -14,10 +14,12 @@ var PROXY_TOKEN = "DEV-CRED",
  
 function createTunnel(proxyServer, cb) {
   net.connect(proxyServer, function () {
-    // TODO: proxySocket/tunnel error handling
     var proxySocket = this,
         tunnel = streamplex(streamplex.B_SIDE);
     tunnel.pipe(proxySocket).pipe(tunnel);
+    proxySocket.on('error', function (e) {
+      tunnel.destroy(e);    // substreams will each emit `e`, then go inactive
+    });
     tunnel.once('inactive', function () {
       proxySocket.destroy();
     });
