@@ -129,6 +129,8 @@ ProxiedSocket.prototype._write = function (buf, enc, cb) {
 };
 
 ProxiedSocket.prototype._connect = function (port, host) {
+  this.remotePort = port;
+  this.remoteAddress = host;
   this._transport.remoteEmit('_pls_connect', port, host);
 };
 
