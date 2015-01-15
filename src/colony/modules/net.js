@@ -37,22 +37,6 @@ function isPipeName(s) {
 function toNumber(x) { return (x = Number(x)) >= 0 ? x : false; }
 
 /**
- * ssl
- */
-
-var ssl_ctx = null;
-
-function ensureSSLCtx () {
-  if (!tm.ssl_context_create) {
-    throw new Error("SSL/TLS is not supported in this version.");
-  }
-  if (ssl_ctx == null) {
-    ssl_ctx = tm.ssl_context_create();
-  }
-}
-
-
-/**
  * TCPSocket
  */
 
@@ -163,7 +147,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
 
   function setUpConnection(ip) {
     if (self.socket == null) {
-      if (self._secure) ensureSSLCtx();
+      if (self._secure) self._ssl_ctx = tm.ssl_context_create();
       self.socket = tm.tcp_open();
     }
 
@@ -245,7 +229,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         }, 100);
 
         function createSession() {
-          var _ = tm.ssl_session_create(ssl_ctx, self.socket, hostname)
+          var _ = tm.ssl_session_create(self._ssl_ctx, self.socket, hostname)
             , ssl = _[0]
             , ret = _[1]
             ;
