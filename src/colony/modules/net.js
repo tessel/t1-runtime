@@ -147,8 +147,10 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
 
   function setUpConnection(ip) {
     if (self.socket == null) {
-      var checkCerts = (opts.rejectUnauthorized !== false);
-      if (self._secure) self._ssl_ctx = tm.ssl_context_create(checkCerts);
+      if (self._secure) {
+        self._ssl_checkCerts = (opts.rejectUnauthorized !== false);
+        self._ssl_ctx = tm.ssl_context_create(self._ssl_checkCerts);
+      }
       self.socket = tm.tcp_open();
     }
 
@@ -275,7 +277,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
             }
           }
 
-          if (!tls.checkServerIdentity(host, cert)) {
+          if (self._ssl_checkCerts && !tls.checkServerIdentity(host, cert)) {
             return self.emit('error', new Error('Hostname/IP doesn\'t match certificate\'s altnames'));
           }
 
