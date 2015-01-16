@@ -53,13 +53,16 @@ int tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t *buf_len)
 typedef struct dir_reg { const char *path; const unsigned char *src; unsigned int len; } dir_reg_t;
 extern dir_reg_t cacert_bundle[];
 
-int tm_ssl_context_create (tm_ssl_ctx_t* ctx)
+int tm_ssl_context_create (bool check_certs, tm_ssl_ctx_t* ctx)
 {
 #ifdef TLS_VERBOSE
     uint32_t options = SSL_DISPLAY_CERTS;
 #else
     uint32_t options = 0;
 #endif
+    if (!check_certs) {
+        options |= SSL_SERVER_VERIFY_LATER;
+    }
 
     SSL_CTX *ssl_ctx;
     if ((ssl_ctx = ssl_ctx_new(options, SSL_DEFAULT_CLNT_SESS)) == NULL)

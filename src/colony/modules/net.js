@@ -147,7 +147,8 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
 
   function setUpConnection(ip) {
     if (self.socket == null) {
-      if (self._secure) self._ssl_ctx = tm.ssl_context_create();
+      var checkCerts = (opts.rejectUnauthorized !== false);
+      if (self._secure) self._ssl_ctx = tm.ssl_context_create(checkCerts);
       self.socket = tm.tcp_open();
     }
 
@@ -522,10 +523,10 @@ TCPSocket.prototype.setNoDelay = function (val) {
   if (val) console.warn("Ignoring call to setNoDelay. TCP_NODELAY socket option not supported.");
 };
 
-function connect (port, host, callback, _secure) {
+function connect (options, callback, _secure) {
   var client = new TCPSocket(null, _secure);
   var args = Array.prototype.slice.call(arguments);
-  if (args.length === 4) args.pop();      // drop _secure param
+  if (args.length === 3) args.pop();      // drop _secure param
   TCPSocket.prototype.connect.apply(client, args);
   return client;
 };

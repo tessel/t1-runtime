@@ -177,7 +177,7 @@ int tm_inflate_end (tm_inflate_t _inflator, uint8_t* out, size_t out_len, size_t
 typedef void* tm_ssl_ctx_t;
 typedef void* tm_ssl_session_t;
 
-int tm_ssl_context_create (tm_ssl_ctx_t* ctx);
+int tm_ssl_context_create (bool check_certs, tm_ssl_ctx_t* ctx);
 int tm_ssl_context_free (tm_ssl_ctx_t *ctx);
 int tm_ssl_session_create (tm_ssl_session_t* session, tm_ssl_ctx_t ctx, tm_socket_t client_fd, const char* host_name);
 int tm_ssl_session_altname (tm_ssl_session_t* session, size_t index, const char** altname);

@@ -305,9 +305,9 @@ static int l_tm_tcp_accept (lua_State* L)
 static int l_tm_ssl_context_create (lua_State* L)
 {
   tm_ssl_ctx_t ctx;
-
-  int res = tm_ssl_context_create(&ctx);
-
+  bool check_certs = lua_toboolean(L, 1);
+  
+  int res = tm_ssl_context_create(check_certs, &ctx);
   if (res != 0) {
     lua_pushnil(L);
   } else {
