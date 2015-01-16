@@ -75,7 +75,7 @@ int tm_ssl_context_create (bool check_certs, dir_reg_t cert_bundle[], tm_ssl_ctx
 
     // Load lib/*.lua files into memory.
     for (int i = 0; cert_bundle[i].path != NULL; i++) {
-        if (add_cert_auth(ssl_ctx, cert_bundle[i].src, 1)) {
+        if (add_cert_auth(ssl_ctx, cert_bundle[i].src, cert_bundle[i].len)) {
             TLS_DEBUG("Invalid CA cert bundle at index %d, aborting.\n", i);
             return -1;
         }
