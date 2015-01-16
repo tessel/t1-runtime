@@ -50,10 +50,9 @@ int tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t *buf_len)
     }
 }
 
-typedef struct dir_reg { const char *path; const unsigned char *src; unsigned int len; } dir_reg_t;
 extern dir_reg_t cacert_bundle[];
 
-int tm_ssl_context_create (bool check_certs, tm_ssl_ctx_t* ctx)
+int tm_ssl_context_create (bool check_certs, dir_reg_t cert_bundle[], tm_ssl_ctx_t* ctx)
 {
 #ifdef TLS_VERBOSE
     uint32_t options = SSL_DISPLAY_CERTS;
@@ -62,6 +61,9 @@ int tm_ssl_context_create (bool check_certs, tm_ssl_ctx_t* ctx)
 #endif
     if (!check_certs) {
         options |= SSL_SERVER_VERIFY_LATER;
+    }
+    if (!cert_bundle) {
+      cert_bundle = cacert_bundle;
     }
 
     SSL_CTX *ssl_ctx;
@@ -72,8 +74,8 @@ int tm_ssl_context_create (bool check_certs, tm_ssl_ctx_t* ctx)
     }
 
     // Load lib/*.lua files into memory.
-    for (int i = 0; cacert_bundle[i].path != NULL; i++) {
-        if (add_cert_auth(ssl_ctx, cacert_bundle[i].src, 1)) {
+    for (int i = 0; cert_bundle[i].path != NULL; i++) {
+        if (add_cert_auth(ssl_ctx, cert_bundle[i].src, 1)) {
             TLS_DEBUG("Invalid CA cert bundle at index %d, aborting.\n", i);
             return -1;
         }
