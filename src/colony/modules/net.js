@@ -258,7 +258,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
             }
           }
 
-          var cert = {
+          self._ssl_cert = {
             subjectaltname: (function () {
               var altnames = [];
               for (var i = 0; ; i++) {
@@ -275,9 +275,9 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
             subject: {
               CN: tm.ssl_session_cn(ssl)[0]
             }
-          }
+          };
 
-          if (self._ssl_checkCerts && !tls.checkServerIdentity(host, cert)) {
+          if (self._ssl_checkCerts && !tls.checkServerIdentity(host, self._ssl_cert)) {
             return self.emit('error', new Error('Hostname/IP doesn\'t match certificate\'s altnames'));
           }
 
@@ -517,7 +517,11 @@ TCPSocket.prototype._restartTimeout = function () {
   this._timeoutWatchdog = (self._timeout) ? setTimeout(function () {
     self.emit('timeout');
   }, self._timeout) : null;
-}
+};
+
+TCPSocket.prototype.getPeerCertificate = function () {
+  return this._ssl_cert || null;
+};
 
 
 // NOTE: CC3K may not support? http://e2e.ti.com/support/wireless_connectivity/f/851/p/349461/1223801.aspx#1223801
