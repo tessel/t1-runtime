@@ -149,7 +149,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
     if (self.socket == null) {
       if (self._secure) {
         self._ssl_checkCerts = (opts.rejectUnauthorized !== false);
-        self._ssl_ctx = tm.ssl_context_create(self._ssl_checkCerts);
+        self._ssl_ctx = tm.ssl_context_create(self._ssl_checkCerts, opts.ca);
       }
       self.socket = tm.tcp_open();
     }
