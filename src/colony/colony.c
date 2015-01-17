@@ -80,7 +80,7 @@ int colony_isbuffer (lua_State *L, int index)
     if (!lua_isnil(L, -1)) {
       ret = 1;
     }
-    lua_pop(L, 1);
+    lua_pop(L, 2);
   }
   return ret;
 }
