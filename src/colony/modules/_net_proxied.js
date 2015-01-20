@@ -4,7 +4,9 @@ var util = require('util'),
     streamplex = require('_streamplex');
 
 
-var PROXY_TOKEN = "DEV-CRED",
+var PROXY_HOST = "localhost",
+    PROXY_PORT = 5005,
+    PROXY_TOKEN = "DEV-CRED",
     // see also https://tools.ietf.org/html/rfc5735#section-4
     PROXY_LOCAL = "10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 169.254.0.0/16 127.0.0.0/8 localhost";
 
@@ -12,8 +14,8 @@ var PROXY_TOKEN = "DEV-CRED",
  * Temporary tunnel globals
  */
  
-function createTunnel(proxyServer, cb) {
-  net.connect(proxyServer, function () {
+function createTunnel(cb) {
+  net.connect({host:PROXY_HOST, port:PROXY_PORT}, function () {
     var proxySocket = this,
         tunnel = streamplex(streamplex.B_SIDE);
     tunnel.pipe(proxySocket).pipe(tunnel);
@@ -38,7 +40,7 @@ tunnelKeeper.getTunnel = function (cb) {    // CAUTION: syncronous callback!
     if (this._tunnel) return cb(null, this._tunnel);
     
     var self = this;
-    if (!this._pending) createTunnel({port:5005}, function (e, tunnel) {
+    if (!this._pending) createTunnel(function (e, tunnel) {
       delete self._pending;
       if (e) return self.emit('tunnel', e);
       
