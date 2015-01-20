@@ -148,8 +148,15 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
   function setUpConnection(ip) {
     if (self.socket == null) {
       if (self._secure) {
+        var custom_certs = null;
         self._ssl_checkCerts = (opts.rejectUnauthorized !== false);
-        self._ssl_ctx = tm.ssl_context_create(self._ssl_checkCerts, opts.ca);
+        if (opts.ca) custom_certs = opts.ca.map(function (pem_data) {
+            // TODO: review PEM specs and axTLS needs; make more thorough if needed
+            return Buffer(pem_data.toString().split('\n').filter(function (line) {
+                return line && line.indexOf('-----') !== 0;
+            }).join(''), 'base64');
+        });
+        self._ssl_ctx = tm.ssl_context_create(self._ssl_checkCerts, custom_certs);
       }
       self.socket = tm.tcp_open();
     }
