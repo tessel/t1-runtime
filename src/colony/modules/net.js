@@ -277,7 +277,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
                 }
                 altnames.push(altname);
               }
-              return 'DNS:' + altnames.join(', DNS:');
+              return altnames.map(function (n) { return 'DNS:' + n; }).join(', ');
             })(),
             subject: {
               CN: tm.ssl_session_cn(ssl)[0]
