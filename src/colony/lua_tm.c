@@ -11,6 +11,7 @@
 #include <lauxlib.h>
 #include <lualib.h>
 #include <math.h>
+#include <assert.h>
 
 #include "tm.h"
 #include "colony.h"
@@ -313,12 +314,9 @@ static int l_tm_ssl_context_create (lua_State* L)
     for (size_t i = 0; i < len; i++) {
       lua_pushinteger(L, i);
       lua_gettable(L, 2);
+      assert(colony_isbuffer(L, -1));
       size_t src_len;
-      if (colony_isbuffer(L, -1)) {
-        cert_bundle[i].src = colony_tobuffer(L, -1, &src_len);
-      } else {
-        cert_bundle[i].src = (const unsigned char *) colony_tolutf8(L, -1, &src_len);
-      }
+      cert_bundle[i].src = colony_tobuffer(L, -1, &src_len);
       cert_bundle[i].len = (unsigned int) src_len;
       cert_bundle[i].path = "custom.ca";
       lua_pop(L, 1);
