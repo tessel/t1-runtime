@@ -506,7 +506,7 @@ end
 
 -- arguments objects
 
-function js_arguments (...)
+function js_arguments (strict, callee, ...)
   local a, len = {}, select('#', ...)
   for i=1,len do
     local val, _ = select(i, ...)
@@ -515,6 +515,13 @@ function js_arguments (...)
 
   local obj = global._obj(a);
   obj.length = len
+  if strict then
+    js_define_getter(obj, 'callee', function (this)
+      error(js_new(global.TypeError, '\'caller\', \'callee\', and \'arguments\' properties may not be accessed on strict mode functions or the arguments objects for calls to them'))
+    end)
+  else
+    obj.callee = callee
+  end
   get_unique_metatable(obj).arguments = true
   return obj
 end
