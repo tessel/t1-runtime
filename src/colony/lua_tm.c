@@ -309,7 +309,7 @@ static int l_tm_ssl_context_create (lua_State* L)
   dir_reg_t* cert_bundle = NULL;
   if (colony_isarray(L, 2)) {
     size_t len = colony_array_length_i(L, 2);
-    cert_bundle = calloc(len + 1, sizeof(dir_reg_t));   // includes end marker
+    cert_bundle = calloc(len + 1, sizeof(dir_reg_t));   // includes \0-filled end marker
     for (size_t i = 0; i < len; i++) {
       lua_pushinteger(L, i);
       lua_gettable(L, 2);
@@ -323,7 +323,6 @@ static int l_tm_ssl_context_create (lua_State* L)
       cert_bundle[i].path = "custom.ca";
       lua_pop(L, 1);
     }
-    memset(&cert_bundle[len], 0, sizeof(dir_reg_t));
   }
   
   int res = tm_ssl_context_create(check_certs, cert_bundle, &ctx);
