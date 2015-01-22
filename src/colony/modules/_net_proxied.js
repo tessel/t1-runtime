@@ -6,9 +6,9 @@ var util = require('util'),
 // NOTE: this list may not be exhaustive, see also https://tools.ietf.org/html/rfc5735#section-4
 var _PROXY_LOCAL = "10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 169.254.0.0/16 127.0.0.0/8 localhost";
 
-var PROXY_HOST = process.env.PROXY_HOST || "localhost",
-    PROXY_PORT = process.env.PROXY_PORT || 5005,
-    PROXY_TOKEN = process.env.PROXY_TOKEN || process.env.TM_API_KEY || "DEV-CRED",
+var PROXY_HOST = process.env.PROXY_HOST || "proxy.tessel.io",
+    PROXY_PORT = process.env.PROXY_PORT || 443,
+    PROXY_TOKEN = process.env.PROXY_TOKEN || process.env.TM_API_KEY,
     PROXY_LOCAL = process.env.PROXY_LOCAL || _PROXY_LOCAL,    
     PROXY_CERT = process.env.PROXY_CERT || [
       "-----BEGIN CERTIFICATE-----",
