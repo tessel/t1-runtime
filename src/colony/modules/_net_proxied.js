@@ -3,12 +3,30 @@ var util = require('util'),
     net = require('net'),
     streamplex = require('_streamplex');
 
+// NOTE: this list may not be exhaustive, see also https://tools.ietf.org/html/rfc5735#section-4
+var _PROXY_LOCAL = "10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 169.254.0.0/16 127.0.0.0/8 localhost";
 
-var PROXY_HOST = "localhost",
-    PROXY_PORT = 5005,
-    PROXY_TOKEN = "DEV-CRED",
-    // see also https://tools.ietf.org/html/rfc5735#section-4
-    PROXY_LOCAL = "10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 169.254.0.0/16 127.0.0.0/8 localhost";
+var PROXY_HOST = process.env.PROXY_HOST || "localhost",
+    PROXY_PORT = process.env.PROXY_PORT || 5005,
+    PROXY_TOKEN = process.env.PROXY_TOKEN || process.env.TM_API_KEY || "DEV-CRED",
+    PROXY_LOCAL = process.env.PROXY_LOCAL || _PROXY_LOCAL,    
+    PROXY_CERT = process.env.PROXY_CERT || [
+      "-----BEGIN CERTIFICATE-----",
+      "MIICTTCCAbYCCQCYeAQlYTG45DANBgkqhkiG9w0BAQUFADBrMQswCQYDVQQGEwJV",
+      "UzETMBEGA1UECBMKV2FzaGluZ3RvbjEWMBQGA1UEBxMNV2VzdCBSaWNobGFuZDEb",
+      "MBkGA1UEChMSTmF0aGFuIFZhbmRlciBXaWx0MRIwEAYDVQQDEwlsb2NhbGhvc3Qw",
+      "HhcNMTUwMTIwMjAyMDAxWhcNMTUwMjE5MjAyMDAxWjBrMQswCQYDVQQGEwJVUzET",
+      "MBEGA1UECBMKV2FzaGluZ3RvbjEWMBQGA1UEBxMNV2VzdCBSaWNobGFuZDEbMBkG",
+      "A1UEChMSTmF0aGFuIFZhbmRlciBXaWx0MRIwEAYDVQQDEwlsb2NhbGhvc3QwgZ8w",
+      "DQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAPQbF5nt8HGxuR4qZ+8Nt0cdGv2nk+qp",
+      "VbVKD0frv1Sy08+FqVR/h0RVLVHhdeSmbmv34drmy8rtuqxBnPfOy8ogiPvyf7jT",
+      "Cp0gY7Tv3DxVYHUqbX91kNTD82J1fSaZ17GdBc70sYL8HD+c7kzjiqFj5IGG+y8W",
+      "yM1ti/CClOJlAgMBAAEwDQYJKoZIhvcNAQEFBQADgYEAiMwRqKl4YutHFe4lkynR",
+      "JO+bbkBo9RqlMO20lGbt4o27I0oLjkjbks5p7GiehFKFlU+sI86FR10eixWa6unr",
+      "FvplVt9MAEU2xQ/qHFBdoS1rTtSPEWJ3GpnoZZpu+1eRLhVpMkBqLOkBKEyLrhtN",
+      "OB32nDe6F9XMm/bFRNzwrqc=",
+      "-----END CERTIFICATE-----",
+    ].join('\n');
 
 /**
  * Temporary tunnel globals
@@ -16,6 +34,7 @@ var PROXY_HOST = "localhost",
  
 function createTunnel(cb) {
   net.connect({host:PROXY_HOST, port:PROXY_PORT}, function () {
+  //tls.connect({host:PROXY_HOST, port:PROXY_PORT, ca:[PROXY_CERT]}, function () {
     var proxySocket = this,
         tunnel = streamplex(streamplex.B_SIDE);
     tunnel.pipe(proxySocket).pipe(tunnel);
@@ -82,7 +101,7 @@ var local_matchers = PROXY_LOCAL.split(' ').map(function (str) {
 
 function protoForConnection(host, port, opts, cb) {   // CAUTION: syncronous callback!
   var addr = (net.isIPv4(host)) ? net._ipStrToInt(host) : null,
-      local = local_matchers.some(function (matcher) { return matcher(addr, host); });
+      local = !PROXY_TOKEN || local_matchers.some(function (matcher) { return matcher(addr, host); });
   if (local) cb(null, net._CC3KSocket.prototype);
   else tunnelKeeper.getTunnel(function (e, tunnel) {
     if (e) return cb(e);
