@@ -34,8 +34,7 @@ var PROXY_HOST = process.env.PROXY_HOST || "proxy.tessel.io",
  */
  
 function createTunnel(cb) {
-  net.connect({host:PROXY_HOST, port:PROXY_PORT, proxy:false}, function () {
-  //tls.connect({host:PROXY_HOST, port:PROXY_PORT, proxy:false, ca:[PROXY_CERT]}, function () {
+  tls.connect({host:PROXY_HOST, port:PROXY_PORT, proxy:false, ca:[PROXY_CERT]}, function () {
     var proxySocket = this,
         tunnel = streamplex(streamplex.B_SIDE);
     tunnel.pipe(proxySocket).pipe(tunnel);
