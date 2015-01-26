@@ -1,6 +1,7 @@
 var util = require('util'),
     events = require('events'),
     net = require('net'),
+    tls = require('tls'),
     streamplex = require('_streamplex');
 
 // NOTE: this list may not be exhaustive, see also https://tools.ietf.org/html/rfc5735#section-4
@@ -33,8 +34,8 @@ var PROXY_HOST = process.env.PROXY_HOST || "proxy.tessel.io",
  */
  
 function createTunnel(cb) {
-  net.connect({host:PROXY_HOST, port:PROXY_PORT}, function () {
-  //tls.connect({host:PROXY_HOST, port:PROXY_PORT, ca:[PROXY_CERT]}, function () {
+  net.connect({host:PROXY_HOST, port:PROXY_PORT, proxy:false}, function () {
+  //tls.connect({host:PROXY_HOST, port:PROXY_PORT, proxy:false, ca:[PROXY_CERT]}, function () {
     var proxySocket = this,
         tunnel = streamplex(streamplex.B_SIDE);
     tunnel.pipe(proxySocket).pipe(tunnel);
@@ -101,7 +102,7 @@ var local_matchers = PROXY_LOCAL.split(' ').map(function (str) {
 
 function protoForConnection(host, port, opts, cb) {   // CAUTION: syncronous callback!
   var addr = (net.isIPv4(host)) ? net._ipStrToInt(host) : null,
-      local = !PROXY_TOKEN || local_matchers.some(function (matcher) { return matcher(addr, host); });
+      local = !PROXY_TOKEN || (opts.proxy === false) || local_matchers.some(function (matcher) { return matcher(addr, host); });
   if (local) cb(null, net._CC3KSocket.prototype);
   else tunnelKeeper.getTunnel(function (e, tunnel) {
     if (e) return cb(e);
