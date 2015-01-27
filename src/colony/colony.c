@@ -57,6 +57,21 @@ int colony_isarray (lua_State* L, int index)
   return ret;
 }
 
+void colony_array_length (lua_State* L, int pos)
+{
+  // TODO fix
+  lua_getfield(L, pos, "length");
+}
+
+size_t colony_array_length_i (lua_State* L, int pos)
+{
+  // TODO fix
+  lua_getfield(L, pos, "length");
+  size_t ret = (size_t) lua_tonumber(L, -1);
+  lua_pop(L, 1);
+  return ret;
+}
+
 int colony_isbuffer (lua_State *L, int index)
 {
   int ret = 0;
@@ -65,7 +80,7 @@ int colony_isbuffer (lua_State *L, int index)
     if (!lua_isnil(L, -1)) {
       ret = 1;
     }
-    lua_pop(L, 1);
+    lua_pop(L, 2);
   }
   return ret;
 }

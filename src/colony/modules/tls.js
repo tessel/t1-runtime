@@ -18,7 +18,7 @@ exports.connect = function connect () {
   var arguments = normalizeConnectArgs(arguments);
   var options = arguments[0];
   var callback = arguments[1];
-  return net.connect(options.port, options.host, callback, true);
+  return net._secureConnect(options, callback);
 }
 
 function normalizeConnectArgs(listArgs) {

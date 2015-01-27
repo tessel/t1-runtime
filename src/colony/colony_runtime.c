@@ -154,7 +154,6 @@ static int runtime_panic (lua_State *L)
  * colony lua methods
  */
 
-typedef struct dir_reg { const char *path; const unsigned char *src; unsigned int len; } dir_reg_t;
 extern dir_reg_t dir_runtime_lib[];
 extern dir_reg_t dir_builtin[];
 

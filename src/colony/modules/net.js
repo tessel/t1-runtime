@@ -37,22 +37,6 @@ function isPipeName(s) {
 function toNumber(x) { return (x = Number(x)) >= 0 ? x : false; }
 
 /**
- * ssl
- */
-
-var ssl_ctx = null;
-
-function ensureSSLCtx () {
-  if (!tm.ssl_context_create) {
-    throw new Error("SSL/TLS is not supported in this version.");
-  }
-  if (ssl_ctx == null) {
-    ssl_ctx = tm.ssl_context_create();
-  }
-}
-
-
-/**
  * TCPSocket
  */
 
@@ -163,7 +147,17 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
 
   function setUpConnection(ip) {
     if (self.socket == null) {
-      if (self._secure) ensureSSLCtx();
+      if (self._secure) {
+        var custom_certs = null;
+        self._ssl_checkCerts = (opts.rejectUnauthorized !== false);
+        if (opts.ca) custom_certs = opts.ca.map(function (pem_data) {
+            // TODO: review PEM specs and axTLS needs; make more thorough if needed
+            return Buffer(pem_data.toString().split('\n').filter(function (line) {
+                return line && line.indexOf('-----') !== 0;
+            }).join(''), 'base64');
+        });
+        self._ssl_ctx = tm.ssl_context_create(self._ssl_checkCerts, custom_certs);
+      }
       self.socket = tm.tcp_open();
     }
 
@@ -245,7 +239,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         }, 100);
 
         function createSession() {
-          var _ = tm.ssl_session_create(ssl_ctx, self.socket, hostname)
+          var _ = tm.ssl_session_create(self._ssl_ctx, self.socket, hostname)
             , ssl = _[0]
             , ret = _[1]
             ;
@@ -271,7 +265,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
             }
           }
 
-          var cert = {
+          self._ssl_cert = {
             subjectaltname: (function () {
               var altnames = [];
               for (var i = 0; ; i++) {
@@ -283,14 +277,14 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
                 }
                 altnames.push(altname);
               }
-              return 'DNS:' + altnames.join(', DNS:');
+              return altnames.map(function (n) { return 'DNS:' + n; }).join(', ');
             })(),
             subject: {
               CN: tm.ssl_session_cn(ssl)[0]
             }
-          }
+          };
 
-          if (!tls.checkServerIdentity(host, cert)) {
+          if (self._ssl_checkCerts && !tls.checkServerIdentity(host, self._ssl_cert)) {
             return self.emit('error', new Error('Hostname/IP doesn\'t match certificate\'s altnames'));
           }
 
@@ -530,7 +524,11 @@ TCPSocket.prototype._restartTimeout = function () {
   this._timeoutWatchdog = (self._timeout) ? setTimeout(function () {
     self.emit('timeout');
   }, self._timeout) : null;
-}
+};
+
+TCPSocket.prototype.getPeerCertificate = function () {
+  return this._ssl_cert || null;
+};
 
 
 // NOTE: CC3K may not support? http://e2e.ti.com/support/wireless_connectivity/f/851/p/349461/1223801.aspx#1223801
@@ -538,11 +536,17 @@ TCPSocket.prototype.setNoDelay = function (val) {
   if (val) console.warn("Ignoring call to setNoDelay. TCP_NODELAY socket option not supported.");
 };
 
-function connect (port, host, callback, _secure) {
-  var client = new TCPSocket(null, _secure);
-  var args = Array.prototype.slice.call(arguments);
-  if (args.length === 4) args.pop();      // drop _secure param
-  TCPSocket.prototype.connect.apply(client, args);
+function connect (port, host, callback) {
+  var client = new TCPSocket(null);
+  TCPSocket.prototype.connect.apply(client, arguments);
+  return client;
+};
+
+// HACK: this is a quick solution to the regressions introduced by 5fb859605b183b70b246328bff24f4e4f8b50dab
+//       a more complete solution is implemented in a different PR: c015017492980271fa583fce57d798de26a12dab
+function _secureConnect (options, callback) {
+  var client = new TCPSocket(null, true);
+  TCPSocket.prototype.connect.apply(client, arguments);
   return client;
 };
 
@@ -655,6 +659,7 @@ function createServer (opts, onsocket) {
 exports.isIP = isIP;
 exports.isIPv4 = isIPv4;
 exports.connect = exports.createConnection = connect;
+exports._secureConnect = _secureConnect;
 exports.createServer = createServer;
 exports.Socket = TCPSocket;
 exports.Server = TCPServer;

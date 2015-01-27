@@ -6,6 +6,7 @@ tap.count(3);
 var options = {
   host : 'www.google.com',
   port : 443,
+  //rejectUnauthorized: false
 };
 
 var socket = tls.connect(options, function connected() {

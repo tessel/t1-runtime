@@ -11,6 +11,7 @@
 #include <lauxlib.h>
 #include <lualib.h>
 #include <math.h>
+#include <assert.h>
 
 #include "tm.h"
 #include "colony.h"
@@ -305,9 +306,25 @@ static int l_tm_tcp_accept (lua_State* L)
 static int l_tm_ssl_context_create (lua_State* L)
 {
   tm_ssl_ctx_t ctx;
-
-  int res = tm_ssl_context_create(&ctx);
-
+  bool check_certs = lua_toboolean(L, 1);
+  dir_reg_t* cert_bundle = NULL;
+  if (colony_isarray(L, 2)) {
+    size_t len = colony_array_length_i(L, 2);
+    cert_bundle = calloc(len + 1, sizeof(dir_reg_t));   // includes \0-filled end marker
+    for (size_t i = 0; i < len; i++) {
+      lua_pushinteger(L, i);
+      lua_gettable(L, 2);
+      assert(colony_isbuffer(L, -1));
+      size_t src_len;
+      cert_bundle[i].src = colony_tobuffer(L, -1, &src_len);
+      cert_bundle[i].len = (unsigned int) src_len;
+      cert_bundle[i].path = "custom.ca";
+      lua_pop(L, 1);
+    }
+  }
+  
+  int res = tm_ssl_context_create(check_certs, cert_bundle, &ctx);
+  if (cert_bundle) free(cert_bundle);
   if (res != 0) {
     lua_pushnil(L);
   } else {
