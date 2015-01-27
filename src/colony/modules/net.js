@@ -536,11 +536,17 @@ TCPSocket.prototype.setNoDelay = function (val) {
   if (val) console.warn("Ignoring call to setNoDelay. TCP_NODELAY socket option not supported.");
 };
 
-function connect (options, callback, _secure) {
-  var client = new TCPSocket(null, _secure);
-  var args = Array.prototype.slice.call(arguments);
-  if (args.length === 3) args.pop();      // drop _secure param
-  TCPSocket.prototype.connect.apply(client, args);
+function connect (port, host, callback) {
+  var client = new TCPSocket(null);
+  TCPSocket.prototype.connect.apply(client, arguments);
+  return client;
+};
+
+// HACK: this is a quick solution to the regressions introduced by 5fb859605b183b70b246328bff24f4e4f8b50dab
+//       a more complete solution is implemented in a different PR: c015017492980271fa583fce57d798de26a12dab
+function _secureConnect (options, callback) {
+  var client = new TCPSocket(null, true);
+  TCPSocket.prototype.connect.apply(client, arguments);
   return client;
 };
 
@@ -653,6 +659,7 @@ function createServer (opts, onsocket) {
 exports.isIP = isIP;
 exports.isIPv4 = isIPv4;
 exports.connect = exports.createConnection = connect;
+exports._secureConnect = _secureConnect;
 exports.createServer = createServer;
 exports.Socket = TCPSocket;
 exports.Server = TCPServer;
