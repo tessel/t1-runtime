@@ -181,8 +181,8 @@ TCPSocket.prototype._connect = function (port, host) {
     if (self.socket == null) {
       if (self._secure) {
         var custom_certs = null;
-        self._ssl_checkCerts = (opts.rejectUnauthorized !== false);
-        if (opts.ca) custom_certs = opts.ca.map(function (pem_data) {
+        self._ssl_checkCerts = (self._opts.rejectUnauthorized !== false);
+        if (self._opts.ca) custom_certs = self._opts.ca.map(function (pem_data) {
             // TODO: review PEM specs and axTLS needs; make more thorough if needed
             return Buffer(pem_data.toString().split('\n').filter(function (line) {
                 return line && line.indexOf('-----') !== 0;
