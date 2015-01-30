@@ -195,13 +195,16 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         var closeRet = tm.tcp_close(self.socket); // returns -57 if socket is already closed
         if (closeRet < 0 && closeRet != -tm.ENOTCONN){ 
           // couldn't close socket, throw an error
-          self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+closeRet));
+          // failed to connect, stay silent
+          console.log("Failed to close socket", self.socket);
+          // self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+closeRet));
           self.destroy();
-          return self.__close(false);
+          return self.__close();
         }
 
         if (retries > 3) {
-          self.emit('error', new Error('ENOENT Cannot connect to ' + ip + ' Got: err'+ret));
+          console.log("Cannot connect to", ip);
+          // self.emit('error', new Error('ENOENT Cannot connect to ' + ip + ' Got: err'+ret));
           // force the cleanup
           self.destroy();
           return self.__close();
