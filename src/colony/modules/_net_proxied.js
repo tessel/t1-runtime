@@ -8,7 +8,8 @@ var util = require('util'),
 var _PROXY_LOCAL = "10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 169.254.0.0/16 127.0.0.0/8 localhost";
 
 var PROXY_HOST = process.env.PROXY_HOST || "proxy.tessel.io",
-    PROXY_PORT = process.env.PROXY_PORT || 443,
+    PROXY_PORT = +process.env.PROXY_PORT || 443,
+    PROXY_TRUSTED = +process.env.PROXY_TRUSTED || 0,
     PROXY_TOKEN = process.env.PROXY_TOKEN || process.env.TM_API_KEY,
     PROXY_LOCAL = process.env.PROXY_LOCAL || _PROXY_LOCAL,    
     PROXY_CERT = process.env.PROXY_CERT || [
@@ -101,7 +102,8 @@ var local_matchers = PROXY_LOCAL.split(' ').map(function (str) {
 
 function protoForConnection(host, port, opts, cb) {   // CAUTION: syncronous callback!
   var addr = (net.isIPv4(host)) ? net._ipStrToInt(host) : null,
-      local = !PROXY_TOKEN || (opts.proxy === false) || local_matchers.some(function (matcher) { return matcher(addr, host); });
+      force_local = !PROXY_TOKEN || (opts._secure && !PROXY_TRUSTED) || (opts.proxy === false),
+      local = force_local || local_matchers.some(function (matcher) { return matcher(addr, host); });
   if (local) cb(null, net._CC3KSocket.prototype);
   else tunnelKeeper.getTunnel(function (e, tunnel) {
     if (e) return cb(e);
