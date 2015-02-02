@@ -197,7 +197,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
           // couldn't close socket, throw an error
           // failed to connect, stay silent
           console.log("Failed to close socket", self.socket);
-          // self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+closeRet));
+          self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+closeRet));
           self.destroy();
           return self.__close();
         }
@@ -470,7 +470,7 @@ TCPSocket.prototype.__close = function (tryToClose) {
     if (ret < 0 && ret != -tm.ENOTCONN) { // -57 is inactive, socket has already been closed
       if (retries > 3) {
         // tried 3 times and couldn't close, error out
-        self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+ret));
+        // self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+ret));
         self.emit('close');
       } else {
         retries++;
