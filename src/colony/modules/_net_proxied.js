@@ -7,11 +7,13 @@ var util = require('util'),
 // NOTE: this list may not be exhaustive, see also https://tools.ietf.org/html/rfc5735#section-4
 var _PROXY_LOCAL = "10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 169.254.0.0/16 127.0.0.0/8 localhost";
 
-var PROXY_HOST = process.env.PROXY_HOST || "proxy.tessel.io",
+var _PROXY_DBG = ('_PROXY_DBG' in process.env) || false,
+    PROXY_HOST = process.env.PROXY_HOST || "proxy.tessel.io",
     PROXY_PORT = +process.env.PROXY_PORT || 443,
     PROXY_TRUSTED = +process.env.PROXY_TRUSTED || 0,
     PROXY_TOKEN = process.env.PROXY_TOKEN || process.env.TM_API_KEY,
-    PROXY_LOCAL = process.env.PROXY_LOCAL || _PROXY_LOCAL,    
+    PROXY_LOCAL = process.env.PROXY_LOCAL || _PROXY_LOCAL,
+    PROXY_IDLE = +process.env.PROXY_IDLE || 0e3,
     PROXY_CERT = process.env.PROXY_CERT || [
       "-----BEGIN CERTIFICATE-----",
       "MIICazCCAdQCCQDr2mJoysZo9DANBgkqhkiG9w0BAQUFADB6MQswCQYDVQQGEwJV",
@@ -31,26 +33,40 @@ var PROXY_HOST = process.env.PROXY_HOST || "proxy.tessel.io",
     ].join('\n');
 
 /**
- * Temporary tunnel globals
+ * Tunnel helpers
  */
- 
+
 function createTunnel(cb) {
+  if (_PROXY_DBG) console.log("TUNNEL -> START", new Date());
   tls.connect({host:PROXY_HOST, port:PROXY_PORT, proxy:false, ca:[PROXY_CERT]}, function () {
     var proxySocket = this,
         tunnel = streamplex(streamplex.B_SIDE);
     tunnel.pipe(proxySocket).pipe(tunnel);
-    proxySocket.on('error', function (e) {
-      tunnel.destroy(e);    // substreams will each emit `e`, then go inactive
+    proxySocket.on('error', shutdownTunnel);
+    proxySocket.on('close', shutdownTunnel);
+    
+    var idleTimeout;
+    tunnel.on('inactive', function () {
+      if (_PROXY_DBG) console.log("TUNNEL -> inactive", new Date());
+      idleTimeout = setTimeout(shutdownTunnel, PROXY_IDLE);
     });
-    tunnel.once('inactive', function () {
-      proxySocket.destroy();
+    tunnel.on('active', function () {
+      if (_PROXY_DBG) console.log("TUNNEL -> active", new Date());
+      clearTimeout(idleTimeout);
     });
+    
     tunnel.sendMessage({token:PROXY_TOKEN});
     tunnel.once('message', function (d) {
       proxySocket.removeListener('error', cb);
       if (!d.authed) cb(new Error("Authorization failed."));
       else cb(null, tunnel);
     });
+    function shutdownTunnel(e) {
+      if (_PROXY_DBG) console.log("TUNNEL -> STOP", new Date());
+      tunnel.destroy(e);
+      if (this !== proxySocket) proxySocket.end();
+      proxySocket.removeListener('close', shutdownTunnel);
+    }
   }).on('error', cb);
 }
 
@@ -65,7 +81,7 @@ tunnelKeeper.getTunnel = function (cb) {    // CAUTION: syncronous callback!
       if (e) return self.emit('tunnel', e);
       
       self._tunnel = tunnel;
-      tunnel.once('inactive', function () {
+      tunnel.on('close', function () {
         self._tunnel = null;
       });
       var streamProto = Object.create(ProxiedSocket.prototype);
@@ -104,6 +120,13 @@ function protoForConnection(host, port, opts, cb) {   // CAUTION: syncronous cal
   var addr = (net.isIPv4(host)) ? net._ipStrToInt(host) : null,
       force_local = !PROXY_TOKEN || (opts._secure && !PROXY_TRUSTED) || (opts.proxy === false),
       local = force_local || local_matchers.some(function (matcher) { return matcher(addr, host); });
+  if (_PROXY_DBG) {
+      if (force_local) console.log(
+        "Forced to use local socket. [token: %s, secure/trusted: %s/%s, opts: %s]",
+        Boolean(PROXY_TOKEN), Boolean(opts._secure), Boolean(PROXY_TRUSTED), opts.proxy
+      );
+      else console.log("Proxied socket to '%s'? %s", host, !local);
+  }
   if (local) cb(null, net._CC3KSocket.prototype);
   else tunnelKeeper.getTunnel(function (e, tunnel) {
     if (e) return cb(e);

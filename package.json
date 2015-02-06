@@ -21,7 +21,7 @@
     "colony-compiler": "~0.6.23",
     "mkdirp": "~0.3.5",
     "semver": "^4.1.0",
-    "streamplex": "^0.13.0"
+    "streamplex": "^0.14.0"
   },
   "devDependencies": {
     "browserify": "^8.1.0",
