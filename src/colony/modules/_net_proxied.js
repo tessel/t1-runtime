@@ -44,6 +44,7 @@ function createTunnel(cb) {
     tunnel.pipe(proxySocket).pipe(tunnel);
     proxySocket.on('error', shutdownTunnel);
     proxySocket.on('close', shutdownTunnel);
+    proxySocket.on('error', cb);
     
     var idleTimeout;
     tunnel.on('inactive', function () {
