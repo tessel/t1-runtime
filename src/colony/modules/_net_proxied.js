@@ -58,6 +58,7 @@ function createTunnel(cb) {
     
     tunnel.sendMessage({token:PROXY_TOKEN});
     tunnel.once('message', function (d) {
+      if (_PROXY_DBG) console.log("TUNNEL: auth response?", d);
       proxySocket.removeListener('error', cb);
       if (!d.authed) cb(new Error("Authorization failed."));
       else cb(null, tunnel);
