@@ -122,10 +122,10 @@ function protoForConnection(host, port, opts, cb) {   // CAUTION: syncronous cal
       local = force_local || local_matchers.some(function (matcher) { return matcher(addr, host); });
   if (_PROXY_DBG) {
       if (force_local) console.log(
-        "Forced to use local socket. [token: %s, secure/trusted: %s/%s, opts: %s]",
-        Boolean(PROXY_TOKEN), Boolean(opts._secure), Boolean(PROXY_TRUSTED), opts.proxy
+        "Forced to use local socket to \"%s\". [token: %s, secure/trusted: %s/%s, opts override: %s]",
+        host, Boolean(PROXY_TOKEN), Boolean(opts._secure), Boolean(PROXY_TRUSTED), (opts.proxy === false)
       );
-      else console.log("Proxied socket to '%s'? %s", host, !local);
+      else console.log("Proxied socket to \"%s\"? %s", host, !local);
   }
   if (local) cb(null, net._CC3KSocket.prototype);
   else tunnelKeeper.getTunnel(function (e, tunnel) {
