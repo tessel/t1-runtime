@@ -385,7 +385,9 @@ TCPSocket.prototype.__send = function (cb) {
 
     var ret = null;
     if (self._ssl) {
-      ret = tm.ssl_write(self._ssl, buf, buf.length);
+      // HACK: if socket isn't writable due to in-progress incoming data, feign EAGAIN
+      //       (axTLS's ssl_write clobbers state that ssl_read may store between calls)
+      ret = (tm.ssl_writeable(self._ssl)) ? tm.ssl_write(self._ssl, buf, buf.length) : -11;
     } else {
       // HACK/TODO: invert return value to match logic below (but AFAICT it used to always get -1 from this TCP path anyway??!)
       ret = -tm.tcp_write(self.socket, buf, buf.length);

@@ -405,6 +405,16 @@ static int l_tm_ssl_session_free (lua_State* L)
   return 1;
 }
 
+static int l_tm_ssl_writeable (lua_State* L)
+{
+  tm_ssl_session_t session = (tm_ssl_session_t) lua_touserdata(L, 1);
+  
+  bool res = tm_ssl_writeable(session);
+  
+  lua_pushboolean(L, res);
+  return 1;
+}
+
 
 static int l_tm_ssl_write (lua_State* L)
 {
@@ -1408,6 +1418,7 @@ LUALIB_API int luaopen_tm (lua_State *L)
     { "ssl_session_altname", l_tm_ssl_session_altname },
     { "ssl_session_cn", l_tm_ssl_session_cn },
     { "ssl_session_free", l_tm_ssl_session_free },
+    { "ssl_writeable", l_tm_ssl_writeable },
     { "ssl_write", l_tm_ssl_write },
     { "ssl_read", l_tm_ssl_read },
 #endif
