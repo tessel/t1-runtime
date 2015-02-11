@@ -318,12 +318,6 @@ TCPSocket.prototype._read = function (size) {
 TCPSocket.prototype.__listen = function () {
   var self = this;
   this.__listenid = setTimeout(function loop () {
-    if (self._sending) {
-      // retry soon
-      setTimeout(loop, 100);
-      return;
-    }
-
     self.__listenid = null;
     // ~HACK: set a watchdog to fire end event if not re-polled
     var failsafeEnd = setImmediate(function () {
