@@ -59,6 +59,7 @@ int tm_ssl_context_create (bool check_certs, dir_reg_t cert_bundle[], tm_ssl_ctx
 #else
     uint32_t options = 0;
 #endif
+    //options |= SSL_DISPLAY_STATES | SSL_DISPLAY_BYTES;
     if (!check_certs) {
         options |= SSL_SERVER_VERIFY_LATER;
     }
