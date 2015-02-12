@@ -256,7 +256,10 @@ int tm_fs_open(tm_fs_file_handle* /* -> ~<'s> */ out, tm_fs_ent* /* &'s */ root,
 	switch (ent->type) {
 		case VFS_TYPE_RAW_FILE:
 			if (flags & TM_TRUNC) {
-				free(ent->file.data);
+				if (ent->file.data_owned) {
+					free(ent->file.data);
+				}
+				ent->file.data_owned = true;
 				ent->file.length = 0;
 				ent->file.data = 0;
 			}
