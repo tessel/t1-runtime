@@ -203,8 +203,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         }
 
         if (retries > 3) {
-          console.log("Cannot connect to", ip);
-          // self.emit('error', new Error('ENOENT Cannot connect to ' + ip + ' Got: err'+ret));
+          self.emit('error', new Error('ENOENT Cannot connect to ' + ip + ' Got: err'+ret));
           // force the cleanup
           self.destroy();
           return self.__close();
