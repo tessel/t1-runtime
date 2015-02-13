@@ -428,9 +428,17 @@ TCPSocket.prototype.__readSocket = function(restartTimeout) {
   var arr = [], flag = 0;
   while (self.socket != null && (flag = tm.tcp_readable(self.socket)) > 0) {
     if (self._ssl) {
-      var data = tm.ssl_read(self._ssl);
+      try {
+        var data = tm.ssl_read(self._ssl);
+      } catch(e){
+        self.emit("error", e);
+      }
     } else {
-      var data = tm.tcp_read(self.socket);
+      try {
+        var data = tm.tcp_read(self.socket);
+      } catch(e){
+        self.emit("error", e);
+      }
     }
     if (!data || data.length == 0) {
       break;
@@ -466,10 +474,10 @@ TCPSocket.prototype.__close = function (tryToClose) {
   function closeSocket(){
     if (self.socket === null) return;
     var ret = tm.tcp_close(self.socket);
-
     if (ret < 0 && ret != -tm.ENOTCONN) { // -57 is inactive, socket has already been closed
       if (retries > 3) {
         // tried 3 times and couldn't close, error out
+        // removing this error for now, nothing for the user to do if this error occurs
         // self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+ret));
         self.emit('close');
       } else {

@@ -40,6 +40,7 @@ int tm_ssl_read (tm_ssl_session_t ssl, uint8_t *buf, size_t *buf_len)
     uint8_t *read_buf;
     int res = ssl_read(ssl, &read_buf);
     if (res < 0) {
+        TM_DEBUG("ssl read res %d", res);
         *buf_len = 0;
         return res;
     } else {
