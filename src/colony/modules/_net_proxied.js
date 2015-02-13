@@ -13,7 +13,7 @@ var _PROXY_DBG = ('_PROXY_DBG' in process.env) || false,
     PROXY_TRUSTED = +process.env.PROXY_TRUSTED || 0,
     PROXY_TOKEN = process.env.PROXY_TOKEN || process.env.TM_API_KEY,
     PROXY_LOCAL = process.env.PROXY_LOCAL || _PROXY_LOCAL,
-    PROXY_IDLE = +process.env.PROXY_IDLE || 0e3,
+    PROXY_IDLE = +process.env.PROXY_IDLE || 90e3,
     PROXY_CERT = process.env.PROXY_CERT || [
       "-----BEGIN CERTIFICATE-----",
       "MIICazCCAdQCCQDr2mJoysZo9DANBgkqhkiG9w0BAQUFADB6MQswCQYDVQQGEwJV",
