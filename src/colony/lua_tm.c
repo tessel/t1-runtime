@@ -262,7 +262,7 @@ static int l_tm_tcp_read (lua_State* L)
   size_t buf_len = sizeof(buf);
   int err = tm_tcp_read(socket, buf, &buf_len);
 
-  if (err < 0) {
+  if (err != 0) {
     lua_pushstring(L, "tcp read error");
     lua_error(L);
   } else {
@@ -432,7 +432,7 @@ static int l_tm_ssl_read (lua_State* L)
   uint8_t buf[20000];
   size_t buf_len = sizeof(buf);
   int err = tm_ssl_read(session, buf, &buf_len);
-  if (err < 0) {
+  if (err != 0) {
     lua_pushstring(L, "ssl read error");
     lua_error(L);
   } else {
