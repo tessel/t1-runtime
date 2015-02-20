@@ -409,7 +409,7 @@ static int l_tm_ssl_writeable (lua_State* L)
 {
   tm_ssl_session_t session = (tm_ssl_session_t) lua_touserdata(L, 1);
   
-  bool res = tm_ssl_writeable(session);
+  int res = tm_ssl_writeable(session);
   
   lua_pushboolean(L, res);
   return 1;

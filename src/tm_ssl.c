@@ -22,7 +22,7 @@
 static void display_cipher(tm_ssl_session_t ssl);
 static void display_session_id(tm_ssl_session_t ssl);
 
-bool tm_ssl_writeable (tm_ssl_session_t _ssl)
+int tm_ssl_writeable (tm_ssl_session_t _ssl)
 {
     /*
       The `ssl_read` call of axTLS can sometimes be waiting for more data to come in on a subsequent call.
