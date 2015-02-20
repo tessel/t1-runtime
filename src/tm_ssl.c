@@ -22,6 +22,17 @@
 static void display_cipher(tm_ssl_session_t ssl);
 static void display_session_id(tm_ssl_session_t ssl);
 
+int tm_ssl_writeable (tm_ssl_session_t _ssl)
+{
+    /*
+      The `ssl_read` call of axTLS can sometimes be waiting for more data to come in on a subsequent call.
+      Unfortunately, their `ssl_write` call clobbers an important flag (and the underlying buffer), causing
+      subsequent read calls to read encrypted (random) application data as if it were a record header. So…
+    */
+    SSL *ssl = _ssl;      // needed to (ab)use internal macro
+    return IS_SET_SSL_FLAG(SSL_NEED_RECORD);
+}
+
 int tm_ssl_write (tm_ssl_session_t ssl, const uint8_t *buf, size_t *buf_len)
 {
     int res = ssl_write(ssl, buf, *buf_len);
@@ -59,6 +70,7 @@ int tm_ssl_context_create (bool check_certs, dir_reg_t cert_bundle[], tm_ssl_ctx
 #else
     uint32_t options = 0;
 #endif
+    //options |= SSL_DISPLAY_STATES | SSL_DISPLAY_BYTES;
     if (!check_certs) {
         options |= SSL_SERVER_VERIFY_LATER;
     }
