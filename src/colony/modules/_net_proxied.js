@@ -15,6 +15,7 @@ var _PROXY_DBG = ('_PROXY_DBG' in process.env) || false,
     PROXY_LOCAL = process.env.PROXY_LOCAL || _PROXY_LOCAL,
     PROXY_IDLE = +process.env.PROXY_IDLE || 90e3,
     PROXY_CERT = process.env.PROXY_CERT || [
+      // this is proxy.tessel.io's cert (self-hosters provide their own)
       "-----BEGIN CERTIFICATE-----",
       "MIICazCCAdQCCQDr2mJoysZo9DANBgkqhkiG9w0BAQUFADB6MQswCQYDVQQGEwJV",
       "UzELMAkGA1UECBMCQ0ExETAPBgNVBAcTCEJlcmtlbGV5MQ8wDQYDVQQKEwZUZXNz",
