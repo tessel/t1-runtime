@@ -169,7 +169,7 @@ ProxiedSocket.prototype._setup = function () {
       self.emit.apply(self, args);
     });
   }
-  ['connect', 'secureConnect', 'error', 'timeout'].forEach(reEmit);
+  ['connect', 'secureConnect', 'error', 'timeout', 'close'].forEach(reEmit);
 };
 
 ProxiedSocket.prototype._read = function () {
