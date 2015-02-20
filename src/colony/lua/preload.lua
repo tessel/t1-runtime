@@ -73,6 +73,7 @@ if _G.COLONY_EMBED then
   end
 end
 
+local env = {}
 if not _G.COLONY_EMBED then
   -- This is temporary until we have proper compilation in C.
   colony._load = function (file)
@@ -88,6 +89,16 @@ if not _G.COLONY_EMBED then
     handle:close()
     return output
   end
+
+  local handle = io.popen('env')
+  while true do
+    local line = handle:read('*line')
+    if line == nil then break end
+    for k, v in string.gmatch(line, "(.+)=(.*)") do
+      env[k] = v
+    end
+  end
+  handle:close()
 end
 
 -- Set up builtin dependencies
@@ -109,7 +120,7 @@ do
   global.process.version = global.process.versions.node
   global.process.EventEmitter = EventEmitter
   global.process.argv = js_arr({}, 0)
-  global.process.env = js_obj({})
+  global.process.env = js_obj(env)
   global.process.exit = function (this, code)
     tm.exit(code)
   end
