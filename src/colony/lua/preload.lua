@@ -95,7 +95,7 @@ if not _G.COLONY_EMBED then
     local line = handle:read('*line')
     if line == nil then break end
     for k, v in string.gmatch(line, "(.+)=(.*)") do
-      env[k] = v
+      env[k] = os.getenv(k)
     end
   end
   handle:close()
