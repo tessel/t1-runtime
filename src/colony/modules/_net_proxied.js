@@ -14,24 +14,7 @@ var _PROXY_DBG = ('_PROXY_DBG' in process.env) || false,
     PROXY_TOKEN = process.env.PROXY_TOKEN || process.env.TM_API_KEY,
     PROXY_LOCAL = process.env.PROXY_LOCAL || _PROXY_LOCAL,
     PROXY_IDLE = +process.env.PROXY_IDLE || 90e3,
-    PROXY_CERT = process.env.PROXY_CERT || [
-      // this is proxy.tessel.io's cert (self-hosters provide their own)
-      "-----BEGIN CERTIFICATE-----",
-      "MIICazCCAdQCCQDr2mJoysZo9DANBgkqhkiG9w0BAQUFADB6MQswCQYDVQQGEwJV",
-      "UzELMAkGA1UECBMCQ0ExETAPBgNVBAcTCEJlcmtlbGV5MQ8wDQYDVQQKEwZUZXNz",
-      "ZWwxGDAWBgNVBAMTD3Byb3h5LnRlc3NlbC5pbzEgMB4GCSqGSIb3DQEJARYRdGVh",
-      "bUB0ZWNobmljYWwuaW8wHhcNMTUwMTIzMDExOTQ5WhcNMTUwMjIyMDExOTQ5WjB6",
-      "MQswCQYDVQQGEwJVUzELMAkGA1UECBMCQ0ExETAPBgNVBAcTCEJlcmtlbGV5MQ8w",
-      "DQYDVQQKEwZUZXNzZWwxGDAWBgNVBAMTD3Byb3h5LnRlc3NlbC5pbzEgMB4GCSqG",
-      "SIb3DQEJARYRdGVhbUB0ZWNobmljYWwuaW8wgZ8wDQYJKoZIhvcNAQEBBQADgY0A",
-      "MIGJAoGBAMBZDd+DvwOxtCHl0tVYjctfoim7GvVrE257vofr7oi1SXGXf1ZPcPgb",
-      "DDiq5zq5G38JaHNHpkUq5+J8XUNXgdITAm0Pj4RHwwIHejmWh7ZWRZqsxrz+E6T0",
-      "aj+RIqe3wAfNmr4N7pZ8un9XL1abcTREOMdaLvsNBLhFSJOf3B2tAgMBAAEwDQYJ",
-      "KoZIhvcNAQEFBQADgYEAbNbBFOe5P33FWUup35d/zUdU/q2j5xDGhMbyCVkdONh9",
-      "QrjD9jStLIhaLOjXleI5S+TT9Vgqknn7D9Q977+/wTAg6aXwSBe1LK/V4du92eSx",
-      "/stxtxpFH7BQ1YPuuzmIcYd8rGPywjV91fsgqmWIZFe7FHGbRqKNKPCeR3Nv4tg=",
-      "-----END CERTIFICATE-----",
-    ].join('\n');
+    PROXY_CERT = process.env.PROXY_CERT || null;
 
 /**
  * Tunnel helpers
@@ -39,7 +22,7 @@ var _PROXY_DBG = ('_PROXY_DBG' in process.env) || false,
 
 function createTunnel(cb) {
   if (_PROXY_DBG) console.log("TUNNEL -> START", new Date());
-  tls.connect({host:PROXY_HOST, port:PROXY_PORT, proxy:false, ca:[PROXY_CERT]}, function () {
+  tls.connect({host:PROXY_HOST, port:PROXY_PORT, proxy:false, ca:(PROXY_CERT && [PROXY_CERT])}, function () {
     var proxySocket = this,
         tunnel = streamplex(streamplex.B_SIDE);
     tunnel.pipe(proxySocket).pipe(tunnel);
