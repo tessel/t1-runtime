@@ -1,10 +1,10 @@
-CONFIG ?= Release
+noCONFIG ?= Release
 ENABLE_TLS ?= 1
 ENABLE_NET ?= 1
 ENABLE_LUAJIT ?= 1
 
 # Update when targeting new Node build.
-NODE_VERSION ?= 0.10.32
+NODE_VERSION ?= 0.12.1
 
 ifeq ($(ARM),1)
 	CCENV = AR=arm-none-eabi-ar AR_host=arm-none-eabi-ar AR_target=arm-none-eabi-ar CC=arm-none-eabi-gcc CXX=arm-none-eabi-g++
