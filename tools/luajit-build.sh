@@ -3,7 +3,7 @@
 set -e
 
 MYPATH=`dirname $0`
-TARGET=$(pwd)/$2
+TARGET="$(pwd)/$2"
 # gcc on Linux, clang on OS X, doesn't matter
 LJ_CC=gcc
 
@@ -14,4 +14,4 @@ else
 	make HOST_CFLAGS="-DLUAJIT_COLONY -g" TARGET_CFLAGS="-DLUAJIT_COLONY -g" || true
 fi
 cd ../..
-cp deps/colony-luajit/src/libluajit.a $TARGET
+cp deps/colony-luajit/src/libluajit.a "$TARGET"
