@@ -1,6 +1,6 @@
 var tap = require('../tap');
 
-tap.count(38);
+tap.count(36);
 
 var d = new Date();
 var offset = d.getTimezoneOffset() * 60000;
@@ -100,16 +100,6 @@ tap.eq(d.toLocaleTimeString(), '16:00:00');
 testEqIgnoreTimezoneName(d.toLocaleString(), 'Wed Dec 02 1992 16:00:00 GMT+0000 (GMT)');
 
 /** UTC **/
-
-d = new Date();
-d.setHours(16);
-d.setMinutes(0);
-tap.eq(d.getUTCHours(), Math.floor(16 + offsetHours) % 24);
-
-d = new Date();
-d.setUTCHours(16);
-d.setUTCMinutes(0);
-tap.eq(d.getHours(), Math.floor(16 - offsetHours) % 24);
 
 d = new Date();
 d.setMinutes(35);
