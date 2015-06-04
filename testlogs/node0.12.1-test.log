@@ -1,0 +1,596 @@
+node testbench:
+ok test/suite/__proto__.js .............................. 2/2
+ok test/suite/arguments.js .............................. 3/3
+ok test/suite/array.js ................................ 60/60
+ok test/suite/bind.js ................................... 5/5
+ok test/suite/bitmath.js .............................. 24/28
+  skipped: undefined
+not ok test/suite/buffer.js ......................... 119/120
+    Command: "node buffer.js"
+    TAP version 13
+    ok 1 buffer.length
+    ok 2 buffer indexing
+    ok 3 buffer high indexing
+    ok 4 buffer char length
+    ok 5 buffer char index
+    ok 6 buffer fixed size len
+    ok 7 buffer.fill worked
+    ok 8 Buffer.isBuffer succeeds on buffer
+    ok 9 Buffer.isBuffer fails on non-buffer (array)
+    ok 10 Buffer.isBuffer fails on non-buffer (string)
+    ok 11 Buffer.isBuffer fails on non-buffer (null)
+    ok 12 buffer.copy works
+    ok 13 buffer.slice length
+    ok 14 buffer.slice works
+    ok 15 error on buffer copy to non-buffer target
+    ok 16 readUInt8 and assert work
+    ok 17 readUInt8
+    ok 18 readUInt16LE
+    ok 19 readUInt16BE
+    ok 20 readUInt32LE
+    ok 21 readUInt32BE
+    ok 22 readInt8
+    ok 23 readInt16LE
+    ok 24 readInt16BE
+    ok 25 readInt32LE
+    ok 26 readInt32BE
+    ok 27 readFloatLE
+    ok 28 readFloatBE
+    ok 29 readDoubleLE
+    ok 30 readDoubleBE
+    ok 31 buffer read offsets
+    ok 32 writeUInt8
+    ok 33 writeUInt16LE
+    ok 34 writeUInt16BE
+    ok 35 writeUInt32LE
+    ok 36 writeUInt32BE
+    ok 37 writeInt8
+    ok 38 writeInt16LE
+    ok 39 writeInt16BE
+    ok 40 writeInt32LE
+    ok 41 writeInt32BE
+    ok 42 writeFloatLE
+    ok 43 writeFloatBE
+    ok 44 writeDoubleLE
+    ok 45 writeDoubleBE
+    ok 46 buffer write offsets
+    ok 47 buffer concat length
+    ok 48 buffer concat works
+    not ok 49 buffer toJSON works
+    ok 50 readUInt8(0xff)
+    ok 51 readInt8(0xff)
+    ok 52 readUInt32LE(0xffff)
+    ok 53 readUInt32BE(0xffff)
+    ok 54 readUInt32LE(0xffffffff)
+    ok 55 readUInt32BE(0xffffffff)
+    ok 56 hex encoding
+    ok 57 hex encoding
+    ok 58 invalid hex digits truncated: "1" == "1"
+    ok 59 invalid hex digits truncate but return a value: "170" == "170"
+    ok 60 invalid hex length
+    ok 61 base64 encoding (padded)
+    ok 62 base64 encoding (not padded)
+    ok 63 str -> base64 -> str
+    ok 64 str -> hex -> str
+    ok 65 array ingested: "4" == "4"
+    ok 66 undefined: "0" == "0"
+    ok 67 undefined: "65" == "65"
+    ok 68 undefined: "130" == "130"
+    ok 69 undefined: "4" == "4"
+    ok 70 binary toString: "\u0000A\u0004" == "\u0000A\u0004"
+    ok 71 undefined: "4" == "4"
+    ok 72 ascii toString: "\u0000A\u0002\u0004" == "\u0000A\u0002\u0004"
+    ok 73 undefined: "4" == "4"
+    ok 74 utf8 toString: "\u0000A�\u0004" == "\u0000A�\u0004"
+    ok 75 undefined: "4" == "4"
+    ok 76 utf16le toString: "䄀҂" == "䄀҂"
+    ok 77 undefined: "2" == "2"
+    ok 78 undefined: "2" == "2"
+    ok 79 base64 toString: "AEGCBA==" == "AEGCBA=="
+    ok 80 undefined: "8" == "8"
+    ok 81 hex toString: "00418204" == "00418204"
+    ok 82 undefined: "8" == "8"
+    ok 83 buffer from utf8: "130" == "130"
+    ok 84 undefined: "3" == "3"
+    ok 85 buffer from ascii: "130" == "130"
+    ok 86 undefined: "1" == "1"
+    ok 87 buffer from binary: "130" == "130"
+    ok 88 undefined: "1" == "1"
+    ok 89 buffer from utf16le: "129" == "129"
+    ok 90 undefined: "2" == "2"
+    ok 91 undefined: "129" == "129"
+    ok 92 buffer from [bad] base64: "0" == "0"
+    ok 93 buffer from [bad] hex
+    ok 94 written length is 12 byes
+    ok 95 result was written
+    ok 96 write utf8: "130" == "130"
+    ok 97 undefined: "3" == "3"
+    ok 98 write ascii: "130" == "130"
+    ok 99 undefined: "1" == "1"
+    ok 100 write binary: "130" == "130"
+    ok 101 undefined: "1" == "1"
+    ok 102 write utf16le: "129" == "129"
+    ok 103 undefined: "2" == "2"
+    ok 104 write hex: "130" == "130"
+    ok 105 undefined: "1" == "1"
+    ok 106 write base64: "130" == "130"
+    ok 107 write with encoding: "66" == "66"
+    ok 108 undefined: "0" == "0"
+    ok 109 write with offset and encoding: "66" == "66"
+    ok 110 undefined: "67" == "67"
+    ok 111 undefined: "0" == "0"
+    ok 112 write with offset, length and encoding: "66" == "66"
+    ok 113 undefined: "67" == "67"
+    ok 114 undefined: "68" == "68"
+    ok 115 undefined: "0" == "0"
+    ok 116 did not write partial character: "2" == "2"
+    ok 117 undefined: "0" == "0"
+    ok 118 original fill remains: "255" == "255"
+    ok 119 default INSPECT_MAX_BYTES is 50
+    ok 120 test/suite/buffer.js
+    
+    1..120
+    # tests 120
+    # pass  119
+    # fail  1
+    
+ok test/suite/bug-bindnull.js ........................... 3/3
+ok test/suite/bug-endwithcomments.js .................... 2/2
+ok test/suite/bug-foreach-null.js ....................... 2/2
+ok test/suite/bug-forinarray.js ....................... 14/14
+ok test/suite/bug-regexreplace.js ....................... 2/2
+ok test/suite/bug-underscores.js ...................... 10/10
+ok test/suite/builtin.js .............................. 20/20
+ok test/suite/console.js ................................ 3/3
+ok test/suite/crypto.js ................................. 1/2
+  skipped: undefined
+ok test/suite/date.js ................................. 17/17
+ok test/suite/defineProperty.js ......................... 3/3
+ok test/suite/delete.js ................................. 3/3
+ok test/suite/dgram.js .................................. 7/7
+ok test/suite/early-return.js ........................... 2/2
+ok test/suite/encoding.js ............................. 36/36
+not ok test/suite/error.js ............................ 34/35
+    Command: "node error.js"
+    TAP version 13
+    ok 1 undefined
+    ok 2 undefined
+    ok 3 undefined
+    ok 4 undefined
+    ok 5 undefined
+    ok 6 undefined
+    ok 7 undefined
+    ok 8 undefined
+    ok 9 undefined
+    ok 10 undefined
+    ok 11 undefined
+    ok 12 undefined
+    ok 13 undefined
+    ok 14 undefined
+    ok 15 undefined
+    ok 16 undefined
+    ok 17 undefined
+    ok 18 undefined
+    ok 19 undefined
+    ok 20 undefined
+    ok 21 undefined
+    ok 22 undefined
+    ok 23 expected callsite in trace
+    not ok 24 excludable via argument
+    ok 25 expected callsite in object trace
+    ok 26 got return value: "my stack" == "my stack"
+    ok 27 saw correct object: "Error" == "Error"
+    ok 28 got array too
+    ok 29 correct object type: "CallSite" == "CallSite"
+    ok 30 correct function: "function CAPTURER(err, ctor) {\n  Error.captureStackTrace(err, ctor);\n}" == "function CAPTURER(err, ctor) {\n  Error.captureStackTrace(err, ctor);\n}"
+    ok 31 multiple callsites
+    ok 32 undefined
+    ok 33 only one callsite: "1" == "1"
+    ok 34 correct function: "function CAPTURER(err, ctor) {\n  Error.captureStackTrace(err, ctor);\n}" == "function CAPTURER(err, ctor) {\n  Error.captureStackTrace(err, ctor);\n}"
+    ok 35 test/suite/error.js
+    
+    1..35
+    # tests 35
+    # pass  34
+    # fail  1
+    
+ok test/suite/etters.js ................................. 8/9
+not ok test/suite/event-error.js ........................ 4/5
+    Command: "node event-error.js"
+    TAP version 13
+    not ok 1 undefined
+    ok 2 undefined
+    ok 3 undefined
+    ok 4 undefined
+    ok 5 test/suite/event-error.js
+    
+    1..5
+    # tests 5
+    # pass  4
+    # fail  1
+    
+not ok test/suite/fs-streams.js ......................... 1/3
+    Command: "node fs-streams.js"
+    TAP version 13
+    not ok 1 MISSING TEST
+    not ok 2 MISSING TEST
+    ok 3 test/suite/fs-streams.js
+    
+    1..3
+    # tests 3
+    # pass  1
+    # fail  2
+    
+ok test/suite/fs.js ................................... 30/30
+ok test/suite/function.js ............................... 3/3
+ok test/suite/hasOwnProperty.js ....................... 10/10
+ok test/suite/hash.js ................................... 2/2
+not ok test/suite/http.js ............................. 18/19
+    Command: "node http.js"
+    TAP version 13
+    ok 1 ok
+    ok 2 equal
+    ok 3 ok
+    ok 4 equal
+    ok 5 ok
+    ok 6 ok
+    ok 7 equal
+    ok 8 ok
+    ok 9 equal
+    ok 10 equal
+    ok 11 equal
+    ok 12 equal
+    ok 13 equal
+    ok 14 equal
+    ok 15 ok
+    ok 16 ok
+    ok 17 ok
+    ok 18 ok
+    not ok 19 test/suite/http.js
+      ---
+        exit:     ~
+        timedOut: true
+        signal:   SIGTERM
+        command:  "node http.js"
+      ...
+    
+    1..19
+    # tests 19
+    # pass  18
+    # fail  1
+    
+ok test/suite/https.js .................................. 3/3
+not ok test/suite/json.js ............................. 75/76
+    Command: "node json.js"
+    TAP version 13
+    ok 1 json object is real object
+    ok 2 json array is real array
+    ok 3 non object null: "null" == "null"
+    ok 4 non object null: "null" == "null"
+    ok 5 non object bool: "true" == "true"
+    ok 6 non object bool: "true" == "true"
+    ok 7 non object number: "3" == "3"
+    ok 8 non object number: "3" == "3"
+    ok 9 non object double: "7.42" == "7.42"
+    ok 10 non object double: "7.42" == "7.42"
+    ok 11 empty array: "[]" == "[]"
+    ok 12 empty array: "[]" == "[]"
+    ok 13 array: "[0,1,2]" == "[0,1,2]"
+    ok 14 array: "[0,1,2]" == "[0,1,2]"
+    ok 15 mixed array: "[3,\"a\"]" == "[3,\"a\"]"
+    ok 16 mixed array: "[3,\"a\"]" == "[3,\"a\"]"
+    ok 17 repeat value array: "[3,false,3.454,\"a\",\"a\"]" == "[3,false,3.454,\"a\",\"a\"]"
+    ok 18 repeat value array: "[3,false,3.454,\"a\",\"a\"]" == "[3,false,3.454,\"a\",\"a\"]"
+    ok 19 super nested arrays: "[[[],[],[]],[[],[[1,2]]]]" == "[[[],[],[]],[[],[[1,2]]]]"
+    ok 20 super nested arrays: "[[[],[],[]],[[],[[1,2]]]]" == "[[[],[],[]],[[],[[1,2]]]]"
+    ok 21 sringify lvl 1 array: "{\"a\":2,\"b\":[false,true,\"a\"]}" == "{\"a\":2,\"b\":[false,true,\"a\"]}"
+    ok 22 sringify lvl 1 array: "{\"a\":2,\"b\":[false,true,\"a\"]}" == "{\"a\":2,\"b\":[false,true,\"a\"]}"
+    ok 23 empty object: "{}" == "{}"
+    ok 24 empty object: "{}" == "{}"
+    ok 25 empty object constructor: "{}" == "{}"
+    ok 26 empty object constructor: "{}" == "{}"
+    ok 27 object explicit key: "{\"hi\":5}" == "{\"hi\":5}"
+    ok 28 object explicit key: "{\"hi\":5}" == "{\"hi\":5}"
+    ok 29 object implicit key: "{\"hi\":5}" == "{\"hi\":5}"
+    ok 30 object implicit key: "{\"hi\":5}" == "{\"hi\":5}"
+    ok 31 lvl 1 empty object: "{\"a\":{}}" == "{\"a\":{}}"
+    ok 32 lvl 1 empty object: "{\"a\":{}}" == "{\"a\":{}}"
+    ok 33 lvl 1 object: "{\"a\":3,\"b\":{\"1\":false,\"x\":54}}" == "{\"a\":3,\"b\":{\"1\":false,\"x\":54}}"
+    ok 34 lvl 1 object: "{\"a\":3,\"b\":{\"1\":false,\"x\":54}}" == "{\"a\":3,\"b\":{\"1\":false,\"x\":54}}"
+    ok 35 super nested objects: "{\"a\":{\"b\":{\"c\":{\"d\":1}}}}" == "{\"a\":{\"b\":{\"c\":{\"d\":1}}}}"
+    ok 36 super nested objects: "{\"a\":{\"b\":{\"c\":{\"d\":1}}}}" == "{\"a\":{\"b\":{\"c\":{\"d\":1}}}}"
+    ok 37 realistic object: "{\"location\":{\"city\":{\"name\":\"Chattanooga\",\"population\":167674},\"state\":{\"abbreviation\":\"TN\",\"name\":\"Tennessee\",\"population\":6403000}},\"name\":\"Jim Cowart\",\"company\":\"appendTo\"}" == "{\"location\":{\"city\":{\"name\":\"Chattanooga\",\"population\":167674},\"state\":{\"abbreviation\":\"TN\",\"name\":\"Tennessee\",\"population\":6403000}},\"name\":\"Jim Cowart\",\"company\":\"appendTo\"}"
+    ok 38 realistic object: "{\"location\":{\"city\":{\"name\":\"Chattanooga\",\"population\":167674},\"state\":{\"abbreviation\":\"TN\",\"name\":\"Tennessee\",\"population\":6403000}},\"name\":\"Jim Cowart\",\"company\":\"appendTo\"}" == "{\"location\":{\"city\":{\"name\":\"Chattanooga\",\"population\":167674},\"state\":{\"abbreviation\":\"TN\",\"name\":\"Tennessee\",\"population\":6403000}},\"name\":\"Jim Cowart\",\"company\":\"appendTo\"}"
+    ok 39 spacer string: "{\n  \"hi\": 5\n}" == "{\n  \"hi\": 5\n}"
+    ok 40 spacer string: "{\n  \"hi\": 5\n}" == "{\n  \"hi\": 5\n}"
+    ok 41 spacer number: "{\n   \"hi\": 5\n}" == "{\n   \"hi\": 5\n}"
+    ok 42 spacer number: "{\n   \"hi\": 5\n}" == "{\n   \"hi\": 5\n}"
+    ok 43 super nested spacer: "{\n \"a\": {\n  \"b\": {\n   \"c\": {\n    \"d\": 1\n   }\n  }\n }\n}" == "{\n \"a\": {\n  \"b\": {\n   \"c\": {\n    \"d\": 1\n   }\n  }\n }\n}"
+    ok 44 super nested spacer: "{\n \"a\": {\n  \"b\": {\n   \"c\": {\n    \"d\": 1\n   }\n  }\n }\n}" == "{\n \"a\": {\n  \"b\": {\n   \"c\": {\n    \"d\": 1\n   }\n  }\n }\n}"
+    ok 45 function: "{\"b\":5}" == "{\"b\":5}"
+    ok 46 function: "{\"b\":5}" == "{\"b\":5}"
+    ok 47 function in array: "[1,null,2]" == "[1,null,2]"
+    ok 48 function in array: "[1,null,2]" == "[1,null,2]"
+    ok 49 buffer: "[11,22,33,44]" == "[11,22,33,44]"
+    not ok 50 buffer: "{\"type\":\"Buffer\",\"data\":[11,22,33,44]}" == "[11,22,33,44]"
+    ok 51 NaN: "null" == "null"
+    ok 52 NaN: "null" == "null"
+    ok 53 Infinity: "null" == "null"
+    ok 54 Infinity: "null" == "null"
+    ok 55 -Infinity: "null" == "null"
+    ok 56 -Infinity: "null" == "null"
+    ok 57 arr in arr then value: "[[],\"11\"]" == "[[],\"11\"]"
+    ok 58 arr in arr then value: "[[],\"11\"]" == "[[],\"11\"]"
+    ok 59 non object string: "\"hello\\n\"" == "\"hello\\n\""
+    ok 60 non object string: "\"hello\\n\"" == "\"hello\\n\""
+    ok 61 spacer string long: "{\n123456789A\"hi\": 5\n}" == "{\n123456789A\"hi\": 5\n}"
+    ok 62 "this" value correct in replacer
+    ok 63 "this" value correct in replacer
+    ok 64 "this" value correct in replacer
+    ok 65 "this" value correct in replacer
+    ok 66 "this" value correct in replacer
+    ok 67 "this" value correct in replacer
+    ok 68 replacer function
+    ok 69 complex object
+    ok 70 replacer array
+    ok 71 array object mess
+    ok 72 input file test
+    ok 73 toJSON called on dates: "\"foo\"" == "\"foo\""
+    ok 74 toJSON called on objects: "\"hello\"" == "\"hello\""
+    ok 75 toJSON isnt recursive: "{}" == "{}"
+    ok 76 test/suite/json.js
+    
+    1..76
+    # tests 76
+    # pass  75
+    # fail  1
+    
+ok test/suite/jsonload.js ............................... 3/3
+ok test/suite/keywords.js ............................... 3/3
+ok test/suite/math.js ................................. 17/17
+ok test/suite/net.js .................................. 75/75
+ok test/suite/number.js ................................. 4/4
+ok test/suite/parse-numbers.js ........................ 14/14
+ok test/suite/primitive.js ............................ 42/44
+ok test/suite/process.js ................................ 8/8
+ok test/suite/regex.js ................................ 24/24
+ok test/suite/require.js ................................ 7/7
+not ok test/suite/streams.js ............................ 1/2
+    Command: "node streams.js"
+    TAP version 13
+    not ok 1 MISSING TEST
+    ok 2 test/suite/streams.js
+    
+    1..2
+    # tests 2
+    # pass  1
+    # fail  1
+    
+ok test/suite/string-decoder.js ......................... 3/3
+ok test/suite/string.js ............................... 62/62
+ok test/suite/timers.js ................................. 5/5
+ok test/suite/tls.js .................................... 4/4
+ok test/suite/truthy.js ............................... 17/17
+ok test/suite/try.js .................................... 5/6
+ok test/suite/unicode.js ................................ 2/2
+ok test/suite/url.js .................................. 15/15
+ok test/suite/util.js ................................. 28/28
+ok test/suite/with.js ................................... 8/8
+ok test/suite/zlib.js ................................. 31/31
+ok test/issues/issue-beta-100.js ........................ 2/2
+ok test/issues/issue-beta-101.js ........................ 3/3
+ok test/issues/issue-beta-108.js ........................ 2/2
+ok test/issues/issue-beta-131.js ........................ 2/2
+ok test/issues/issue-beta-140.js ........................ 4/4
+ok test/issues/issue-beta-148.js ........................ 2/2
+ok test/issues/issue-beta-159.js ........................ 3/3
+ok test/issues/issue-beta-162.js ........................ 2/2
+ok test/issues/issue-beta-170.js ........................ 2/2
+ok test/issues/issue-beta-179.js ........................ 3/3
+ok test/issues/issue-beta-180.js ........................ 2/2
+ok test/issues/issue-beta-180b.js ....................... 2/2
+ok test/issues/issue-beta-195.js ........................ 6/6
+ok test/issues/issue-beta-200.js ........................ 3/3
+ok test/issues/issue-beta-204.js ........................ 3/3
+ok test/issues/issue-beta-207.js ...................... 10/10
+ok test/issues/issue-beta-212.js ........................ 9/9
+ok test/issues/issue-beta-213.js ........................ 8/8
+ok test/issues/issue-beta-221.js ........................ 3/3
+ok test/issues/issue-beta-242.js ........................ 2/2
+ok test/issues/issue-beta-243.js ........................ 2/2
+ok test/issues/issue-beta-244.js ........................ 3/3
+ok test/issues/issue-beta-245.js ........................ 2/2
+ok test/issues/issue-beta-251.js ........................ 2/2
+ok test/issues/issue-beta-274.js ........................ 3/3
+ok test/issues/issue-beta-276.js ........................ 3/3
+ok test/issues/issue-beta-294.js ........................ 2/2
+ok test/issues/issue-beta-296.js ........................ 4/4
+ok test/issues/issue-beta-314.js ........................ 2/2
+ok test/issues/issue-beta-317.js ........................ 4/4
+ok test/issues/issue-beta-319.js ........................ 4/4
+ok test/issues/issue-beta-327.js ........................ 2/2
+ok test/issues/issue-beta-334.js ...................... 12/12
+ok test/issues/issue-beta-337.js ........................ 2/2
+ok test/issues/issue-beta-338.js ........................ 2/2
+ok test/issues/issue-beta-339.js ........................ 2/2
+ok test/issues/issue-beta-340.js ........................ 5/5
+not ok test/issues/issue-beta-342.js .................... 6/7
+    Command: "node issue-beta-342.js"
+    TAP version 13
+    ok 1 undefined: "Hello Friends" == "Hello Friends"
+    ok 2 undefined
+    ok 3 undefined
+    ok 4 undefined
+    not ok 5 undefined
+    ok 6 undefined
+    ok 7 test/issues/issue-beta-342.js
+    
+    1..7
+    # tests 7
+    # pass  6
+    # fail  1
+    
+ok test/issues/issue-beta-351.js ........................ 2/2
+ok test/issues/issue-beta-352.js ........................ 5/5
+ok test/issues/issue-beta-356.js ........................ 2/2
+ok test/issues/issue-beta-366.js ........................ 4/4
+ok test/issues/issue-beta-379.js ........................ 4/4
+not ok test/issues/issue-beta-380.js .................... 1/3
+    Command: "node issue-beta-380.js"
+    TAP version 13
+    not ok 1 undefined: "0000000000000000000000000000000000000000" == "00000000000000000000"
+    not ok 2 undefined: "2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a" == "00000000002a2a2a2a2a2a2a2a2a2a0000000000"
+    ok 3 test/issues/issue-beta-380.js
+    
+    1..3
+    # tests 3
+    # pass  1
+    # fail  2
+    
+ok test/issues/issue-beta-390.js ........................ 4/4
+ok test/issues/issue-beta-394.js ........................ 6/6
+ok test/issues/issue-beta-395.js ........................ 3/3
+ok test/issues/issue-beta-402.js ........................ 2/2
+ok test/issues/issue-beta-440.js ........................ 2/2
+ok test/issues/issue-beta-446.js ........................ 3/3
+ok test/issues/issue-beta-451.js ........................ 2/2
+ok test/issues/issue-beta-73.js ......................... 2/2
+ok test/issues/issue-beta-77.js ......................... 4/4
+ok test/issues/issue-beta-81.js ......................... 3/3
+ok test/issues/issue-beta-84.js ......................... 8/8
+ok test/issues/issue-beta-87.js ......................... 2/2
+ok test/issues/issue-beta-93.js ......................... 2/2
+ok test/issues/issue-beta-97.js ......................... 3/3
+ok test/issues/issue-beta-98.js ......................... 4/4
+ok test/issues/issue-runtime-107.js ..................... 3/3
+ok test/issues/issue-runtime-109.js ..................... 3/3
+ok test/issues/issue-runtime-117.js ..................... 2/2
+ok test/issues/issue-runtime-122.js ..................... 2/2
+ok test/issues/issue-runtime-133.js ..................... 2/2
+ok test/issues/issue-runtime-134.js ..................... 5/5
+ok test/issues/issue-runtime-146.js ..................... 3/3
+ok test/issues/issue-runtime-150.js ..................... 4/4
+ok test/issues/issue-runtime-156.js ..................... 5/5
+ok test/issues/issue-runtime-158.js ..................... 8/8
+ok test/issues/issue-runtime-159.js ..................... 2/2
+ok test/issues/issue-runtime-170.js ..................... 3/3
+ok test/issues/issue-runtime-173.js ..................... 2/2
+ok test/issues/issue-runtime-177.js ..................... 2/2
+ok test/issues/issue-runtime-185.js ..................... 8/8
+ok test/issues/issue-runtime-186.js ..................... 9/9
+ok test/issues/issue-runtime-190.js ..................... 2/2
+ok test/issues/issue-runtime-191.js ..................... 2/2
+ok test/issues/issue-runtime-199.js ..................... 2/2
+ok test/issues/issue-runtime-204.js ..................... 4/4
+ok test/issues/issue-runtime-208.js ..................... 3/3
+ok test/issues/issue-runtime-223.js ..................... 3/3
+ok test/issues/issue-runtime-234.js ..................... 5/5
+not ok test/issues/issue-runtime-239.js ................. 4/5
+    Command: "node issue-runtime-239.js"
+    TAP version 13
+    ok 1 undefined
+    ok 2 undefined
+    not ok 3 undefined
+    ok 4 correct Buffer.concat usage
+    ok 5 test/issues/issue-runtime-239.js
+    
+    1..5
+    # tests 5
+    # pass  4
+    # fail  1
+    
+ok test/issues/issue-runtime-244.js ..................... 4/4
+ok test/issues/issue-runtime-246.js ..................... 3/3
+ok test/issues/issue-runtime-269.js ..................... 2/2
+ok test/issues/issue-runtime-276.js ..................... 2/2
+ok test/issues/issue-runtime-282.js ..................... 2/2
+ok test/issues/issue-runtime-283.js ..................... 4/4
+ok test/issues/issue-runtime-287.js ................... 16/16
+ok test/issues/issue-runtime-289.js ................... 31/31
+ok test/issues/issue-runtime-292.js ..................... 2/2
+ok test/issues/issue-runtime-295.js ..................... 4/4
+ok test/issues/issue-runtime-296.js ..................... 4/4
+ok test/issues/issue-runtime-297.js ..................... 3/3
+ok test/issues/issue-runtime-298.js ..................... 5/5
+ok test/issues/issue-runtime-302.js ................... 23/23
+ok test/issues/issue-runtime-303.js ................... 10/10
+ok test/issues/issue-runtime-304.js ..................... 4/4
+ok test/issues/issue-runtime-305.js ..................... 2/2
+ok test/issues/issue-runtime-306.js ................... 12/12
+ok test/issues/issue-runtime-307.js ..................... 5/5
+ok test/issues/issue-runtime-314.js ..................... 2/2
+ok test/issues/issue-runtime-320.js ..................... 3/3
+ok test/issues/issue-runtime-337.js ..................... 2/2
+ok test/issues/issue-runtime-345.js ..................... 3/3
+ok test/issues/issue-runtime-360.js ..................... 7/7
+ok test/issues/issue-runtime-361.js ..................... 2/2
+ok test/issues/issue-runtime-362.js ..................... 2/2
+ok test/issues/issue-runtime-368.js ..................... 3/3
+ok test/issues/issue-runtime-373.js ..................... 7/7
+ok test/issues/issue-runtime-385.js ..................... 3/3
+ok test/issues/issue-runtime-397.js ..................... 7/7
+ok test/issues/issue-runtime-419.js ..................... 3/3
+ok test/issues/issue-runtime-420.js ..................... 2/2
+ok test/issues/issue-runtime-434.js ..................... 6/6
+ok test/issues/issue-runtime-437.js ..................... 2/2
+not ok test/issues/issue-runtime-448.js ................. 8/9
+    Command: "node issue-runtime-448.js"
+    TAP version 13
+    ok 1 default encoding doesn't return utf-8 encoded string.: "This is a Test String" == "This is a Test String"
+    ok 2 utf-8 encoding doesn't return the correct string.: "This is a Test String" == "This is a Test String"
+    ok 3 Offset arguments not returning correct string: "is" == "is"
+    ok 4 Negative offset arguments return empty string: "" == ""
+    not ok 5 Negative start offset defaults to start offset of 0: "" == "This "
+    ok 6 End offset larger then buffer defaults to end of buffer: "This is a Test String" == "This is a Test String"
+    ok 7 End offset larger then buffer defaults to end of buffer while origin offset still slices: "is a Test String" == "is a Test String"
+    ok 8 Error thrown on invalid encoding.: "TypeError" == "TypeError"
+    ok 9 test/issues/issue-runtime-448.js
+    
+    1..9
+    # tests 9
+    # pass  8
+    # fail  1
+    
+ok test/issues/issue-runtime-450.js ..................... 5/5
+ok test/issues/issue-runtime-472.js ..................... 6/6
+ok test/issues/issue-runtime-473.js ..................... 2/2
+ok test/issues/issue-runtime-487.js ..................... 2/2
+ok test/issues/issue-runtime-491.js ..................... 3/3
+ok test/issues/issue-runtime-506.js ..................... 2/2
+ok test/issues/issue-runtime-524.js ..................... 2/2
+ok test/issues/issue-runtime-529.js ..................... 2/2
+ok test/issues/issue-runtime-534.js ..................... 5/5
+ok test/issues/issue-runtime-548.js ..................... 2/2
+ok test/issues/issue-runtime-605.js ................... 17/17
+ok test/issues/issue-runtime-611.js ..................... 2/2
+ok test/issues/issue-runtime-612.js ..................... 2/2
+ok test/issues/issue-runtime-628.js ..................... 2/2
+ok test/issues/issue-runtime-652.js ..................... 5/5
+not ok test/issues/issue-runtime-659.js ................. 2/6
+    Command: "node issue-runtime-659.js"
+    TAP version 13
+    ok 1 buffer contains "aaaa": "aaaa" == "aaaa"
+    not ok 2 buffer contains "aaaa": "aaaa" == "abab"
+    not ok 3 buffer contains "aaaa": "aaaa" == "abca"
+    not ok 4 buffer contains "aaaaaaaaaa": "aaaaaaaaaa" == "abcabcabca"
+    not ok 5 buffer contains "\0\0\0\0": "\u0000\u0000\u0000\u0000" == "\u0010 0@"
+    ok 6 test/issues/issue-runtime-659.js
+    
+    1..6
+    # tests 6
+    # pass  2
+    # fail  4
+    
+ok test/issues/issue-runtime-669.js ................... 37/37
+ok test/issues/issue-runtime-686.js ..................... 2/2
+ok test/issues/log-global.js ............................ 2/2
+ok test/net/dns.js ...................................... 3/3
+ok test/net/http-get-query.js ........................... 3/3
+ok test/net/http-get.js ................................. 2/2
+ok test/net/http-md5.js ................................. 1/2
+  skipped: undefined
+ok test/net/http-req-ip.js .............................. 2/2
+total ............................................. 1508/1535
+
+not ok
+make: *** [test-node] errors 17
