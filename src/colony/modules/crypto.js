@@ -30,10 +30,6 @@ function Hmac (encryption, key)
 {
 	checkAvailable();
 
-	if (encryption != 'sha1') {
-		throw new Error('HMAC encryption ' + String(encryption) + ' not supported.');
-	}
-
 	this.encryption = encryption;
 	this.key = key;
 	this._values = [];
