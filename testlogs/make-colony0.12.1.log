@@ -1,0 +1,190 @@
+make[1]: Verzeichnis »/home/daniel/runtime/deps/colony-luajit« wird betreten
+make -C src clean
+make[2]: Verzeichnis »/home/daniel/runtime/deps/colony-luajit/src« wird betreten
+rm -f luajit libluajit.a libluajit.so host/minilua host/buildvm lj_vm.s lj_bcdef.h lj_ffdef.h lj_libdef.h lj_recdef.h lj_folddef.h host/buildvm_arch.h jit/vmdef.lua *.o host/*.o *.obj *.lib *.exp *.dll *.exe *.manifest *.pdb *.ilk
+make[2]: Verzeichnis »/home/daniel/runtime/deps/colony-luajit/src« wird verlassen
+make[1]: Verzeichnis »/home/daniel/runtime/deps/colony-luajit« wird verlassen
+gyp config/colony.gyp --depth=. -f ninja -D builtin_section=.rodata -D node_version=0.10.32 -D compiler_path="/home/daniel/runtime/node_modules/colony-compiler/bin/colony-compiler.js" -D enable_luajit=1 -D enable_ssl=1 -D enable_net=1 && ninja -C out/Release
+ninja: Entering directory `out/Release'
+[1/136] CC obj/deps/hsregex/src/hsregex.regcomp.o
+[2/136] CC obj/deps/hsregex/src/hsregex.regexec.o
+[3/136] CC obj/deps/hsregex/src/hsregex.regerror.o
+[4/136] CC obj/deps/hsregex/src/hsregex.regfree.o
+[5/136] CC obj/deps/hsregex/src/hsregex.regalone.o
+[6/136] CC obj/deps/dlmalloc/dlmalloc.dlmalloc.o
+[7/136] AR obj/config/libdlmalloc.a
+[8/136] ACTION colony-luajit: luajit-build_0041fb1e5ca096858bc094817987f3f3
+[9/136] AR obj/config/libhsregex.a
+[10/136] CC obj/deps/miniz/miniz.miniz.o
+[11/136] CC obj/deps/c-ares/c-ares.ares_cancel.o
+[12/136] AR obj/config/libminiz.a
+[13/136] CC obj/deps/fortuna/src/fortuna.sha2.o
+[14/136] CC obj/deps/fortuna/src/fortuna.fortuna.o
+[15/136] CC obj/deps/fortuna/src/fortuna.rijndael.o
+[16/136] CC obj/deps/fortuna/src/fortuna.px.o
+[17/136] CC obj/deps/fortuna/src/fortuna.random.o
+[18/136] CC obj/deps/fortuna/src/fortuna.internal.o
+[19/136] CC obj/deps/fortuna/src/fortuna.sha1.o
+[20/136] CC obj/deps/fortuna/src/fortuna.md5.o
+[21/136] CC obj/deps/c-ares/c-ares.ares__close_sockets.o
+[22/136] CC obj/deps/c-ares/c-ares.ares__get_hostent.o
+[23/136] CC obj/deps/c-ares/c-ares.ares__read_line.o
+[24/136] CC obj/deps/c-ares/c-ares.ares_expand_name.o
+[25/136] CC obj/deps/c-ares/c-ares.ares__timeval.o
+[26/136] CC obj/deps/c-ares/c-ares.ares_data.o
+[27/136] CC obj/deps/c-ares/c-ares.ares_nowarn.o
+[28/136] CC obj/deps/c-ares/c-ares.ares_init.o
+[29/136] CC obj/deps/c-ares/c-ares.ares_destroy.o
+[30/136] CC obj/deps/c-ares/c-ares.ares_expand_string.o
+[31/136] CC obj/deps/c-ares/c-ares.ares_fds.o
+[32/136] CC obj/deps/c-ares/c-ares.ares_free_hostent.o
+[33/136] CC obj/deps/c-ares/c-ares.ares_free_string.o
+[34/136] CC obj/deps/c-ares/c-ares.ares_getenv.o
+[35/136] CC obj/deps/c-ares/c-ares.ares_gethostbyaddr.o
+[36/136] CC obj/deps/c-ares/c-ares.ares_gethostbyname.o
+[37/136] CC obj/deps/c-ares/c-ares.ares_getnameinfo.o
+[38/136] CC obj/deps/c-ares/c-ares.ares_create_query.o
+[39/136] CC obj/deps/c-ares/c-ares.ares_getsock.o
+[40/136] CC obj/deps/c-ares/c-ares.ares_library_init.o
+[41/136] CC obj/deps/c-ares/c-ares.ares_llist.o
+[42/136] CC obj/deps/c-ares/c-ares.ares_parse_a_reply.o
+[43/136] CC obj/deps/c-ares/c-ares.ares_mkquery.o
+[44/136] CC obj/deps/fortuna/src/fortuna.blf.o
+[45/136] CC obj/deps/c-ares/c-ares.ares_parse_aaaa_reply.o
+[46/136] CC obj/deps/c-ares/c-ares.ares_options.o
+[47/136] CC obj/deps/c-ares/c-ares.ares_parse_naptr_reply.o
+[48/136] CC obj/deps/c-ares/c-ares.ares_parse_mx_reply.o
+[49/136] CC obj/deps/c-ares/c-ares.ares_parse_ptr_reply.o
+[50/136] CC obj/deps/c-ares/c-ares.ares_parse_ns_reply.o
+[51/136] CC obj/deps/c-ares/c-ares.ares_parse_soa_reply.o
+[52/136] CC obj/deps/c-ares/c-ares.ares_parse_srv_reply.o
+[53/136] CC obj/deps/c-ares/c-ares.ares_parse_txt_reply.o
+[54/136] CC obj/deps/c-ares/c-ares.ares_writev.o
+[55/136] CC obj/deps/c-ares/c-ares.ares_query.o
+[56/136] CC obj/deps/c-ares/c-ares.ares_platform.o
+[57/136] CC obj/deps/c-ares/c-ares.ares_process.o
+[58/136] CC obj/deps/c-ares/c-ares.ares_search.o
+[59/136] CC obj/deps/c-ares/c-ares.ares_send.o
+[60/136] CC obj/deps/c-ares/c-ares.ares_strcasecmp.o
+[61/136] CC obj/deps/c-ares/c-ares.ares_strdup.o
+[62/136] CC obj/deps/c-ares/c-ares.inet_ntop.o
+[63/136] CC obj/deps/c-ares/c-ares.ares_strerror.o
+[64/136] CC obj/deps/c-ares/c-ares.ares_timeout.o
+[65/136] CC obj/deps/c-ares/c-ares.ares_version.o
+[66/136] CC obj/deps/c-ares/c-ares.bitncmp.o
+[67/136] CC obj/deps/c-ares/c-ares.inet_net_pton.o
+[68/136] CC obj/deps/c-ares/c-ares.windows_port.o
+[69/136] ACTION dir_runtime_lib: dir_runtime_lib_compile_74c4306e431fa9631a51b3f246d6796c
+FAILED: cd ../../config; ../tools/compile_folder.sh ../out/Release/gen/dir_runtime_lib.c dir_runtime_lib 1 ../src/colony/lua/cli.lua ../src/colony/lua/colony-init.lua ../src/colony/lua/colony-js.lua ../src/colony/lua/colony-node.lua ../src/colony/lua/colony.lua ../src/colony/lua/preload.lua
+/home/daniel/runtime/node_modules/colony-compiler/node_modules/bindings-shyp/bindings.js:99
+        throw e
+              ^
+Error: /home/daniel/runtime/node_modules/colony-compiler/build/Release/colony_compiler_bytecode.node: undefined symbol: _ZN2v816FunctionTemplate3NewEPFNS_6HandleINS_5ValueEEERKNS_9ArgumentsEES3_NS1_INS_9SignatureEEE
+    at Error (native)
+    at Module.load (module.js:355:32)
+    at Function.Module._load (module.js:310:12)
+    at Module.require (module.js:365:17)
+    at require (module.js:384:17)
+    at bindings (/home/daniel/runtime/node_modules/colony-compiler/node_modules/bindings-shyp/bindings.js:92:44)
+    at Object.<anonymous> (/home/daniel/runtime/node_modules/colony-compiler/src/bytecode/index.js:10:39)
+    at Module._compile (module.js:460:26)
+    at Object.Module._extensions..js (module.js:478:10)
+    at Module.load (module.js:355:32)
+make[1]: Verzeichnis »/home/daniel/runtime/deps/colony-luajit« wird betreten
+==== Building LuaJIT 2.0.3 ====
+make -C src
+make[2]: Verzeichnis »/home/daniel/runtime/deps/colony-luajit/src« wird betreten
+HOSTCC    host/minilua.o
+HOSTLINK  host/minilua
+DYNASM    host/buildvm_arch.h
+echo host/minilua ../dynasm/dynasm.lua
+host/minilua ../dynasm/dynasm.lua
+echo   -D FPU -D HFABI -D VER=
+-D FPU -D HFABI -D VER=
+echo host/buildvm_arch.h
+host/buildvm_arch.h
+echo vm_x86.dasc
+vm_x86.dasc
+HOSTCC    host/buildvm.o
+HOSTCC    host/buildvm_asm.o
+HOSTCC    host/buildvm_peobj.o
+HOSTCC    host/buildvm_lib.o
+HOSTCC    host/buildvm_fold.o
+HOSTLINK  host/buildvm
+BUILDVM   lj_vm.s
+ASM       lj_vm.o
+CC        lj_gc.o
+BUILDVM   lj_ffdef.h
+CC        lj_err.o
+CC        lj_char.o
+BUILDVM   lj_bcdef.h
+CC        lj_bc.o
+CC        lj_obj.o
+CC        lj_str.o
+CC        lj_tab.o
+CC        lj_func.o
+CC        lj_udata.o
+CC        lj_meta.o
+CC        lj_debug.o
+CC        lj_state.o
+CC        lj_dispatch.o
+CC        lj_vmevent.o
+CC        lj_vmmath.o
+CC        lj_strscan.o
+CC        lj_api.o
+CC        lj_lex.o
+CC        lj_parse.o
+CC        lj_bcread.o
+CC        lj_bcwrite.o
+CC        lj_load.o
+CC        lj_ir.o
+CC        lj_opt_mem.o
+BUILDVM   lj_folddef.h
+CC        lj_opt_fold.o
+CC        lj_opt_narrow.o
+CC        lj_opt_dce.o
+CC        lj_opt_loop.o
+CC        lj_opt_split.o
+CC        lj_opt_sink.o
+CC        lj_mcode.o
+CC        lj_snap.o
+CC        lj_record.o
+CC        lj_crecord.o
+BUILDVM   lj_recdef.h
+CC        lj_ffrecord.o
+CC        lj_asm.o
+CC        lj_trace.o
+CC        lj_gdbjit.o
+CC        lj_ctype.o
+CC        lj_cdata.o
+CC        lj_cconv.o
+CC        lj_ccall.o
+CC        lj_ccallback.o
+CC        lj_carith.o
+CC        lj_clib.o
+CC        lj_cparse.o
+CC        lj_lib.o
+CC        lj_alloc.o
+CC        lib_aux.o
+BUILDVM   lj_libdef.h
+CC        lib_base.o
+CC        lib_math.o
+CC        lib_bit.o
+CC        lib_string.o
+CC        lib_table.o
+CC        lib_io.o
+CC        lib_os.o
+CC        lib_package.o
+CC        lib_debug.o
+CC        lib_jit.o
+CC        lib_ffi.o
+CC        lib_init.o
+AR        libluajit.a
+CC        luajit.o
+BUILDVM   jit/vmdef.lua
+LINK      luajit
+OK        Successfully built LuaJIT
+make[2]: Verzeichnis »/home/daniel/runtime/deps/colony-luajit/src« wird verlassen
+==== Successfully built LuaJIT 2.0.3 ====
+make[1]: Verzeichnis »/home/daniel/runtime/deps/colony-luajit« wird verlassen
+ninja: build stopped: subcommand failed.

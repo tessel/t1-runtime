@@ -1,0 +1,81 @@
+gyp config/colony.gyp --depth=. -f ninja -D builtin_section=.rodata -D node_version=0.10.32 -D compiler_path="/home/daniel/runtime/node_modules/colony-compiler/bin/colony-compiler.js" -D enable_luajit=1 -D enable_ssl=1 -D enable_net=1 && ninja -C out/Release
+ninja: Entering directory `out/Release'
+[1/120] ACTION colony-luajit: luajit-build_0041fb1e5ca096858bc094817987f3f3
+[2/120] CC obj/deps/fortuna/src/fortuna.px.o
+make[1]: Verzeichnis »/home/daniel/runtime/deps/colony-luajit« wird betreten
+==== Building LuaJIT 2.0.3 ====
+make -C src
+make[2]: Verzeichnis »/home/daniel/runtime/deps/colony-luajit/src« wird betreten
+make[2]: Für das Ziel »default« ist nichts zu tun.
+make[2]: Verzeichnis »/home/daniel/runtime/deps/colony-luajit/src« wird verlassen
+==== Successfully built LuaJIT 2.0.3 ====
+make[1]: Verzeichnis »/home/daniel/runtime/deps/colony-luajit« wird verlassen
+[3/120] AR obj/config/libcolony-luajit.a
+[4/120] CC obj/deps/fortuna/src/fortuna.random.o
+[5/120] CC obj/deps/fortuna/src/fortuna.internal.o
+[6/120] CC obj/deps/fortuna/src/fortuna.sha1.o
+[7/120] CC obj/deps/fortuna/src/fortuna.md5.o
+[8/120] CC obj/deps/c-ares/c-ares.ares__close_sockets.o
+[9/120] CC obj/deps/c-ares/c-ares.ares__get_hostent.o
+[10/120] CC obj/deps/c-ares/c-ares.ares__read_line.o
+[11/120] CC obj/deps/c-ares/c-ares.ares_expand_name.o
+[12/120] CC obj/deps/c-ares/c-ares.ares__timeval.o
+[13/120] CC obj/deps/c-ares/c-ares.ares_data.o
+[14/120] CC obj/deps/c-ares/c-ares.ares_nowarn.o
+[15/120] CC obj/deps/c-ares/c-ares.ares_init.o
+[16/120] CC obj/deps/c-ares/c-ares.ares_destroy.o
+[17/120] CC obj/deps/c-ares/c-ares.ares_fds.o
+[18/120] CC obj/deps/c-ares/c-ares.ares_free_hostent.o
+[19/120] CC obj/deps/c-ares/c-ares.ares_free_string.o
+[20/120] CC obj/deps/c-ares/c-ares.ares_getenv.o
+[21/120] CC obj/deps/c-ares/c-ares.ares_gethostbyaddr.o
+[22/120] CC obj/deps/c-ares/c-ares.ares_gethostbyname.o
+[23/120] CC obj/deps/c-ares/c-ares.ares_getnameinfo.o
+[24/120] CC obj/deps/c-ares/c-ares.ares_create_query.o
+[25/120] CC obj/deps/c-ares/c-ares.ares_getsock.o
+[26/120] CC obj/deps/c-ares/c-ares.ares_library_init.o
+[27/120] CC obj/deps/c-ares/c-ares.ares_llist.o
+[28/120] CC obj/deps/c-ares/c-ares.ares_parse_a_reply.o
+[29/120] CC obj/deps/c-ares/c-ares.ares_mkquery.o
+[30/120] CC obj/deps/c-ares/c-ares.ares_parse_aaaa_reply.o
+[31/120] CC obj/deps/c-ares/c-ares.ares_options.o
+[32/120] CC obj/deps/c-ares/c-ares.ares_parse_naptr_reply.o
+[33/120] CC obj/deps/c-ares/c-ares.ares_parse_mx_reply.o
+[34/120] CC obj/deps/c-ares/c-ares.ares_parse_ptr_reply.o
+[35/120] CC obj/deps/c-ares/c-ares.ares_parse_ns_reply.o
+[36/120] CC obj/deps/c-ares/c-ares.ares_parse_soa_reply.o
+[37/120] CC obj/deps/c-ares/c-ares.ares_parse_srv_reply.o
+[38/120] CC obj/deps/c-ares/c-ares.ares_parse_txt_reply.o
+[39/120] CC obj/deps/c-ares/c-ares.ares_writev.o
+[40/120] CC obj/deps/c-ares/c-ares.ares_query.o
+[41/120] CC obj/deps/c-ares/c-ares.ares_platform.o
+[42/120] CC obj/deps/c-ares/c-ares.ares_process.o
+[43/120] CC obj/deps/c-ares/c-ares.ares_search.o
+[44/120] CC obj/deps/c-ares/c-ares.ares_send.o
+[45/120] CC obj/deps/c-ares/c-ares.ares_strcasecmp.o
+[46/120] CC obj/deps/c-ares/c-ares.ares_strdup.o
+[47/120] CC obj/deps/c-ares/c-ares.inet_ntop.o
+[48/120] CC obj/deps/c-ares/c-ares.ares_strerror.o
+[49/120] CC obj/deps/c-ares/c-ares.ares_timeout.o
+[50/120] CC obj/deps/c-ares/c-ares.ares_version.o
+[51/120] CC obj/deps/c-ares/c-ares.bitncmp.o
+[52/120] CC obj/deps/c-ares/c-ares.inet_net_pton.o
+[53/120] CC obj/deps/c-ares/c-ares.windows_port.o
+[54/120] ACTION dir_runtime_lib: dir_runtime_lib_compile_74c4306e431fa9631a51b3f246d6796c
+[55/120] CC obj/deps/axtls/ssl/axtls.x509.o
+FAILED: cd ../../config; ../tools/compile_folder.sh ../out/Release/gen/dir_runtime_lib.c dir_runtime_lib 1 ../src/colony/lua/cli.lua ../src/colony/lua/colony-init.lua ../src/colony/lua/colony-js.lua ../src/colony/lua/colony-node.lua ../src/colony/lua/colony.lua ../src/colony/lua/preload.lua
+/home/daniel/runtime/node_modules/colony-compiler/node_modules/bindings-shyp/bindings.js:99
+        throw e
+              ^
+Error: /home/daniel/runtime/node_modules/colony-compiler/build/Release/colony_compiler_bytecode.node: undefined symbol: _ZN2v816FunctionTemplate3NewEPFNS_6HandleINS_5ValueEEERKNS_9ArgumentsEES3_NS1_INS_9SignatureEEE
+    at Error (native)
+    at Module.load (module.js:355:32)
+    at Function.Module._load (module.js:310:12)
+    at Module.require (module.js:365:17)
+    at require (module.js:384:17)
+    at bindings (/home/daniel/runtime/node_modules/colony-compiler/node_modules/bindings-shyp/bindings.js:92:44)
+    at Object.<anonymous> (/home/daniel/runtime/node_modules/colony-compiler/src/bytecode/index.js:10:39)
+    at Module._compile (module.js:460:26)
+    at Object.Module._extensions..js (module.js:478:10)
+    at Module.load (module.js:355:32)
+ninja: build stopped: subcommand failed.

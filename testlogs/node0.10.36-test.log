@@ -1,0 +1,761 @@
+node testbench:
+ok test/suite/__proto__.js .............................. 2/2
+ok test/suite/arguments.js .............................. 3/3
+ok test/suite/array.js ................................ 60/60
+ok test/suite/bind.js ................................... 5/5
+ok test/suite/bitmath.js .............................. 24/28
+  skipped: undefined
+ok test/suite/buffer.js ............................. 120/120
+ok test/suite/bug-bindnull.js ........................... 3/3
+ok test/suite/bug-endwithcomments.js .................... 2/2
+ok test/suite/bug-foreach-null.js ....................... 2/2
+ok test/suite/bug-forinarray.js ....................... 14/14
+ok test/suite/bug-regexreplace.js ....................... 2/2
+ok test/suite/bug-underscores.js ...................... 10/10
+ok test/suite/builtin.js .............................. 20/20
+ok test/suite/console.js ................................ 3/3
+ok test/suite/crypto.js ................................. 1/2
+  skipped: undefined
+ok test/suite/date.js ................................. 17/17
+ok test/suite/defineProperty.js ......................... 3/3
+ok test/suite/delete.js ................................. 3/3
+ok test/suite/dgram.js .................................. 7/7
+ok test/suite/early-return.js ........................... 2/2
+ok test/suite/encoding.js ............................. 36/36
+ok test/suite/error.js ................................ 35/35
+ok test/suite/etters.js ................................. 8/9
+ok test/suite/event-error.js ............................ 5/5
+ok test/suite/fs-streams.js ............................. 3/3
+ok test/suite/fs.js ................................... 30/30
+ok test/suite/function.js ............................... 3/3
+ok test/suite/hasOwnProperty.js ....................... 10/10
+ok test/suite/hash.js ................................... 2/2
+ok test/suite/http.js ................................. 39/39
+ok test/suite/https.js .................................. 3/3
+ok test/suite/json.js ................................. 76/76
+ok test/suite/jsonload.js ............................... 3/3
+ok test/suite/keywords.js ............................... 3/3
+ok test/suite/math.js ................................. 17/17
+ok test/suite/net.js .................................. 75/75
+ok test/suite/number.js ................................. 4/4
+ok test/suite/parse-numbers.js ........................ 14/14
+ok test/suite/primitive.js ............................ 42/44
+ok test/suite/process.js ................................ 8/8
+ok test/suite/regex.js ................................ 24/24
+ok test/suite/require.js ................................ 7/7
+ok test/suite/streams.js ................................ 2/2
+ok test/suite/string-decoder.js ......................... 3/3
+ok test/suite/string.js ............................... 62/62
+ok test/suite/timers.js ................................. 5/5
+ok test/suite/tls.js .................................... 4/4
+ok test/suite/truthy.js ............................... 17/17
+ok test/suite/try.js .................................... 5/6
+ok test/suite/unicode.js ................................ 2/2
+ok test/suite/url.js .................................. 15/15
+ok test/suite/util.js ................................. 28/28
+ok test/suite/with.js ................................... 8/8
+ok test/suite/zlib.js ................................. 31/31
+ok test/issues/issue-beta-100.js ........................ 2/2
+ok test/issues/issue-beta-101.js ........................ 3/3
+ok test/issues/issue-beta-108.js ........................ 2/2
+ok test/issues/issue-beta-131.js ........................ 2/2
+ok test/issues/issue-beta-140.js ........................ 4/4
+ok test/issues/issue-beta-148.js ........................ 2/2
+ok test/issues/issue-beta-159.js ........................ 3/3
+ok test/issues/issue-beta-162.js ........................ 2/2
+ok test/issues/issue-beta-170.js ........................ 2/2
+ok test/issues/issue-beta-179.js ........................ 3/3
+ok test/issues/issue-beta-180.js ........................ 2/2
+ok test/issues/issue-beta-180b.js ....................... 2/2
+ok test/issues/issue-beta-195.js ........................ 6/6
+ok test/issues/issue-beta-200.js ........................ 3/3
+ok test/issues/issue-beta-204.js ........................ 3/3
+ok test/issues/issue-beta-207.js ...................... 10/10
+ok test/issues/issue-beta-212.js ........................ 9/9
+ok test/issues/issue-beta-213.js ........................ 8/8
+ok test/issues/issue-beta-221.js ........................ 3/3
+ok test/issues/issue-beta-242.js ........................ 2/2
+ok test/issues/issue-beta-243.js ........................ 2/2
+ok test/issues/issue-beta-244.js ........................ 3/3
+ok test/issues/issue-beta-245.js ........................ 2/2
+ok test/issues/issue-beta-251.js ........................ 2/2
+ok test/issues/issue-beta-274.js ........................ 3/3
+ok test/issues/issue-beta-276.js ........................ 3/3
+ok test/issues/issue-beta-294.js ........................ 2/2
+ok test/issues/issue-beta-296.js ........................ 4/4
+ok test/issues/issue-beta-314.js ........................ 2/2
+ok test/issues/issue-beta-317.js ........................ 4/4
+ok test/issues/issue-beta-319.js ........................ 4/4
+ok test/issues/issue-beta-327.js ........................ 2/2
+ok test/issues/issue-beta-334.js ...................... 12/12
+ok test/issues/issue-beta-337.js ........................ 2/2
+ok test/issues/issue-beta-338.js ........................ 2/2
+ok test/issues/issue-beta-339.js ........................ 2/2
+ok test/issues/issue-beta-340.js ........................ 5/5
+ok test/issues/issue-beta-342.js ........................ 7/7
+ok test/issues/issue-beta-351.js ........................ 2/2
+ok test/issues/issue-beta-352.js ........................ 5/5
+ok test/issues/issue-beta-356.js ........................ 2/2
+ok test/issues/issue-beta-366.js ........................ 4/4
+ok test/issues/issue-beta-379.js ........................ 4/4
+ok test/issues/issue-beta-380.js ........................ 3/3
+ok test/issues/issue-beta-390.js ........................ 4/4
+ok test/issues/issue-beta-394.js ........................ 6/6
+ok test/issues/issue-beta-395.js ........................ 3/3
+ok test/issues/issue-beta-402.js ........................ 2/2
+ok test/issues/issue-beta-440.js ........................ 2/2
+ok test/issues/issue-beta-446.js ........................ 3/3
+ok test/issues/issue-beta-451.js ........................ 2/2
+ok test/issues/issue-beta-73.js ......................... 2/2
+ok test/issues/issue-beta-77.js ......................... 4/4
+ok test/issues/issue-beta-81.js ......................... 3/3
+ok test/issues/issue-beta-84.js ......................... 8/8
+ok test/issues/issue-beta-87.js ......................... 2/2
+ok test/issues/issue-beta-93.js ......................... 2/2
+ok test/issues/issue-beta-97.js ......................... 3/3
+ok test/issues/issue-beta-98.js ......................... 4/4
+ok test/issues/issue-runtime-107.js ..................... 3/3
+ok test/issues/issue-runtime-109.js ..................... 3/3
+ok test/issues/issue-runtime-117.js ..................... 2/2
+ok test/issues/issue-runtime-122.js ..................... 2/2
+ok test/issues/issue-runtime-133.js ..................... 2/2
+ok test/issues/issue-runtime-134.js ..................... 5/5
+ok test/issues/issue-runtime-146.js ..................... 3/3
+ok test/issues/issue-runtime-150.js ..................... 4/4
+ok test/issues/issue-runtime-156.js ..................... 5/5
+ok test/issues/issue-runtime-158.js ..................... 8/8
+ok test/issues/issue-runtime-159.js ..................... 2/2
+ok test/issues/issue-runtime-170.js ..................... 3/3
+ok test/issues/issue-runtime-173.js ..................... 2/2
+ok test/issues/issue-runtime-177.js ..................... 2/2
+ok test/issues/issue-runtime-185.js ..................... 8/8
+ok test/issues/issue-runtime-186.js ..................... 9/9
+ok test/issues/issue-runtime-190.js ..................... 2/2
+ok test/issues/issue-runtime-191.js ..................... 2/2
+ok test/issues/issue-runtime-199.js ..................... 2/2
+ok test/issues/issue-runtime-204.js ..................... 4/4
+ok test/issues/issue-runtime-208.js ..................... 3/3
+ok test/issues/issue-runtime-223.js ..................... 3/3
+ok test/issues/issue-runtime-234.js ..................... 5/5
+ok test/issues/issue-runtime-239.js ..................... 5/5
+ok test/issues/issue-runtime-244.js ..................... 4/4
+ok test/issues/issue-runtime-246.js ..................... 3/3
+ok test/issues/issue-runtime-269.js ..................... 2/2
+ok test/issues/issue-runtime-276.js ..................... 2/2
+ok test/issues/issue-runtime-282.js ..................... 2/2
+ok test/issues/issue-runtime-283.js ..................... 4/4
+ok test/issues/issue-runtime-287.js ................... 16/16
+ok test/issues/issue-runtime-289.js ................... 31/31
+ok test/issues/issue-runtime-292.js ..................... 2/2
+ok test/issues/issue-runtime-295.js ..................... 4/4
+ok test/issues/issue-runtime-296.js ..................... 4/4
+ok test/issues/issue-runtime-297.js ..................... 3/3
+ok test/issues/issue-runtime-298.js ..................... 5/5
+ok test/issues/issue-runtime-302.js ................... 23/23
+ok test/issues/issue-runtime-303.js ................... 10/10
+ok test/issues/issue-runtime-304.js ..................... 4/4
+ok test/issues/issue-runtime-305.js ..................... 2/2
+ok test/issues/issue-runtime-306.js ................... 12/12
+ok test/issues/issue-runtime-307.js ..................... 5/5
+ok test/issues/issue-runtime-314.js ..................... 2/2
+ok test/issues/issue-runtime-320.js ..................... 3/3
+ok test/issues/issue-runtime-337.js ..................... 2/2
+ok test/issues/issue-runtime-345.js ..................... 3/3
+ok test/issues/issue-runtime-360.js ..................... 7/7
+ok test/issues/issue-runtime-361.js ..................... 2/2
+ok test/issues/issue-runtime-362.js ..................... 2/2
+ok test/issues/issue-runtime-368.js ..................... 3/3
+ok test/issues/issue-runtime-373.js ..................... 7/7
+ok test/issues/issue-runtime-385.js ..................... 3/3
+ok test/issues/issue-runtime-397.js ..................... 7/7
+ok test/issues/issue-runtime-419.js ..................... 3/3
+ok test/issues/issue-runtime-420.js ..................... 2/2
+ok test/issues/issue-runtime-434.js ..................... 6/6
+ok test/issues/issue-runtime-437.js ..................... 2/2
+ok test/issues/issue-runtime-448.js ..................... 9/9
+ok test/issues/issue-runtime-450.js ..................... 5/5
+ok test/issues/issue-runtime-472.js ..................... 6/6
+ok test/issues/issue-runtime-473.js ..................... 2/2
+ok test/issues/issue-runtime-487.js ..................... 2/2
+ok test/issues/issue-runtime-491.js ..................... 3/3
+ok test/issues/issue-runtime-506.js ..................... 2/2
+ok test/issues/issue-runtime-524.js ..................... 2/2
+ok test/issues/issue-runtime-529.js ..................... 2/2
+ok test/issues/issue-runtime-534.js ..................... 5/5
+ok test/issues/issue-runtime-548.js ..................... 2/2
+ok test/issues/issue-runtime-605.js ................... 17/17
+ok test/issues/issue-runtime-611.js ..................... 2/2
+ok test/issues/issue-runtime-612.js ..................... 2/2
+ok test/issues/issue-runtime-628.js ..................... 2/2
+ok test/issues/issue-runtime-652.js ..................... 5/5
+ok test/issues/issue-runtime-659.js ..................... 6/6
+ok test/issues/issue-runtime-669.js ................... 37/37
+ok test/issues/issue-runtime-686.js ..................... 2/2
+ok test/issues/log-global.js ............................ 2/2
+ok test/net/dns.js ...................................... 3/3
+ok test/net/http-get-query.js ........................... 3/3
+ok test/net/http-get.js ................................. 2/2
+ok test/net/http-md5.js ................................. 1/2
+  skipped: undefined
+ok test/net/http-req-ip.js .............................. 2/2
+total ............................................. 1545/1555
+
+ok
+colony testbench:
+ok test/suite/__proto__.js .............................. 2/2
+ok test/suite/arguments.js .............................. 3/3
+ok test/suite/array.js ................................ 60/60
+ok test/suite/bind.js ................................... 5/5
+not ok test/suite/bitmath.js .......................... 15/28
+    Command: "/home/daniel/runtime/tools/tap-colony.sh bitmath.js"
+    TAP version 13
+    ok 1 xor operator: "10" == "10"
+    ok 2 xor operator: "10" == "10"
+    ok 3 xor operator: "10" == "10"
+    ok 4 and operator: "4" == "4"
+    ok 5 and operator: "255" == "255"
+    ok 6 and operator: "0" == "0"
+    ok 7 and operator: "0" == "0"
+    ok 8 and operator: "0" == "0"
+    ok 9 or operator: "255" == "255"
+    ok 10 or operator: "1" == "1"
+    ok 11 or operator: "1" == "1"
+    ok 12 not operator # SKIP
+    ok 13 not operator # SKIP
+    ok 14 not operator # SKIP
+    ok 15 not operator # SKIP
+    ok 16 not operator: "0" == "0"
+    ok 17 1 << 0
+    ok 18 1 << 8
+    ok 19 1 << 256
+    not ok 20 MISSING TEST
+    not ok 21 MISSING TEST
+    not ok 22 MISSING TEST
+    not ok 23 MISSING TEST
+    not ok 24 MISSING TEST
+    not ok 25 MISSING TEST
+    not ok 26 MISSING TEST
+    not ok 27 MISSING TEST
+    not ok 28 test/suite/bitmath.js
+      ---
+        exit:    8
+        command: "/home/daniel/runtime/tools/tap-colony.sh bitmath.js"
+      ...
+    
+    1..28
+    # tests 28
+    # pass  15
+    # fail  9
+    # skip  4
+    
+ok test/suite/buffer.js ............................. 120/120
+ok test/suite/bug-bindnull.js ........................... 3/3
+ok test/suite/bug-endwithcomments.js .................... 2/2
+ok test/suite/bug-foreach-null.js ....................... 2/2
+ok test/suite/bug-forinarray.js ....................... 14/14
+ok test/suite/bug-regexreplace.js ....................... 2/2
+ok test/suite/bug-underscores.js ...................... 10/10
+ok test/suite/builtin.js .............................. 20/20
+ok test/suite/console.js ................................ 4/4
+ok test/suite/crypto.js ............................... 10/10
+ok test/suite/date.js ................................. 17/17
+ok test/suite/defineProperty.js ......................... 3/3
+ok test/suite/delete.js ................................. 3/3
+not ok test/suite/dgram.js .............................. 2/3
+    Command: "/home/daniel/runtime/tools/tap-colony.sh dgram.js"
+    TAP version 13
+    ok 1 ok
+    ok 2 ok
+    not ok 3 test/suite/dgram.js
+      ---
+        exit:    8
+        command: "/home/daniel/runtime/tools/tap-colony.sh dgram.js"
+      ...
+    
+    1..3
+    # tests 3
+    # pass  2
+    # fail  1
+    
+ok test/suite/early-return.js ........................... 2/2
+ok test/suite/encoding.js ............................. 36/36
+ok test/suite/error.js ................................ 35/35
+ok test/suite/etters.js ................................. 8/9
+ok test/suite/event-error.js ............................ 5/5
+ok test/suite/fs-streams.js ............................. 3/3
+ok test/suite/fs.js ................................... 30/30
+ok test/suite/function.js ............................... 3/3
+ok test/suite/hasOwnProperty.js ....................... 10/10
+ok test/suite/hash.js ................................... 2/2
+not ok test/suite/http.js ............................... 0/1
+    Command: "/home/daniel/runtime/tools/tap-colony.sh http.js"
+    TAP version 13
+    not ok 1 test/suite/http.js
+      ---
+        exit:    8
+        command: "/home/daniel/runtime/tools/tap-colony.sh http.js"
+      ...
+    
+    1..1
+    # tests 1
+    # fail  1
+    
+not ok test/suite/https.js .............................. 0/1
+    Command: "/home/daniel/runtime/tools/tap-colony.sh https.js"
+    TAP version 13
+    not ok 1 test/suite/https.js
+      ---
+        exit:    134
+        stderr:  |
+          /home/daniel/runtime/tools/tap-colony.sh: Zeile 10:  4008 Abgebrochen             (Speicherabzug geschrieben) ./out/Release/colony "$RELATIVE/$1"
+        command: "/home/daniel/runtime/tools/tap-colony.sh https.js"
+      ...
+    
+    1..1
+    # tests 1
+    # fail  1
+    
+ok test/suite/json.js ................................. 76/76
+ok test/suite/jsonload.js ............................... 3/3
+ok test/suite/keywords.js ............................... 3/3
+ok test/suite/math.js ................................. 17/17
+not ok test/suite/net.js .............................. 55/75
+    Command: "/home/daniel/runtime/tools/tap-colony.sh net.js"
+    TAP version 13
+    ok 1 ok
+    ok 2 ok
+    ok 3 equal
+    ok 4 equal
+    ok 5 equal
+    ok 6 equal
+    ok 7 equal
+    ok 8 equal
+    ok 9 equal
+    ok 10 equal
+    ok 11 equal
+    ok 12 equal
+    ok 13 equal
+    ok 14 equal
+    ok 15 equal
+    ok 16 equal
+    ok 17 equal
+    ok 18 equal
+    ok 19 equal
+    ok 20 equal
+    ok 21 equal
+    ok 22 equal
+    ok 23 equal
+    ok 24 equal
+    ok 25 equal
+    ok 26 equal
+    ok 27 equal
+    ok 28 equal
+    ok 29 equal
+    ok 30 equal
+    ok 31 equal
+    ok 32 equal
+    ok 33 equal
+    ok 34 equal
+    ok 35 equal
+    ok 36 equal
+    ok 37 equal
+    ok 38 equal
+    ok 39 equal
+    ok 40 equal
+    ok 41 equal
+    ok 42 equal
+    ok 43 equal
+    ok 44 equal
+    ok 45 equal
+    ok 46 equal
+    ok 47 equal
+    ok 48 equal
+    ok 49 equal
+    ok 50 equal
+    ok 51 equal
+    ok 52 equal
+    ok 53 ok
+    ok 54 ok
+    ok 55 ok
+    not ok 56 MISSING TEST
+    not ok 57 MISSING TEST
+    not ok 58 MISSING TEST
+    not ok 59 MISSING TEST
+    not ok 60 MISSING TEST
+    not ok 61 MISSING TEST
+    not ok 62 MISSING TEST
+    not ok 63 MISSING TEST
+    not ok 64 MISSING TEST
+    not ok 65 MISSING TEST
+    not ok 66 MISSING TEST
+    not ok 67 MISSING TEST
+    not ok 68 MISSING TEST
+    not ok 69 MISSING TEST
+    not ok 70 MISSING TEST
+    not ok 71 MISSING TEST
+    not ok 72 MISSING TEST
+    not ok 73 MISSING TEST
+    not ok 74 MISSING TEST
+    not ok 75 test/suite/net.js
+      ---
+        exit:    8
+        command: "/home/daniel/runtime/tools/tap-colony.sh net.js"
+      ...
+    
+    1..75
+    # tests 75
+    # pass  55
+    # fail  20
+    
+ok test/suite/number.js ................................. 4/4
+ok test/suite/parse-numbers.js ........................ 14/14
+ok test/suite/primitive.js ............................ 42/44
+ok test/suite/process.js ................................ 8/8
+ok test/suite/regex.js ................................ 24/24
+ok test/suite/require.js ................................ 7/7
+ok test/suite/streams.js ................................ 2/2
+ok test/suite/string-decoder.js ......................... 3/3
+ok test/suite/string.js ............................... 62/62
+ok test/suite/timers.js ................................. 5/5
+not ok test/suite/tls.js ................................ 0/4
+    Command: "/home/daniel/runtime/tools/tap-colony.sh tls.js"
+    TAP version 13
+    not ok 1 MISSING TEST
+    not ok 2 MISSING TEST
+    not ok 3 MISSING TEST
+    not ok 4 test/suite/tls.js
+      ---
+        exit:    134
+        stderr:  |
+          /home/daniel/runtime/tools/tap-colony.sh: Zeile 10:  4177 Abgebrochen             (Speicherabzug geschrieben) ./out/Release/colony "$RELATIVE/$1"
+        command: "/home/daniel/runtime/tools/tap-colony.sh tls.js"
+      ...
+    
+    1..4
+    # tests 4
+    # fail  4
+    
+ok test/suite/truthy.js ............................... 17/17
+ok test/suite/try.js .................................... 5/6
+ok test/suite/unicode.js ................................ 2/2
+ok test/suite/url.js .................................. 15/15
+ok test/suite/util.js ................................. 28/28
+ok test/suite/with.js ................................... 8/8
+ok test/suite/zlib.js ................................. 31/31
+ok test/colony/buffer-limit.js .......................... 2/2
+ok test/colony/eval-fn.js ............................... 2/2
+ok test/colony/floatint.js ............................ 11/11
+ok test/colony/issue-runtime-620.js ..................... 2/2
+ok test/colony/issue-runtime-627.js ..................... 3/3
+not ok test/colony/math-fns.js ......................... 0/54
+    Command: "/home/daniel/runtime/tools/tap-colony.sh math-fns.js"
+    TAP version 13
+    not ok 1 MISSING TEST
+    not ok 2 MISSING TEST
+    not ok 3 MISSING TEST
+    not ok 4 MISSING TEST
+    not ok 5 MISSING TEST
+    not ok 6 MISSING TEST
+    not ok 7 MISSING TEST
+    not ok 8 MISSING TEST
+    not ok 9 MISSING TEST
+    not ok 10 MISSING TEST
+    not ok 11 MISSING TEST
+    not ok 12 MISSING TEST
+    not ok 13 MISSING TEST
+    not ok 14 MISSING TEST
+    not ok 15 MISSING TEST
+    not ok 16 MISSING TEST
+    not ok 17 MISSING TEST
+    not ok 18 MISSING TEST
+    not ok 19 MISSING TEST
+    not ok 20 MISSING TEST
+    not ok 21 MISSING TEST
+    not ok 22 MISSING TEST
+    not ok 23 MISSING TEST
+    not ok 24 MISSING TEST
+    not ok 25 MISSING TEST
+    not ok 26 MISSING TEST
+    not ok 27 MISSING TEST
+    not ok 28 MISSING TEST
+    not ok 29 MISSING TEST
+    not ok 30 MISSING TEST
+    not ok 31 MISSING TEST
+    not ok 32 MISSING TEST
+    not ok 33 MISSING TEST
+    not ok 34 MISSING TEST
+    not ok 35 MISSING TEST
+    not ok 36 MISSING TEST
+    not ok 37 MISSING TEST
+    not ok 38 MISSING TEST
+    not ok 39 MISSING TEST
+    not ok 40 MISSING TEST
+    not ok 41 MISSING TEST
+    not ok 42 MISSING TEST
+    not ok 43 MISSING TEST
+    not ok 44 MISSING TEST
+    not ok 45 MISSING TEST
+    not ok 46 MISSING TEST
+    not ok 47 MISSING TEST
+    not ok 48 MISSING TEST
+    not ok 49 MISSING TEST
+    not ok 50 MISSING TEST
+    not ok 51 MISSING TEST
+    not ok 52 MISSING TEST
+    not ok 53 MISSING TEST
+    not ok 54 test/colony/math-fns.js
+      ---
+        exit:    8
+        command: "/home/daniel/runtime/tools/tap-colony.sh math-fns.js"
+      ...
+    
+    1..54
+    # tests 54
+    # fail  54
+    
+ok test/colony/number.js .............................. 15/15
+ok test/issues/issue-beta-100.js ........................ 2/2
+ok test/issues/issue-beta-101.js ........................ 3/3
+ok test/issues/issue-beta-108.js ........................ 2/2
+ok test/issues/issue-beta-131.js ........................ 2/2
+ok test/issues/issue-beta-140.js ........................ 4/4
+ok test/issues/issue-beta-148.js ........................ 2/2
+ok test/issues/issue-beta-159.js ........................ 3/3
+ok test/issues/issue-beta-162.js ........................ 2/2
+ok test/issues/issue-beta-170.js ........................ 2/2
+ok test/issues/issue-beta-179.js ........................ 3/3
+ok test/issues/issue-beta-180.js ........................ 2/2
+ok test/issues/issue-beta-180b.js ....................... 2/2
+ok test/issues/issue-beta-195.js ........................ 6/6
+ok test/issues/issue-beta-200.js ........................ 3/3
+ok test/issues/issue-beta-204.js ........................ 3/3
+ok test/issues/issue-beta-207.js ...................... 10/10
+ok test/issues/issue-beta-212.js ........................ 9/9
+ok test/issues/issue-beta-213.js ........................ 8/8
+ok test/issues/issue-beta-221.js ........................ 3/3
+ok test/issues/issue-beta-242.js ........................ 2/2
+ok test/issues/issue-beta-243.js ........................ 2/2
+ok test/issues/issue-beta-244.js ........................ 3/3
+ok test/issues/issue-beta-245.js ........................ 2/2
+ok test/issues/issue-beta-251.js ........................ 2/2
+ok test/issues/issue-beta-274.js ........................ 3/3
+ok test/issues/issue-beta-276.js ........................ 3/3
+ok test/issues/issue-beta-294.js ........................ 2/2
+ok test/issues/issue-beta-296.js ........................ 4/4
+ok test/issues/issue-beta-314.js ........................ 2/2
+ok test/issues/issue-beta-317.js ........................ 4/4
+ok test/issues/issue-beta-319.js ........................ 4/4
+ok test/issues/issue-beta-327.js ........................ 2/2
+ok test/issues/issue-beta-334.js ...................... 12/12
+ok test/issues/issue-beta-337.js ........................ 2/2
+ok test/issues/issue-beta-338.js ........................ 2/2
+ok test/issues/issue-beta-339.js ........................ 2/2
+ok test/issues/issue-beta-340.js ........................ 5/5
+ok test/issues/issue-beta-342.js ........................ 7/7
+ok test/issues/issue-beta-351.js ........................ 2/2
+ok test/issues/issue-beta-352.js ........................ 5/5
+ok test/issues/issue-beta-356.js ........................ 2/2
+ok test/issues/issue-beta-366.js ........................ 4/4
+ok test/issues/issue-beta-379.js ........................ 4/4
+ok test/issues/issue-beta-380.js ........................ 3/3
+ok test/issues/issue-beta-390.js ........................ 4/4
+ok test/issues/issue-beta-394.js ........................ 6/6
+ok test/issues/issue-beta-395.js ........................ 3/3
+ok test/issues/issue-beta-402.js ........................ 2/2
+ok test/issues/issue-beta-440.js ........................ 2/2
+ok test/issues/issue-beta-446.js ........................ 3/3
+ok test/issues/issue-beta-451.js ........................ 2/2
+ok test/issues/issue-beta-73.js ......................... 2/2
+ok test/issues/issue-beta-77.js ......................... 4/4
+ok test/issues/issue-beta-81.js ......................... 3/3
+ok test/issues/issue-beta-84.js ......................... 8/8
+ok test/issues/issue-beta-87.js ......................... 2/2
+ok test/issues/issue-beta-93.js ......................... 2/2
+ok test/issues/issue-beta-97.js ......................... 3/3
+ok test/issues/issue-beta-98.js ......................... 4/4
+ok test/issues/issue-runtime-107.js ..................... 3/3
+ok test/issues/issue-runtime-109.js ..................... 3/3
+ok test/issues/issue-runtime-117.js ..................... 2/2
+ok test/issues/issue-runtime-122.js ..................... 2/2
+ok test/issues/issue-runtime-133.js ..................... 2/2
+ok test/issues/issue-runtime-134.js ..................... 5/5
+ok test/issues/issue-runtime-146.js ..................... 3/3
+ok test/issues/issue-runtime-150.js ..................... 4/4
+ok test/issues/issue-runtime-156.js ..................... 5/5
+ok test/issues/issue-runtime-158.js ..................... 8/8
+ok test/issues/issue-runtime-159.js ..................... 2/2
+ok test/issues/issue-runtime-170.js ..................... 3/3
+ok test/issues/issue-runtime-173.js ..................... 2/2
+ok test/issues/issue-runtime-177.js ..................... 2/2
+ok test/issues/issue-runtime-185.js ..................... 8/8
+ok test/issues/issue-runtime-186.js ..................... 9/9
+ok test/issues/issue-runtime-190.js ..................... 2/2
+ok test/issues/issue-runtime-191.js ..................... 2/2
+ok test/issues/issue-runtime-199.js ..................... 2/2
+ok test/issues/issue-runtime-204.js ..................... 4/4
+ok test/issues/issue-runtime-208.js ..................... 3/3
+ok test/issues/issue-runtime-223.js ..................... 3/3
+ok test/issues/issue-runtime-234.js ..................... 5/5
+ok test/issues/issue-runtime-239.js ..................... 5/5
+ok test/issues/issue-runtime-244.js ..................... 4/4
+ok test/issues/issue-runtime-246.js ..................... 3/3
+ok test/issues/issue-runtime-269.js ..................... 2/2
+ok test/issues/issue-runtime-276.js ..................... 2/2
+ok test/issues/issue-runtime-282.js ..................... 2/2
+ok test/issues/issue-runtime-283.js ..................... 4/4
+ok test/issues/issue-runtime-287.js ................... 16/16
+ok test/issues/issue-runtime-289.js ................... 31/31
+ok test/issues/issue-runtime-292.js ..................... 2/2
+ok test/issues/issue-runtime-295.js ..................... 4/4
+ok test/issues/issue-runtime-296.js ..................... 4/4
+ok test/issues/issue-runtime-297.js ..................... 3/3
+ok test/issues/issue-runtime-298.js ..................... 5/5
+ok test/issues/issue-runtime-302.js ................... 23/23
+ok test/issues/issue-runtime-303.js ................... 10/10
+ok test/issues/issue-runtime-304.js ..................... 4/4
+ok test/issues/issue-runtime-305.js ..................... 2/2
+not ok test/issues/issue-runtime-306.js ............... 10/12
+    Command: "/home/daniel/runtime/tools/tap-colony.sh issue-runtime-306.js"
+    TAP version 13
+    ok 1 wrap: -1 == 0xff
+    ok 2 wrap: 0x555 % 0xFF == 0x5a
+    ok 3 wrap: 256 == 0
+    ok 4 wrap: -256 == 0
+    ok 5 wrap: 0x555 == 0x55
+    ok 6 wrap: 300 == 0x2c
+    ok 7 wrap: -300 == 0xd4
+    ok 8 wrap: -0x555 == 0xab
+    not ok 9 modulus check: -0x555 % 0xFF == -90
+    not ok 10 wrap: -0x555 % 0xff == 0xa6
+    ok 11 writing -1 yields 0
+    ok 12 test/issues/issue-runtime-306.js
+    
+    1..12
+    # tests 12
+    # pass  10
+    # fail  2
+    
+ok test/issues/issue-runtime-307.js ..................... 5/5
+ok test/issues/issue-runtime-314.js ..................... 2/2
+ok test/issues/issue-runtime-320.js ..................... 3/3
+ok test/issues/issue-runtime-337.js ..................... 2/2
+ok test/issues/issue-runtime-345.js ..................... 3/3
+ok test/issues/issue-runtime-360.js ..................... 7/7
+ok test/issues/issue-runtime-361.js ..................... 2/2
+ok test/issues/issue-runtime-362.js ..................... 2/2
+ok test/issues/issue-runtime-368.js ..................... 3/3
+ok test/issues/issue-runtime-373.js ..................... 7/7
+ok test/issues/issue-runtime-385.js ..................... 3/3
+ok test/issues/issue-runtime-397.js ..................... 7/7
+ok test/issues/issue-runtime-419.js ..................... 3/3
+ok test/issues/issue-runtime-420.js ..................... 2/2
+ok test/issues/issue-runtime-434.js ..................... 6/6
+ok test/issues/issue-runtime-437.js ..................... 2/2
+ok test/issues/issue-runtime-448.js ..................... 9/9
+ok test/issues/issue-runtime-450.js ..................... 5/5
+ok test/issues/issue-runtime-472.js ..................... 6/6
+ok test/issues/issue-runtime-473.js ..................... 2/2
+ok test/issues/issue-runtime-487.js ..................... 2/2
+ok test/issues/issue-runtime-491.js ..................... 3/3
+ok test/issues/issue-runtime-506.js ..................... 2/2
+ok test/issues/issue-runtime-524.js ..................... 2/2
+ok test/issues/issue-runtime-529.js ..................... 2/2
+ok test/issues/issue-runtime-534.js ..................... 5/5
+ok test/issues/issue-runtime-548.js ..................... 2/2
+ok test/issues/issue-runtime-605.js ................... 17/17
+not ok test/issues/issue-runtime-611.js ................. 0/2
+    Command: "/home/daniel/runtime/tools/tap-colony.sh issue-runtime-611.js"
+    TAP version 13
+    not ok 1 MISSING TEST
+    not ok 2 test/issues/issue-runtime-611.js
+      ---
+        exit:    8
+        command: "/home/daniel/runtime/tools/tap-colony.sh issue-runtime-611.js"
+      ...
+    
+    1..2
+    # tests 2
+    # fail  2
+    
+not ok test/issues/issue-runtime-612.js ................. 0/2
+    Command: "/home/daniel/runtime/tools/tap-colony.sh issue-runtime-612.js"
+    TAP version 13
+    not ok 1 MISSING TEST
+    not ok 2 test/issues/issue-runtime-612.js
+      ---
+        exit:    8
+        command: "/home/daniel/runtime/tools/tap-colony.sh issue-runtime-612.js"
+      ...
+    
+    1..2
+    # tests 2
+    # fail  2
+    
+ok test/issues/issue-runtime-628.js ..................... 2/2
+ok test/issues/issue-runtime-652.js ..................... 5/5
+ok test/issues/issue-runtime-659.js ..................... 6/6
+ok test/issues/issue-runtime-669.js ................... 37/37
+ok test/issues/issue-runtime-686.js ..................... 2/2
+ok test/issues/log-global.js ............................ 2/2
+ok test/net/dns.js ...................................... 3/3
+not ok test/net/http-get-query.js ....................... 0/3
+    Command: "/home/daniel/runtime/tools/tap-colony.sh http-get-query.js"
+    TAP version 13
+    not ok 1 MISSING TEST
+    not ok 2 MISSING TEST
+    not ok 3 test/net/http-get-query.js
+      ---
+        exit:    8
+        command: "/home/daniel/runtime/tools/tap-colony.sh http-get-query.js"
+      ...
+    
+    1..3
+    # tests 3
+    # fail  3
+    
+not ok test/net/http-get.js ............................. 0/2
+    Command: "/home/daniel/runtime/tools/tap-colony.sh http-get.js"
+    TAP version 13
+    not ok 1 MISSING TEST
+    not ok 2 test/net/http-get.js
+      ---
+        exit:    8
+        command: "/home/daniel/runtime/tools/tap-colony.sh http-get.js"
+      ...
+    
+    1..2
+    # tests 2
+    # fail  2
+    
+not ok test/net/http-md5.js ............................. 0/3
+    Command: "/home/daniel/runtime/tools/tap-colony.sh http-md5.js"
+    TAP version 13
+    not ok 1 MISSING TEST
+    not ok 2 MISSING TEST
+    not ok 3 test/net/http-md5.js
+      ---
+        exit:    8
+        command: "/home/daniel/runtime/tools/tap-colony.sh http-md5.js"
+      ...
+    
+    1..3
+    # tests 3
+    # fail  3
+    
+not ok test/net/http-req-ip.js .......................... 0/2
+    Command: "/home/daniel/runtime/tools/tap-colony.sh http-req-ip.js"
+    TAP version 13
+    not ok 1 MISSING TEST
+    not ok 2 test/net/http-req-ip.js
+      ---
+        exit:    8
+        command: "/home/daniel/runtime/tools/tap-colony.sh http-req-ip.js"
+      ...
+    
+    1..2
+    # tests 2
+    # fail  2
+    
+total ............................................. 1496/1610
+
+not ok
