@@ -127,6 +127,19 @@
       ],
       'actions': [
         {
+          'action_name': 'bundle_streamplex',
+          'variables': {
+            'main_file': '<!(node -p "require.resolve(\'streamplex\')")'
+          },
+          'inputs': [
+            '<!@(<(npm_bin_path)/browserify --list --bare <(main_file))',
+          ],
+          'outputs': [
+            '<(SHARED_INTERMEDIATE_DIR)/_streamplex.js',
+          ],
+          'action': [ '<(npm_bin_path)/browserify', '--bare', '--standalone', 'streamplex', '<(main_file)', '-o', '<@(_outputs)'],
+        },
+        {
           'action_name': '<(_target_name)_compile',
           'inputs': [
             '<(node_libs_path)/_stream_duplex.js',
@@ -148,6 +161,8 @@
             '<(runtime_path)/colony/modules/http.js',
             '<(runtime_path)/colony/modules/https.js',
             '<(runtime_path)/colony/modules/net.js',
+            '<(runtime_path)/colony/modules/_net_proxied.js',
+            '<(SHARED_INTERMEDIATE_DIR)/_streamplex.js',
             '<(runtime_path)/colony/modules/os.js',
             '<(node_libs_path)/path.js',
             '<(node_libs_path)/punycode.js',

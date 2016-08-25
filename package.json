@@ -20,11 +20,13 @@
     "bindings": "~1.2.0",
     "colony-compiler": "~0.6.23",
     "mkdirp": "~0.3.5",
-    "semver": "^4.1.0"
+    "semver": "^4.1.0",
+    "streamplex": "^0.14.0"
   },
   "devDependencies": {
-    "nodejs-websocket": "^1.0.0",
+    "browserify": "^8.1.0",
     "faye-websocket": "~0.7.2",
+    "nodejs-websocket": "^1.0.0",
     "tap": "git+https://github.com/tcr/node-tap.git#4f96b1",
     "tape": "~2.3.2",
     "tinytap": "^0.2.0"

@@ -17,6 +17,7 @@
     "miniz_path": "../deps/miniz",
     "miniz_inc_path": "../deps/miniz-inc",
     "node_libs_path": "../deps/node-libs",
+    "npm_bin_path": "../node_modules/.bin",
     "approxidate_path": "../deps/approxidate",
     "tools_path": "../tools",
     'enable_ssl%': 0,
