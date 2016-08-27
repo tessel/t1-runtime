@@ -261,9 +261,20 @@ static int l_tm_tcp_read (lua_State* L)
   uint8_t buf[512];
   size_t buf_len = sizeof(buf);
   int err = tm_tcp_read(socket, buf, &buf_len);
-  (void) err;
+
+  if (err != 0) {
+    char strbuffer[100];
+    ssize_t len = (ssize_t) snprintf(strbuffer, sizeof(strbuffer), "TCP read error: %d", err);
+    if (len > 0) {
+      lua_pushlstring(L, strbuffer, len);
+    } else {
+      lua_pushstring(L, "TCP read error: [unavailable]");
+    }
+    lua_error(L);
+  } else {
+    colony_pushbuffer(L, buf, buf_len);
+  }
   
-  colony_pushbuffer(L, buf, buf_len);
   return 1;
 }
 
@@ -437,9 +448,20 @@ static int l_tm_ssl_read (lua_State* L)
   uint8_t buf[20000];
   size_t buf_len = sizeof(buf);
   int err = tm_ssl_read(session, buf, &buf_len);
-  (void) err;
+
+  if (err != 0) {
+    char strbuffer[100];
+    ssize_t len = (ssize_t) snprintf(strbuffer, sizeof(strbuffer), "SSL read error: %d", err);
+    if (len > 0) {
+      lua_pushlstring(L, strbuffer, len);
+    } else {
+      lua_pushstring(L, "SSL read error: [unavailable]");
+    }
+    lua_error(L);
+  } else {
+    colony_pushbuffer(L, buf, buf_len);
+  }
   
-  colony_pushbuffer(L, buf, buf_len);
   return 1;
 }
 

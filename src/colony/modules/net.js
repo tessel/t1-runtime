@@ -188,23 +188,24 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
         self.emit('error', new Error("ENETUNREACH: Wifi is not connected"));
         // force the cleanup
         self.destroy();
-        return self.__close(); // need to call close otherwise we keep listening for the tcp-close event
+        return self.__close(true); // need to call close otherwise we keep listening for the tcp-close event
       }
 
       if (ret < 0) {
         var closeRet = tm.tcp_close(self.socket); // returns -57 if socket is already closed
         if (closeRet < 0 && closeRet != -tm.ENOTCONN){ 
           // couldn't close socket, throw an error
+          // failed to connect, stay silent
           self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+closeRet));
           self.destroy();
-          return self.__close(false);
+          return self.__close(true);
         }
 
         if (retries > 3) {
           self.emit('error', new Error('ENOENT Cannot connect to ' + ip + ' Got: err'+ret));
           // force the cleanup
           self.destroy();
-          return self.__close();
+          return self.__close(true);
         } else {
           retries++;
           setTimeout(function(){
@@ -221,7 +222,7 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
 
               // force the close
               self.destroy();
-              return self.__close();
+              return self.__close(true);
             } else {
               doConnect();
             }
@@ -254,13 +255,13 @@ TCPSocket.prototype.connect = function (/*options | [port], [host], [cb]*/) {
 
               tm.tcp_readable(self.socket);
               self.destroy();
-              self.__close();
+              self.__close(true);
               return;
             } else {
               // close socket
               self.emit('error', new Error('Could not validate SSL request (error ' + ret + ')'));
               self.destroy();
-              self.__close();
+              self.__close(true);
               return;
             }
           }
@@ -366,7 +367,7 @@ TCPSocket.prototype.__send = function (cb) {
     if (this._queueEnd) {
       // close actual socket
       this._queueEnd = false;
-      this.__close();
+      this.__close(true);
     }
     return cb ? cb() : false;
   }
@@ -421,9 +422,17 @@ TCPSocket.prototype.__readSocket = function(restartTimeout) {
   var arr = [], flag = 0;
   while (self.socket != null && (flag = tm.tcp_readable(self.socket)) > 0) {
     if (self._ssl) {
-      var data = tm.ssl_read(self._ssl);
+      try {
+        var data = tm.ssl_read(self._ssl);
+      } catch(e){
+        self.emit("error", typeof e == 'string' ? new Error(e) : e);
+      }
     } else {
-      var data = tm.tcp_read(self.socket);
+      try {
+        var data = tm.tcp_read(self.socket);
+      } catch(e){
+        self.emit("error", typeof e == 'string' ? new Error(e) : e);
+      }
     }
     if (!data || data.length == 0) {
       break;
@@ -459,11 +468,10 @@ TCPSocket.prototype.__close = function (tryToClose) {
   function closeSocket(){
     if (self.socket === null) return;
     var ret = tm.tcp_close(self.socket);
-
     if (ret < 0 && ret != -tm.ENOTCONN) { // -57 is inactive, socket has already been closed
       if (retries > 3) {
-        // tried 3 times and couldn't close, error out
-        self.emit('error', new Error('ENOENT Cannot close socket ' + self.socket + ' Got: err'+ret));
+        // tried 3 times and couldn't close
+        // nothing for the user to do if this occurs, close the socket and user should re-request connection
         self.emit('close');
       } else {
         retries++;
@@ -486,6 +494,10 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
   if (this._destroy) return;
 
   this._destroy = true;
+  if (this._secure) {
+    // free ssl context
+    tm.ssl_context_free(this._ssl_ctx);
+  }
   
   var self = this;
   setImmediate(function () {
@@ -499,7 +511,7 @@ TCPSocket.prototype.destroy = TCPSocket.prototype.close = function () {
       if (self._outgoing.length || self._sending) {
         self._queueEnd = true;
       } else {
-        self.__close();
+        self.__close(true);
       } 
     }
     self.removeAllListeners();
@@ -611,9 +623,15 @@ TCPServer.prototype.listen = function (port, host, backlog, cb) {
       clientsocket.remotePort = port;
       clientsocket.__listen();
       self.emit('connection', clientsocket);
-    }
 
-    setTimeout(poll, 10);
+      // do not poll if we're not connected
+      // this also gives time for the 'disconnect' event to fire from the wifi-cc3000 lib 
+      // user should listen for require('wifi-cc3000').on('disconnect') event and
+      // reissue the request
+      setTimeout(poll, 10);
+    } else {
+      self.emit('error', new Error("Cannot listen on a bad socket %d", client));
+    }
   }
   return this;
 };

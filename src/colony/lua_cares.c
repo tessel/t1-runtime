@@ -27,6 +27,7 @@
 #define INET6_ADDRSTRLEN 46
 
 uint8_t ipaddr[4] = { 0 };
+uint32_t ip_dns = 0;
  
 static void
 state_cb(void *data, int s, int read, int write)
@@ -103,8 +104,12 @@ uint32_t tm__sync_gethostbyname (const char *domain)
 
     struct in_addr ns1;
 
-    // get the dns server
-    uint32_t ip_dns = tm_net_dnsserver();
+    // check cache of old dns server
+    // if it isn't there, get the new dns server
+    if (ip_dns == 0) {
+        ip_dns = tm_net_dnsserver();
+    }
+
     if (ip_dns == 0) {
         // error not connected
         return 1;
