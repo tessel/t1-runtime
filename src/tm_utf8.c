@@ -98,10 +98,8 @@ size_t tm_str_to_utf8 (const uint8_t* buf, size_t buf_len, const uint8_t ** cons
 
 size_t tm_str_from_utf8 (const uint8_t* utf8, size_t utf8_len, const uint8_t ** const dstptr) {
   size_t buf_len = utf8_len;
-  // TODO: increase buf_len to fit actual split pairs (4 bytes become 6) and replaced non-characters (3 bytes per byte in bad sequence)
-  buf_len += utf8_len / 2 + 6;    // HACK: this is just a glorified/dynamic fudge factor
-  // ugh, test/suite/crypto.js does toString on a 4K buffer of random bytes …PLS TO ADD MOAR FUDGERS!!1!
-  buf_len += utf8_len;
+  // TODO: decrease buf_len to only fit actual split pairs (4 bytes become 6) and replaced non-characters (3 bytes per byte in bad sequence)
+  buf_len = utf8_len * 3 + 6;     // each byte could become 3 (replacement character), plus safety margin wanted by assert below
   uint8_t* buf = malloc(buf_len);
   
   size_t buf_pos = 0;
