@@ -18,7 +18,7 @@
   "dependencies": {
     "async": "~0.2.9",
     "bindings": "~1.2.0",
-    "colony-compiler": "~0.6.23",
+    "colony-compiler": "0.7.x",
     "mkdirp": "~0.3.5",
     "semver": "^4.1.0"
   },
