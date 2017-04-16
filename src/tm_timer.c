@@ -30,6 +30,7 @@ typedef struct tm_timer {
   unsigned repeat; // If nonzero, `time` is reset to `repeat` when the timer expires.
                    // Note that this means setInterval calls are clamped to 1ms
   int lua_cb; // Callback index in the lua registry
+  int pending; // Pending flag for this next loop.
 } tm_timer;
 
 /// Head of the linked list of timers. Pointer to the timeout object which
@@ -95,6 +96,7 @@ unsigned tm_settimeout(unsigned delay, bool repeat, int lua_cb) {
 	t->lua_cb = lua_cb;
 	t->next = 0;
 	t->id = ++timer_id;
+	t->pending = 0;
 
 	// Adjust because the times on the queue are relative to last_time
 	unsigned time = delay + (tm_uptime_micro() - last_time);
@@ -150,8 +152,15 @@ void timer_cb(tm_event* event) {
 
 	unsigned next_time = tm_uptime_micro();
 
-	while (timers_head) {
-		tm_timer* t = timers_head;
+	// Mark all timers as "pending" for this loop.
+	tm_timer* t = timers_head;
+	while (t) {
+		t->pending = 1;
+		t = t->next;
+	}
+
+	while (timers_head && timers_head->pending) {
+		t = timers_head;
 
 		unsigned remaining = next_time - last_time;
 
